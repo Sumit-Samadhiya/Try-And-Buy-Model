@@ -1,0 +1,44 @@
+/* ProductDetailsComponent.css */
+
+/* Default styles */
+.product-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.product-container .header-footer {
+    width: 100%;
+}
+
+.product-container .icons-column {
+    display: flex;
+    flex-direction: column;
+    margin-right: 5%;
+    margin-bottom: 10%;
+}
+
+.product-container .slider-container {
+    width: 40%;
+    position: relative;
+}
+
+.product-container .product-details-column {
+    display: flex;
+    flex-direction: column;
+    width: 100%; /* Take full width initially */
+    margin-top: 20px; /* Add space between slider and product details */
+}
+
+/* Responsive styles */
+@media (min-width: 960px) {
+    .product-container {
+        flex-direction: row;
+        justify-content: space-around;
+    }
+
+    .product-container .product-details-column {
+        width: auto; /* Reset width to auto to fit content */
+        margin-top: 0; /* Reset margin */
+    }
+}

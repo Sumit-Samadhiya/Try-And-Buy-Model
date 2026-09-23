@@ -1,0 +1,32 @@
+
+
+.product-container {
+    display: grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap: 10px;
+    padding: 80px;
+}
+.product-container-2 {
+    display: grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap: 20px;
+    padding: 20px;
+}
+
+.product-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+}
+
+.product-image {
+    width: 80%;
+    cursor: pointer;
+   
+    height: auto;
+}
+
+.product-details {
+    text-align: center;
+}
