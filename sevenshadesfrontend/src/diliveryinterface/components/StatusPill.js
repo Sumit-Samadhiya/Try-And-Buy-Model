@@ -4,6 +4,7 @@ const statusColorMap = {
   assigned: 'default',
   on_the_way: 'info',
   trial_in_progress: 'warning',
+  trial_completed: 'info',
   completed: 'success',
 };
 
@@ -11,6 +12,7 @@ const statusLabelMap = {
   assigned: 'Assigned',
   on_the_way: 'On The Way',
   trial_in_progress: 'Trial In Progress',
+  trial_completed: 'Trial Completed',
   completed: 'Completed',
 };
 

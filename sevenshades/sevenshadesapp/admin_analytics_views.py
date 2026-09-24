@@ -1,14 +1,16 @@
 from django.http.response import JsonResponse
 from rest_framework.decorators import api_view
 from django.db import models
-from sevenshadesapp.models import TryOrder, FinalOrder, DeliveryAssignment
+from sevenshadesapp.models import TryOrder, FinalOrder
 
 @api_view(['GET'])
 def GetOrderAnalytics(request):
     try:
         total_orders = TryOrder.objects.count()
-        completed_orders = FinalOrder.objects.filter(status='completed').count()
-        total_revenue = FinalOrder.objects.filter(status='completed').aggregate(models.Sum('final_payable'))['final_payable__sum'] or 0
+        completed_orders = TryOrder.objects.filter(status__in=['DELIVERED', 'NO_PURCHASE']).count()
+        final_collections = FinalOrder.objects.filter(payment_status='paid').aggregate(models.Sum('final_payable'))['final_payable__sum'] or 0
+        trial_collections = TryOrder.objects.filter(trial_fee_paid=True).aggregate(models.Sum('try_fee'))['try_fee__sum'] or 0
+        total_revenue = final_collections + trial_collections
         
         return JsonResponse({
             'status': True,

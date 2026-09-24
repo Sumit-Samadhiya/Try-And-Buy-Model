@@ -83,10 +83,11 @@ def fetchData(field,data):
 def Banner_List(request):
      try:
           if request.method=='GET':
-            #    maincategory_list=MainCategory.get()
                banner_list=Banner.objects.all()
                banner_serializer_list=BannerSerializer(banner_list,many=True)
-               return JsonResponse({"data":banner_serializer_list.data[0], "status":True})
+               if not banner_serializer_list.data:
+                    return JsonResponse({"data":[],"status":False,"message":"No banners found"},safe=False)
+               return JsonResponse({"data":banner_serializer_list.data, "status":True})
           else:
                return JsonResponse({"data":[],"status":False},safe=False)
      except Exception as e :

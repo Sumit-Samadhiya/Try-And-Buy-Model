@@ -15,7 +15,7 @@ export default function OrderSuccess() {
   const billingAmount = payload.billingAmount || 0;
   const paymentMode = (payload.paymentMode || 'N/A').toUpperCase();
   const totalItems = payload.totalTryItems || 0;
-  const orderId = payload.orderId;
+
 
   return (
     <Container maxWidth="sm" sx={{ py: 8 }}>
@@ -34,16 +34,7 @@ export default function OrderSuccess() {
           <Chip label={`Mode: ${paymentMode}`} variant="outlined" />
         </Stack>
 
-        {orderId ? (
-          <Button
-            variant="outlined"
-            fullWidth
-            sx={{ mt: 2, py: 1.2, fontWeight: 700 }}
-            onClick={() => navigate('/trial-selection', { state: { orderId } })}
-          >
-            Simulate Delivery Selection (Create Main Cart)
-          </Button>
-        ) : null}
+        <Typography sx={{ mt: 2 }}>Your assigned rider will record your selection after the trial.</Typography>
 
         <Button
           variant="contained"

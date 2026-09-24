@@ -1,3 +1,5 @@
+import LocationButton from '../../services/LocationButton';
+import useOrderEvents from '../../services/useOrderEvents';
 import { useEffect, useMemo, useState } from 'react';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -31,6 +33,7 @@ export default function DeliveryHome() {
     setLoading(false);
   };
 
+  useOrderEvents(loadTasks);
   useEffect(() => {
     const active = getDeliveryLogin();
     if (!active?.phone) {
@@ -87,6 +90,7 @@ export default function DeliveryHome() {
       subtitle={`${loginData?.name || 'Delivery Rider'} • ${loginData?.zone || 'Assigned Zone'} • ${loginData?.phone || ''}`}
       activePage="dashboard"
     >
+      <LocationButton rider />
       <Paper elevation={0} sx={{ p: 2.5, borderRadius: 4, border: '1px solid #e5e7eb', mb: 3 }}>
         <Stack direction="row" spacing={2} alignItems="center">
           <Avatar sx={{ width: 58, height: 58, bgcolor: '#111827' }}>

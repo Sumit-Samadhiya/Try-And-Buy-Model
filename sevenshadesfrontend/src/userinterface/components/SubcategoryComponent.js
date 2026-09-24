@@ -1,85 +1,29 @@
-import {Button,Grid,} from '@mui/material'
-import { serverURL } from "../../services/FetchDjangoApiServices"
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
-import {useTheme} from '@mui/material/styles';
-import UseMediaQuery from '@mui/material/useMediaQuery';
+import { useRef } from 'react';
+import Slider from 'react-slick';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import { createRef } from 'react';
+import imageUrl from '../../services/imageUrl';
+import './StorefrontCarousels.css';
 
-
-export default function SubcategoryComponent(props)
-{
-    const theme=useTheme()
-   
-    const sm_matches=UseMediaQuery(theme.breakpoints.down('sm'));
-    const md_matches=UseMediaQuery(theme.breakpoints.down('md')) 
-     
-    var sldr=createRef(null);  //initializing the slider reference object
-
-    
-   
-var settings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-                       
-    autoPlaySpeed:3000,
-   
-    slidesToShow: sm_matches?1:md_matches?2:4, 
-   
-    slidesToScroll: 1,
-    arrows:false
-  };
- 
-
-
-
-
-const handlePrevious=()=>{
-    sldr.current.slickPrev()
-}
-const handleNext=()=>{
-    sldr.current.slickNext()
-}
-var data=props.data
-const showAllItems=()=>{
-    return data.map((item)=>{
-        return <div key={item.id} onClick={()=>props?.onItemClick && props.onItemClick(item)} style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
-            <div>
-                <img src={`${serverURL}/${item.icon}`} alt="" loading="lazy" style={{width:sm_matches?'80%':300,height:sm_matches?'80%':400,cursor:'pointer'}} /> 
-            </div>
-            <div style={{fontSize:25,fontWeight:'bold'}}>
-                {item.subcategoryname}
-            </div>
-          
-
+export default function SubcategoryComponent({ data = [], onItemClick }) {
+  const theme = useTheme();
+  const small = useMediaQuery(theme.breakpoints.down('sm'));
+  const medium = useMediaQuery(theme.breakpoints.down('md'));
+  const slider = useRef(null);
+  const count = Math.min(data.length, small ? 1 : medium ? 2 : 4);
+  if (!data.length) return null;
+  return <div className="home-subcategories">
+    {!small && data.length > count && <button aria-label="Previous categories" className="category-arrow category-prev" onClick={() => slider.current?.slickPrev()}><ArrowBackIosNewIcon fontSize="small" /></button>}
+    <Slider ref={slider} dots={data.length > count} infinite={data.length > count} speed={500} slidesToShow={count} slidesToScroll={1} arrows={false}>
+      {data.map(item => <div key={item.id}>
+        <div className="category-card" role="button" tabIndex={0} onClick={() => onItemClick?.(item)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onItemClick?.(item); } }}>
+          <img src={imageUrl(item.icon)} alt={item.subcategoryname} loading="lazy" />
+          <div className="category-title">{item.subcategoryname}</div>
         </div>
-
-    })
-}
-
-
-
-    return(
-       <div style={{width:'90%',position:'relative'}}>
-        {sm_matches?null:
-        <div style={{cursor:'pointer',position:'absolute',left:'-7%',top:'30%',zIndex:2}} ><ArrowBackIosNewIcon style={{color:'grey',fontSize:'6vw'}} onClick={handlePrevious}/></div>}
-        
-    <Slider ref={sldr} {...settings}>
-         {showAllItems()}
-         </Slider>
-       
-        {sm_matches?null:
-        <div style={{cursor:'pointer',position:'absolute',right:'-7.5%',top:'30%',zIndex:2}} ><ArrowForwardIosIcon style={{color:'grey',fontSize:'6vw'}} onClick={handleNext}/></div>}
-        
-         
-      
-        
-
-         </div>
-       
-    )
+      </div>)}
+    </Slider>
+    {!small && data.length > count && <button aria-label="Next categories" className="category-arrow category-next" onClick={() => slider.current?.slickNext()}><ArrowForwardIosIcon fontSize="small" /></button>}
+  </div>;
 }

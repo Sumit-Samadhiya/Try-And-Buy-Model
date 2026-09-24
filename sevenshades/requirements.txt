@@ -1,0 +1,8 @@
+Django==5.0.2
+channels==4.3.2
+daphne==4.2.3
+django-cors-headers==4.9.0
+djangorestframework==3.17.1
+Pillow==12.2.0
+PyMySQL==1.1.2
+requests==2.34.2

@@ -24,7 +24,7 @@ export default function RootReducer(state=initialState,action){
         case "ADD_USER":
             return {
                 ...state,
-                user: { ...state.user, [payload[0]]: payload[1] }
+                user: { [payload[0]]: payload[1] }
             }
 
         case "CLEAR_USER":

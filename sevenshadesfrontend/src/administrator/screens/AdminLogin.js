@@ -14,7 +14,7 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useState } from 'react';
-import { postData } from '../../services/FetchDjangoApiServices';
+import { postData, clearCachedAccounts } from '../../services/FetchDjangoApiServices';
 import { Navigate, useNavigate } from 'react-router-dom';
 
 function Copyright(props) {
@@ -41,7 +41,9 @@ export default function AdminLogin() {
   const handleSubmit = async() => {
     var body = {emailid, password}
     var result = await postData('check_admin_login',body)
-    if(result.status){
+    if(result?.status){
+      clearCachedAccounts();
+    window.dispatchEvent(new Event('session-cleared'));
       const {id,emailid,mobileno,picture,adminname}=result.data[0]
       localStorage.setItem('ADMIN',JSON.stringify({id,emailid,mobileno,picture,adminname}))
       navigate('/admindashboard')
@@ -49,7 +51,7 @@ export default function AdminLogin() {
 
     }
     else
-      alert('No')
+      alert(result?.message || 'Unable to sign in')
   
   };
 

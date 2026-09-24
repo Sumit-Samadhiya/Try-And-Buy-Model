@@ -1,3 +1,4 @@
+import useOrderEvents from '../../services/useOrderEvents';
 import { useEffect, useMemo, useState } from 'react';
 import MaterialTable from '@material-table/core';
 import { Button, Chip, Stack } from '@mui/material';
@@ -32,6 +33,7 @@ export default function DisplayAllOrders() {
     setLoading(false);
   };
 
+  useOrderEvents(fetchOrders);
   useEffect(() => {
     fetchOrders();
     const interval = setInterval(fetchOrders, 10000); // Poll every 10 seconds

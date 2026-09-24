@@ -1,4 +1,4 @@
-import { serverURL } from '../../services/FetchDjangoApiServices';
+import imageUrl from '../../services/imageUrl';
 import './ProductByCategory.css';
 import { useNavigate } from 'react-router-dom';
 import {useTheme} from '@mui/material/styles';
@@ -17,7 +17,7 @@ export default function ProductByCategory(props){
     const renderProducts = () => {
         return items.map((item, index) => (
             <div key={index} onClick={()=>handleNextPage(item)} className="product-item">
-                <img src={`${serverURL}/${item.icon}`} alt="" className="product-image" />
+                <img src={imageUrl(item.icon)} alt="" className="product-image" />
                 <div className="product-details">
                     <div>{item.productname}</div>
                     <div>{item.description}</div>

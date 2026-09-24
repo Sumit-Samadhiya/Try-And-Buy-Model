@@ -1,3 +1,4 @@
+import imageUrl from '../../services/imageUrl';
 import * as React from 'react';
 import { useState,useEffect } from 'react';
 import AppBar from '@mui/material/AppBar';
@@ -14,7 +15,7 @@ import SearchBarComponent from './SearchBarComponent';
 import {useTheme} from '@mui/material/styles';
 import UseMediaQuery from '@mui/material/useMediaQuery';
 import DrawerComponent from './DrawerComponent';
-import { serverURL,postData } from '../../services/FetchDjangoApiServices';
+import { postData } from '../../services/FetchDjangoApiServices';
 import {useSelector} from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 export default function Header() {
@@ -78,7 +79,7 @@ export default function Header() {
 
     const showAllBrands=()=>{
       return brandList.map((item)=>{
-        return <div style={{padding:5,display:'flex',justifyContent:'space-between'}}><span><img src={`${serverURL}${item?.icon}`} alt='' style={{width:30,height:30,}}/></span><span>{item?.brandname}</span>
+        return <div style={{padding:5,display:'flex',justifyContent:'space-between'}}><span><img src={imageUrl(item?.icon)} alt='' style={{width:30,height:30,}}/></span><span>{item?.brandname}</span>
          
         </div>
        

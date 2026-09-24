@@ -1,8 +1,12 @@
+import ForgotPassword from './userinterface/screens/ForgotPassword';
+import CustomerOrderNotifications from './services/CustomerOrderNotifications';
+import RequireSession from './services/RequireSession';
+import { getData, clearCachedAccounts } from './services/FetchDjangoApiServices';
 
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import AdminLogin from "./administrator/screens/AdminLogin";
-import Banner from "./administrator/screens/Banner";
+
 
 import AdminDashboard from "./administrator/screens/AdminDashboard";
 import {BrowserRouter,Routes,Route, Navigate} from 'react-router-dom'
@@ -15,7 +19,7 @@ import SignUpDisplay from "./userinterface/screens/SignUpDisplay";
 import DisplayCheckOut from "./userinterface/screens/DisplayCheckOut";
 import OrderSuccess from "./userinterface/screens/OrderSuccess";
 import ProfilePage from "./userinterface/screens/ProfilePage";
-import TrialSelectionDisplay from "./userinterface/screens/TrialSelectionDisplay";
+
 import MainCartDisplay from "./userinterface/screens/MainCartDisplay";
 import DeliveryLogin from "./diliveryinterface/screens/DeliveryLogin";
 import DeliveryHome from "./diliveryinterface/screens/DeliveryHome";
@@ -26,42 +30,43 @@ function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    try {
-      const savedUserStr = localStorage.getItem('sevenshades_user');
-      if (savedUserStr) {
-        const savedUser = JSON.parse(savedUserStr);
-        if (savedUser && savedUser.mobileno) {
-          dispatch({ type: 'ADD_USER', payLoad: [savedUser.mobileno, savedUser] });
-        }
-      }
-    } catch (e) {
-      console.error('Session rehydration error:', e);
-    }
+    let active = true;
+    clearCachedAccounts();
+    const clear = () => dispatch({ type: 'CLEAR_USER' });
+    window.addEventListener('session-cleared', clear);
+    getData('auth_session').then(result => {
+      if (!active) return;
+      if (result.status && result.role === 'customer') dispatch({ type: 'ADD_USER', payLoad: [result.data.mobileno, result.data] });
+      else clear();
+    });
+    return () => { active = false; window.removeEventListener('session-cleared', clear); };
   }, [dispatch]);
 
   return (
     <div>
       <BrowserRouter>
+      <CustomerOrderNotifications />
       <Routes>
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route element={<AdminLogin/>} path="/adminlogin"/>
-        <Route element={<AdminDashboard/>} path="/admindashboard/*"/>
+        <Route element={<RequireSession role="admin"><AdminDashboard/></RequireSession>} path="/admindashboard/*"/>
         <Route element={<Home/>} path="/home"></Route>
         <Route element={<ProductPage/>} path="/productpage"></Route>
         <Route element={<ProductDetailsPage/>} path="/productdetailspage"></Route>
         <Route element={<MyBagDisplay/>} path={"/mybagdisplay"}></Route>
 
         <Route element={<SignInDisplay/>} path={"/signindisplay"}/>
+        <Route element={<ForgotPassword/>} path="/forgotpassword"/>
         <Route element={<SignUpDisplay/>} path={"/signupdisplay"}/>
-        <Route element={<DisplayCheckOut/>} path={"/displaycheckout"}/>
-        <Route element={<OrderSuccess/>} path={"/ordersuccess"}/>
-        <Route element={<TrialSelectionDisplay/>} path={"/trial-selection"}/>
-        <Route element={<MainCartDisplay/>} path={"/maincart"}/>
-        <Route element={<ProfilePage/>} path={"/profile"}/>
+        <Route element={<RequireSession role="customer"><DisplayCheckOut/></RequireSession>} path={"/displaycheckout"}/>
+        <Route element={<RequireSession role="customer"><OrderSuccess/></RequireSession>} path={"/ordersuccess"}/>
+        <Route element={<Navigate to="/profile" replace/>} path={"/trial-selection"}/>
+        <Route element={<RequireSession role="customer"><MainCartDisplay/></RequireSession>} path={"/maincart"}/>
+        <Route element={<RequireSession role="customer"><ProfilePage/></RequireSession>} path={"/profile"}/>
         <Route element={<DeliveryLogin/>} path={"/delivery/login"}/>
-        <Route element={<DeliveryHome/>} path={"/delivery/dashboard"}/>
-        <Route element={<DeliveryOrderDetails/>} path={"/delivery/order/:taskId"}/>
-        <Route element={<DeliveryHelpCenter/>} path={"/delivery/help-center"}/>
+        <Route element={<RequireSession role="rider"><DeliveryHome/></RequireSession>} path={"/delivery/dashboard"}/>
+        <Route element={<RequireSession role="rider"><DeliveryOrderDetails/></RequireSession>} path={"/delivery/order/:taskId"}/>
+        <Route element={<RequireSession role="rider"><DeliveryHelpCenter/></RequireSession>} path={"/delivery/help-center"}/>
         <Route element={<Navigate to="/delivery/login" replace />} path={"/deliverydashboard"}/>
 
       </Routes>

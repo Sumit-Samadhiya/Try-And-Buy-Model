@@ -43,6 +43,7 @@ export default function PlusMinusComponent(props) {
                      paddingInline: 18,
                   }}
                   onClick={handlePlus}
+                  disabled={props.disableIncrement}
                >
                   {props.addLabel || 'Add to Bag'}
                </Button>

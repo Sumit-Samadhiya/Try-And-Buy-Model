@@ -1,328 +1,89 @@
-import { useEffect, useMemo, useState } from 'react';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import CircularProgress from '@mui/material/CircularProgress';
-import Checkbox from '@mui/material/Checkbox';
-import Chip from '@mui/material/Chip';
-import Divider from '@mui/material/Divider';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import LinearProgress from '@mui/material/LinearProgress';
-import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, Button, Checkbox, FormControlLabel, Paper, Stack, Typography } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { fetchDeliveryTasksFromApi, getDeliveryLogin, getDeliveryTaskById, updateAssignmentStatusApi, updateDeliveryTask } from '../data/deliverySessionStore';
 import DeliveryShell from '../components/DeliveryShell';
-import { postData } from '../../services/FetchDjangoApiServices';
+import { postData, serverURL } from '../../services/FetchDjangoApiServices';
+import { TrialReturnCollection } from '../../services/TrialInventoryControls';
+import useOrderEvents from '../../services/useOrderEvents';
+import { remainingTrialSeconds } from '../../services/trialTimer';
 
-const STATUS_MAP = {
-  'TRY_REQUESTED': 'Try Requested',
-  'ASSIGNED': 'Assigned',
-  'OUT_FOR_TRIAL': 'Out for Trial',
-  'TRIAL_IN_PROGRESS': 'Trial in Progress',
-  'SELECTION_SUBMITTED': 'Selection Submitted',
-  'DELIVERED': 'Delivered',
-  'CANCELLED': 'Cancelled'
-};
-
-export default function DeliveryOrderDetails() {
+export default function DeliveryOrderDetails({ orderId, embedded = false }) {
+  const params = useParams();
+  const taskId = orderId || params.taskId;
+  const Shell = embedded ? EmbeddedShell : DeliveryShell;
   const navigate = useNavigate();
-  const { taskId } = useParams();
-
-  const [task, setTask] = useState(null);
-  const [selectedItemIds, setSelectedItemIds] = useState([]);
-  const [customerApproved, setCustomerApproved] = useState(false);
-  const [paymentMode, setPaymentMode] = useState('upi');
-  const [paymentStatus, setPaymentStatus] = useState('pending');
-  const [liveSyncStatus, setLiveSyncStatus] = useState('idle');
-  const [startTime, setStartTime] = useState(null);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!task) return;
-    const socket = new WebSocket(`ws://${window.location.host}/ws/order/${task.id}/`);
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'ORDER_STATUS_UPDATED') {
-        console.log('Order updated:', data.data);
-        // Optionally update task state here
-      }
-    };
-    return () => socket.close();
-  }, [task]);
-
-  useEffect(() => {
-    const active = getDeliveryLogin();
-    if (!active?.phone) {
-      navigate('/delivery/login');
-      return;
-    }
-
-    const loadTask = async () => {
-      setLoading(true);
-      await fetchDeliveryTasksFromApi(active?.phone);
-      const currentTask = getDeliveryTaskById(taskId);
-      if (!currentTask) {
-        navigate('/delivery/dashboard');
-        setLoading(false);
-        return;
-      }
-
-      setTask(currentTask);
-      setSelectedItemIds(currentTask.items.map((item) => item.id));
-      setLoading(false);
-    };
-
-    loadTask();
-  }, [taskId, navigate]);
-
-  useEffect(() => {
-    if (!startTime) return;
-    const timer = setInterval(() => {
-      setElapsedSeconds(Math.floor((Date.now() - startTime) / 1000));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [startTime]);
-
-  const selectedItemTotal = useMemo(() => {
-    if (!task) return 0;
-    return task.items
-      .filter((item) => selectedItemIds.includes(item.id))
-      .reduce((sum, item) => sum + item.price, 0) + task.feeAmount;
-  }, [task, selectedItemIds]);
-
-  const toggleItem = (itemId) => {
-    setSelectedItemIds((prev) => (prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]));
+  const [data, setData] = useState(null);
+  const [selected, setSelected] = useState([]);
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [now, setNow] = useState(Date.now());
+  const dirty = useRef(false);
+  const offset = useRef(0);
+  const load = useCallback(async () => {
+    const result = await postData('settlement_detail', { order_id: taskId });
+    if (!result.status) { setMessage(result.message); return; }
+    const value = result.data;
+    offset.current = Date.parse(value.server_time) - Date.now();
+    setData(value);
+    if (!dirty.current) setSelected(value.final_order ? value.final_order.finalorderitem_set.map(item => item.try_order_item) : value.try_order.tryorderitem_set.filter(item => item.status !== 'RETURNED').map(item => item.id));
+  }, [taskId]);
+  useEffect(() => { dirty.current = false; setData(null); load(); }, [load]);
+  useOrderEvents(load, !!taskId, taskId);
+  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
+  const action = async (endpoint, payload) => {
+    setBusy(true); setMessage('');
+    const result = await postData(endpoint, payload);
+    if (!result.status) setMessage(result.message); else { dirty.current = false; setMessage('Saved and synced.'); }
+    await load(); setBusy(false);
   };
-
-  const markLiveSync = () => {
-    setLiveSyncStatus('syncing');
-    setTimeout(() => {
-      setLiveSyncStatus('synced');
-    }, 800);
-  };
-
-  const handleCompleteFlow = async () => {
-    if (!task) return;
-    if (!customerApproved) {
-      alert('Please click Customer Approved before final completion.');
-      return;
-    }
-
-    const selectionResult = await postData('submit_final_selection', {
-      order_id: task.id,
-      selected_items: selectedItemIds.map(id => ({ try_order_item_id: id, qty: 1 })),
-    });
-
-    if (!selectionResult?.status) {
-      alert(selectionResult?.message || 'Unable to sync delivery selection.');
-      return;
-    }
-
-    const paymentResult = await postData('final_payment_update', {
-      order_id: task.id,
-      payment_mode: paymentMode,
-      payment_status: paymentStatus,
-    });
-
-    if (!paymentResult?.status) {
-      alert(paymentResult?.message || 'Unable to update payment status.');
-      return;
-    }
-
-    await updateAssignmentStatusApi(task.assignmentId, paymentStatus === 'paid' ? 'completed' : 'trial_in_progress');
-
-    updateDeliveryTask(task.id, {
-      status: paymentStatus === 'paid' ? 'completed' : 'trial_in_progress',
-      selectedItemIds,
-      selectedItems: task.items.filter((item) => selectedItemIds.includes(item.id)),
-      totalCollected: selectedItemTotal,
-      paymentMode,
-      paymentStatus,
-      liveSyncStatus: 'synced',
-    });
-
-    alert('Delivery flow completed and synced to backend.');
-    navigate('/delivery/dashboard');
-  };
-
-  const [trialSecondsLeft, setTrialSecondsLeft] = useState(900); // 15 mins = 900 seconds
-  const [timerRunning, setTimerRunning] = useState(false);
-  const [tagChecks, setTagChecks] = useState({});
-
-  useEffect(() => {
-    let timer;
-    if (timerRunning && trialSecondsLeft > 0) {
-      timer = setInterval(() => {
-        setTrialSecondsLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (trialSecondsLeft === 0) {
-      setTimerRunning(false);
-    }
-    return () => clearInterval(timer);
-  }, [timerRunning, trialSecondsLeft]);
-
-  const toggleTagCheck = (itemId) => {
-    setTagChecks((prev) => ({ ...prev, [itemId]: !prev[itemId] }));
-  };
-
-  const formatCountdown = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-  };
-
-  if (loading || !task) {
-    return (
-      <DeliveryShell title="Order Details" subtitle="Loading..." activePage="dashboard">
-        <Stack alignItems="center" sx={{ py: 6 }}><CircularProgress /></Stack>
-      </DeliveryShell>
-    );
-  }
-
-  return (
-    <DeliveryShell
-      title={`Order Details • ${task.id}`}
-      subtitle="Step by step delivery trial workflow"
-      activePage="dashboard"
-    >
-      <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid #e5e7eb' }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Chip size="small" label={`Route #${task.routeOrder}`} color="info" />
-            <Chip
-              size="small"
-              label={task.delivery_mode === 'emergency_sos' ? '⚡ Emergency SOS (90-120 Min)' : '🚚 Standard Try & Buy'}
-              color={task.delivery_mode === 'emergency_sos' ? 'error' : 'default'}
-              sx={{ fontWeight: 800 }}
-            />
-          </Stack>
-          <Button variant="outlined" onClick={() => navigate('/delivery/dashboard')}>Back</Button>
-        </Stack>
-
-        <Typography sx={{ mt: 1.5, fontWeight: 800, fontSize: 18 }}>{task.customerName}</Typography>
-        <Typography variant="body2" sx={{ color: '#6b7280' }}>Phone: {task.customerPhone}</Typography>
-        <Typography variant="body2" sx={{ color: '#374151', fontWeight: 600 }}>Address: {task.address}</Typography>
-        <Typography variant="body2" sx={{ color: '#6b7280' }}>Slot: {task.slot}</Typography>
-        <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 700 }}>Status: {STATUS_MAP[task.status] || task.status}</Typography>
-
-        <Divider sx={{ my: 2 }} />
-
-        {/* 15-MINUTE LIVE COUNTDOWN TIMER WIDGET */}
-        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, bgcolor: trialSecondsLeft === 0 ? '#fef2f2' : '#f0fdf4', border: trialSecondsLeft === 0 ? '2px solid #ef4444' : '2px solid #22c55e', mb: 3 }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Box>
-              <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', color: trialSecondsLeft === 0 ? '#991b1b' : '#15803d' }}>
-                ⏱️ 15-Minute Doorstep Trial Timer
-              </Typography>
-              <Typography variant="h3" sx={{ fontWeight: 900, color: trialSecondsLeft === 0 ? '#dc2626' : '#166534', fontFamily: 'monospace', my: 0.5 }}>
-                {formatCountdown(trialSecondsLeft)}
-              </Typography>
-              <Typography variant="caption" sx={{ color: trialSecondsLeft === 0 ? '#b91c1c' : '#16a34a', fontWeight: 600 }}>
-                {trialSecondsLeft === 0 ? '⚠️ 15-Minute Cap Reached! Please guide customer to conclude trial.' : 'Hard cap timer for doorstep trial & fitting check.'}
-              </Typography>
-            </Box>
-
-            <Stack spacing={1}>
-              {!timerRunning ? (
-                <Button size="small" variant="contained" color="success" onClick={() => setTimerRunning(true)} sx={{ fontWeight: 800 }}>
-                  Start 15m Timer
-                </Button>
-              ) : (
-                <Button size="small" variant="contained" color="warning" onClick={() => setTimerRunning(false)} sx={{ fontWeight: 800 }}>
-                  Pause Timer
-                </Button>
-              )}
-              <Button size="small" variant="outlined" onClick={() => { setTimerRunning(false); setTrialSecondsLeft(900); }}>
-                Reset Timer
-              </Button>
-            </Stack>
-          </Stack>
-
-          <LinearProgress
-            variant="determinate"
-            value={((900 - trialSecondsLeft) / 900) * 100}
-            color={trialSecondsLeft < 180 ? 'error' : 'success'}
-            sx={{ mt: 1.5, height: 8, borderRadius: 4 }}
-          />
+  const final = data?.final_order;
+  const remaining = remainingTrialSeconds(data?.trial_ends_at, now + offset.current);
+  const stage = data?.assignment_status;
+  const billItems = new Set(final?.finalorderitem_set.map(item => item.try_order_item) || []);
+  const collected = data?.try_order.tryorderitem_set.every(item => billItems.has(item.id) || item.status === 'RETURNED' || !item.stock_reserved);
+  const advance = status => action('delivery_assignment_update_status', { assignment_id: data.assignment_id, status });
+  return <Shell title={'Doorstep order · ' + taskId} subtitle="Trial, customer approval and settlement" activePage="dashboard">
+    <Stack spacing={2}>
+      {!embedded && <Button onClick={() => navigate('/delivery/dashboard')}>Back to tasks</Button>}
+      {message && <Alert severity="info">{message}</Alert>}
+      {!data ? <Typography>Loading order…</Typography> : <>
+        <Paper sx={{ p: 2 }}><Typography variant="h6">{data.try_order.order_id}</Typography>
+          <Typography>{data.try_order.address_text}, {data.try_order.city} — {data.try_order.postcode}</Typography>
+          <Typography>Customer: {data.try_order.mobileno} · Slot: {data.try_order.delivery_slot}</Typography>
+          <Typography>Status: {data.try_order.status.replaceAll('_', ' ')}</Typography>
         </Paper>
-
-        <Typography sx={{ fontWeight: 800, color: '#111827' }}>Step 1: Doorstep Arrival</Typography>
-        <Stack direction="row" spacing={1} sx={{ mt: 1, mb: 2 }}>
-          <Button
-            variant="contained"
-            onClick={async () => {
-              setStartTime(Date.now());
-              setTimerRunning(true);
-              await updateAssignmentStatusApi(task.assignmentId, 'on_the_way');
-              updateDeliveryTask(task.id, { status: 'on_the_way' });
-            }}
-          >
-            Arrived at Doorstep
-          </Button>
-          <Button variant="outlined" onClick={() => alert(`Calling ${task.customerName} (${task.customerPhone})`)}>Call Customer</Button>
-        </Stack>
-
-        <Typography sx={{ fontWeight: 800, color: '#111827' }}>Step 2: Trial & Security Tag Inspection</Typography>
-        <Typography variant="body2" sx={{ color: '#6b7280', mb: 1 }}>
-          Check tamper-proof barcode security tags before accepting return items.
-        </Typography>
-
-        <Stack spacing={1} sx={{ mb: 2 }}>
-          {task.items.map((item) => (
-            <Paper key={item.id} elevation={0} sx={{ p: 1.5, borderRadius: 2, border: '1px solid #e2e8f0', bgcolor: '#f8fafc' }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <FormControlLabel
-                  control={<Checkbox checked={selectedItemIds.includes(item.id)} onChange={() => toggleItem(item.id)} />}
-                  label={<Typography variant="body2" sx={{ fontWeight: 700 }}>{item.name} (₹{item.price})</Typography>}
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={!!tagChecks[item.id]}
-                      onChange={() => toggleTagCheck(item.id)}
-                      color="success"
-                      size="small"
-                    />
-                  }
-                  label={<Typography variant="caption" sx={{ fontWeight: 700, color: tagChecks[item.id] ? '#16a34a' : '#64748b' }}>Barcode Tag Intact</Typography>}
-                />
-              </Stack>
-            </Paper>
-          ))}
-        </Stack>
-
-        <Typography sx={{ fontWeight: 800, mt: 2, color: '#111827' }}>Step 3: Final Approval & Collection</Typography>
-        <Typography variant="body2" sx={{ color: '#6b7280' }}>
-          Selected Items for Purchase: {task.items.filter((item) => selectedItemIds.includes(item.id)).map((item) => item.name).join(', ') || 'None (Zero Purchase)'}
-        </Typography>
-        <Typography variant="subtitle1" sx={{ fontWeight: 800, mt: 1, color: '#111827' }}>Total Payable Amount: ₹{selectedItemTotal}</Typography>
-
-        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-          <Button size="small" variant={paymentMode === 'upi' ? 'contained' : 'outlined'} onClick={() => setPaymentMode('upi')}>UPI</Button>
-          <Button size="small" variant={paymentMode === 'cash' ? 'contained' : 'outlined'} onClick={() => setPaymentMode('cash')}>Cash</Button>
-        </Stack>
-        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-          <Button size="small" color={paymentStatus === 'paid' ? 'success' : 'inherit'} variant={paymentStatus === 'paid' ? 'contained' : 'outlined'} onClick={() => setPaymentStatus('paid')}>Paid</Button>
-          <Button size="small" color={paymentStatus === 'pending' ? 'warning' : 'inherit'} variant={paymentStatus === 'pending' ? 'contained' : 'outlined'} onClick={() => setPaymentStatus('pending')}>Pending</Button>
-        </Stack>
-
-        <Button sx={{ mt: 2 }} color="success" variant="outlined" fullWidth onClick={() => { setCustomerApproved(true); markLiveSync(); }}>
-          Mark Customer Approved
-        </Button>
-
-        <Chip
-          sx={{ mt: 2 }}
-          size="small"
-          label={liveSyncStatus === 'synced' ? 'Live Sync: User cart updated' : liveSyncStatus === 'syncing' ? 'Live Sync: Updating...' : 'Live Sync: Ready'}
-          color={liveSyncStatus === 'synced' ? 'success' : 'default'}
-        />
-
-        <Button sx={{ mt: 2 }} fullWidth variant="contained" color="success" onClick={handleCompleteFlow}>
-          Complete Doorstep Flow
-        </Button>
-      </Paper>
-    </DeliveryShell>
-  );
+        {stage === 'Assigned' && <Button disabled={busy} variant="contained" onClick={() => advance('On Route')}>Start Route</Button>}
+        {stage === 'On Route' && <Button disabled={busy} variant="contained" onClick={() => advance('Trial In Progress')}>Arrived at Doorstep — Start 15-Minute Trial</Button>}
+        <Paper sx={{ p: 2 }}><Typography variant="h6">Home trial timer</Typography>
+          <Typography variant="h4">{data.trial_completed_at ? 'Trial completed' : remaining === null ? 'Not started' : Math.floor(remaining / 60) + ':' + String(remaining % 60).padStart(2, '0')}</Typography>
+          {remaining === 0 && <Typography>Trial time elapsed. Confirm the customer selection; no automatic purchase is made.</Typography>}
+          <Typography>The timer continues across refreshes.</Typography>
+        </Paper>
+        {stage === 'Trial In Progress' && <Button disabled={busy} variant="contained" onClick={() => advance('Trial Completed')}>Trial Completed — Open Customer Selection</Button>}
+        {['Trial Completed', 'Delivered'].includes(stage) && <>
+        <Typography variant="h6">Selection by Customer</Typography>
+        {data.try_order.tryorderitem_set.map(item => <Paper key={item.id} sx={{ p: 1 }}>
+          <FormControlLabel control={<Checkbox checked={selected.includes(item.id)} disabled={busy || stage !== 'Trial Completed' || item.status === 'RETURNED' || final?.payment_status === 'paid'} onChange={() => { dirty.current = true; setSelected(ids => ids.includes(item.id) ? ids.filter(id => id !== item.id) : [...ids, item.id]); }} />}
+            label={item.product_name + ' · ' + item.size + ' · ' + item.color + ' · ₹' + item.line_total} />
+          <Typography>{item.status === 'RETURNED' ? 'Collection recorded' : selected.includes(item.id) ? 'Selected for purchase' : 'To be returned'}</Typography>
+        </Paper>)}
+        <Button variant="contained" disabled={busy || stage !== 'Trial Completed' || final?.payment_status === 'paid'} onClick={() => action('submit_final_selection', { order_id: taskId, selected_items: selected.map(id => ({ try_order_item_id: id, qty: 1 })) })}>Send Selection for Customer Approval</Button>
+        </>}
+        {final && <Paper sx={{ p: 2 }}><Stack spacing={1}>
+          <Typography variant="h6">{data.customer_approved ? 'Approved bill' : 'Selection awaiting approval'} · version {final.bill_revision}</Typography>
+          {data.customer_approved && <Typography>Items ₹{final.items_total} − verified trial fee ₹{final.wallet_credit} = ₹{final.final_payable}</Typography>}
+          <Alert severity={data.customer_approved ? 'success' : 'warning'}>{data.customer_approved ? 'Customer approved this bill in their app.' : 'Waiting for customer in-app approval. Rider cannot approve on their behalf.'}</Alert>
+          <Typography>Payment: {final.payment_status} · {final.payment_mode || 'Not chosen by customer'}</Typography>
+          {final.payment_mode === 'cash' && final.payment_status !== 'paid' && <Button variant="contained" disabled={busy || !data.customer_approved} onClick={() => action('final_payment_update', { order_id: taskId, bill_revision: final.bill_revision, payment_mode: 'cash', payment_status: 'paid' })}>Confirm ₹{final.final_payable} Cash Physically Received</Button>}
+          {final.payment_mode === 'razorpay' && final.payment_status !== 'paid' && <Typography>Customer completes UPI/online payment on their phone. Await server verification.</Typography>}
+        </Stack></Paper>}
+        {final && <TrialReturnCollection key={final.bill_revision} orderId={taskId} onCollected={load} />}
+        {stage !== 'Delivered' && <Button variant="contained" color="success" disabled={busy || !data.customer_approved || final?.payment_status !== 'paid' || !collected || stage !== 'Trial Completed'} onClick={() => advance('Delivered')}>Confirm Delivery</Button>}
+        {data.receipt_number && <Button component="a" href={serverURL + '/api/receipt_download?order_id=' + encodeURIComponent(taskId)}>Download Payment Receipt</Button>}
+        <Button disabled={busy} onClick={load}>Refresh verified status</Button>
+      </>}
+    </Stack>
+  </Shell>;
 }
+
+function EmbeddedShell({ children }) { return <div>{children}</div>; }

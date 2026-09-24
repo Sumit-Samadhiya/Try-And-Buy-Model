@@ -1,7 +1,8 @@
+import imageUrl from '../../services/imageUrl';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getData, serverURL } from '../../services/FetchDjangoApiServices';
+import { getData } from '../../services/FetchDjangoApiServices';
 
 export default function SearchBarComponent(props) {
     const [productname, setProductName] = useState('');
@@ -11,14 +12,27 @@ export default function SearchBarComponent(props) {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchCatalog = async () => {
-            const res = await getData('user_subcategory_list');
-            const catRes = await getData('user_maincategory_list');
-            if (res && res.status) {
-                setAllProducts(res.data || []);
+        const fetchSearchableItems = async () => {
+            const [subCategoryRes, mainCategoryRes, productRes] = await Promise.all([
+                getData('user_subcategory_list'),
+                getData('user_maincategory_list'),
+                getData('user_product_list') // Assuming this endpoint exists for all products
+            ]);
+
+            let combinedList = [];
+
+            if (subCategoryRes && subCategoryRes.status) {
+                combinedList = combinedList.concat(subCategoryRes.data.map(item => ({ ...item, type: 'subcategory' })));
             }
+            if (mainCategoryRes && mainCategoryRes.status) {
+                combinedList = combinedList.concat(mainCategoryRes.data.map(item => ({ ...item, type: 'maincategory' })));
+            }
+            if (productRes && productRes.status) {
+                combinedList = combinedList.concat(productRes.data.map(item => ({ ...item, type: 'product' })));
+            }
+            setAllProducts(combinedList);
         };
-        fetchCatalog();
+        fetchSearchableItems();
     }, []);
 
     const handleInputChange = (e) => {
@@ -26,9 +40,11 @@ export default function SearchBarComponent(props) {
         setProductName(val);
         if (val.trim().length > 0) {
             const query = val.toLowerCase();
-            const matches = allProducts.filter((item) =>
-                (item.subcategoryname || '').toLowerCase().includes(query)
-            );
+            const matches = allProducts.filter((item) => {
+                const name = (item.subcategoryname || item.maincategoryname || item.productname || '').toLowerCase();
+                const brand = (item.brandname || '').toLowerCase();
+                return name.includes(query) || brand.includes(query);
+            });
             setFilteredList(matches);
             setShowDropdown(true);
         } else {
@@ -39,16 +55,29 @@ export default function SearchBarComponent(props) {
     const handleSelectProduct = (item) => {
         setShowDropdown(false);
         setProductName('');
-        navigate('/productpage', { state: { products: item, pageView: 'SubCategoryComponent' } });
+        if (item.type === 'product') {
+            navigate('/productdetailspage', { state: { product: item, pageView: 'ProductDetailsComponent' } });
+        } else if (item.type === 'subcategory') {
+            navigate('/productpage', { state: { products: item, pageView: 'SubCategoryComponent' } });
+        } else if (item.type === 'maincategory') {
+            navigate('/productpage', { state: { products: item, pageView: 'MainCategoryComponent' } });
+        }
     };
 
     const handleSearchClick = () => {
-        if (['men', 'Men', 'MEN'].includes(productname.trim())) {
-            navigate('/productpage', { state: { pageView: 'MainCategoryComponent', products: { id: 5 } } });
-        } else if (['women', 'Women', 'WOMEN'].includes(productname.trim())) {
-            navigate('/productpage', { state: { pageView: 'MainCategoryComponent', products: { id: 4 } } });
+        const query = productname.trim().toLowerCase();
+        const menCategory = allProducts.find(item => item.type === 'maincategory' && item.maincategoryname.toLowerCase() === 'men');
+        const womenCategory = allProducts.find(item => item.type === 'maincategory' && item.maincategoryname.toLowerCase() === 'women');
+
+        if (query === 'men' && menCategory) {
+            navigate('/productpage', { state: { pageView: 'MainCategoryComponent', products: { id: menCategory.id } } });
+        } else if (query === 'women' && womenCategory) {
+            navigate('/productpage', { state: { pageView: 'MainCategoryComponent', products: { id: womenCategory.id } } });
         } else if (filteredList.length > 0) {
             handleSelectProduct(filteredList[0]);
+        } else {
+            // Handle no results found or a generic search page
+            console.log('No results found for:', productname);
         }
     };
 
@@ -115,7 +144,7 @@ export default function SearchBarComponent(props) {
                             onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
                         >
                             <img
-                                src={`${serverURL}/static/${item.icon}`}
+                                src={imageUrl(item.icon)}
                                 alt=""
                                 style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 4, marginRight: 12 }}
                             />

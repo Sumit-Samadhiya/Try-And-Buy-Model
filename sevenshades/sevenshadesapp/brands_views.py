@@ -68,16 +68,7 @@ def EditBrands_Data(request):
 
 
 
-@api_view(['GET','POST','DELETE'])
+@api_view(['POST'])
 def DeleteBrands_Data(request):
-    try:
-        if request.method=='POST':
-                brands_data=Brands.objects.get(pk=request.data['id'])
-               
-                brands_data.delete()
-                return JsonResponse({"message":'Brands Data Deleted',"status":True},safe=False)
-        else:
-             return JsonResponse({"message":'Fail to Delete Data ',"status":False},safe=False)
-    except Exception as e:
-        print("Error submit:",e)
-        return JsonResponse({"message":'Fail to delete ',"status":False},safe=False)
+    from .catalog_integrity import delete_unused
+    return delete_unused(Brands, request.data.get('id'), 'Brand')

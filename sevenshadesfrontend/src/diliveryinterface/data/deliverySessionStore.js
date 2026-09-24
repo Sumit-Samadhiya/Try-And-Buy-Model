@@ -17,6 +17,7 @@ const mapAssignmentStatus = (status) => {
   if (normalized === 'assigned') return 'assigned';
   if (normalized === 'on route') return 'on_the_way';
   if (normalized === 'trial in progress') return 'trial_in_progress';
+  if (normalized === 'trial completed') return 'trial_completed';
   if (normalized === 'delivered') return 'completed';
   return 'assigned';
 };
@@ -25,6 +26,7 @@ const mapTaskStatusToAssignment = (status) => {
   if (status === 'assigned') return 'Assigned';
   if (status === 'on_the_way') return 'On Route';
   if (status === 'trial_in_progress') return 'Trial In Progress';
+  if (status === 'trial_completed') return 'Trial Completed';
   if (status === 'completed') return 'Delivered';
   return 'Assigned';
 };
@@ -48,6 +50,9 @@ const mapAssignmentToTask = (assignment, index) => {
     items: tryItems.map((item) => ({
       id: item.id,
       name: item.product_name,
+      status: item.status,
+      size: item.size,
+      color: item.color,
       price: item.line_total,
     })),
     api: {
@@ -99,7 +104,8 @@ export const fetchDeliveryTasksFromApi = async (phone) => {
     return mapped;
   }
 
-  return getDeliveryTasks();
+  setDeliveryTasks([]);
+  return [];
 };
 
 export const setDeliveryLogin = (riderData) => {
@@ -118,4 +124,5 @@ export const getDeliveryLogin = () => {
 
 export const clearDeliveryLogin = () => {
   localStorage.removeItem(DELIVERY_AUTH_KEY);
+  localStorage.removeItem(DELIVERY_TASKS_KEY);
 };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
@@ -7,20 +7,14 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useNavigate } from 'react-router-dom';
-import { getDeliveryLogin, setDeliveryLogin } from '../data/deliverySessionStore';
-import { postData } from '../../services/FetchDjangoApiServices';
+import { setDeliveryLogin } from '../data/deliverySessionStore';
+import { postData, clearCachedAccounts } from '../../services/FetchDjangoApiServices';
 
 export default function DeliveryLogin() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const active = getDeliveryLogin();
-    if (active?.phone) {
-      navigate('/delivery/dashboard');
-    }
-  }, [navigate]);
 
   const handleLogin = async () => {
     if (!phone || phone.length < 10) {
@@ -38,7 +32,9 @@ export default function DeliveryLogin() {
       return;
     }
 
-    setDeliveryLogin(result.data || { phone });
+    clearCachedAccounts();
+    window.dispatchEvent(new Event('session-cleared'));
+    setDeliveryLogin(result.data);
     navigate('/delivery/dashboard');
   };
 

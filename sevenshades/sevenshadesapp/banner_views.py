@@ -15,7 +15,7 @@ def Upload_Files(files):
      for uploaded_file in files.getlist('icon'):
           file_path = default_storage.save('static/' + uploaded_file.name,uploaded_file)
           print(file_path)
-          iconname.append(uploaded_file.name)
+          iconname.append(file_path.removeprefix('static/'))
      return ",".join(iconname)
 
 

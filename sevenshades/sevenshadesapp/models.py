@@ -1,4 +1,19 @@
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from django.contrib.auth.hashers import make_password, identify_hasher
+
+
+class PasswordAccount(models.Model):
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        try:
+            identify_hasher(self.password)
+        except ValueError:
+            self.password = make_password(self.password or None)
+        super().save(*args, **kwargs)
+
 
 # Create your models here.
 class MainCategory(models.Model):
@@ -8,7 +23,7 @@ class MainCategory(models.Model):
 
 
 class MySubCategory(models.Model):
-    maincategoryid=models.ForeignKey(MainCategory,on_delete=models.CASCADE,default=1)
+    maincategoryid=models.ForeignKey(MainCategory,on_delete=models.PROTECT,default=1)
     subcategoryname=models.CharField(max_length=70,blank=False,default='')
     icon=models.ImageField(upload_to='static/')
 
@@ -21,19 +36,19 @@ class Brands(models.Model):
 
 
 class Product(models.Model):
-    maincategoryid=models.ForeignKey(MainCategory,on_delete=models.CASCADE,default=1)
-    subcategoryid=models.ForeignKey(MySubCategory,on_delete=models.CASCADE,default=1)
-    brandid=models.ForeignKey(Brands,on_delete=models.CASCADE,default=1)
+    maincategoryid=models.ForeignKey(MainCategory,on_delete=models.PROTECT,default=1)
+    subcategoryid=models.ForeignKey(MySubCategory,on_delete=models.PROTECT,default=1)
+    brandid=models.ForeignKey(Brands,on_delete=models.PROTECT,default=1)
     productname=models.CharField(max_length=70,blank=False,default='')
     description=models.CharField(max_length=150,blank=False,default='')
     icon=models.ImageField(upload_to='static/')
 
 
 class ProductDetails(models.Model):
-    maincategoryid=models.ForeignKey(MainCategory,on_delete=models.CASCADE,default=1)
-    subcategoryid=models.ForeignKey(MySubCategory,on_delete=models.CASCADE,default=1)
-    brandid=models.ForeignKey(Brands,on_delete=models.CASCADE,default=1)
-    productid=models.ForeignKey(Product,on_delete=models.CASCADE,default=1)
+    maincategoryid=models.ForeignKey(MainCategory,on_delete=models.PROTECT,default=1)
+    subcategoryid=models.ForeignKey(MySubCategory,on_delete=models.PROTECT,default=1)
+    brandid=models.ForeignKey(Brands,on_delete=models.PROTECT,default=1)
+    productid=models.ForeignKey(Product,on_delete=models.PROTECT,default=1)
     productsubname=models.CharField(max_length=70,blank=False,default='')
     description=models.CharField(max_length=150,blank=False,default='')
     qty=models.IntegerField(blank=False,default='')
@@ -56,11 +71,11 @@ class ProductReview(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
-class AdminLogin(models.Model):
+class AdminLogin(PasswordAccount):
     emailid=models.CharField(max_length=70,blank=False,default='',unique=True)
     mobileno=models.CharField(max_length=70,blank=False,default='',unique=True)
     adminname=models.CharField(max_length=70,blank=False,default='')
-    password=models.CharField(max_length=70,blank=False,default='')
+    password=models.CharField(max_length=128,blank=False,default='')
     picture=models.CharField(max_length=70,blank=False,default='')
 
 
@@ -68,14 +83,16 @@ class Banner(models.Model):
     bannerdescription=models.CharField(max_length=70,blank=False,default='')
     icon=models.TextField(default='')
 
-class SignUp(models.Model):
+class SignUp(PasswordAccount):
     mobileno=models.CharField(max_length=15,blank=False,primary_key=True,default='')
     fname=models.CharField(max_length=70,blank=False,default='')
     lname=models.CharField(max_length=70,blank=False,default='')
     emailid=models.CharField(max_length=70,blank=False,default='',unique=True)
-    password=models.CharField(max_length=70,blank=False,default='')
+    password=models.CharField(max_length=128,blank=False,default='')
 
 class UserAddress(models.Model):
+    latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, validators=[MinValueValidator(-90), MaxValueValidator(90)])
+    longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, validators=[MinValueValidator(-180), MaxValueValidator(180)])
     mobileno=models.ForeignKey(SignUp,on_delete=models.CASCADE)
     country=models.CharField(max_length=70,blank=False,default='')
     address=models.CharField(max_length=70,blank=False,default='')
@@ -91,6 +108,12 @@ class WalletAccount(models.Model):
 
 
 class TryOrder(models.Model):
+    dispatched_at = models.DateTimeField(null=True, blank=True)
+    reservation_expires_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancellation_reason = models.CharField(max_length=30, blank=True, default="")
+    latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, validators=[MinValueValidator(-90), MaxValueValidator(90)])
+    longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, validators=[MinValueValidator(-180), MaxValueValidator(180)])
     order_id = models.CharField(max_length=40, unique=True)
     mobileno = models.CharField(max_length=15)
     address_text = models.CharField(max_length=250, blank=False, default='')
@@ -119,8 +142,13 @@ class TryOrder(models.Model):
         ('ASSIGNED', 'Assigned'),
         ('OUT_FOR_TRIAL', 'Out for Trial'),
         ('TRIAL_IN_PROGRESS', 'Trial in Progress'),
+        ('TRIAL_COMPLETED', 'Trial Completed'),
+        ('AWAITING_SELECTION_APPROVAL', 'Awaiting Selection Approval'),
         ('SELECTION_SUBMITTED', 'Selection Submitted'),
         ('DELIVERED', 'Delivered'),
+        ('AWAITING_TRIAL_PAYMENT', 'Awaiting Trial Fee'),
+        ('PAYMENT_PENDING', 'Payment Pending'),
+        ('NO_PURCHASE', 'Trial Completed - No Purchase'),
         ('CANCELLED', 'Cancelled')
     ], default='TRY_REQUESTED')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -128,10 +156,13 @@ class TryOrder(models.Model):
 
 
 class TryOrderItem(models.Model):
+    stock_reserved = models.BooleanField(default=False)
     try_order = models.ForeignKey(TryOrder, on_delete=models.CASCADE)
-    product_details = models.ForeignKey(ProductDetails, on_delete=models.SET_NULL, null=True, blank=True)
+    product_details = models.ForeignKey(ProductDetails, on_delete=models.PROTECT, null=True, blank=True)
     product_name = models.CharField(max_length=120, blank=False, default='')
     brand_name = models.CharField(max_length=120, blank=False, default='')
+    size = models.CharField(max_length=70, blank=True, default='')
+    color = models.CharField(max_length=70, blank=True, default='')
     qty = models.IntegerField(blank=False, default=1)
     unit_price = models.IntegerField(blank=False, default=0)
     line_total = models.IntegerField(blank=False, default=0)
@@ -139,6 +170,13 @@ class TryOrderItem(models.Model):
 
 
 class FinalOrder(models.Model):
+    paid_at = models.DateTimeField(null=True, blank=True)
+    cash_collected_by = models.CharField(max_length=100, blank=True, default='')
+    bill_revision = models.PositiveIntegerField(default=1)
+    approved_revision = models.PositiveIntegerField(default=0)
+    approved_by = models.CharField(max_length=15, blank=True, default='')
+    approved_at = models.DateTimeField(null=True, blank=True)
+
     try_order = models.OneToOneField(TryOrder, on_delete=models.CASCADE)
     order_id = models.CharField(max_length=40, unique=True)
     selected_items_count = models.IntegerField(blank=False, default=0)
@@ -157,16 +195,21 @@ class FinalOrderItem(models.Model):
     try_order_item = models.ForeignKey(TryOrderItem, on_delete=models.SET_NULL, null=True, blank=True)
     product_name = models.CharField(max_length=120, blank=False, default='')
     brand_name = models.CharField(max_length=120, blank=False, default='')
+    size = models.CharField(max_length=70, blank=True, default='')
+    color = models.CharField(max_length=70, blank=True, default='')
     qty = models.IntegerField(blank=False, default=1)
     unit_price = models.IntegerField(blank=False, default=0)
     line_total = models.IntegerField(blank=False, default=0)
 
 
-class DeliveryRider(models.Model):
+class DeliveryRider(PasswordAccount):
+    latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, validators=[MinValueValidator(-90), MaxValueValidator(90)])
+    longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, validators=[MinValueValidator(-180), MaxValueValidator(180)])
+    location_updated_at = models.DateTimeField(null=True, blank=True)
     rider_id = models.CharField(max_length=30, unique=True)
     name = models.CharField(max_length=120, blank=False, default='')
     phone = models.CharField(max_length=15, unique=True)
-    password = models.CharField(max_length=120, blank=False, default='')
+    password = models.CharField(max_length=128, blank=False, default='')
     bike_number = models.CharField(max_length=40, blank=False, default='')
     zone = models.CharField(max_length=70, blank=False, default='')
     status = models.CharField(max_length=20, blank=False, default='Active')
@@ -182,6 +225,8 @@ class DeliveryBatch(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 class DeliveryAssignment(models.Model):
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['try_order'], name='one_assignment_per_trial')]
     assignment_id = models.CharField(max_length=40, unique=True)
     try_order = models.ForeignKey(TryOrder, on_delete=models.CASCADE)
     rider = models.ForeignKey(DeliveryRider, on_delete=models.CASCADE)
@@ -215,3 +260,68 @@ class ExcludedArea(models.Model):
     
 #     name=models.CharField(max_length=70,blank=False,default='')
     
+
+
+class TrialReturn(models.Model):
+    tag_intact = models.BooleanField(default=False)
+    steam_pressed_at = models.DateTimeField(null=True, blank=True)
+    steam_pressed_by = models.CharField(max_length=100, blank=True, default='')
+    item = models.OneToOneField(TryOrderItem, on_delete=models.PROTECT, related_name='trial_return')
+    condition = models.CharField(max_length=20, choices=[('Good', 'Good'), ('Damaged', 'Damaged')])
+    status = models.CharField(max_length=20, default='Collected', choices=[('Collected', 'Collected'), ('Received', 'Received'), ('Approved', 'Approved'), ('Rejected', 'Rejected')])
+    recorded_by = models.CharField(max_length=100)
+    received_by = models.CharField(max_length=100, blank=True, default='')
+    reviewed_by = models.CharField(max_length=100, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    received_at = models.DateTimeField(null=True, blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+
+class GatewayPayment(models.Model):
+    receipt_reference = models.CharField(max_length=40, blank=True, default="")
+    recovered_by = models.CharField(max_length=70, blank=True, default="")
+    recovered_at = models.DateTimeField(null=True, blank=True)
+    try_order = models.ForeignKey(TryOrder, on_delete=models.PROTECT)
+    purpose = models.CharField(max_length=10, choices=[('trial', 'Trial fee'), ('final', 'Final purchase')])
+    revision = models.PositiveIntegerField(default=0)
+    amount_paise = models.PositiveIntegerField()
+    gateway_order_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    payment_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    state = models.CharField(max_length=20, default='CREATING')
+    created_at = models.DateTimeField(auto_now_add=True)
+    captured_at = models.DateTimeField(null=True, blank=True)
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['try_order', 'purpose', 'revision'], name='one_payment_per_bill_revision')]
+
+
+class OrderReceipt(models.Model):
+    final_order = models.OneToOneField(FinalOrder, on_delete=models.PROTECT)
+    number = models.CharField(max_length=40, unique=True)
+    snapshot = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class OtpChallenge(models.Model):
+    challenge_id = models.CharField(max_length=36, unique=True)
+    mobile = models.CharField(max_length=10, db_index=True)
+    purpose = models.CharField(max_length=10)
+    session_hash = models.CharField(max_length=64)
+    ip_hash = models.CharField(max_length=64, db_index=True)
+    code_hash = models.CharField(max_length=64)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    consumed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+
+class SupportTicket(models.Model):
+    customer = models.ForeignKey(SignUp, on_delete=models.PROTECT)
+    subject = models.CharField(max_length=120)
+    message = models.TextField()
+    status = models.CharField(max_length=20, default='Open')
+    priority = models.CharField(max_length=10, default='Normal')
+    response = models.TextField(blank=True, default='')
+    version = models.PositiveIntegerField(default=1)
+    updated_by = models.CharField(max_length=70, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)

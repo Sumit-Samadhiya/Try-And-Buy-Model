@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 import os
 from pathlib import Path
+from django.core.exceptions import ImproperlyConfigured
+import secrets
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,12 +23,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-5pm5*g7@#5__t_=mcksgfj28t)%h+x+qylm^fpi1u3217rg4=q'
+DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured('DJANGO_SECRET_KEY must be set in production.')
+    secret_path = BASE_DIR / '.local-secret'
+    try:
+        with secret_path.open('x') as secret_file:
+            secret_file.write(secrets.token_urlsafe(64))
+    except FileExistsError:
+        pass
+    SECRET_KEY = secret_path.read_text().strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = []
+
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -57,7 +70,14 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-CORS_ORIGIN_ALLOW_ALL=True
+CORS_ALLOWED_ORIGINS = os.environ.get('FRONTEND_ORIGINS', 'http://127.0.0.1:3000,http://localhost:3000').split(',')
+CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_AGE = 8 * 60 * 60
 ROOT_URLCONF = 'sevenshades.urls'
 
 TEMPLATES = [
@@ -137,3 +157,13 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
+
+# Configure locally; never put gateway secrets in frontend code.
+RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', '')
+RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', '')
+RAZORPAY_WEBHOOK_SECRET = os.environ.get('RAZORPAY_WEBHOOK_SECRET', '')
+RECEIPT_SELLER_NAME = os.environ.get('RECEIPT_SELLER_NAME', 'SevenShades')
+RECEIPT_SELLER_ADDRESS = os.environ.get('RECEIPT_SELLER_ADDRESS', '')
+
+# Fixed OTP is explicitly limited to local debug mode. SMS integration is pending.
+OTP_TEST_MODE = DEBUG and os.environ.get('OTP_TEST_MODE', '1') == '1'

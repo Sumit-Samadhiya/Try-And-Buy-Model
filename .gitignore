@@ -1,0 +1,8 @@
+.local-secret
+**/.local-secret
+**/__pycache__/
+**/.venv/
+.venv-1/
+**/node_modules/
+**/.env*
+.runtime/

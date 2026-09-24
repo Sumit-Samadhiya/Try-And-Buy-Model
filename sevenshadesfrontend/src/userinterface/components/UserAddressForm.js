@@ -1,3 +1,6 @@
+import { validateFields } from '../../services/validation';
+import LocationButton from '../../services/LocationButton';
+import { payWithRazorpay } from '../../services/razorpayCheckout';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
@@ -18,7 +21,7 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { postData } from '../../services/FetchDjangoApiServices';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -33,6 +36,8 @@ export default function UserAddressForm() {
   const dispatch = useDispatch();
   const trialDetails = location.state || {};
 
+  const submittingRef = useRef(false);
+  const [submitting, setSubmitting] = useState(false);
   const [country, setCountry] = useState('India');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
@@ -89,7 +94,9 @@ export default function UserAddressForm() {
     if (!city) { handleError('Required', 'city'); err = true; }
     if (!postcode) { handleError('Required', 'postcode'); err = true; }
 
-    if (err) return;
+    const validation = validateFields(editingAddress ? 'address_update' : 'address_submit', { address, city, country, postcode, address_type: addressType, mobileno });
+    Object.entries(validation).forEach(([field, message]) => handleError(message, field));
+    if (err || Object.keys(validation).length) return;
 
     let result;
     if (editingAddress) {
@@ -169,6 +176,11 @@ export default function UserAddressForm() {
   };
 
   const handlePlaceOrder = () => {
+    if (submittingRef.current) return;
+    if (!billingItems.length || billingItems.some(item => !item.size)) {
+      alert("Please return to your bag and select a size for each product.");
+      return;
+    }
     const selectedAddress = selectedAddressIndex >= 0 ? addressList[selectedAddressIndex] : null;
 
     if (!selectedAddress) {
@@ -182,8 +194,12 @@ export default function UserAddressForm() {
     }
 
     const createTryOrder = async () => {
+      submittingRef.current = true;
+      setSubmitting(true);
+      try {
       const payload = {
         mobileno: userData?.mobileno,
+        address_id: selectedAddress.id,
         address: {
           address: selectedAddress.address,
           city: selectedAddress.city,
@@ -194,9 +210,9 @@ export default function UserAddressForm() {
         delivery_mode: deliveryMode,
         delivery_slot: deliverySlot,
         try_payment_mode: billingAmount > 0 ? billingPaymentMode : 'free',
-        try_payment_status: 'paid',
         items: billingItems.map((item) => ({
           product_details_id: item.id,
+          size: item.size,
           product_name: item.name,
           brand_name: item.brand,
           qty: item.qty,
@@ -206,6 +222,14 @@ export default function UserAddressForm() {
 
       const result = await postData('try_order_create', payload);
       if (result?.status && result?.data?.order_id) {
+        if (result.data.status === 'AWAITING_TRIAL_PAYMENT') {
+          try { await payWithRazorpay(result.data.order_id, 'trial'); }
+          catch (error) {
+            alert(error.message);
+            navigate('/maincart?order=' + encodeURIComponent(result.data.order_id));
+            return;
+          }
+        }
         billingItems.forEach((item) => {
           dispatch({ type: 'DELETE_PRODUCT', payLoad: [item.id] });
         });
@@ -223,6 +247,12 @@ export default function UserAddressForm() {
       } else {
         alert(result?.message || 'Unable to place try order right now.');
       }
+      } catch (error) {
+        alert('Unable to confirm the order. Please check your orders before retrying.');
+      } finally {
+        submittingRef.current = false;
+        setSubmitting(false);
+      }
     };
 
     createTryOrder();
@@ -232,6 +262,8 @@ export default function UserAddressForm() {
     <ThemeProvider theme={defaultTheme}>
       <Container component="main" maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}>
         <CssBaseline />
+        {selectedAddress && <LocationButton addressId={selectedAddress.id} />}
+        <Typography sx={{ my: 2 }}>Try items at home before deciding. Once your purchase is finalized, returns and refunds are not available.</Typography>
         <Box sx={{ mb: 3 }}>
           <Stack direction="row" spacing={2} alignItems="center">
             <Avatar sx={{ bgcolor: '#111827', width: 52, height: 52 }}>
@@ -584,6 +616,7 @@ export default function UserAddressForm() {
                 color={deliveryMode === 'emergency_sos' ? 'error' : 'success'}
                 sx={{ py: 1.5, fontWeight: 800, fontSize: 15 }}
                 onClick={handlePlaceOrder}
+                disabled={submitting || !billingItems.length}
               >
                 {billingAmount > 0 ? `Pay ₹${billingAmount} & Confirm Order` : 'Place Free Trial Order'}
               </Button>

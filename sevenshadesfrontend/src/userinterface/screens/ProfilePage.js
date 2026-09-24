@@ -1,3 +1,5 @@
+import useOrderEvents from '../../services/useOrderEvents';
+import { CancelTrialButton } from '../../services/TrialInventoryControls';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -20,7 +22,7 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
-import { postData } from '../../services/FetchDjangoApiServices';
+import { getData, postData, logout } from '../../services/FetchDjangoApiServices';
 
 export default function ProfilePage() {
   const user = useSelector((state) => state.user);
@@ -38,9 +40,15 @@ export default function ProfilePage() {
   const [helpForm, setHelpForm] = useState({ subject: '', message: '' });
 
   const reviewKey = userData?.mobileno ? `trial_reviews_${userData.mobileno}` : '';
-  const helpKey = userData?.mobileno ? `help_tickets_${userData.mobileno}` : '';
+  const [ticketBusy, setTicketBusy] = useState(false);
+  const [ticketMessage, setTicketMessage] = useState('');
 
   const [orderHistory, setOrderHistory] = useState([]);
+  useOrderEvents(async () => {
+    if (!userData?.mobileno) return;
+    const result = await postData('user_order_lifecycle_list', { mobileno: userData.mobileno });
+    if (result.status) setOrderHistory(result.data);
+  }, !!userData?.mobileno);
   const [reviews, setReviews] = useState([]);
   const [tickets, setTickets] = useState([]);
 
@@ -63,6 +71,8 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!userData?.mobileno) return;
     const fetchOrderLifecycle = async () => {
+      const support = await getData('customer_tickets');
+      if (support.status) setTickets(support.data);
       const result = await postData('user_order_lifecycle_list', { mobileno: userData.mobileno });
       if (result?.status) {
         setOrderHistory(result.data || []);
@@ -78,10 +88,10 @@ export default function ProfilePage() {
     const interval = setInterval(fetchOrderLifecycle, 10000); // Poll every 10 seconds
 
     setReviews(JSON.parse(localStorage.getItem(reviewKey) || '[]'));
-    setTickets(JSON.parse(localStorage.getItem(helpKey) || '[]'));
+
 
     return () => clearInterval(interval);
-  }, [userData?.mobileno, reviewKey, helpKey]);
+  }, [userData?.mobileno, reviewKey]);
 
   const stats = useMemo(() => {
     return {
@@ -94,18 +104,14 @@ export default function ProfilePage() {
 
   const renderOrderLifecycleStep = (status) => {
     const steps = ['Try Requested', 'Rider Out for Trial', 'Trial in Progress', 'Trial Completed', 'Selection Submitted', 'Completed'];
-    let activeIndex = 0;
-    if (status?.includes('Out') || status?.includes('Assigned')) activeIndex = 1;
-    if (status?.includes('Progress') || status?.includes('Active')) activeIndex = 2;
-    if (status?.includes('Trial Completed')) activeIndex = 3;
-    if (status?.includes('selection_submitted') || status?.includes('ready_for_payment')) activeIndex = 4;
-    if (status?.includes('Completed') || status?.includes('paid')) activeIndex = 5;
+    const activeIndex = { TRY_REQUESTED: 0, ASSIGNED: 1, OUT_FOR_TRIAL: 1, TRIAL_IN_PROGRESS: 2, TRIAL_COMPLETED: 3, AWAITING_SELECTION_APPROVAL: 3,
+      SELECTION_SUBMITTED: 4, PAYMENT_PENDING: 4, DELIVERED: 5, NO_PURCHASE: 5, CANCELLED: -1 }[status] ?? 0;
 
     return (
       <Box sx={{ mt: 1.5, mb: 1 }}>
         <Grid container spacing={1}>
           {steps.map((step, idx) => (
-            <Grid item xs={2.4} key={step}>
+            <Grid item xs={2} key={step}>
               <Box
                 sx={{
                   height: 6,
@@ -210,27 +216,19 @@ export default function ProfilePage() {
     setReviewForm({ product: '', rating: '', review: '' });
   };
 
-  const handleTicketCreate = () => {
-    if (!helpForm.subject || !helpForm.message) {
-      alert('Please enter subject and message.');
-      return;
-    }
-
-    const next = [
-      {
-        id: `TKT-${Date.now()}`,
-        ...helpForm,
-        status: 'Open',
-        createdAt: new Date().toISOString(),
-      },
-      ...tickets,
-    ];
-    setTickets(next);
-    localStorage.setItem(helpKey, JSON.stringify(next));
-    setHelpForm({ subject: '', message: '' });
+  const handleTicketCreate = async () => {
+    if (ticketBusy) return;
+    if (helpForm.subject.trim().length < 3 || helpForm.subject.length > 120 || helpForm.message.trim().length < 10 || helpForm.message.length > 2000) { setTicketMessage('Subject: 3–120 characters. Message: 10–2000 characters.'); return; }
+    setTicketBusy(true); setTicketMessage('');
+    const result = await postData('create_ticket', helpForm);
+    setTicketBusy(false);
+    if (!result.status) { setTicketMessage(result.message); return; }
+    setTickets(old => [result.data, ...old]); setHelpForm({ subject: '', message: '' }); setTicketMessage('Ticket raised successfully.');
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const result = await logout();
+    if (!result.status) { alert(result.message); return; }
     dispatch({ type: 'CLEAR_USER' });
     navigate('/home');
   };
@@ -319,6 +317,8 @@ export default function ProfilePage() {
                           <Chip label={row?.try_order?.status || 'Try Requested'} color={row?.try_order?.status?.includes('Completed') ? 'success' : 'info'} size="small" sx={{ fontWeight: 700 }} />
                         </Stack>
 
+                        {row?.can_cancel && <CancelTrialButton orderId={row.try_order.order_id} />}
+                        <Button onClick={() => navigate("/maincart?order=" + encodeURIComponent(row.try_order.order_id))}>View Bill / Payment / Receipt</Button>
                         {/* VISUAL ORDER LIFECYCLE PROGRESS */}
                         {renderOrderLifecycleStep(row?.try_order?.status)}
 
@@ -326,7 +326,7 @@ export default function ProfilePage() {
                           Try Fee: <b>₹{row?.try_order?.try_fee || 0}</b> • Items: <b>{row?.try_order?.total_try_items || 0}</b>
                         </Typography>
                         <Typography variant="body2" sx={{ mt: 0.5, color: '#4b5563' }}>
-                          Final Purchase: {row?.final_order ? `${row.final_order.status} • Final Payable ₹${row.final_order.final_payable}` : 'Pending delivery doorstep selection'}
+                          Final Purchase: {row?.final_order ? (row.final_order.approved_revision === row.final_order.bill_revision ? `${row.final_order.status} • Final Payable ₹${row.final_order.final_payable}` : 'Awaiting your selection approval') : 'Pending delivery doorstep selection'}
                         </Typography>
                       </Paper>
                     ))
@@ -429,7 +429,7 @@ export default function ProfilePage() {
                     </Stack>
                     <TextField fullWidth size="small" label="Subject" value={helpForm.subject} onChange={(e) => setHelpForm({ ...helpForm, subject: e.target.value })} />
                     <TextField fullWidth size="small" multiline minRows={3} sx={{ mt: 1.5 }} label="Message" value={helpForm.message} onChange={(e) => setHelpForm({ ...helpForm, message: e.target.value })} />
-                    <Button variant="contained" sx={{ mt: 2 }} onClick={handleTicketCreate}>Submit Ticket</Button>
+                    <Typography role="status" sx={{mt:1}}>{ticketMessage}</Typography><Button disabled={ticketBusy} variant="contained" sx={{ mt: 2 }} onClick={handleTicketCreate}>{ticketBusy ? "Submitting…" : "Submit Ticket"}</Button>
                   </Paper>
 
                   {tickets.map((ticket) => (
@@ -438,7 +438,7 @@ export default function ProfilePage() {
                         <Typography sx={{ fontWeight: 700 }}>{ticket.subject}</Typography>
                         <Chip size="small" label={ticket.status} />
                       </Stack>
-                      <Typography variant="body2" sx={{ mt: 1 }}>{ticket.message}</Typography>
+                      <Typography variant="body2" sx={{ mt: 1 }}>{ticket.message}</Typography>{ticket.response && <Typography sx={{mt:1,whiteSpace:"pre-wrap"}}>Support response: {ticket.response}</Typography>}
                     </Paper>
                   ))}
                 </Stack>

@@ -1,10 +1,11 @@
+import imageUrl from '../../services/imageUrl';
 import MaterialTable from "@material-table/core";
 import { useStyles } from "./CategoryCss";
 import { useEffect,useState } from "react";
 import TitleComponent from "../components/admin/TitleComponent";
 import Swal from "sweetalert2";
 import { Button,TextField,Avatar } from "@mui/material";
-import { getData, serverURL,postData } from "../../services/FetchDjangoApiServices";
+import { getData, postData } from "../../services/FetchDjangoApiServices";
 import Dialog from  '@mui/material/Dialog';
 import  DialogActions  from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -125,7 +126,7 @@ export default function DisplayAllBrand()
       {
         Swal.fire("Deleted..", "","success" ) 
         
-      }
+      } else { Swal.fire("Cannot delete", result.message || "This record is still in use.", "error"); }
       fetchAllBrand()
           
         }
@@ -207,8 +208,8 @@ export default function DisplayAllBrand()
       const handleOpenDialog=(rowData)=>{
         setId(rowData.id)
         setBrandName(rowData.brandname)
-        setIcon({file:`${serverURL}${rowData.icon}`,bytes:''})
-        setTempIcon(`${serverURL}${rowData.icon}`)
+        setIcon({file:imageUrl(rowData.icon),bytes:''})
+        setTempIcon(imageUrl(rowData.icon))
         setOpen(true)
       }
       const handleClose=()=>{
@@ -222,7 +223,7 @@ export default function DisplayAllBrand()
             columns={[
               { title: 'id', field: 'id' },
               { title: 'Brand Name', field: 'brandname' },
-              { title: 'icon',render:(row)=><><img src={`${serverURL}${row.icon}`} alt="icons" style={{width:40,height:40,borderRadius:10}}  /></> },
+              { title: 'icon',render:(row)=><><img src={imageUrl(row.icon)} alt="icons" style={{width:40,height:40,borderRadius:10}}  /></> },
              
             ]}
             data={brandList}        

@@ -25,7 +25,7 @@ Yeh model dono ka perfect solution hai: **Hyperlocal Fashion E-Commerce with Doo
 
 
 * **Our Solution:**
-* **15-Minute Home Trial:** Pasand aaye toh lo, nahi toh rider ko wapas thamao. Zero refund delay.
+* **15-Minute Home Trial:** Pasand aaye toh lo, nahi toh rider ko wapas thamao. Final purchase ke baad no return / no refund.
 
 
 * **SOS Fashion Delivery:** Shaam ko party hai aur kapde nahi hain? 2 ghante mein trial room customer ke ghar par.

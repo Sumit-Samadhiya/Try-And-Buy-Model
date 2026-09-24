@@ -1,154 +1,99 @@
-from django.shortcuts import render
-from django.http.response import JsonResponse
-from rest_framework.parsers import JSONParser
-from rest_framework import status
-from django.shortcuts import render
-
-from sevenshadesapp.models import MySubCategory
-from sevenshadesapp.models import Product,ProductDetails,Brands
-
-from sevenshadesapp.serializer import MySubCategorySerializer
-from sevenshadesapp.serializer import MySubCategoryGetSerializer
-from sevenshadesapp.serializer import ProductSerializer,ProductDetailsSerializer,ProductDetailsGetSerializer,BrandsSerializer
-from sevenshadesapp.serializer import ProductGetSerializer
-from rest_framework.decorators import api_view
 from django.core.files.storage import default_storage
+from django.db import transaction
+from django.db.models import F
+from django.http import JsonResponse
+from rest_framework.decorators import api_view
+from .models import Product, ProductDetails, TryOrderItem
+from .serializer import ProductGetSerializer, ProductDetailsSerializer, ProductDetailsGetSerializer
+from .security import failure
 
-
+FIELDS=('maincategoryid','subcategoryid','brandid','productid','productsubname','description','qty','price','color','size','offerprice','offertype')
 
 def Upload_Files(files):
-     iconname=[]
-     for uploaded_file in files.getlist('icon'):
-          file_path = default_storage.save('static/' + uploaded_file.name,uploaded_file)
-          print(file_path)
-          iconname.append(uploaded_file.name)
-     return ",".join(iconname)
+    saved=[]
+    try:
+        for upload in files.getlist('icon'):
+            saved.append(default_storage.save('static/'+upload.name.replace(',', '_'),upload))
+    except Exception:
+        for name in saved: default_storage.delete(name)
+        raise
+    return ','.join(name.removeprefix('static/') for name in saved)
 
+def cleanup(names):
+    for name in names.split(','):
+        if name: default_storage.delete('static/'+name)
 
-
-@api_view(['GET','POST','DELETE'])
+@api_view(['POST'])
+@transaction.atomic
 def ProductDetails_Submit(request):
-    try:
-        if request.method=='POST':
-            print("filesss",dict(request.FILES))
-            filenames=Upload_Files(request.FILES)
-            request.data['icon']=filenames
-            print(request.data)
-            productdetails_serializer=ProductDetailsSerializer(data=request.data)
-            
-            # Size validation
-            if not request.data.get('size'):
-                return JsonResponse({"message":'Size is required',"status":False},safe=False)
+    # Validate a plain copy before saving files; multipart request.data may be immutable.
+    data={key:request.data.get(key) for key in FIELDS}
+    serializer=ProductDetailsSerializer(data=data)
+    if not serializer.is_valid():
+        return JsonResponse({'status':False,'message':'Check variant fields.','errors':serializer.errors},status=400)
+    names=Upload_Files(request.FILES)
+    try: serializer.save(icon=names)
+    except Exception:
+        cleanup(names)
+        raise
+    return JsonResponse({'status':True,'message':'Variant created successfully.'})
 
-        if(productdetails_serializer.is_valid()):
-                productdetails_serializer.save()
-                return JsonResponse({"message":'Product Details Submitted Successfully',"status":True},safe=False)
-        else:
-             return JsonResponse({"message":'Fail to submit ',"status":False},safe=False)
-    except Exception as e:
-        print("Error submit:",e)
-        return JsonResponse({"message":'Fail to submit ',"status":False},safe=False)
-    
-@api_view(['GET','POST','DELETE'])
+@api_view(['POST'])
 def Productdetail_product_list_by_subcategoryid(request):
-     try:
-          if request.method=='POST':
-            #    maincategory_list=MainCategory.get()
-               sid=request.data['subcategoryid']
-               product_list=Product.objects.all().filter(subcategoryid_id=sid)
-               product_serializer_list=ProductGetSerializer(product_list,many=True)
-               print(product_serializer_list.data)
-               return JsonResponse({"data":product_serializer_list.data, "status":True})
-          else:
-               return JsonResponse({"data":[],"status":False},safe=False)
-     except Exception as e :
-          print('Error in Listing data',e)
-          return JsonResponse({"data":[],"status":False},safe=False)
-     
-@api_view(['GET','POST','DELETE'])
+    rows=Product.objects.filter(subcategoryid_id=request.data.get('subcategoryid')).select_related('maincategoryid','subcategoryid','brandid')
+    return JsonResponse({'status':True,'data':ProductGetSerializer(rows,many=True).data})
+
+@api_view(['POST'])
 def Productdetail_brand_list_by_productid(request):
-     try:
-          if request.method=='POST':
-            #    maincategory_list=MainCategory.get()
-               pid=request.data['productid']
-               brand_list=Product.objects.all().filter(id=pid)
-               brand_serializer_list=ProductGetSerializer(brand_list,many=True)
-            #    print(brand_serializer_list.data)
-               return JsonResponse({"data":brand_serializer_list.data, "status":True})
-          else:
-               return JsonResponse({"data":[],"status":False},safe=False)
-     except Exception as e :
-          print('Error in Listing data',e)
-          return JsonResponse({"data":[],"status":False},safe=False)
-     
+    rows=Product.objects.filter(pk=request.data.get('productid')).select_related('maincategoryid','subcategoryid','brandid')
+    return JsonResponse({'status':True,'data':ProductGetSerializer(rows,many=True).data})
+
+@api_view(['GET'])
 def ProductDetails_List(request):
-     try:
-          if request.method=='GET':
-            #    maincategory_list=MainCategory.get()
-               productdetails_list=ProductDetails.objects.all()
-               productdetails_serializer_list=ProductDetailsGetSerializer(productdetails_list,many=True)
-               print(productdetails_serializer_list.data)
-               return JsonResponse({"data":productdetails_serializer_list.data, "status":True})
-          else:
-               return JsonResponse({"data":[],"status":False},safe=False)
-     except Exception as e :
-          print('Error in Listing data',e)
-          return JsonResponse({"data":[],"status":False},safe=False)
+    rows=ProductDetails.objects.select_related('maincategoryid','subcategoryid','brandid','productid').order_by('-pk')
+    return JsonResponse({'status':True,'data':ProductDetailsGetSerializer(rows,many=True).data})
 
-
-@api_view(['GET','POST','DELETE'])
+@api_view(['POST'])
+@transaction.atomic
 def EditProductDetails_Icon(request):
+    ProductDetails.objects.filter(pk=request.data.get('id')).update(qty=F('qty'))
+    variant=ProductDetails.objects.select_for_update().filter(pk=request.data.get('id')).first()
+    if not variant: return failure('Variant not found.',404)
+    names=Upload_Files(request.FILES)
     try:
-        if request.method=='POST':
-                productdetails_data=ProductDetails.objects.get(pk=request.data['id'])
-                productdetails_data.icon=request.data['icon']
-                productdetails_data.save()
-                return JsonResponse({"message":'Product Icon Updated',"status":True},safe=False)
-        else:
-             return JsonResponse({"message":'Fail to update Icon ',"status":False},safe=False)
-    except Exception as e:
-        print("Error submit:",e)
-        return JsonResponse({"message":'Fail to submit ',"status":False},safe=False)
+        variant.icon=names
+        variant.save(update_fields=['icon'])
+    except Exception:
+        cleanup(names)
+        raise
+    return JsonResponse({'status':True,'message':'Variant images replaced.'})
 
-
-
-@api_view(['GET','POST','DELETE'])
+@api_view(['POST'])
+@transaction.atomic
 def EditProductDetails_Data(request):
-    try:
-         if request.method=='POST':
-                productdetails_data=ProductDetails.objects.get(pk=request.data['id'])
-                productdetails_data.maincategoryid_id=request.data['maincategoryid']
-                productdetails_data.subcategoryid_id=request.data['subcategoryid']
-                productdetails_data.brandid_id=request.data['brandid']
-                productdetails_data.productid_id=request.data['productid']
-                productdetails_data.productsubname=request.data['productsubname']
-                productdetails_data.description=request.data['description']
-                productdetails_data.qty=request.data['qty']
-                productdetails_data.price=request.data['price']
-                productdetails_data.color=request.data['color']
-                productdetails_data.size=request.data['size']
-                productdetails_data.offerprice=request.data['offerprice']
-                productdetails_data.offertype=request.data['offertype']
-                productdetails_data.save()
-                return JsonResponse({"message":'Product Data Updated',"status":True},safe=False)
-         else:
-             return JsonResponse({"message":'Fail to update Data ',"status":False},safe=False)
-    except Exception as e:
-        print("Error submit:",e)
-        return JsonResponse({"message":'Fail to update ',"status":False},safe=False)
+    ProductDetails.objects.filter(pk=request.data.get('id')).update(qty=F('qty'))
+    variant=ProductDetails.objects.select_for_update().filter(pk=request.data.get('id')).first()
+    if not variant: return failure('Variant not found.',404)
+    expected=request.data.get('expected_qty')
+    if type(expected) is not int or expected<0:
+        return failure('Reload this variant before editing its stock.',400)
+    if expected!=variant.qty:
+        return failure('Stock changed while this form was open. Close and refresh the list before saving.',409)
+    if TryOrderItem.objects.filter(product_details=variant).exists() and any(str(getattr(variant,key+'_id') if key in ('productid','maincategoryid','subcategoryid','brandid') else getattr(variant,key))!=str(request.data.get(key)) for key in ('productid','maincategoryid','subcategoryid','brandid','size','color')):
+        return failure('An ordered variant cannot change product, category, brand, size or colour. Create a new variant instead.',409)
+    serializer=ProductDetailsSerializer(variant,data={key:request.data.get(key) for key in FIELDS},partial=True)
+    if not serializer.is_valid():
+        return JsonResponse({'status':False,'message':'Check variant fields.','errors':serializer.errors},status=400)
+    serializer.save()
+    return JsonResponse({'status':True,'message':'Variant updated.'})
 
-
-
-@api_view(['GET','POST','DELETE'])
+@api_view(['POST'])
+@transaction.atomic
 def DeleteProductDetails_Data(request):
-    try:
-        if request.method=='POST':
-                productdetails_data=ProductDetails.objects.get(pk=request.data['id'])
-               
-                productdetails_data.delete()
-                return JsonResponse({"message":'Product Data Deleted',"status":True},safe=False)
-        else:
-             return JsonResponse({"message":'Fail to Delete Data ',"status":False},safe=False)
-    except Exception as e:
-        print("Error submit:",e)
-        return JsonResponse({"message":'Fail to delete ',"status":False},safe=False)
+    ProductDetails.objects.filter(pk=request.data.get('id')).update(qty=F('qty'))
+    variant=ProductDetails.objects.select_for_update().filter(pk=request.data.get('id')).first()
+    if not variant: return failure('Variant not found.',404)
+    if TryOrderItem.objects.filter(product_details=variant).exists():
+        return failure('This variant is linked to orders and must be kept for stock and return tracking.',409)
+    variant.delete()
+    return JsonResponse({'status':True,'message':'Variant deleted.'})

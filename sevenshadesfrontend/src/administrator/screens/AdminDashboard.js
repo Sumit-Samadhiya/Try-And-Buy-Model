@@ -1,31 +1,12 @@
-import * as  React from 'react';
-import { Grid, Button, TextField, Box, AppBar, Toolbar, Typography } from "@mui/material"
-import List from '@mui/material/List';
-import ListItemButton from '@mui/material/ListItemButton';
-
-import ListItem from '@mui/material/ListItem';
-import CategoryIcon from '@mui/icons-material/Category';
-import DashboardIcon from '@mui/icons-material/Dashboard'
-// import DashboardIcon from '@mui/icons-material/DashboardIcon';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-
-import { serverURL } from '../../services/FetchDjangoApiServices';
-
-import Paper from '@mui/material/Paper';
-import Divider from '@mui/material/Divider';
-
-import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
-// import { useStyles } from './CategoryCss';
-import { useStyles } from './AdminDashboardCss'
-import YardIcon from '@mui/icons-material/Yard';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
-import ViewCarouselIcon from '@mui/icons-material/ViewCarousel';
-import SummarizeIcon from '@mui/icons-material/Summarize'
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-import DeliveryDiningIcon from '@mui/icons-material/DeliveryDining';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import PaymentRecovery from './PaymentRecovery';
+import { useState } from 'react';
+import { Box, Button, Chip, Drawer, IconButton, List, ListItemButton, ListItemText, ThemeProvider, Toolbar, Typography, createTheme } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { logout } from '../../services/FetchDjangoApiServices';
+import useOrderEvents from '../../services/useOrderEvents';
+import InventoryReturns from './InventoryReturns';
+import { SalesReport, SupportTickets } from './AdminReports';
 import Category from './Category';
 import DisplayAllCategory from "./DisplayAllCategory"
 import MySubCategory from './MySubCategory'
@@ -43,157 +24,15 @@ import Dashboard from './Dashboard';
 
 
 
-export default function AdminDashboard(props) {
-    const classes = useStyles();
-    const navigate = useNavigate();
-    const admin = JSON.parse(localStorage?.getItem("ADMIN"))
 
-
-    return (
-        <Box sx={{ flexGrow: 1 }}>
-
-            <AppBar Position="sticky">
-                <Toolbar variant="dense">
-                    <Typography variant="h6" color="inherit" component="div">
-                        sevenshades
-                    </Typography>
-                </Toolbar>
-            </AppBar>
-
-            <Grid container spaces={3} style={{ paddingInlineStart: 5, marginTop: 40 }}>
-
-                <Grid item xs={2.8}>
-                    <Paper>
-                        <div className={classes.leftBarStyle}>
-                            <img src={`${serverURL}/static/${admin?.picture}`} style={{ width: 40, height: 40, borderRadius: 50 }} alt=''></img>
-
-
-                            <div className={classes.nameStyle}>{admin?.adminname}</div>
-                            <div className={classes.emailStyle}>{admin?.emailid}</div>
-                            <div className={classes.phoneStyle}>+91{admin?.mobileno}</div>
-                        </div>
-                        <div className={classes.menuStyle}>
-                            <List>
-                                <Divider />
-                                <ListItem disablePadding>
-                                    <ListItemButton onClick={() => navigate('/admindashboard/dashboard')}>
-                                        <ListItemIcon>
-                                            <DashboardIcon />
-
-                                        </ListItemIcon>
-                                        <ListItemText primary={<span className={classes.makeStyles}>Dashboard</span>}></ListItemText>
-                                    </ListItemButton>
-                                </ListItem>
-
-                                <ListItem disablePadding>
-                                    <ListItemButton onClick={() => navigate('/admindashboard/category')}>
-                                        <ListItemIcon>
-                                            <CategoryIcon />
-
-                                        </ListItemIcon>
-                                        <ListItemText primary={<span className={classes.menuItemStyle}>Category List</span>}></ListItemText>
-                                    </ListItemButton>
-                                </ListItem>
-
-                                <ListItem disablePadding>
-                                    <ListItemButton onClick={() => navigate('/admindashboard/subcategory')}>
-                                        <ListItemIcon>
-                                            <YardIcon />
-
-                                        </ListItemIcon>
-                                        <ListItemText primary={<span className={classes.menuItemStyle}>Sub Categories</span>}></ListItemText>
-                                    </ListItemButton>
-                                </ListItem>
-
-
-                                <ListItem disablePadding>
-                                    <ListItemButton onClick={() => navigate('/admindashboard/brand')}>
-                                        <ListItemIcon>
-                                            <YardIcon />
-
-                                        </ListItemIcon>
-                                        <ListItemText primary={<span className={classes.menuItemStyle}>Brands List</span>}></ListItemText>
-                                    </ListItemButton>
-                                </ListItem>
-
-
-                                <ListItem disablePadding>
-                                    <ListItemButton onClick={() => navigate('/admindashboard/product')}>
-                                        <ListItemIcon>
-                                            <ShoppingCartIcon />
-
-                                        </ListItemIcon>
-                                        <ListItemText primary={<span className={classes.menuItemStyle}>Product List</span>}></ListItemText>
-                                    </ListItemButton>
-                                </ListItem>
-
-                                <ListItem disablePadding>
-                                    <ListItemButton onClick={() => navigate('/admindashboard/productdetails')}>
-                                        <ListItemIcon>
-                                            <AddShoppingCartIcon />
-
-                                        </ListItemIcon>
-                                        <ListItemText primary={<span className={classes.menuItemStyle}>Product Details</span>}></ListItemText>
-                                    </ListItemButton>
-                                </ListItem>
-
-                                <ListItem disablePadding>
-                                    <ListItemButton onClick={() => navigate('/admindashboard/banner')}>
-                                        <ListItemIcon>
-                                            <ViewCarouselIcon />
-
-                                        </ListItemIcon>
-                                        <ListItemText primary={<span className={classes.menuItemStyle}>Banners</span>}></ListItemText>
-                                    </ListItemButton>
-                                </ListItem>
-
-                                <ListItem disablePadding>
-                                    <ListItemButton>
-                                        <ListItemIcon>
-                                            <SummarizeIcon />
-
-                                        </ListItemIcon>
-                                        <ListItemText primary={<span className={classes.menuItemStyle}>Sales Report</span>}></ListItemText>
-                                    </ListItemButton>
-                                </ListItem>
-
-                                <ListItem disablePadding>
-                                    <ListItemButton onClick={() => navigate('/admindashboard/deliveryops')}>
-                                        <ListItemIcon>
-                                            <DeliveryDiningIcon />
-
-                                        </ListItemIcon>
-                                        <ListItemText primary={<span className={classes.menuItemStyle}>Delivery Ops</span>}></ListItemText>
-                                    </ListItemButton>
-                                </ListItem>
-
-                                <ListItem disablePadding>
-                                    <ListItemButton onClick={() => navigate('/admindashboard/orders')}>
-                                        <ListItemIcon>
-                                            <ReceiptLongIcon />
-
-                                        </ListItemIcon>
-                                        <ListItemText primary={<span className={classes.menuItemStyle}>Orders</span>}></ListItemText>
-                                    </ListItemButton>
-                                </ListItem>
-
-
-                                <ListItem disablePadding>
-                                    <ListItemButton>
-                                        <ListItemIcon>
-                                            <ExitToAppIcon />
-
-                                        </ListItemIcon>
-                                        <ListItemText primary={<span className={classes.menuItemStyle}>Log Out</span>}></ListItemText>
-                                    </ListItemButton>
-                                </ListItem>
-                            </List>
-                        </div>
-                    </Paper>
-                </Grid>
-
-                <Grid item xs={9.2} style={{ padding: 20 }}>
-                    <Routes>
+const theme=createTheme({palette:{primary:{main:'#315c4d'},background:{default:'#f4f6f5'}},typography:{fontFamily:'Arial, sans-serif'},shape:{borderRadius:12},components:{MuiTableCell:{styleOverrides:{head:{background:'#f3f5f4',fontWeight:700,whiteSpace:'nowrap'},body:{borderColor:'#eef0ee'}}},MuiButton:{styleOverrides:{root:{textTransform:'none',fontWeight:600}}}}});
+const sections=[['OVERVIEW',[['Quick Dashboard','dashboard'],['Sales Report','sales'],['Support Tickets','tickets']]],['OPERATIONS',[['Orders','orders'],['Payment recovery','payment-recovery'],['Delivery Ops','deliveryops'],['Returns & Stock','returns']]],['CATALOG',[['Categories','category'],['Subcategories','subcategory'],['Brands','brand'],['Products','product'],['Product Variants','productdetails'],['Banners','banner']]]];
+export default function AdminDashboard(){
+ const navigate=useNavigate(),location=useLocation();const [open,setOpen]=useState(false),[notice,setNotice]=useState('');
+ useOrderEvents(event=>{if(['order_created','trial_payment_captured'].includes(event.reason))setNotice(event.order_id);});
+ const current=location.pathname.split('/')[2]||'dashboard';
+ const sidebar=<Box sx={{height:'100%',bgcolor:'#22372f',color:'#fff',p:2}}><Typography variant="h5" fontWeight={800} sx={{px:1,pt:2}}>SevenShades</Typography><Typography variant="overline" sx={{px:1,color:'#b9cabe'}}>ADMIN WORKSPACE</Typography>{sections.map(([heading,items])=><Box key={heading} sx={{mt:3}}><Typography variant="caption" sx={{px:1,color:'#9cb4a5',letterSpacing:1.5}}>{heading}</Typography><List dense>{items.map(([label,to])=><ListItemButton key={to} selected={current===to} onClick={()=>{navigate('/admindashboard/'+to);setOpen(false);}} sx={{borderRadius:2,mb:.5,'&.Mui-selected':{bgcolor:'#ffffff20',color:'#fff'},'&:hover':{bgcolor:'#ffffff12'}}}><ListItemText primary={label}/></ListItemButton>)}</List></Box>)}</Box>;
+ return <ThemeProvider theme={theme}><Box sx={{display:'flex',minHeight:'100vh',bgcolor:'#f4f6f5'}}><Box component="nav" sx={{width:{md:240},flexShrink:0}}><Drawer variant="permanent" sx={{display:{xs:'none',md:'block'},'& .MuiDrawer-paper':{width:240,border:0}}}>{sidebar}</Drawer><Drawer open={open} onClose={()=>setOpen(false)} sx={{'& .MuiDrawer-paper':{width:240}}}>{sidebar}</Drawer></Box><Box sx={{flex:1,minWidth:0}}><Toolbar sx={{bgcolor:'white',borderBottom:'1px solid #e3e8e4',gap:2,position:'sticky',top:0,zIndex:100}}><IconButton sx={{display:{md:'none'}}} aria-label="Open admin menu" onClick={()=>setOpen(true)}><MenuIcon/></IconButton><Typography sx={{flex:1,fontWeight:700}}>Store administration</Typography><Chip size="small" label="Admin"/><Button onClick={async()=>{const result=await logout();if(result.status)navigate('/adminlogin');else setNotice(result.message);}}>Sign out</Button></Toolbar>{notice&&<Button fullWidth onClick={()=>{navigate('/admindashboard/orders');setNotice('');}}>New activity: {notice} · Review orders</Button>}<Box component="main" sx={{p:{xs:2,md:4},maxWidth:1800,mx:'auto'}}><Routes><Route path="payment-recovery" element={<PaymentRecovery/>}/><Route index element={<Navigate to="dashboard" replace/>}/><Route path="sales" element={<SalesReport/>}/><Route path="tickets" element={<SupportTickets/>}/><Route element={<InventoryReturns />} path="/returns" />
                         <Route element={<Category />} path='/category'></Route>
                         <Route element={<DisplayAllCategory />} path='/displayallcategory'></Route>
                         <Route element={<MySubCategory />} path="/subcategory" />
@@ -208,10 +47,5 @@ export default function AdminDashboard(props) {
                         <Route element={<DeliveryOps />} path="/deliveryops" />
                         <Route element={<DisplayAllOrders />} path="/orders" />
                         <Route element={<Dashboard />} path="/dashboard" />
-                    </Routes>
-
-                </Grid>
-            </Grid>
-        </Box>
-    )
+                    <Route path="*" element={<Navigate to="/admindashboard/dashboard" replace/>}/></Routes></Box></Box></Box></ThemeProvider>;
 }

@@ -1,3 +1,7 @@
+import DeliveryOrderDetails from '../../diliveryinterface/screens/DeliveryOrderDetails';
+import RiderSuggestions from './RiderSuggestions';
+import useOrderEvents from '../../services/useOrderEvents';
+import DeliveryBatches from './DeliveryBatches';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
@@ -5,6 +9,9 @@ import {
   Chip,
   CircularProgress,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
   FormControl,
   Grid,
   InputLabel,
@@ -20,6 +27,7 @@ import {
 import { getData, postData } from '../../services/FetchDjangoApiServices';
 
 export default function DeliveryOps() {
+  const [settlementOrder, setSettlementOrder] = useState(null);
   const [tabValue, setTabValue] = useState(0);
 
   const [riders, setRiders] = useState([]);
@@ -59,12 +67,13 @@ export default function DeliveryOps() {
     setLoading(false);
   };
 
+  useOrderEvents(loadAll);
   useEffect(() => {
     loadAll();
   }, []);
 
   const assignedOrderIds = useMemo(() => new Set(assignments.map((row) => row?.try_order?.order_id)), [assignments]);
-  const unassignedOrders = useMemo(() => orders.filter((row) => !assignedOrderIds.has(row.order_id)), [orders, assignedOrderIds]);
+  const unassignedOrders = useMemo(() => orders.filter((row) => row.status === 'TRY_REQUESTED' && !assignedOrderIds.has(row.order_id)), [orders, assignedOrderIds]);
 
   const handleCreateRider = async () => {
     if (!riderForm.name || !riderForm.phone || !riderForm.password || !riderForm.bikeNumber || !riderForm.zone) {
@@ -131,6 +140,10 @@ export default function DeliveryOps() {
       return;
     }
 
+    if (nextStatus === 'Trial Completed') {
+      const row = assignments.find(item => item.assignment_id === assignmentId);
+      setSettlementOrder(row?.try_order?.order_id);
+    }
     loadAll();
   };
 
@@ -159,10 +172,11 @@ export default function DeliveryOps() {
         <Button size="small" variant="outlined" onClick={loadAll}>Refresh</Button>
       </Stack>
 
+      <Dialog open={!!settlementOrder} onClose={() => setSettlementOrder(null)} maxWidth="md" fullWidth><DialogTitle>Customer Selection & Settlement <Button onClick={() => setSettlementOrder(null)}>Close</Button></DialogTitle><DialogContent>{settlementOrder && <DeliveryOrderDetails key={settlementOrder} orderId={settlementOrder} embedded />}</DialogContent></Dialog>
       <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} variant="scrollable" scrollButtons="auto">
         <Tab label="Rider Registration" />
         <Tab label="Order Assignment" />
-        <Tab label="Status History" />
+        <Tab label="Latest Status" />
       </Tabs>
 
       {loading ? (
@@ -237,6 +251,7 @@ export default function DeliveryOps() {
         <Box sx={{ mt: 2 }}>
           <Paper elevation={0} sx={{ p: 2, borderRadius: 2, border: '1px solid #e5e7eb' }}>
             <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Assign Order To Rider</Typography>
+            <RiderSuggestions orderId={assignOrderId} onSelect={setAssignRiderId} />
             <Grid container spacing={1.5}>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
@@ -267,9 +282,6 @@ export default function DeliveryOps() {
                   <InputLabel>Status</InputLabel>
                   <Select label="Status" value={assignmentStatus} onChange={(e) => setAssignmentStatus(e.target.value)}>
                     <MenuItem value="Assigned">Assigned</MenuItem>
-                    <MenuItem value="On Route">On Route</MenuItem>
-                    <MenuItem value="Trial In Progress">Trial In Progress</MenuItem>
-                    <MenuItem value="Delivered">Delivered</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -280,6 +292,7 @@ export default function DeliveryOps() {
           </Paper>
 
           <Paper elevation={0} sx={{ p: 2, mt: 2, borderRadius: 2, border: '1px solid #e5e7eb' }}>
+            <DeliveryBatches riders={riders} onAssigned={loadAll} />
             <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Current Assignments</Typography>
             <Stack spacing={1}>
               {assignments.length === 0 ? (
@@ -300,10 +313,12 @@ export default function DeliveryOps() {
                         </Typography>
                       </Box>
                       <Stack direction="row" spacing={1}>
-                        <Button size="small" variant="outlined" onClick={() => updateAssignmentStatus(row.assignment_id, 'On Route')}>On Route</Button>
-                        <Button size="small" variant="outlined" onClick={() => updateAssignmentStatus(row.assignment_id, 'Trial In Progress')}>Trial</Button>
-                        <Button size="small" variant="outlined" color="success" onClick={() => updateAssignmentStatus(row.assignment_id, 'Delivered')}>Delivered</Button>
-                        <Chip size="small" label={row.status} color={row.status === 'Delivered' ? 'success' : row.status === 'On Route' ? 'warning' : 'info'} />
+                        <Button size="small" variant="outlined" disabled={row.status !== 'Assigned'} onClick={() => updateAssignmentStatus(row.assignment_id, 'On Route')}>On Route</Button>
+                        <Button size="small" variant="outlined" disabled={row.status !== 'On Route'} onClick={() => updateAssignmentStatus(row.assignment_id, 'Trial In Progress')}>Trial</Button>
+                        <Button size="small" variant="outlined" color="success" disabled={row.status !== 'Trial In Progress'} onClick={() => updateAssignmentStatus(row.assignment_id, 'Trial Completed')}>Trial Completed</Button>
+                        <Button size="small" disabled={!['Trial Completed', 'Delivered'].includes(row.status)} onClick={() => setSettlementOrder(row.try_order.order_id)}>Selection & Bill</Button>
+                        <Button size="small" onClick={() => setSettlementOrder(row.try_order.order_id)}>Open Trial / Selection & Bill</Button>
+                      <Chip size="small" label={row.status} color={row.status === 'Delivered' ? 'success' : row.status === 'On Route' ? 'warning' : 'info'} />
                       </Stack>
                     </Stack>
                   </Paper>
@@ -338,6 +353,7 @@ export default function DeliveryOps() {
                     <MenuItem value="Assigned">Assigned</MenuItem>
                     <MenuItem value="On Route">On Route</MenuItem>
                     <MenuItem value="Trial In Progress">Trial In Progress</MenuItem>
+                    <MenuItem value="Trial Completed">Trial Completed</MenuItem>
                     <MenuItem value="Delivered">Delivered</MenuItem>
                   </Select>
                 </FormControl>
@@ -348,7 +364,7 @@ export default function DeliveryOps() {
             </Grid>
 
             <Divider sx={{ my: 2 }} />
-            <Typography sx={{ fontWeight: 700, mb: 1 }}>Status History</Typography>
+            <Typography sx={{ fontWeight: 700, mb: 1 }}>Latest Status</Typography>
             <Stack spacing={1}>
               {filteredAssignments.length === 0 ? (
                 <Typography variant="body2" sx={{ color: '#6b7280' }}>

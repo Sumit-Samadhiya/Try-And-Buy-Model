@@ -1,26 +1,15 @@
-from django.shortcuts import render
-from django.http.response import JsonResponse
-from rest_framework.parsers import JSONParser
-from rest_framework import status
-from django.shortcuts import render
-from sevenshadesapp.models import AdminLogin
-from sevenshadesapp.serializer import AdminLoginSerializer
+from django.http import JsonResponse
 from rest_framework.decorators import api_view
+from .security import authenticate_account, failure
+from .serializer import AdminLoginSerializer
 
 
-@api_view(['GET','POST','DELETE'])
+@api_view(['POST'])
 def CheckAdminLogin(request):
-    try:
-        if request.method=='POST':
-            email=request.data['emailid']
-            pwd = request.data['password']
-            adminLogin=AdminLogin.objects.all().filter(emailid=email,password=pwd)
-            admin_serializer=AdminLoginSerializer(adminLogin,many=True)
-            if(len(admin_serializer.data)==1):
-                
-                return JsonResponse({"data":admin_serializer.data,"message":'Success',"status":True},safe=False)
-        else:
-             return JsonResponse({"data":[],"message":'Fail ',"status":False},safe=False)
-    except Exception as e:
-        print("Error submit:",e)
-        return JsonResponse({"message":'Fail',"status":False},safe=False)
+    email, password = request.data.get('emailid'), request.data.get('password')
+    if not email or not password or not isinstance(password, str):
+        return failure('Email and password are required.', 400)
+    account, error = authenticate_account(request, 'admin', email, password)
+    if error is not None:
+        return error
+    return JsonResponse({'status': True, 'data': [AdminLoginSerializer(account).data]})

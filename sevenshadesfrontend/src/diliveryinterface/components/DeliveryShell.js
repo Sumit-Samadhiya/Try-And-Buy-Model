@@ -1,3 +1,4 @@
+import { logout } from '../../services/FetchDjangoApiServices';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
@@ -27,7 +28,9 @@ export default function DeliveryShell({ title, subtitle, activePage, children })
     setMenuOpen(false);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const result = await logout();
+    if (!result.status) { alert(result.message); return; }
     clearDeliveryLogin();
     navigate('/delivery/login');
     setMenuOpen(false);

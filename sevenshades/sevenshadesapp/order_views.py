@@ -1,8 +1,11 @@
 from django.http.response import JsonResponse
 from django.db import transaction
+from .security import failure
+from .inventory_workflow import lock_order
 from rest_framework.decorators import api_view
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+import uuid
 
 from sevenshadesapp.models import SignUp, ProductDetails, WalletAccount, TryOrder, TryOrderItem, FinalOrder, FinalOrderItem, ProductReview, DeliveryRider, ExcludedArea, DeliveryZone
 from sevenshadesapp.serializer import TryOrderWithItemsSerializer, FinalOrderWithItemsSerializer, WalletAccountSerializer, ProductReviewSerializer
@@ -31,268 +34,51 @@ def _emit_order_update(order_id, data):
 
 @api_view(['POST'])
 def TryOrderCreate(request):
+    from django.db import OperationalError
+    from .checkout import create_trial, CheckoutError
     try:
-        # Address Validation
-        postcode = request.data.get('address', {}).get('postcode')
-        if ExcludedArea.objects.filter(postcode=postcode).exists():
-            return JsonResponse({'message': 'Delivery not supported in this area', 'status': False}, safe=False)
-        
-        if not DeliveryZone.objects.filter(postcodes__contains=postcode).exists():
-            return JsonResponse({'message': 'Delivery not supported in this area', 'status': False}, safe=False)
-
-        mobile = request.data.get('mobileno')
-        address = request.data.get('address', {})
-        items = request.data.get('items', [])
-        delivery_mode = request.data.get('delivery_mode', 'standard')
-        delivery_slot = request.data.get('delivery_slot', '10 AM - 2 PM')
-        try_payment_mode = request.data.get('try_payment_mode', 'free')
-        try_payment_status = request.data.get('try_payment_status', 'paid')
-
-        user = _get_user(mobile)
-        if not user:
-            return JsonResponse({'message': 'User not found', 'status': False}, safe=False)
-
-        address_type = address.get('address_type', 'Residential')
-        if address_type == 'Hostel/Commercial':
-            return JsonResponse({
-                'message': 'Try & Buy service is restricted at Hostel & Restricted Commercial locations. Please select Standard Prepaid Delivery.',
-                'status': False
-            }, safe=False)
-
-        if not items or len(items) > 4 or (delivery_mode == 'emergency_sos' and len(items) > 4):
-            return JsonResponse({'message': 'Try Cart should have 1 to 4 items (max 4 for SOS)', 'status': False}, safe=False)
-
-        # Ek banda ko ek hi active order hona chaiye
-        active_order = TryOrder.objects.filter(
-            mobileno=user.mobileno
-        ).exclude(status__in=['Completed', 'Completed - No Purchase', 'Cancelled']).exists()
-        
-        if active_order:
-            return JsonResponse({'message': 'You already have an active order. Please complete it before placing a new one.', 'status': False}, safe=False)
-
-        existing_count = TryOrder.objects.filter(mobileno=user.mobileno).count()
-        is_first_order = existing_count == 0
-
-        # SOS = ₹99 (No free first order per PDF rules), Standard = ₹49 (Free if 1st order)
-        if delivery_mode == 'emergency_sos':
-            try_fee = 99
-        else:
-            try_fee = 0 if is_first_order else 49
-
-        normalized_items = []
-        total_try_items = 0
-        reference_value = 0
-
-        for item in items:
-            qty = int(item.get('qty', 1) or 1)
-            qty = 1 if qty > 0 else 0
-            if qty == 0:
-                continue
-
-            unit_price = int(item.get('unit_price', item.get('price', 0)) or 0)
-            product_name = item.get('product_name', item.get('name', ''))
-            brand_name = item.get('brand_name', item.get('brand', 'SevenShades'))
-            product_details_id = item.get('product_details_id')
-            size = item.get('size')
-            
-            # without size add hue hum product ko add nhi ker sakte
-            if not size:
-                return JsonResponse({'message': f'Please select a size for {product_name}', 'status': False}, safe=False)
-
-            normalized_items.append({
-                'qty': qty,
-                'unit_price': unit_price,
-                'line_total': unit_price * qty,
-                'product_name': product_name,
-                'brand_name': brand_name,
-                'product_details_id': product_details_id,
-            })
-
-            total_try_items += qty
-            reference_value += unit_price * qty
-
-        if total_try_items == 0 or total_try_items > 4:
-            return JsonResponse({'message': 'Try Cart should have 1 to 4 valid items', 'status': False}, safe=False)
-
-        with transaction.atomic():
-            order_row_id = TryOrder.objects.count() + 1
-            order_id = f'TRL-{order_row_id:06d}'
-
-            try_order = TryOrder.objects.create(
-                order_id=order_id,
-                mobileno=user.mobileno,
-                address_text=address.get('address', ''),
-                city=address.get('city', ''),
-                country=address.get('country', ''),
-                postcode=address.get('postcode', ''),
-                address_type=address_type,
-                delivery_mode=delivery_mode,
-                delivery_slot=delivery_slot,
-                total_try_items=total_try_items,
-                reference_value=reference_value,
-                try_fee=try_fee,
-                is_first_order=is_first_order,
-                try_payment_mode=try_payment_mode,
-                try_payment_status=try_payment_status,
-                status='Try Requested',
-            )
-
-            for item in normalized_items:
-                product_details = None
-                if item['product_details_id']:
-                    product_details = ProductDetails.objects.filter(id=item['product_details_id']).first()
-
-                TryOrderItem.objects.create(
-                    try_order=try_order,
-                    product_details=product_details,
-                    product_name=item['product_name'],
-                    brand_name=item['brand_name'],
-                    qty=item['qty'],
-                    unit_price=item['unit_price'],
-                    line_total=item['line_total'],
-                )
-
-            wallet = _get_wallet(user.mobileno)
-            payload = TryOrderWithItemsSerializer(try_order).data
-            return JsonResponse(
-                {
-                    'status': True,
-                    'message': 'Try order created successfully',
-                    'data': payload,
-                    'wallet': WalletAccountSerializer(wallet).data,
-                },
-                safe=False,
-            )
-
-    except Exception as e:
-        print('TryOrderCreate error:', e)
-        return JsonResponse({'message': 'Fail to create try order', 'status': False}, safe=False)
+        from .inventory_workflow import expire_pending_trials
+        expire_pending_trials()
+        order = create_trial(request.account, request.data)
+        return JsonResponse({'status': True, 'message': 'Try order created successfully',
+            'data': TryOrderWithItemsSerializer(order).data})
+    except CheckoutError as error:
+        return failure(str(error), 409)
+    except OperationalError:
+        return failure('Checkout is busy. Please retry after checking your orders.', 503)
 
 
 @api_view(['POST'])
 def DeliverySelectionUpdate(request):
-    try:
-        order_id = request.data.get('order_id')
-        selected_item_ids = request.data.get('selected_item_ids', [])
-        selected_id_set = set()
-        for item_id in selected_item_ids:
-            try:
-                selected_id_set.add(int(item_id))
-            except Exception:
-                pass
-        suggested_payment_mode = request.data.get('suggested_payment_mode', 'upi')
-
-        try_order = TryOrder.objects.filter(order_id=order_id).first()
-        if not try_order:
-            return JsonResponse({'message': 'Try order not found', 'status': False}, safe=False)
-
-        try_items = list(TryOrderItem.objects.filter(try_order=try_order))
-        selected_items = [item for item in try_items if item.id in selected_id_set]
-
-        items_total = sum(item.line_total for item in selected_items)
-        wallet_credit = try_order.try_fee if len(selected_items) > 0 else 0
-        final_payable = max(items_total - wallet_credit, 0)
-
-        with transaction.atomic():
-            final_order, _ = FinalOrder.objects.get_or_create(
-                try_order=try_order,
-                defaults={
-                    'order_id': f'FIN-{try_order.order_id}',
-                },
-            )
-
-            final_order.selected_items_count = len(selected_items)
-            final_order.items_total = items_total
-            final_order.wallet_credit = wallet_credit
-            final_order.final_payable = final_payable
-            final_order.payment_mode = suggested_payment_mode
-            final_order.payment_status = 'pending'
-            final_order.status = 'ready_for_payment' if len(selected_items) > 0 else 'no_purchase'
-            final_order.save()
-
-            FinalOrderItem.objects.filter(final_order=final_order).delete()
-            for item in selected_items:
-                FinalOrderItem.objects.create(
-                    final_order=final_order,
-                    try_order_item=item,
-                    product_name=item.product_name,
-                    brand_name=item.brand_name,
-                    qty=item.qty,
-                    unit_price=item.unit_price,
-                    line_total=item.line_total,
-                )
-
-            try_order.status = 'Trial Completed' if len(selected_items) > 0 else 'Trial Completed - No Purchase'
-            try_order.save()
-
-            payload = FinalOrderWithItemsSerializer(final_order).data
-            return JsonResponse(
-                {
-                    'status': True,
-                    'message': 'Delivery selection updated',
-                    'data': payload,
-                },
-                safe=False,
-            )
-
-    except Exception as e:
-        print('DeliverySelectionUpdate error:', e)
-        return JsonResponse({'message': 'Fail to update delivery selection', 'status': False}, safe=False)
+    from .settlement import generate_bill
+    from .settlement_views import mutation
+    ids = request.data.get('selected_item_ids', [])
+    if not isinstance(ids, list):
+        return failure('Invalid selection.', 400)
+    return mutation(lambda: FinalOrderWithItemsSerializer(generate_bill(request.account_role, request.account,
+        request.data.get('order_id'), [{'try_order_item_id': item_id, 'qty': 1} for item_id in ids])).data)
 
 
 @api_view(['POST'])
 def FinalPaymentUpdate(request):
-    try:
-        order_id = request.data.get('order_id')
-        payment_mode = request.data.get('payment_mode', 'upi')
-        payment_status = request.data.get('payment_status', 'paid')
-
-        try_order = TryOrder.objects.filter(order_id=order_id).first()
-        if not try_order:
-            return JsonResponse({'message': 'Try order not found', 'status': False}, safe=False)
-
-        final_order = FinalOrder.objects.filter(try_order=try_order).first()
-        if not final_order:
-            return JsonResponse({'message': 'Final order not found', 'status': False}, safe=False)
-
-        with transaction.atomic():
-            previous_payment_status = final_order.payment_status
-            final_order.payment_mode = payment_mode
-            final_order.payment_status = payment_status
-            if final_order.selected_items_count == 0:
-                final_order.status = 'no_purchase'
-            else:
-                final_order.status = 'completed' if payment_status == 'paid' else 'payment_pending'
-            final_order.save()
-
-            try_order.status = 'Completed' if final_order.status == 'completed' else 'Completed - No Purchase' if final_order.status == 'no_purchase' else 'Final Payment Pending'
-            try_order.save()
-
-            wallet = _get_wallet(try_order.mobileno)
-
-            return JsonResponse(
-                {
-                    'status': True,
-                    'message': 'Final payment updated',
-                    'data': FinalOrderWithItemsSerializer(final_order).data,
-                    'wallet': WalletAccountSerializer(wallet).data,
-                },
-                safe=False,
-            )
-
-    except Exception as e:
-        print('FinalPaymentUpdate error:', e)
-        return JsonResponse({'message': 'Fail to update final payment', 'status': False}, safe=False)
+    from .settlement import confirm_cash
+    from .settlement_views import mutation
+    if request.data.get('payment_mode') != 'cash' or request.data.get('payment_status') != 'paid':
+        return failure('Only confirmed cash collection is manual. Online payments require verified capture.', 409)
+    return mutation(lambda: FinalOrderWithItemsSerializer(confirm_cash(request.account_role, request.account,
+        request.data.get('order_id'), request.data.get('bill_revision'))).data)
 
 
 @api_view(['POST'])
 def UserOrderLifecycleList(request):
     try:
-        mobile = request.data.get('mobileno')
+        mobile = request.account.mobileno
         user = _get_user(mobile)
         if not user:
             return JsonResponse({'message': 'User not found', 'status': False, 'data': []}, safe=False)
 
+        from .inventory_workflow import expire_pending_trials, cancellation_blocker
+        expire_pending_trials(user.mobileno)
         try_orders = TryOrder.objects.filter(mobileno=user.mobileno).order_by('-id')
         rows = []
         for order in try_orders:
@@ -302,6 +88,7 @@ def UserOrderLifecycleList(request):
             rows.append(
                 {
                     'try_order': try_payload,
+                    'can_cancel': not cancellation_blocker(order),
                     'final_order': final_payload,
                 }
             )
@@ -312,6 +99,7 @@ def UserOrderLifecycleList(request):
                 'status': True,
                 'data': rows,
                 'wallet': WalletAccountSerializer(wallet).data,
+                'intro_offer_available': not try_orders.exclude(status='CANCELLED', dispatched_at__isnull=True).exists(),
             },
             safe=False,
         )
@@ -427,24 +215,8 @@ def DoorstepSelection(request, order_id):
 
 @api_view(['POST'])
 def CustomerApprovePay(request, order_id):
-    try:
-        payment_status = request.data.get('payment_status')
-        
-        with transaction.atomic():
-            try_order = TryOrder.objects.get(order_id=order_id)
-            
-            if payment_status == 'PAID':
-                try_order.payment_status = 'COMPLETED'
-                try_order.status = 'DELIVERED'
-                try_order.save()
-                
-                _emit_order_update(order_id, {'status': 'DELIVERED', 'payment_status': 'COMPLETED'})
-                
-                return JsonResponse({'status': True, 'message': 'Payment successful'})
-            else:
-                return JsonResponse({'status': False, 'message': 'Payment failed'}, status=400)
-    except Exception as e:
-        return JsonResponse({'status': False, 'message': str(e)}, status=400)
+    # Legacy placeholder: never accept a client-declared online payment.
+    return failure('Online payments require verified gateway confirmation.', 409)
 
 @api_view(['GET'])
 def GenerateInvoice(request, order_id):
@@ -457,103 +229,50 @@ def GenerateInvoice(request, order_id):
 
 @api_view(['POST'])
 def SubmitFinalSelection(request):
-    try:
-        order_id = request.data.get('order_id')
-        selected_items = request.data.get('selected_items', []) # List of {try_order_item_id, qty}
-        
-        with transaction.atomic():
-            try_order = TryOrder.objects.get(order_id=order_id)
-            
-            # Create or get FinalOrder
-            final_order, created = FinalOrder.objects.get_or_create(try_order=try_order, defaults={
-                'order_id': f"FIN-{order_id}",
-                'status': 'selection_submitted'
-            })
-            
-            # Clear existing items if any
-            FinalOrderItem.objects.filter(final_order=final_order).delete()
-            
-            items_total = 0
-            for item_data in selected_items:
-                try_item = TryOrderItem.objects.get(id=item_data['try_order_item_id'], try_order=try_order)
-                
-                # Create FinalOrderItem
-                FinalOrderItem.objects.create(
-                    final_order=final_order,
-                    try_order_item=try_item,
-                    product_name=try_item.product_name,
-                    brand_name=try_item.brand_name,
-                    qty=item_data['qty'],
-                    unit_price=try_item.unit_price,
-                    line_total=try_item.unit_price * item_data['qty']
-                )
-                items_total += (try_item.unit_price * item_data['qty'])
-            
-            # Apply wallet credit
-            wallet = _get_wallet(try_order.mobileno)
-            wallet_credit = min(items_total, wallet.balance)
-            
-            final_order.items_total = items_total
-            final_order.wallet_credit = wallet_credit
-            final_order.final_payable = items_total - wallet_credit
-            final_order.selected_items_count = len(selected_items)
-            final_order.status = 'selection_submitted'
-            final_order.save()
-            
-            return JsonResponse({'status': True, 'message': 'Final selection submitted successfully', 'final_order_id': final_order.order_id}, status=200)
-            
-    except Exception as e:
-        return JsonResponse({'status': False, 'message': str(e)}, status=400)
+    from .settlement import generate_bill
+    from .settlement_views import mutation
+    return mutation(lambda: FinalOrderWithItemsSerializer(generate_bill(request.account_role, request.account,
+        request.data.get('order_id'), request.data.get('selected_items'))).data)
+
 
 @api_view(['POST'])
 def SubmitProductReview(request):
+    from django.db import transaction, OperationalError
+    from django.db.models import F, Avg, Count
     try:
-        product_details_id = request.data.get('product_details_id')
-        user_mobile = request.data.get('user_mobile', '')
-        user_name = request.data.get('user_name', 'Customer')
-        rating = int(request.data.get('rating', 5))
-        review_text = request.data.get('review_text', '')
-        
-        product_details = ProductDetails.objects.filter(id=product_details_id).first()
-        if not product_details:
-            return JsonResponse({'status': False, 'message': 'Product not found'}, safe=False)
-        
-        # Jo product ka hmne order successful nhi hua uska review nhi likh sakte.
-        has_purchased = FinalOrderItem.objects.filter(
-            final_order__try_order__mobileno=user_mobile,
-            final_order__status='completed',
-            product_name=product_details.productid.productname # Matching by name as a proxy, or better by product_details
-        ).exists()
-        
-        if not has_purchased:
-            return JsonResponse({'status': False, 'message': 'You can only review products you have successfully purchased.'}, safe=False)
-            
-        review = ProductReview.objects.create(
-            product_details=product_details,
-            user_mobile=user_mobile,
-            user_name=user_name,
-            rating=rating,
-            review_text=review_text,
-        )
-        
-        all_reviews = ProductReview.objects.filter(product_details=product_details)
-        total_count = all_reviews.count()
-        avg_r = sum(r.rating for r in all_reviews) / total_count if total_count > 0 else 0.0
-        
-        product_details.avg_rating = round(avg_r, 1)
-        product_details.total_reviews = total_count
-        product_details.save()
-        
-        return JsonResponse({
-            'status': True,
-            'message': 'Review submitted successfully',
-            'data': ProductReviewSerializer(review).data,
-            'avg_rating': product_details.avg_rating,
-            'total_reviews': product_details.total_reviews,
-        }, safe=False)
-    except Exception as e:
-        print('SubmitProductReview error:', e)
-        return JsonResponse({'status': False, 'message': 'Unable to submit review'}, safe=False)
+        with transaction.atomic():
+            product_details_id = request.data.get('product_details_id')
+            # Acquire SQLite's write lock before reading; the row lock serializes
+            # review aggregates and inventory writers on row-locking databases.
+            ProductDetails.objects.filter(pk=product_details_id).update(avg_rating=F('avg_rating'))
+            product_details = ProductDetails.objects.select_for_update().filter(pk=product_details_id).first()
+            if not product_details:
+                return failure('Product not found.', 404)
+            user_mobile = request.account.mobileno
+            rating = int(request.data.get('rating', 5))
+            if not 1 <= rating <= 5:
+                return failure('Rating must be between 1 and 5.', 400)
+            has_purchased = FinalOrderItem.objects.filter(
+                final_order__try_order__mobileno=user_mobile,
+                final_order__status='completed',
+                try_order_item__product_details=product_details,
+            ).exists()
+            if not has_purchased:
+                return failure('You can only review products you have successfully purchased.', 403)
+            review = ProductReview.objects.create(
+                product_details=product_details, user_mobile=user_mobile,
+                user_name=f'{request.account.fname} {request.account.lname}'.strip() or 'Customer',
+                rating=rating, review_text=request.data.get('review_text', ''),
+            )
+            totals = ProductReview.objects.filter(product_details=product_details).aggregate(average=Avg('rating'), count=Count('pk'))
+            average = round(totals['average'] or 0, 1)
+            # Never save a full variant instance here: ratings must not write stock,
+            # pricing, images or any other catalog fields read before this review.
+            ProductDetails.objects.filter(pk=product_details.pk).update(avg_rating=average, total_reviews=totals['count'])
+        return JsonResponse({'status': True, 'message': 'Review submitted successfully',
+            'data': ProductReviewSerializer(review).data, 'avg_rating': average, 'total_reviews': totals['count']})
+    except OperationalError:
+        return failure('The product is busy. Please try submitting your review again.', 409)
 
 
 @api_view(['POST', 'GET'])
@@ -565,4 +284,3 @@ def FetchProductReviews(request):
     except Exception as e:
         print('FetchProductReviews error:', e)
         return JsonResponse({'status': False, 'data': []}, safe=False)
-

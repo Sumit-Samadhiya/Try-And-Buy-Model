@@ -1,4 +1,4 @@
-import { serverURL } from "../../services/FetchDjangoApiServices";
+import imageUrl from '../../services/imageUrl';
 import { postData } from "../../services/FetchDjangoApiServices";
 import { Alert, Button } from "@mui/material";
 import PlusMinusComponent from "./PlusMinuComponent";
@@ -24,7 +24,7 @@ export default function MyBag(props) {
 
             const result = await postData('user_order_lifecycle_list', { mobileno: userData.mobileno });
             if (result?.status) {
-                setPreviousOrders((result.data || []).length);
+                setPreviousOrders(result.intro_offer_available === true ? 0 : (result.data || []).filter(row => !(row.try_order?.status === 'CANCELLED' && !row.try_order?.dispatched_at)).length);
             } else {
                 setPreviousOrders(0);
             }
@@ -34,15 +34,17 @@ export default function MyBag(props) {
     }, [userData?.mobileno]);
 
     const totalTryItems = items.filter((item) => (item.qty || 0) > 0).length;
-    const referenceValue = items.reduce((total, item) => total + ((item.offerprice > 0 ? item.offerprice : item.price) * ((item.qty || 0) > 0 ? 1 : 0)), 0);
+    const referenceValue = items.reduce((total, item) => total + ((item.offerprice > 0 && item.offerprice <= item.price ? item.offerprice : item.price) * ((item.qty || 0) > 0 ? 1 : 0)), 0);
     const isFirstOrder = previousOrders === 0;
     const payableAmount = isFirstOrder ? 0 : 49;
     const billingItems = items.map((item) => ({
         id: item.id,
+        size: item.selectedSize || item.size,
+        color: item.color,
         name: item?.productid?.productname || item.productname,
         brand: item?.brandid?.brandname || 'SevenShades',
         qty: (item.qty || 0) > 0 ? 1 : 0,
-        price: (item.offerprice > 0 ? item.offerprice : item.price) * ((item.qty || 0) > 0 ? 1 : 0),
+        price: (item.offerprice > 0 && item.offerprice <= item.price ? item.offerprice : item.price) * ((item.qty || 0) > 0 ? 1 : 0),
     })).filter((item) => item.qty > 0);
 
     const handleChange = (value, product) => {
@@ -65,6 +67,10 @@ export default function MyBag(props) {
     };
 
     const handleScheduleTry = () => {
+        if (!billingItems.length || billingItems.some(item => !item.size)) {
+            alert("Please select a size for each product before checkout.");
+            return;
+        }
         const trialDetails = {
             payableAmount,
             totalTryItems,
@@ -84,12 +90,13 @@ export default function MyBag(props) {
         return items.map((item) => (
             <div key={item.id} className="product-card">
                 <img
-                    src={item?.productid?.icon ? `${serverURL}/${item.productid.icon}` : `${serverURL}/static/${item.icon?.split(',')[0] || ''}`}
+                    src={item?.productid?.icon ? imageUrl(item.productid.icon) : imageUrl(item.icon?.split(',')[0] || '')}
                     alt=""
                     className="product-image"
                 />
                 <div className="product-details">
                     <div className="product-name">{item?.productid?.productname || item.productname}</div>
+                    <div>Size: {item.selectedSize || item.size || "Please reselect"} · {item.color}</div>
                     <div className="product-brand">{item?.brandid?.brandname || 'SevenShades'}</div>
                     <div className="product-color">Color: {item.color || 'Selected at trial'}</div>
                     <div className="product-price">
@@ -103,7 +110,7 @@ export default function MyBag(props) {
                         )}
                     </div>
                     <div className="total-price">
-                        Reference Value: ₹{(item.offerprice > 0 ? item.offerprice : item.price) * ((item.qty || 0) > 0 ? 1 : 0)}
+                        Reference Value: ₹{(item.offerprice > 0 && item.offerprice <= item.price ? item.offerprice : item.price) * ((item.qty || 0) > 0 ? 1 : 0)}
                     </div>
                     <div className="quantity-control">
                         <PlusMinusComponent

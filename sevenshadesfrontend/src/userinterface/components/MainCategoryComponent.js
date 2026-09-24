@@ -1,15 +1,14 @@
+import imageUrl from '../../services/imageUrl';
 import { Button } from '@mui/material';
 import {useTheme} from '@mui/material/styles';
 import UseMediaQuery from '@mui/material/useMediaQuery';
-import { serverURL } from '../../services/FetchDjangoApiServices';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export default function MainCategoryComponent(props){
     const navigate = useNavigate()
     const theme=useTheme()
    
     const sm_matches=UseMediaQuery(theme.breakpoints.down('sm'));
-    const md_matches=UseMediaQuery(theme.breakpoints.down('md')) 
     var data = props.data
     const handleClick=(item)=>{
 
@@ -17,10 +16,10 @@ export default function MainCategoryComponent(props){
     }
     const showAllItemss=()=>{
         return data.map((item)=>{
-                return <div key={item.id} onClick={()=>handleClick(item)} style={{display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',padding:'30px',cursor:'pointer'}}>
-                    <div>
+                return <div key={item.id} onClick={()=>handleClick(item)} style={{display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',padding: '12px', flex: '1 1 0', minWidth: 0, width: '100%', maxWidth: 450, boxSizing: 'border-box',cursor:'pointer'}}>
+                    <div style={{width:'100%'}}>
                     
-                    <img src={`${serverURL}/${item.icon}`} alt="" style={{width:sm_matches?280:426,height:sm_matches?350:545}}/>
+                    <img src={imageUrl(item.icon)} alt="" style={{display:'block',width:'100%',height:'auto',aspectRatio:'870 / 1110',objectFit:'cover'}}/>
                 </div>
                 <div style={{fontSize:25}}>
                    Trending clothes of {item.maincategoryname}
@@ -35,7 +34,7 @@ export default function MainCategoryComponent(props){
     
     }
 
-    return(   <div style={{display:'flex',justifyContent:'space-evenly',alignItems:'center', marginTop:50,flexDirection:sm_matches?'column':'row'}}>
+    return(   <div style={{display:'flex',justifyContent:'space-evenly',alignItems:'center', width:'100%',gap:16,marginTop:0,flexDirection:sm_matches?'column':'row'}}>
     {showAllItemss()}
     
     </div>)

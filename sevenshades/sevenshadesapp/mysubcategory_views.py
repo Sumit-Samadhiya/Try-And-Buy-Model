@@ -77,16 +77,7 @@ def EditMySubCategory_Data(request):
 
 
 
-@api_view(['GET','POST','DELETE'])
+@api_view(['POST'])
 def DeleteMySubCategory_Data(request):
-    try:
-        if request.method=='POST':
-                mysubcategory_data=MySubCategory.objects.get(pk=request.data['id'])
-               
-                mysubcategory_data.delete()
-                return JsonResponse({"message":'SubCategory Data Deleted',"status":True},safe=False)
-        else:
-             return JsonResponse({"message":'Fail to Delete Data ',"status":False},safe=False)
-    except Exception as e:
-        print("Error submit:",e)
-        return JsonResponse({"message":'Fail to delete ',"status":False},safe=False)
+    from .catalog_integrity import delete_unused
+    return delete_unused(MySubCategory, request.data.get('id'), 'Subcategory')

@@ -2,6 +2,14 @@ from django.http.response import JsonResponse
 from rest_framework.decorators import api_view
 from django.utils import timezone
 import requests
+from django.db import transaction, OperationalError
+from .delivery_workflow import assign_order, advance_assignment, generate_batches
+from .inventory_workflow import InventoryError
+from .inventory_workflow import lock_order
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from .security import authenticate_account, failure
 from sevenshadesapp.models import DeliveryRider, DeliveryAssignment, TryOrder, DeliveryBatch
 from sevenshadesapp.serializer import DeliveryRiderSerializer, DeliveryAssignmentWithRefSerializer, DeliveryBatchSerializer
 
@@ -13,12 +21,17 @@ def DeliveryRiderCreate(request):
         if DeliveryRider.objects.filter(phone=phone).exists():
             return JsonResponse({'status': False, 'message': 'Rider phone already exists'}, safe=False)
 
+        password = request.data.get('password', '')
+        try:
+            validate_password(password)
+        except ValidationError as exc:
+            return failure(' '.join(exc.messages), 400)
         rider_count = DeliveryRider.objects.count() + 1
         rider = DeliveryRider.objects.create(
             rider_id=f'RDR-{rider_count:04d}',
             name=request.data.get('name', ''),
             phone=phone,
-            password=request.data.get('password', ''),
+            password=make_password(password),
             bike_number=request.data.get('bike_number', ''),
             zone=request.data.get('zone', ''),
             status=request.data.get('status', 'Active'),
@@ -41,50 +54,28 @@ def DeliveryRiderList(request):
 
 @api_view(['POST'])
 def DeliveryRiderLogin(request):
-    try:
-        phone = request.data.get('phone')
-        password = request.data.get('password')
-        rider = DeliveryRider.objects.filter(phone=phone, password=password, status='Active').first()
-        if not rider:
-            return JsonResponse({'status': False, 'message': 'Invalid rider credentials'}, safe=False)
+    phone, password = request.data.get('phone'), request.data.get('password')
+    if not phone or not password or not isinstance(password, str):
+        return failure('Phone and password are required.', 400)
+    rider, error = authenticate_account(request, 'rider', phone, password)
+    if error is not None:
+        return error
+    return JsonResponse({'status': True, 'data': DeliveryRiderSerializer(rider).data})
 
-        return JsonResponse({'status': True, 'data': DeliveryRiderSerializer(rider).data, 'message': 'Login success'}, safe=False)
-    except Exception as e:
-        print('DeliveryRiderLogin error:', e)
-        return JsonResponse({'status': False, 'message': 'Unable to login'}, safe=False)
+
+def delivery_mutation(callback):
+    try:
+        return JsonResponse({'status': True, 'data': callback()})
+    except InventoryError as error:
+        return failure(str(error), 409)
+    except OperationalError:
+        return failure('Delivery operations are busy. Refresh and retry.', 503)
 
 
 @api_view(['POST'])
 def DeliveryAssignOrder(request):
-    try:
-        order_id = request.data.get('order_id')
-        rider_id = request.data.get('rider_id')
-        status = request.data.get('status', 'Assigned')
-
-        try_order = TryOrder.objects.filter(order_id=order_id).first()
-        rider = DeliveryRider.objects.filter(rider_id=rider_id).first()
-
-        if not try_order or not rider:
-            return JsonResponse({'status': False, 'message': 'Invalid order or rider'}, safe=False)
-
-        assignment = DeliveryAssignment.objects.filter(try_order=try_order).first()
-        if assignment:
-            assignment.rider = rider
-            assignment.status = status
-            assignment.save()
-        else:
-            assignment_count = DeliveryAssignment.objects.count() + 1
-            assignment = DeliveryAssignment.objects.create(
-                assignment_id=f'ASG-{assignment_count:06d}',
-                try_order=try_order,
-                rider=rider,
-                status=status,
-            )
-
-        return JsonResponse({'status': True, 'message': 'Order assigned successfully', 'data': DeliveryAssignmentWithRefSerializer(assignment).data}, safe=False)
-    except Exception as e:
-        print('DeliveryAssignOrder error:', e)
-        return JsonResponse({'status': False, 'message': 'Unable to assign order'}, safe=False)
+    return delivery_mutation(lambda: DeliveryAssignmentWithRefSerializer(assign_order(
+        request.data.get('order_id'), request.data.get('rider_id'), request.data.get('status', 'Assigned'))).data)
 
 
 @api_view(['GET'])
@@ -99,19 +90,8 @@ def DeliveryAssignmentsList(request):
 
 @api_view(['POST'])
 def DeliveryAssignmentUpdateStatus(request):
-    try:
-        assignment_id = request.data.get('assignment_id')
-        status = request.data.get('status')
-        assignment = DeliveryAssignment.objects.filter(assignment_id=assignment_id).first()
-        if not assignment:
-            return JsonResponse({'status': False, 'message': 'Assignment not found'}, safe=False)
-
-        assignment.status = status
-        assignment.save()
-        return JsonResponse({'status': True, 'message': 'Status updated', 'data': DeliveryAssignmentWithRefSerializer(assignment).data}, safe=False)
-    except Exception as e:
-        print('DeliveryAssignmentUpdateStatus error:', e)
-        return JsonResponse({'status': False, 'message': 'Unable to update status'}, safe=False)
+    return delivery_mutation(lambda: DeliveryAssignmentWithRefSerializer(advance_assignment(
+        request.account_role, request.account, request.data.get('assignment_id'), request.data.get('status'))).data)
 
 
 @api_view(['POST'])
@@ -164,7 +144,7 @@ def EndTrialTimer(request):
 @api_view(['POST'])
 def DeliveryRiderTasks(request):
     try:
-        phone = request.data.get('phone')
+        phone = request.account.phone if request.account_role == 'rider' else request.data.get('phone')
         rider = DeliveryRider.objects.filter(phone=phone, status='Active').first()
         if not rider:
             return JsonResponse({'status': False, 'message': 'Rider not found', 'data': []}, safe=False)
@@ -217,43 +197,15 @@ def AssignSOSOrder(request):
 
 @api_view(['POST'])
 def GenerateDeliveryBatch(request):
-    try:
-        # 1. Find pending standard orders
-        pending_orders = TryOrder.objects.filter(delivery_mode='standard', status='Try Requested')
-        
-        if not pending_orders.exists():
-            return JsonResponse({'status': False, 'message': 'No pending standard orders to batch'}, safe=False)
+    return delivery_mutation(lambda: DeliveryBatchSerializer(generate_batches(request.data.get('rider_id')), many=True).data)
 
-        # 2. Group by postcode (simple batching)
-        batches = {}
-        for order in pending_orders:
-            postcode = order.postcode
-            if postcode not in batches:
-                batches[postcode] = []
-            batches[postcode].append(order)
 
-        # 3. Create batches
-        created_batches = []
-        for postcode, orders in batches.items():
-            batch_count = DeliveryBatch.objects.count() + 1
-            batch = DeliveryBatch.objects.create(
-                batch_id=f'BAT-{postcode}-{batch_count:04d}',
-                status='Pending'
-            )
-            
-            # 4. Assign orders to batch
-            for order in orders:
-                assignment = DeliveryAssignment.objects.filter(try_order=order).first()
-                if assignment:
-                    assignment.batch = batch
-                    assignment.save()
-            
-            created_batches.append(DeliveryBatchSerializer(batch).data)
-
-        return JsonResponse({'status': True, 'message': 'Batches generated', 'data': created_batches}, safe=False)
-    except Exception as e:
-        print('GenerateDeliveryBatch error:', e)
-        return JsonResponse({'status': False, 'message': 'Unable to generate batches'}, safe=False)
+@api_view(['GET'])
+def DeliveryBatchList(request):
+    rows = DeliveryBatch.objects.select_related('rider').order_by('-created_at')
+    return JsonResponse({'status': True, 'data': [dict(DeliveryBatchSerializer(row).data,
+        rider_name=row.rider.name if row.rider else '',
+        order_ids=list(row.deliveryassignment_set.values_list('try_order__order_id', flat=True))) for row in rows]})
 
 
 @api_view(['POST'])

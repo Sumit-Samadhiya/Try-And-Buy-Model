@@ -1,9 +1,10 @@
+import imageUrl from '../../services/imageUrl';
 import React, { useState, createRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Header from './Header';
 import Footer from './Footer';
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
-import { serverURL, postData } from '../../services/FetchDjangoApiServices';
+import { postData } from '../../services/FetchDjangoApiServices';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
@@ -21,12 +22,11 @@ import Select from '@mui/material/Select';
 export default function ProductDetailsComponent(props) {
     const dispatch = useDispatch();
     const [index, setIndex] = useState(0);
-    const [age, setAge] = useState('');
     const theme = useTheme();
     const sm_matches = useMediaQuery(theme.breakpoints.down('sm'));
     const md_matches = useMediaQuery(theme.breakpoints.down('md'));
     const bagItems = useSelector((state) => state.product);
-    const totalTryItems = Object.values(bagItems).reduce((total, item) => total + (item.qty || 0), 0);
+    const totalTryItems = Object.values(bagItems).reduce((total, item) => total + (item.qty > 0 ? 1 : 0), 0);
     const sldr = createRef(null);
 
     let product, items;
@@ -57,6 +57,7 @@ export default function ProductDetailsComponent(props) {
     };
 
     const handleChange = (v, product) => {
+        if (v > 1 || (v > 0 && (!product.size || product.qty < 1))) return;
         const existingQty = bagItems[product.id]?.qty || 0;
         const updatedTotal = totalTryItems - existingQty + v;
 
@@ -64,7 +65,7 @@ export default function ProductDetailsComponent(props) {
             return;
         }
 
-        const payload = { ...product, qty: v, selectedSize: age || product.size };
+        const payload = { ...product, qty: v, selectedSize: product.size };
         if (v >= 1) {
             dispatch({ type: 'ADD_PRODUCT', payLoad: [product.id, payload] });
         } else {
@@ -74,13 +75,13 @@ export default function ProductDetailsComponent(props) {
     };
 
     const handleSizeChange = (event) => {
-        setAge(event.target.value);
+        setIndex(Number(event.target.value));
     };
 
     const show = () => {
         return items.map((item) => (
             <div key={item} style={styles.thumbnail}>
-                <img src={`${serverURL}/static/${item}`} alt="" style={styles.thumbnailImage} />
+                <img src={imageUrl(item)} alt="" style={styles.thumbnailImage} />
             </div>
         ));
     };
@@ -89,7 +90,7 @@ export default function ProductDetailsComponent(props) {
         return items.map((item) => (
             <div key={item}>
                 <div>
-                    <img src={`${serverURL}/static/${item}`} alt="" style={styles.productImage} />
+                    <img src={imageUrl(item)} alt="" style={styles.productImage} />
                 </div>
             </div>
         ));
@@ -158,7 +159,7 @@ export default function ProductDetailsComponent(props) {
 
                     <div style={styles.color}>Color: {product.color}</div>
                     <div style={styles.price}>
-                        Reference Value: ₹<span><s>{product.price}</s> ₹{product.offerprice}</span>
+                        Reference Value: ₹{product.offerprice > 0 && product.offerprice <= product.price ? product.offerprice : product.price}
                     </div>
                     <div style={styles.size}>
                         <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
@@ -166,14 +167,15 @@ export default function ProductDetailsComponent(props) {
                             <Select
                                 labelId="demo-simple-select-standard-label"
                                 id="demo-simple-select-standard"
-                                value={age}
+                                value={index}
                                 onChange={handleSizeChange}
                                 label="Size"
                             >
-                                <MenuItem value=""><em>None</em></MenuItem>
-                                <MenuItem value={"M"}>Medium</MenuItem>
-                                <MenuItem value={'L'}>Large</MenuItem>
-                                <MenuItem value={'XL'}>Extra Large</MenuItem>
+                                {(props.productList || []).map((variant, variantIndex) => (
+                                    <MenuItem key={variant.id} value={variantIndex} disabled={variant.qty < 1 || !variant.size}>
+                                        {variant.size} / {variant.color}{variant.qty < 1 ? ' — Out of stock' : ''}
+                                    </MenuItem>
+                                ))}
                             </Select>
                         </FormControl>
                     </div>
@@ -182,8 +184,8 @@ export default function ProductDetailsComponent(props) {
                             value={bagItems[product.id]?.qty || 0}
                             onChange={(v) => handleChange(v, product)}
                             addLabel="Add to Try Bag"
-                            disableIncrement={totalTryItems >= 4}
-                            helperText={totalTryItems >= 4 ? 'Maximum 4 try items allowed in one home trial.' : ''}
+                            disableIncrement={totalTryItems >= 4 || product.qty < 1 || !product.size || bagItems[product.id]?.qty >= 1}
+                            helperText={product.qty < 1 ? 'This variant is out of stock.' : !product.size ? 'Size unavailable.' : 'Choose up to 4 variants, one piece of each.'}
                         />
                     </div>
                     <div style={styles.delivery}>
@@ -271,7 +273,7 @@ export default function ProductDetailsComponent(props) {
                 </div>
             );
         } else {
-            return null;
+            return <p>No variants are available for this product yet.</p>;
         }
     };
     const styles = {

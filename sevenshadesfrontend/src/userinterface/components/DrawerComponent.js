@@ -1,3 +1,4 @@
+import imageUrl from '../../services/imageUrl';
 import {Drawer} from '@mui/material'
 import { useState,useEffect } from 'react'
 import { serverURL,getData } from '../../services/FetchDjangoApiServices'
@@ -22,7 +23,7 @@ export default function DrawerComponent(props){
             return(<ListItemButton> 
                  <ListItemText primary={<div style={{fontSize:20,fontWeight:'bold',letterSpacing:1,textAlign:'start'}}>{item.maincategoryname}</div>} ></ListItemText>
             <ListItemIcon>
-            <div><img src={`${serverURL}/${item.icon}`} style={{width:60,height:60,borderRadius:10}} alt='' /></div>
+            <div><img src={imageUrl(item.icon)} style={{width:60,height:60,borderRadius:10}} alt='' /></div>
             </ListItemIcon>
            
             </ListItemButton>)
