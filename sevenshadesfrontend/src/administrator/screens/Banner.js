@@ -14,41 +14,46 @@ export default function Banner(){
     const [formError,setFormError]=useState({icon:false})
     const handleChange=(event)=>{
       var files=Object.values(event.target.files)
-      if(files.length>=4 && files.length<=7){
-      setIcon({file:files,bytes:event.target.files})
-     
+      if(files.length>=1 && files.length<=10){
+        setIcon({file:files,bytes:event.target.files})
       }
-      else
-       alert('pls Input 4 and Max 7 Images')
+      else {
+        alert('Please choose between 1 and 10 images.')
+      }
       handleError(false,"icon")
-}
+    }
   const handleError=(errormessage,label)=>{
-    setFormError((prev)=>({...prev,[label]:errormessage })
+    setFormError((prev)=>({...prev,[label]:errormessage }))
+  }
 
-  )}
+  const handleReset = () => {
+    setDescription('')
+    setIcon({ file: [], bytes: [] })
+    setFormError({ icon: false, description: false })
+  }
   
   const showImages=()=>{
-    return icon?.file?.map((item)=>{
-     return <span><img src={URL.createObjectURL(item)} alt="" style={{width:40,height:40,borderRadius:10,marginRight:3}}/></span>
+    return icon?.file?.map((item, i)=>{
+     return <span key={i}><img src={URL.createObjectURL(item)} alt="" style={{width:40,height:40,borderRadius:10,marginRight:3}}/></span>
     })
   }
   const handleClick=async()=>{
        var err=false
-       if(description.length==0)
+       if(description.trim().length==0)
        {
          handleError("This field is required","description")
          err=true
        }
-       if(icon.bytes.length==0)
+       if(icon.file.length==0)
        {
-         handleError("pls select some icon","icon")
+         handleError("Please select at least 1 image","icon")
          err=true
        }
        if(err==false){
        var formData=new FormData()
-       formData.append('brandname',description)
-       icon?.file?.map((item,i)=>{
-        formData.append("icon",item)
+       formData.append('bannerdescription', description.trim())
+       icon?.file?.forEach((item)=>{
+         formData.append("icon",item)
        })
        var result=await postData('banner_submit',formData)
        if(result.status)
@@ -59,6 +64,7 @@ export default function Banner(){
           icon:"success",
           toast:true,
         })
+        handleReset()
        }
        else{
         Swal.fire({
@@ -79,7 +85,7 @@ export default function Banner(){
                 <TitleComponent title={'Banner'} listicon={iconimage}/>
             </Grid>
             <Grid item xs={12}>
-                <TextField error={formError.description} helperText={formError.description} onFocus={()=>handleError(false,'description')} onChange={(event)=>setDescription(event.target.value)} fullWidth label="Description"></TextField>
+                <TextField error={formError.description} helperText={formError.description} onFocus={()=>handleError(false,'description')} value={description} onChange={(event)=>setDescription(event.target.value)} fullWidth label="Description"></TextField>
             </Grid>
            
 
@@ -98,7 +104,7 @@ export default function Banner(){
                 <Button onClick={handleClick} variant="contained" fullWidth>Submit</Button>
             </Grid>
             <Grid item xs={6}>
-                <Button variant="contained" fullWidth>Reset</Button>
+                <Button onClick={handleReset} variant="contained" fullWidth>Reset</Button>
             </Grid>
         </Grid>
       </div>

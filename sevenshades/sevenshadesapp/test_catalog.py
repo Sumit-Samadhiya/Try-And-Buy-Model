@@ -131,6 +131,13 @@ class CatalogTests(TestCase):
         variant.refresh_from_db()
         self.assertEqual((variant.qty,variant.price,variant.icon),(2,700,'new.png'))
         self.assertEqual((variant.avg_rating,variant.total_reviews),(3,1))
+        from .models import SignUp, FinalOrder, FinalOrderItem, TryOrderItem
+        user2=SignUp.objects.create(mobileno='9000000057',emailid='review2@example.test',fname='Buyer2',password='Catalog-test-872!')
+        order2=TryOrder.objects.create(order_id='REVIEW2',mobileno=user2.pk,status='DELIVERED')
+        item2=TryOrderItem.objects.create(try_order=order2,product_details=variant,qty=1,status='PURCHASED')
+        final2=FinalOrder.objects.create(try_order=order2,order_id='FINREVIEW2',status='completed',payment_status='paid')
+        FinalOrderItem.objects.create(final_order=final2,try_order_item=item2)
+        self.post('check_costumer_login',{'mobileno':user2.pk,'password':'Catalog-test-872!'})
         self.assertTrue(self.post('submit_product_review',{'product_details_id':variant.pk,'rating':5}).json()['status'])
         variant.refresh_from_db();self.assertEqual((variant.avg_rating,variant.total_reviews),(4,2))
     def test_failed_rating_write_rolls_back_review(self):

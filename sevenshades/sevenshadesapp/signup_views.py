@@ -72,18 +72,23 @@ def Address_Submit(request):
 def Address_Update(request):
     try:
         mobile = request.account.mobileno
-        old_address = request.data.get('old_address')
-        old_city = request.data.get('old_city')
-        old_postcode = request.data.get('old_postcode')
-        old_country = request.data.get('old_country')
-
-        address_obj = UserAddress.objects.filter(
-            mobileno=mobile,
-            address=old_address,
-            city=old_city,
-            postcode=old_postcode,
-            country=old_country,
-        ).first()
+        address_id = request.data.get('id') or request.data.get('address_id')
+        address_obj = None
+        if address_id:
+            address_obj = UserAddress.objects.filter(pk=address_id, mobileno=mobile).first()
+        
+        if not address_obj:
+            old_address = request.data.get('old_address')
+            old_city = request.data.get('old_city')
+            old_postcode = request.data.get('old_postcode')
+            old_country = request.data.get('old_country')
+            address_obj = UserAddress.objects.filter(
+                mobileno=mobile,
+                address=old_address,
+                city=old_city,
+                postcode=old_postcode,
+                country=old_country,
+            ).first()
 
         if not address_obj:
             return JsonResponse({"message": 'Address not found', "status": False}, safe=False)
@@ -107,18 +112,23 @@ def Address_Update(request):
 def Address_Delete(request):
     try:
         mobile = request.account.mobileno
-        old_address = request.data.get('old_address')
-        old_city = request.data.get('old_city')
-        old_postcode = request.data.get('old_postcode')
-        old_country = request.data.get('old_country')
+        address_id = request.data.get('id') or request.data.get('address_id')
+        address_obj = None
+        if address_id:
+            address_obj = UserAddress.objects.filter(pk=address_id, mobileno=mobile).first()
 
-        address_obj = UserAddress.objects.filter(
-            mobileno=mobile,
-            address=old_address,
-            city=old_city,
-            postcode=old_postcode,
-            country=old_country,
-        ).first()
+        if not address_obj:
+            old_address = request.data.get('old_address')
+            old_city = request.data.get('old_city')
+            old_postcode = request.data.get('old_postcode')
+            old_country = request.data.get('old_country')
+            address_obj = UserAddress.objects.filter(
+                mobileno=mobile,
+                address=old_address,
+                city=old_city,
+                postcode=old_postcode,
+                country=old_country,
+            ).first()
 
         if not address_obj:
             return JsonResponse({"message": 'Address not found', "status": False}, safe=False)

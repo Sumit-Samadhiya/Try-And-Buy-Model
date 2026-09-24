@@ -13,10 +13,11 @@ export default function SearchBarComponent(props) {
 
     useEffect(() => {
         const fetchSearchableItems = async () => {
-            const [subCategoryRes, mainCategoryRes, productRes] = await Promise.all([
+            const [subCategoryRes, mainCategoryRes, productRes, brandRes] = await Promise.all([
                 getData('user_subcategory_list'),
                 getData('user_maincategory_list'),
-                getData('user_product_list') // Assuming this endpoint exists for all products
+                getData('user_product_list'),
+                getData('user_brand_list'),
             ]);
 
             let combinedList = [];
@@ -30,6 +31,9 @@ export default function SearchBarComponent(props) {
             if (productRes && productRes.status) {
                 combinedList = combinedList.concat(productRes.data.map(item => ({ ...item, type: 'product' })));
             }
+            if (brandRes && brandRes.status) {
+                combinedList = combinedList.concat(brandRes.data.map(item => ({ ...item, type: 'brand' })));
+            }
             setAllProducts(combinedList);
         };
         fetchSearchableItems();
@@ -41,13 +45,14 @@ export default function SearchBarComponent(props) {
         if (val.trim().length > 0) {
             const query = val.toLowerCase();
             const matches = allProducts.filter((item) => {
-                const name = (item.subcategoryname || item.maincategoryname || item.productname || '').toLowerCase();
-                const brand = (item.brandname || '').toLowerCase();
+                const name = (item.productname || item.subcategoryname || item.maincategoryname || item.brandname || '').toLowerCase();
+                const brand = (item.brandname || item.brandid?.brandname || '').toLowerCase();
                 return name.includes(query) || brand.includes(query);
             });
             setFilteredList(matches);
             setShowDropdown(true);
         } else {
+            setFilteredList([]);
             setShowDropdown(false);
         }
     };
@@ -56,11 +61,13 @@ export default function SearchBarComponent(props) {
         setShowDropdown(false);
         setProductName('');
         if (item.type === 'product') {
-            navigate('/productdetailspage', { state: { product: item, pageView: 'ProductDetailsComponent' } });
+            navigate('/productdetailspage', { state: { productid: item.id, product: item, pageView: 'ProductDetailsComponent' } });
         } else if (item.type === 'subcategory') {
             navigate('/productpage', { state: { products: item, pageView: 'SubCategoryComponent' } });
         } else if (item.type === 'maincategory') {
             navigate('/productpage', { state: { products: item, pageView: 'MainCategoryComponent' } });
+        } else if (item.type === 'brand') {
+            navigate('/productpage', { state: { products: item, pageView: 'BrandComponent' } });
         }
     };
 
@@ -150,10 +157,14 @@ export default function SearchBarComponent(props) {
                             />
                             <div>
                                 <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#111827' }}>
-                                    {item.subcategoryname}
+                                    {item.productname || item.subcategoryname || item.maincategoryname || item.brandname}
                                 </div>
                                 <div style={{ fontSize: '11px', color: '#6b7280' }}>
-                                    Category Search Match
+                                    {item.type === 'product'
+                                        ? (item.brandid?.brandname ? `Product • ${item.brandid.brandname}` : 'Product Match')
+                                        : item.type === 'brand'
+                                        ? 'Brand Match'
+                                        : 'Category Match'}
                                 </div>
                             </div>
                         </div>

@@ -19,20 +19,42 @@ def Upload_Files(files):
      return ",".join(iconname)
 
 
-@api_view(['GET','POST','DELETE'])
+@api_view(['POST'])
 def Banner_Submit(request):
+    saved_files = []
     try:
-        if request.method=='POST':
-            print("filesss",dict(request.FILES))
-            filenames=Upload_Files(request.FILES)
-            request.data['icon']=filenames
-            print(request.data)
-            banner_serializer=BannerSerializer(data=request.data)
-        if(banner_serializer.is_valid()):
-                banner_serializer.save()
-                return JsonResponse({"message":'Banner Submitted Successfully',"status":True},safe=False)
+        bannerdescription = request.data.get('bannerdescription', '').strip()
+        if not bannerdescription:
+            return JsonResponse({"message": 'Banner description is required.', "status": False}, status=400)
+
+        uploaded_files = request.FILES.getlist('icon')
+        if not uploaded_files:
+            return JsonResponse({"message": 'Please select at least 1 image.', "status": False}, status=400)
+        if len(uploaded_files) > 10:
+            return JsonResponse({"message": 'Upload at most 10 images at a time.', "status": False}, status=400)
+
+        iconname = []
+        for uploaded_file in uploaded_files:
+            file_path = default_storage.save('static/' + uploaded_file.name, uploaded_file)
+            saved_files.append(file_path)
+            iconname.append(file_path.removeprefix('static/'))
+
+        payload = {
+            'bannerdescription': bannerdescription,
+            'icon': ",".join(iconname)
+        }
+        banner_serializer = BannerSerializer(data=payload)
+        if banner_serializer.is_valid():
+            banner_serializer.save()
+            return JsonResponse({"message": 'Banner Submitted Successfully', "status": True}, safe=False)
         else:
-             return JsonResponse({"message":'Fail to submit ',"status":False},safe=False)
+            for path in saved_files:
+                try: default_storage.delete(path)
+                except Exception: pass
+            return JsonResponse({"message": 'Validation error: ' + str(banner_serializer.errors), "status": False}, status=400)
     except Exception as e:
-        print("Error submit:",e)
-        return JsonResponse({"message":'Fail to submit ',"status":False},safe=False)
+        for path in saved_files:
+            try: default_storage.delete(path)
+            except Exception: pass
+        print("Error banner submit:", e)
+        return JsonResponse({"message": 'Fail to submit banner.', "status": False}, status=500)

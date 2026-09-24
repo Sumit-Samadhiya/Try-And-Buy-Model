@@ -1,7 +1,7 @@
 import useOrderEvents from '../../services/useOrderEvents';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import MaterialTable from '@material-table/core';
-import { Button, Chip, Stack } from '@mui/material';
+import { Alert, Button, Chip, Stack } from '@mui/material';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import { getData } from '../../services/FetchDjangoApiServices';
 import TitleComponent from '../components/admin/TitleComponent';
@@ -21,24 +21,40 @@ export default function DisplayAllOrders() {
   const classes = useStyles();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const requestIdRef = useRef(0);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
+    const currentRequestId = ++requestIdRef.current;
     setLoading(true);
-    const result = await getData('admin_order_lifecycle_list');
-    if (result?.status) {
-      setRows(result.data || []);
-    } else {
-      setRows([]);
+    try {
+      const result = await getData('admin_order_lifecycle_list');
+      if (currentRequestId === requestIdRef.current) {
+        if (result?.status) {
+          setRows(result.data || []);
+          setError(null);
+        } else {
+          setError(result?.message || 'Failed to load order lifecycle data.');
+          // Retain cached rows on failure rather than wiping to an empty list
+        }
+      }
+    } catch (err) {
+      if (currentRequestId === requestIdRef.current) {
+        setError('Network error while refreshing orders.');
+      }
+    } finally {
+      if (currentRequestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
-    setLoading(false);
-  };
+  }, []);
 
+  // Consolidate live updates and polling into useOrderEvents (which manages 15-second polling fallback)
   useOrderEvents(fetchOrders);
+
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 10000); // Poll every 10 seconds
-    return () => clearInterval(interval);
-  }, []);
+  }, [fetchOrders]);
 
   const tableData = useMemo(() => {
     return rows.map((row, index) => {
@@ -69,6 +85,11 @@ export default function DisplayAllOrders() {
   return (
     <div className={classes.display_root}>
       <div className={classes.display_box}>
+        {error && (
+          <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setError(null)}>
+            {error} Showing cached data.
+          </Alert>
+        )}
         <MaterialTable
           title={
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%', pr: 2 }}>

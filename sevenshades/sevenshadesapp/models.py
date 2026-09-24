@@ -61,6 +61,14 @@ class ProductDetails(models.Model):
     avg_rating = models.FloatField(default=0.0)
     total_reviews = models.IntegerField(default=0)
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(check=models.Q(qty__gte=0), name='product_details_qty_non_negative'),
+            models.CheckConstraint(check=models.Q(price__gte=0), name='product_details_price_non_negative'),
+            models.CheckConstraint(check=models.Q(offerprice__gte=0), name='product_details_offerprice_non_negative'),
+            models.UniqueConstraint(fields=['productid', 'color', 'size'], name='unique_product_color_size'),
+        ]
+
 
 class ProductReview(models.Model):
     product_details = models.ForeignKey(ProductDetails, on_delete=models.CASCADE)
@@ -123,6 +131,7 @@ class TryOrder(models.Model):
     address_type = models.CharField(max_length=30, blank=False, default='Residential')
     delivery_mode = models.CharField(max_length=30, blank=False, default='standard')
     delivery_slot = models.CharField(max_length=50, blank=False, default='10 AM - 2 PM')
+    scheduled_date = models.DateField(null=True, blank=True)
     total_try_items = models.IntegerField(blank=False, default=0)
     reference_value = models.IntegerField(blank=False, default=0)
     try_fee = models.IntegerField(blank=False, default=0)
@@ -167,6 +176,8 @@ class TryOrderItem(models.Model):
     unit_price = models.IntegerField(blank=False, default=0)
     line_total = models.IntegerField(blank=False, default=0)
     status = models.CharField(max_length=20, choices=[('TRY_REQUESTED', 'Try Requested'), ('PURCHASED', 'Purchased'), ('RETURNED', 'Returned')], default='TRY_REQUESTED')
+    security_tag = models.CharField(max_length=40, blank=True, default='')
+
 
 
 class FinalOrder(models.Model):
@@ -264,6 +275,8 @@ class ExcludedArea(models.Model):
 
 class TrialReturn(models.Model):
     tag_intact = models.BooleanField(default=False)
+    tag_verified = models.BooleanField(default=False)
+    scanned_tag = models.CharField(max_length=40, blank=True, default='')
     steam_pressed_at = models.DateTimeField(null=True, blank=True)
     steam_pressed_by = models.CharField(max_length=100, blank=True, default='')
     item = models.OneToOneField(TryOrderItem, on_delete=models.PROTECT, related_name='trial_return')
@@ -315,7 +328,8 @@ class OtpChallenge(models.Model):
 
 
 class SupportTicket(models.Model):
-    customer = models.ForeignKey(SignUp, on_delete=models.PROTECT)
+    customer = models.ForeignKey(SignUp, on_delete=models.PROTECT, null=True, blank=True)
+    rider = models.ForeignKey(DeliveryRider, on_delete=models.PROTECT, null=True, blank=True)
     subject = models.CharField(max_length=120)
     message = models.TextField()
     status = models.CharField(max_length=20, default='Open')
@@ -325,3 +339,49 @@ class SupportTicket(models.Model):
     updated_by = models.CharField(max_length=70, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+from django.db.models.signals import post_delete, pre_save
+from django.dispatch import receiver
+import os
+
+
+@receiver(post_delete, sender=Product)
+def cleanup_product_image_on_delete(sender, instance, **kwargs):
+    if instance.icon and hasattr(instance.icon, 'path') and os.path.isfile(instance.icon.path):
+        try:
+            os.remove(instance.icon.path)
+        except OSError:
+            pass
+
+
+@receiver(pre_save, sender=Product)
+def cleanup_product_image_on_update(sender, instance, **kwargs):
+    if not instance.pk:
+        return
+    try:
+        old_instance = Product.objects.get(pk=instance.pk)
+        if old_instance.icon and old_instance.icon != instance.icon:
+            if hasattr(old_instance.icon, 'path') and os.path.isfile(old_instance.icon.path):
+                os.remove(old_instance.icon.path)
+    except (Product.DoesNotExist, OSError):
+        pass
+
+
+@receiver(post_delete, sender=MainCategory)
+def cleanup_category_image_on_delete(sender, instance, **kwargs):
+    if instance.icon and hasattr(instance.icon, 'path') and os.path.isfile(instance.icon.path):
+        try:
+            os.remove(instance.icon.path)
+        except OSError:
+            pass
+
+
+@receiver(post_delete, sender=Brands)
+def cleanup_brand_image_on_delete(sender, instance, **kwargs):
+    if instance.icon and hasattr(instance.icon, 'path') and os.path.isfile(instance.icon.path):
+        try:
+            os.remove(instance.icon.path)
+        except OSError:
+            pass
+

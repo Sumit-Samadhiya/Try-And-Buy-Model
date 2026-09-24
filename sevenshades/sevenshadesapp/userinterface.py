@@ -174,3 +174,14 @@ def User_ProductsDetails_By_Id(request):
      except Exception as e :
           print('Error in Listing data',e)
           return JsonResponse({"data":[],"status":False},safe=False)
+
+
+@api_view(['GET'])
+def User_Product_List(request):
+     try:
+          product_list = Product.objects.select_related('maincategoryid', 'subcategoryid', 'brandid').all()
+          product_serializer_list = ProductGetSerializer(product_list, many=True)
+          return JsonResponse({"data": product_serializer_list.data, "status": True})
+     except Exception as e:
+          print('Error in User_Product_List:', e)
+          return JsonResponse({"data": [], "status": False}, safe=False)

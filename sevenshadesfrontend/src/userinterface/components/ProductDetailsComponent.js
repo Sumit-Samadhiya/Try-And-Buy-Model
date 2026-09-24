@@ -3,7 +3,6 @@ import React, { useState, createRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Header from './Header';
 import Footer from './Footer';
-import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
 import { postData } from '../../services/FetchDjangoApiServices';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
@@ -24,19 +23,38 @@ export default function ProductDetailsComponent(props) {
     const [index, setIndex] = useState(0);
     const theme = useTheme();
     const sm_matches = useMediaQuery(theme.breakpoints.down('sm'));
-    const md_matches = useMediaQuery(theme.breakpoints.down('md'));
     const bagItems = useSelector((state) => state.product);
     const totalTryItems = Object.values(bagItems).reduce((total, item) => total + (item.qty > 0 ? 1 : 0), 0);
     const sldr = createRef(null);
 
+    const [reviewsList, setReviewsList] = useState([]);
+    const [reviewModalOpen, setReviewModalOpen] = useState(false);
+    const [userRating, setUserRating] = useState(5);
+    const [userComment, setUserComment] = useState('');
+    const userState = useSelector((state) => state.user);
+    const currentUser = Object.values(userState)[0] || {};
+
     let product, items;
     try {
-        product = props.productList[index];
+        product = props.productList?.[index];
         items = product?.icon?.split(",") || [];
     } catch (e) {
         items = [""];
         product = {};
     }
+
+    const loadReviews = React.useCallback(async () => {
+        if (product?.id) {
+            const res = await postData('fetch_product_reviews', { product_details_id: product.id });
+            if (res && res.status) {
+                setReviewsList(res.data || []);
+            }
+        }
+    }, [product?.id]);
+
+    React.useEffect(() => {
+        loadReviews();
+    }, [loadReviews]);
 
     const settings = {
         dots: false,
@@ -47,6 +65,19 @@ export default function ProductDetailsComponent(props) {
         slidesToScroll: 1,
         arrows: false,
     };
+
+    if (!props.productList || props.productList.length === 0 || !props.productList[index]) {
+        return (
+            <div>
+                <Header />
+                <div style={{ textAlign: 'center', padding: '60px 20px', minHeight: '50vh' }}>
+                    <h2 style={{ color: '#111827' }}>Product Unavailable</h2>
+                    <p style={{ color: '#6b7280' }}>This product has no active variants or sizes available right now.</p>
+                </div>
+                <Footer />
+            </div>
+        );
+    }
 
     const handlePrevious = () => {
         sldr.current.slickPrev();
@@ -96,25 +127,6 @@ export default function ProductDetailsComponent(props) {
         ));
     };
 
-    const [reviewsList, setReviewsList] = useState([]);
-    const [reviewModalOpen, setReviewModalOpen] = useState(false);
-    const [userRating, setUserRating] = useState(5);
-    const [userComment, setUserComment] = useState('');
-    const userState = useSelector((state) => state.user);
-    const currentUser = Object.values(userState)[0] || {};
-
-    const loadReviews = async () => {
-        if (product?.id) {
-            const res = await postData('fetch_product_reviews', { product_details_id: product.id });
-            if (res && res.status) {
-                setReviewsList(res.data || []);
-            }
-        }
-    };
-
-    React.useEffect(() => {
-        loadReviews();
-    }, [product?.id]);
 
     const handlePostReview = async () => {
         if (!userComment) {
@@ -149,12 +161,20 @@ export default function ProductDetailsComponent(props) {
                     
                     {/* RATING DISPLAY */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
-                        <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#f59e0b' }}>
-                            ⭐ {product.avg_rating ? product.avg_rating.toFixed(1) : '4.5'}
-                        </span>
-                        <span style={{ fontSize: '14px', color: '#6b7280' }}>
-                            ({product.total_reviews || reviewsList.length || 12} Verified Customer Reviews)
-                        </span>
+                        {(product.total_reviews > 0 || reviewsList.length > 0) ? (
+                            <>
+                                <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#f59e0b' }}>
+                                    ⭐ {(product.avg_rating || 0).toFixed(1)}
+                                </span>
+                                <span style={{ fontSize: '14px', color: '#6b7280' }}>
+                                    ({product.total_reviews || reviewsList.length} Verified Customer Reviews)
+                                </span>
+                            </>
+                        ) : (
+                            <span style={{ fontSize: '14px', color: '#9ca3af', fontStyle: 'italic' }}>
+                                No reviews yet
+                            </span>
+                        )}
                     </div>
 
                     <div style={styles.color}>Color: {product.color}</div>
@@ -279,47 +299,34 @@ export default function ProductDetailsComponent(props) {
     const styles = {
         mainContainer: {
             display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
+            flexDirection: sm_matches ? 'column' : 'row',
+            alignItems: sm_matches ? 'center' : 'flex-start',
+            justifyContent: 'center',
             margin: '20px 0',
             padding: '0 20px',
-            // For larger screens
-            '@media (min-width: 600px)': {
-                flexDirection: 'row',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-            },
         },
         thumbnailContainer: {
             display: 'flex',
-            flexDirection: 'row',
+            flexDirection: sm_matches ? 'row' : 'column',
             flexWrap: 'wrap',
             justifyContent: 'center',
             marginBottom: '20px',
-            // For larger screens
-            '@media (min-width: 600px)': {
-                flexDirection: 'column',
-                marginRight: '20px',
-            },
+            marginRight: sm_matches ? 0 : '20px',
         },
         sliderContainer: {
             width: '100%',
             maxWidth: '600px',
             position: 'relative',
             marginBottom: '20px',
-            marginLeft:sm_matches?'70px':'165px'
+            marginLeft: sm_matches ? '70px' : '165px'
         },
         detailsContainer: {
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
+            alignItems: sm_matches ? 'center' : 'flex-start',
             width: '100%',
             maxWidth: '600px',
-            // For larger screens
-            '@media (min-width: 600px)': {
-                alignItems: 'flex-start',
-                marginLeft: '20px',
-            },
+            marginLeft: sm_matches ? 0 : '20px',
         },
         thumbnail: {
             margin: '5px',

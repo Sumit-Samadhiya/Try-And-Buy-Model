@@ -79,11 +79,16 @@ def UserOrderLifecycleList(request):
 
         from .inventory_workflow import expire_pending_trials, cancellation_blocker
         expire_pending_trials(user.mobileno)
-        try_orders = TryOrder.objects.filter(mobileno=user.mobileno).order_by('-id')
+        try_orders = (
+            TryOrder.objects.filter(mobileno=user.mobileno)
+            .select_related('finalorder')
+            .prefetch_related('tryorderitem_set', 'finalorder__finalorderitem_set')
+            .order_by('-id')
+        )
         rows = []
         for order in try_orders:
             try_payload = TryOrderWithItemsSerializer(order).data
-            final_order = FinalOrder.objects.filter(try_order=order).first()
+            final_order = getattr(order, 'finalorder', None)
             final_payload = FinalOrderWithItemsSerializer(final_order).data if final_order else None
             rows.append(
                 {
@@ -122,10 +127,16 @@ def DeleteOldOrders(request):
 def AdminOrderLifecycleList(request):
     try:
         status_filter = request.GET.get('status', '')
-        try_orders = TryOrder.objects.all().order_by('-id')
+        limit = min(int(request.GET.get('limit', 100)), 500)
+        try_orders = (
+            TryOrder.objects.select_related('finalorder')
+            .prefetch_related('tryorderitem_set', 'finalorder__finalorderitem_set')
+            .all()
+            .order_by('-id')
+        )
         rows = []
         for order in try_orders:
-            final_order = FinalOrder.objects.filter(try_order=order).first()
+            final_order = getattr(order, 'finalorder', None)
             final_status = final_order.status if final_order else 'pending_selection'
             if status_filter and final_status != status_filter and order.status != status_filter:
                 continue
@@ -136,11 +147,13 @@ def AdminOrderLifecycleList(request):
                     'final_order': FinalOrderWithItemsSerializer(final_order).data if final_order else None,
                 }
             )
+            if len(rows) >= limit:
+                break
 
         return JsonResponse({'status': True, 'data': rows}, safe=False)
     except Exception as e:
         print('AdminOrderLifecycleList error:', e)
-        return JsonResponse({'status': False, 'data': []}, safe=False)
+        return JsonResponse({'status': False, 'data': []}, status=500, safe=False)
 
 
 @api_view(['POST'])
@@ -259,11 +272,22 @@ def SubmitProductReview(request):
             ).exists()
             if not has_purchased:
                 return failure('You can only review products you have successfully purchased.', 403)
-            review = ProductReview.objects.create(
-                product_details=product_details, user_mobile=user_mobile,
-                user_name=f'{request.account.fname} {request.account.lname}'.strip() or 'Customer',
-                rating=rating, review_text=request.data.get('review_text', ''),
-            )
+            review = ProductReview.objects.filter(
+                product_details=product_details, user_mobile=user_mobile
+            ).first()
+            user_name = f'{request.account.fname} {request.account.lname}'.strip() or 'Customer'
+            review_text = request.data.get('review_text', '')
+            if review:
+                review.rating = rating
+                review.review_text = review_text
+                review.user_name = user_name
+                review.save(update_fields=['rating', 'review_text', 'user_name'])
+            else:
+                review = ProductReview.objects.create(
+                    product_details=product_details, user_mobile=user_mobile,
+                    user_name=user_name,
+                    rating=rating, review_text=review_text,
+                )
             totals = ProductReview.objects.filter(product_details=product_details).aggregate(average=Avg('rating'), count=Count('pk'))
             average = round(totals['average'] or 0, 1)
             # Never save a full variant instance here: ratings must not write stock,

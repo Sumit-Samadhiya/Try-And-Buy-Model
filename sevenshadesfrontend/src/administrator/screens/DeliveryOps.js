@@ -12,6 +12,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogActions,
   FormControl,
   Grid,
   InputLabel,
@@ -47,6 +48,9 @@ export default function DeliveryOps() {
   const [assignOrderId, setAssignOrderId] = useState('');
   const [assignRiderId, setAssignRiderId] = useState('');
   const [assignmentStatus, setAssignmentStatus] = useState('Assigned');
+
+  const [reassignTarget, setReassignTarget] = useState(null);
+  const [newRiderId, setNewRiderId] = useState('');
 
   const [filterRider, setFilterRider] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
@@ -104,6 +108,38 @@ export default function DeliveryOps() {
       status: 'Active',
     });
     loadAll();
+  };
+
+  const handleToggleRiderStatus = async (rider) => {
+    const nextStatus = rider.status === 'Active' ? 'Inactive' : 'Active';
+    const result = await postData('delivery_rider_update', {
+      rider_id: rider.rider_id,
+      status: nextStatus,
+    });
+    if (result && result.status) {
+      loadAll();
+    } else {
+      alert(result?.message || 'Unable to update rider status.');
+    }
+  };
+
+  const handleReassignOrder = async () => {
+    if (!reassignTarget || !newRiderId) {
+      alert('Please select a new rider.');
+      return;
+    }
+    const result = await postData('delivery_order_reassign', {
+      order_id: reassignTarget.try_order?.order_id,
+      rider_id: newRiderId,
+    });
+    if (result && result.status) {
+      alert('Order reassigned successfully.');
+      setReassignTarget(null);
+      setNewRiderId('');
+      loadAll();
+    } else {
+      alert(result?.message || 'Unable to reassign order.');
+    }
   };
 
   const handleAssignOrder = async () => {
@@ -173,6 +209,36 @@ export default function DeliveryOps() {
       </Stack>
 
       <Dialog open={!!settlementOrder} onClose={() => setSettlementOrder(null)} maxWidth="md" fullWidth><DialogTitle>Customer Selection & Settlement <Button onClick={() => setSettlementOrder(null)}>Close</Button></DialogTitle><DialogContent>{settlementOrder && <DeliveryOrderDetails key={settlementOrder} orderId={settlementOrder} embedded />}</DialogContent></Dialog>
+      <Dialog open={!!reassignTarget} onClose={() => setReassignTarget(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>Reassign Order {reassignTarget?.try_order?.order_id}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2, color: '#6b7280', mt: 1 }}>
+            Current Rider: {reassignTarget?.rider?.name} ({reassignTarget?.rider?.phone})
+          </Typography>
+          <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+            <InputLabel>Select New Active Rider</InputLabel>
+            <Select
+              label="Select New Active Rider"
+              value={newRiderId}
+              onChange={(e) => setNewRiderId(e.target.value)}
+            >
+              {riders
+                .filter((r) => r.status === 'Active' && r.rider_id !== reassignTarget?.rider?.rider_id)
+                .map((r) => (
+                  <MenuItem key={r.rider_id} value={r.rider_id}>
+                    {r.name} • {r.zone} ({r.phone})
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setReassignTarget(null)}>Cancel</Button>
+          <Button variant="contained" onClick={handleReassignOrder} disabled={!newRiderId}>
+            Confirm Reassign
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} variant="scrollable" scrollButtons="auto">
         <Tab label="Rider Registration" />
         <Tab label="Order Assignment" />
@@ -238,7 +304,17 @@ export default function DeliveryOps() {
                         Bike: {rider.bike_number} • Zone: {rider.zone}
                       </Typography>
                     </Box>
-                    <Chip size="small" label={rider.status} color={rider.status === 'Active' ? 'success' : 'default'} />
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Chip size="small" label={rider.status} color={rider.status === 'Active' ? 'success' : 'default'} />
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color={rider.status === 'Active' ? 'warning' : 'success'}
+                        onClick={() => handleToggleRiderStatus(rider)}
+                      >
+                        {rider.status === 'Active' ? 'Deactivate' : 'Activate'}
+                      </Button>
+                    </Stack>
                   </Stack>
                 </Paper>
               ))}
@@ -304,21 +380,34 @@ export default function DeliveryOps() {
                   <Paper key={row.assignment_id} elevation={0} sx={{ p: 1.5, border: '1px solid #e5e7eb', borderRadius: 1.5 }}>
                     <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={1}>
                       <Box>
-                        <Typography sx={{ fontWeight: 700 }}>{row?.try_order?.order_id} • {row?.try_order?.mobileno}</Typography>
+                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                          <Typography sx={{ fontWeight: 700 }}>{row?.try_order?.order_id} • {row?.try_order?.mobileno}</Typography>
+                          {row.is_sos && (
+                            <Chip size="small" label="⚡ SOS 90-120m" color="error" sx={{ fontWeight: 800 }} />
+                          )}
+                          {row.sos_overdue && (
+                            <Chip size="small" label="🚨 SOS SLA Breached" color="error" variant="filled" sx={{ fontWeight: 800 }} />
+                          )}
+                          {row.trial_overdue && (
+                            <Chip size="small" label={`⚠️ Trial Cap Exceeded (+${row.trial_overdue_minutes}m)`} color="error" sx={{ fontWeight: 800 }} />
+                          )}
+                        </Stack>
                         <Typography variant="body2" sx={{ color: '#6b7280' }}>
                           Rider: {row?.rider?.name} ({row?.rider?.phone}) • Bike: {row?.rider?.bike_number}
                         </Typography>
                         <Typography variant="body2" sx={{ color: '#6b7280' }}>
                           Assigned: {new Date(row.assigned_at).toLocaleString()}
+                          {row?.try_order?.scheduled_date ? ` • Scheduled: ${row.try_order.scheduled_date}` : ''}
+                          {row?.try_order?.delivery_slot ? ` • Slot: ${row.try_order.delivery_slot}` : ''}
                         </Typography>
                       </Box>
-                      <Stack direction="row" spacing={1}>
+                      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
                         <Button size="small" variant="outlined" disabled={row.status !== 'Assigned'} onClick={() => updateAssignmentStatus(row.assignment_id, 'On Route')}>On Route</Button>
                         <Button size="small" variant="outlined" disabled={row.status !== 'On Route'} onClick={() => updateAssignmentStatus(row.assignment_id, 'Trial In Progress')}>Trial</Button>
                         <Button size="small" variant="outlined" color="success" disabled={row.status !== 'Trial In Progress'} onClick={() => updateAssignmentStatus(row.assignment_id, 'Trial Completed')}>Trial Completed</Button>
+                        <Button size="small" variant="outlined" color="secondary" disabled={['Trial Completed', 'Delivered', 'Cancelled'].includes(row.status)} onClick={() => setReassignTarget(row)}>Reassign</Button>
                         <Button size="small" disabled={!['Trial Completed', 'Delivered'].includes(row.status)} onClick={() => setSettlementOrder(row.try_order.order_id)}>Selection & Bill</Button>
-                        <Button size="small" onClick={() => setSettlementOrder(row.try_order.order_id)}>Open Trial / Selection & Bill</Button>
-                      <Chip size="small" label={row.status} color={row.status === 'Delivered' ? 'success' : row.status === 'On Route' ? 'warning' : 'info'} />
+                        <Chip size="small" label={row.status} color={row.status === 'Delivered' ? 'success' : row.status === 'On Route' ? 'warning' : 'info'} />
                       </Stack>
                     </Stack>
                   </Paper>
@@ -375,13 +464,19 @@ export default function DeliveryOps() {
                   <Paper key={row.assignment_id} elevation={0} sx={{ p: 1.5, border: '1px solid #e5e7eb', borderRadius: 1.5 }}>
                     <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={1}>
                       <Box>
-                        <Typography sx={{ fontWeight: 700 }}>{row?.try_order?.order_id} • {row?.try_order?.mobileno}</Typography>
+                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                          <Typography sx={{ fontWeight: 700 }}>{row?.try_order?.order_id} • {row?.try_order?.mobileno}</Typography>
+                          {row.is_sos && <Chip size="small" label="⚡ SOS" color="error" />}
+                          {row.sos_overdue && <Chip size="small" label="🚨 SOS Overdue" color="error" />}
+                          {row.trial_overdue && <Chip size="small" label="⚠️ Trial Overdue" color="error" />}
+                        </Stack>
                         <Typography variant="body2" sx={{ color: '#6b7280' }}>
                           Rider: {row?.rider?.name} • Zone: {row?.rider?.zone}
                         </Typography>
                         <Typography variant="body2" sx={{ color: '#6b7280' }}>
                           Assigned: {new Date(row.assigned_at).toLocaleString()}
                           {row.updated_at ? ` • Updated: ${new Date(row.updated_at).toLocaleString()}` : ''}
+                          {row?.try_order?.delivery_slot ? ` • Slot: ${row.try_order.delivery_slot}` : ''}
                         </Typography>
                       </Box>
                       <Chip size="small" label={row.status} color={row.status === 'Delivered' ? 'success' : row.status === 'On Route' ? 'warning' : 'info'} />

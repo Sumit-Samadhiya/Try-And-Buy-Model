@@ -162,6 +162,48 @@ class InventoryTests(TestCase):
         self.assertTrue(self.post(client, 'cancel_trial', {'order_id': self.order.order_id}).json()['status'])
         self.assertEqual(self.stock(), 1)
 
+    def test_trial_barcode_tag_verification_on_return(self):
+        DeliveryAssignment.objects.get_or_create(try_order=self.order, defaults={'assignment_id': 'TAG-ASG', 'rider': self.rider})
+        FinalOrder.objects.get_or_create(try_order=self.order, defaults={'order_id': 'TAG-FINAL'})
+        
+        # Verify item has security tag barcode assigned
+        self.assertTrue(self.item.security_tag.startswith('TAG-TRY-'))
+        
+        # Mismatched barcode scan should fail
+        with self.assertRaises(InventoryError) as ctx:
+            collect_return('rider', self.rider, self.item.pk, 'Good', scanned_tag='TAG-TRY-INVALID123')
+        self.assertIn('does not match', str(ctx.exception))
+        
+        # Correct barcode scan should succeed and set tag_verified=True
+        ret = collect_return('rider', self.rider, self.item.pk, 'Good', scanned_tag=self.item.security_tag)
+        self.assertTrue(ret.tag_verified)
+        self.assertTrue(ret.tag_intact)
+        self.assertEqual(ret.scanned_tag, self.item.security_tag.upper())
+
+    def test_admin_zone_and_excluded_area_apis(self):
+        client = self.client_for('admin')
+        # Test listing zones
+        res = client.get('/api/list_delivery_zones')
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(res.json()['status'])
+        
+        # Test saving new zone
+        save_res = self.post(client, 'save_delivery_zone', {'zone_name': 'Test New Zone', 'postcodes': '452015, 452016'})
+        self.assertEqual(save_res.status_code, 200)
+        zone_id = save_res.json()['data']['id']
+        
+        # Test saving new excluded area
+        ex_res = self.post(client, 'save_excluded_area', {'area_name': 'Test Excluded', 'postcode': '452015'})
+        self.assertEqual(ex_res.status_code, 200)
+
+
+        ex_id = ex_res.json()['data']['id']
+        
+        # Test deleting them
+        self.post(client, 'delete_delivery_zone', {'id': zone_id})
+        self.post(client, 'delete_excluded_area', {'id': ex_id})
+
+
 
 class InventoryConcurrencyTests(TransactionTestCase):
     def setUp(self):

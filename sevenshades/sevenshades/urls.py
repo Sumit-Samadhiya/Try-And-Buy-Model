@@ -39,6 +39,8 @@ urlpatterns = [
     path('api/admin_ticket_update', admin_workspace_views.UpdateTicket),
     path('api/customer_tickets', admin_workspace_views.CustomerTickets),
     path('api/create_ticket', admin_workspace_views.CreateTicket),
+    path('api/rider_tickets', admin_workspace_views.RiderTickets),
+    path('api/rider_create_ticket', admin_workspace_views.RiderCreateTicket),
     path('api/otp_config', otp_views.OtpConfig),
     path('api/otp_request', otp_views.RequestOtp),
     path('api/otp_login', otp_views.OtpLogin),
@@ -96,6 +98,7 @@ urlpatterns = [
     path('api/user_maincategory_list', userinterface.MainCategory_List),
     path('api/user_products_maincategory', userinterface.User_Products_Maincategory),
     path('api/user_productsdetails_by_id', userinterface.User_ProductsDetails_By_Id),
+    path('api/user_product_list', userinterface.User_Product_List),
     path('api/submit_product_review', order_views.SubmitProductReview),
     path('api/fetch_product_reviews', order_views.FetchProductReviews),
     path('api/banner_submit', banner_views.Banner_Submit),
@@ -112,9 +115,11 @@ urlpatterns = [
     path('api/user_order_lifecycle_list', order_views.UserOrderLifecycleList),
     path('api/admin_order_lifecycle_list', order_views.AdminOrderLifecycleList),
     path('api/delivery_rider_create', delivery_ops_views.DeliveryRiderCreate),
+    path('api/delivery_rider_update', delivery_ops_views.DeliveryRiderUpdate),
     path('api/delivery_rider_list', delivery_ops_views.DeliveryRiderList),
     path('api/delivery_rider_login', delivery_ops_views.DeliveryRiderLogin),
     path('api/delivery_assign_order', delivery_ops_views.DeliveryAssignOrder),
+    path('api/delivery_order_reassign', delivery_ops_views.DeliveryOrderReassign),
     path('api/delivery_assignments_list', delivery_ops_views.DeliveryAssignmentsList),
     path('api/delivery_assignment_update_status', delivery_ops_views.DeliveryAssignmentUpdateStatus),
     path('api/delivery_rider_tasks', delivery_ops_views.DeliveryRiderTasks),
@@ -128,7 +133,14 @@ urlpatterns = [
     path('api/inventory_returns', inventory_views.InventoryReturns),
     path('api/trial_return_items', inventory_views.TrialReturnItems),
     path('api/get_order_analytics', admin_analytics_views.GetOrderAnalytics),
+    path('api/list_delivery_zones', admin_workspace_views.ListDeliveryZones),
+    path('api/save_delivery_zone', admin_workspace_views.SaveDeliveryZone),
+    path('api/delete_delivery_zone', admin_workspace_views.DeleteDeliveryZone),
+    path('api/list_excluded_areas', admin_workspace_views.ListExcludedAreas),
+    path('api/save_excluded_area', admin_workspace_views.SaveExcludedArea),
+    path('api/delete_excluded_area', admin_workspace_views.DeleteExcludedArea),
 ]
+
 
 # Unclassified API routes are admin-only by default.
 for route in urlpatterns:

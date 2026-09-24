@@ -63,17 +63,27 @@ def EditMySubCategory_Icon(request):
 @api_view(['GET','POST','DELETE'])
 def EditMySubCategory_Data(request):
     try:
-         if request.method=='POST':
-                mysubcategory_data=MySubCategory.objects.get(pk=request.data['id'])
-                mysubcategory_data.maincategoryid_id=request.data['maincategoryid']
-                mysubcategory_data.subcategoryname=request.data['subcategoryname']
-                mysubcategory_data.save()
-                return JsonResponse({"message":'SubCategory Data Updated',"status":True},safe=False)
-         else:
-             return JsonResponse({"message":'Fail to update Data ',"status":False},safe=False)
+        if request.method == 'POST':
+            mysubcategory_data = MySubCategory.objects.get(pk=request.data['id'])
+            new_maincategory_id = int(request.data['maincategoryid'])
+            if mysubcategory_data.maincategoryid_id != new_maincategory_id:
+                from .models import Product
+                if Product.objects.filter(subcategoryid=mysubcategory_data).exists():
+                    return JsonResponse({
+                        "message": 'Cannot change parent category while dependent products exist for this subcategory.',
+                        "status": False
+                    }, status=409)
+            mysubcategory_data.maincategoryid_id = new_maincategory_id
+            mysubcategory_data.subcategoryname = request.data['subcategoryname']
+            mysubcategory_data.save()
+            return JsonResponse({"message": 'SubCategory Data Updated', "status": True}, safe=False)
+        else:
+            return JsonResponse({"message": 'Fail to update Data', "status": False}, safe=False)
+    except MySubCategory.DoesNotExist:
+        return JsonResponse({"message": 'Subcategory not found', "status": False}, status=404)
     except Exception as e:
-        print("Error submit:",e)
-        return JsonResponse({"message":'Fail to delete ',"status":False},safe=False)
+        print("Error submit:", e)
+        return JsonResponse({"message": 'Fail to update Data', "status": False}, status=400)
 
 
 

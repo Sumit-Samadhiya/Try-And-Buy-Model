@@ -24,14 +24,20 @@ export default function Home(props) {
             let allImages = [];
             result.data.forEach(banner => {
                 if (banner.icon) {
-                    allImages = allImages.concat(banner.icon.split(',').filter(img => img));
+                    const splitIcons = banner.icon.split(',').filter(img => img.trim());
+                    splitIcons.forEach(iconImg => {
+                        allImages.push({
+                            id: banner.id,
+                            bannerdescription: banner.bannerdescription || '',
+                            image: iconImg.trim()
+                        });
+                    });
                 }
             });
             setListBanner(allImages);
         } else {
             setListBanner([]);
         }
-
     }
 
 
@@ -69,10 +75,27 @@ export default function Home(props) {
         navigate('/productpage', { state: { products: item, pageView: 'BrandComponent' } })
     }
 
-    const handleBannerClick = () => {
-        if (listMainCategory.length > 0) {
-            navigate('/productpage', { state: { products: listMainCategory[0], pageView: 'MainCategoryComponent' } })
+    const handleBannerClick = (item, index) => {
+        if (!listMainCategory.length) return;
+        const desc = (typeof item === 'object' ? item.bannerdescription : '')?.toLowerCase() || '';
+        if (desc) {
+            const matchedCategory = listMainCategory.find(cat =>
+                cat.maincategoryname && desc.includes(cat.maincategoryname.toLowerCase())
+            );
+            if (matchedCategory) {
+                navigate('/productpage', { state: { products: matchedCategory, pageView: 'MainCategoryComponent' } });
+                return;
+            }
+            const matchedSub = listSubCategory.find(sub =>
+                sub.subcategoryname && desc.includes(sub.subcategoryname.toLowerCase())
+            );
+            if (matchedSub) {
+                navigate('/productpage', { state: { products: matchedSub, pageView: 'SubCategoryComponent' } });
+                return;
+            }
         }
+        const targetCategory = listMainCategory[(index || 0) % listMainCategory.length] || listMainCategory[0];
+        navigate('/productpage', { state: { products: targetCategory, pageView: 'MainCategoryComponent' } });
     }
 
     useEffect(function () {

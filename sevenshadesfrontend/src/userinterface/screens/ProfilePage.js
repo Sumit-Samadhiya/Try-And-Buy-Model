@@ -33,10 +33,10 @@ export default function ProfilePage() {
   const [tabValue, setTabValue] = useState(0);
 
   const [addressList, setAddressList] = useState([]);
-  const [addressForm, setAddressForm] = useState({ country: 'India', address: '', city: '', postcode: '' });
+  const [addressForm, setAddressForm] = useState({ country: 'India', address: '', city: '', postcode: '', address_type: 'Residential' });
   const [editingAddress, setEditingAddress] = useState(null);
 
-  const [reviewForm, setReviewForm] = useState({ product: '', rating: '', review: '' });
+  const [reviewForm, setReviewForm] = useState({ product_details_id: '', product: '', rating: '', review: '' });
   const [helpForm, setHelpForm] = useState({ subject: '', message: '' });
 
   const reviewKey = userData?.mobileno ? `trial_reviews_${userData.mobileno}` : '';
@@ -102,6 +102,26 @@ export default function ProfilePage() {
     };
   }, [orderHistory.length, addressList.length, reviews.length, tickets.length]);
 
+  const purchasedVariants = useMemo(() => {
+    const items = [];
+    const seen = new Set();
+    orderHistory.forEach((order) => {
+      if (order.final_order && order.final_order.status === 'completed' && Array.isArray(order.final_order.final_order_items)) {
+        order.final_order.final_order_items.forEach((fi) => {
+          const pd = fi.try_order_item?.product_details;
+          const pdId = pd?.id || fi.try_order_item?.product_details_id;
+          const name = fi.try_order_item?.product_name || `Product #${pdId}`;
+          const size = fi.try_order_item?.size ? ` (${fi.try_order_item.size})` : '';
+          if (pdId && !seen.has(pdId)) {
+            seen.add(pdId);
+            items.push({ id: pdId, name: `${name}${size}` });
+          }
+        });
+      }
+    });
+    return items;
+  }, [orderHistory]);
+
   const renderOrderLifecycleStep = (status) => {
     const steps = ['Try Requested', 'Rider Out for Trial', 'Trial in Progress', 'Trial Completed', 'Selection Submitted', 'Completed'];
     const activeIndex = { TRY_REQUESTED: 0, ASSIGNED: 1, OUT_FOR_TRIAL: 1, TRIAL_IN_PROGRESS: 2, TRIAL_COMPLETED: 3, AWAITING_SELECTION_APPROVAL: 3,
@@ -140,7 +160,7 @@ export default function ProfilePage() {
   };
 
   const handleAddressSave = async () => {
-    if (!addressForm.address || !addressForm.city || !addressForm.postcode || !addressForm.country) {
+    if (!addressForm.address || !addressForm.city || !addressForm.postcode || !addressForm.country || !addressForm.address_type) {
       alert('Please fill all address fields.');
       return;
     }
@@ -148,6 +168,8 @@ export default function ProfilePage() {
     let result;
     if (editingAddress) {
       result = await postData('address_update', {
+        id: editingAddress.id,
+        address_id: editingAddress.id,
         mobile: userData.mobileno,
         old_address: editingAddress.address,
         old_city: editingAddress.city,
@@ -157,6 +179,7 @@ export default function ProfilePage() {
         city: addressForm.city,
         postcode: addressForm.postcode,
         country: addressForm.country,
+        address_type: addressForm.address_type || 'Residential',
       });
     } else {
       const formData = new FormData();
@@ -164,13 +187,14 @@ export default function ProfilePage() {
       formData.append('address', addressForm.address);
       formData.append('city', addressForm.city);
       formData.append('postcode', addressForm.postcode);
+      formData.append('address_type', addressForm.address_type || 'Residential');
       formData.append('mobileno', userData.mobileno);
       result = await postData('address_submit', formData);
     }
 
     if (result && result.status) {
       alert(result.message || 'Address saved');
-      setAddressForm({ country: 'India', address: '', city: '', postcode: '' });
+      setAddressForm({ country: 'India', address: '', city: '', postcode: '', address_type: 'Residential' });
       setEditingAddress(null);
       fetchUserAddress();
     } else {
@@ -183,6 +207,8 @@ export default function ProfilePage() {
     if (!ok) return;
 
     const result = await postData('address_delete', {
+      id: item.id,
+      address_id: item.id,
       mobile: userData.mobileno,
       old_address: item.address,
       old_city: item.city,
@@ -197,23 +223,38 @@ export default function ProfilePage() {
     }
   };
 
-  const handleReviewAdd = () => {
-    if (!reviewForm.product || !reviewForm.rating || !reviewForm.review) {
-      alert('Please fill product, rating and review.');
+  const handleReviewAdd = async () => {
+    const targetVariantId = reviewForm.product_details_id;
+    if (!targetVariantId || !reviewForm.rating || !reviewForm.review) {
+      alert('Please select a purchased product, rating (1-5) and review text.');
       return;
     }
 
-    const next = [
-      {
-        id: `RVW-${Date.now()}`,
-        ...reviewForm,
-        createdAt: new Date().toISOString(),
-      },
-      ...reviews,
-    ];
-    setReviews(next);
-    localStorage.setItem(reviewKey, JSON.stringify(next));
-    setReviewForm({ product: '', rating: '', review: '' });
+    const result = await postData('submit_product_review', {
+      product_details_id: Number(targetVariantId),
+      rating: Number(reviewForm.rating),
+      review_text: reviewForm.review,
+    });
+
+    if (result && result.status) {
+      alert(result.message || 'Review submitted successfully');
+      const selectedItem = purchasedVariants.find((p) => p.id === Number(targetVariantId));
+      const next = [
+        {
+          id: `RVW-${Date.now()}`,
+          product: selectedItem?.name || reviewForm.product || `Product #${targetVariantId}`,
+          rating: reviewForm.rating,
+          review: reviewForm.review,
+          createdAt: new Date().toISOString(),
+        },
+        ...reviews,
+      ];
+      setReviews(next);
+      localStorage.setItem(reviewKey, JSON.stringify(next));
+      setReviewForm({ product_details_id: '', product: '', rating: '', review: '' });
+    } else {
+      alert(result?.message || 'Unable to submit review. (Reviews are available for purchased and finalized orders)');
+    }
   };
 
   const handleTicketCreate = async () => {
@@ -340,15 +381,18 @@ export default function ProfilePage() {
                     <Paper key={`${item.address}-${item.postcode}-${index}`} sx={{ p: 2, borderRadius: 2, border: '1px solid #e5e7eb' }}>
                       <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Box>
-                          <Typography sx={{ fontWeight: 700 }}>{item.address}</Typography>
-                          <Typography variant="body2" sx={{ color: '#6b7280' }}>{item.city}, {item.country} - {item.postcode}</Typography>
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <Typography sx={{ fontWeight: 700 }}>{item.address}</Typography>
+                            <Chip label={item.address_type || 'Residential'} size="small" sx={{ height: 20, fontSize: 10, fontWeight: 700 }} />
+                          </Stack>
+                          <Typography variant="body2" sx={{ color: '#6b7280', mt: 0.5 }}>{item.city}, {item.country} - {item.postcode}</Typography>
                         </Box>
                         <Stack direction="row" spacing={1}>
                           <IconButton
                             size="small"
                             onClick={() => {
                               setEditingAddress(item);
-                              setAddressForm({ country: item.country, address: item.address, city: item.city, postcode: item.postcode });
+                              setAddressForm({ country: item.country || 'India', address: item.address, city: item.city, postcode: item.postcode, address_type: item.address_type || 'Residential' });
                             }}
                           >
                             <EditRoundedIcon fontSize="small" />
@@ -376,13 +420,36 @@ export default function ProfilePage() {
                       <Grid item xs={12}>
                         <TextField fullWidth size="small" label="Postcode" value={addressForm.postcode} onChange={(e) => setAddressForm({ ...addressForm, postcode: e.target.value })} />
                       </Grid>
+                      <Grid item xs={12}>
+                        <Typography variant="caption" sx={{ fontWeight: 700, color: '#374151', display: 'block', mb: 0.5 }}>
+                          Address Type
+                        </Typography>
+                        <Stack direction="row" spacing={1}>
+                          {['Residential', 'Gated Society', 'Hostel/Commercial'].map((type) => (
+                            <Button
+                              key={type}
+                              size="small"
+                              variant={addressForm.address_type === type ? 'contained' : 'outlined'}
+                              onClick={() => setAddressForm({ ...addressForm, address_type: type })}
+                              sx={{
+                                fontWeight: 700,
+                                borderRadius: 2,
+                                textTransform: 'none',
+                                bgcolor: addressForm.address_type === type ? (type === 'Hostel/Commercial' ? '#dc2626' : '#111827') : undefined,
+                              }}
+                            >
+                              {type}
+                            </Button>
+                          ))}
+                        </Stack>
+                      </Grid>
                     </Grid>
                     <Stack direction="row" spacing={1.5} sx={{ mt: 2 }}>
                       <Button variant="contained" onClick={handleAddressSave}>Save</Button>
                       {editingAddress && (
                         <Button variant="outlined" onClick={() => {
                           setEditingAddress(null);
-                          setAddressForm({ country: 'India', address: '', city: '', postcode: '' });
+                          setAddressForm({ country: 'India', address: '', city: '', postcode: '', address_type: 'Residential' });
                         }}>
                           Cancel
                         </Button>
@@ -395,19 +462,43 @@ export default function ProfilePage() {
               {tabValue === 2 && (
                 <Stack spacing={2}>
                   <Paper sx={{ p: 2, borderRadius: 2, border: '1px solid #e5e7eb' }}>
-                    <Typography sx={{ fontWeight: 700, mb: 1 }}>Write A Review</Typography>
-                    <Grid container spacing={1.5}>
-                      <Grid item xs={12} sm={6}>
-                        <TextField fullWidth size="small" label="Product Name" value={reviewForm.product} onChange={(e) => setReviewForm({ ...reviewForm, product: e.target.value })} />
+                    <Typography sx={{ fontWeight: 700, mb: 1 }}>Write A Product Review</Typography>
+                    {purchasedVariants.length > 0 ? (
+                      <Grid container spacing={1.5}>
+                        <Grid item xs={12} sm={6}>
+                          <TextField
+                            select
+                            fullWidth
+                            size="small"
+                            label="Select Purchased Product"
+                            SelectProps={{ native: true }}
+                            value={reviewForm.product_details_id}
+                            onChange={(e) => {
+                              const found = purchasedVariants.find((p) => String(p.id) === e.target.value);
+                              setReviewForm({ ...reviewForm, product_details_id: e.target.value, product: found?.name || '' });
+                            }}
+                          >
+                            <option value="">-- Choose item --</option>
+                            {purchasedVariants.map((p) => (
+                              <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                          </TextField>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField fullWidth size="small" label="Rating (1-5)" type="number" inputProps={{ min: 1, max: 5 }} value={reviewForm.rating} onChange={(e) => setReviewForm({ ...reviewForm, rating: e.target.value })} />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <TextField fullWidth size="small" multiline minRows={3} label="Your Review" value={reviewForm.review} onChange={(e) => setReviewForm({ ...reviewForm, review: e.target.value })} />
+                        </Grid>
                       </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField fullWidth size="small" label="Rating (1-5)" value={reviewForm.rating} onChange={(e) => setReviewForm({ ...reviewForm, rating: e.target.value })} />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <TextField fullWidth size="small" multiline minRows={3} label="Review" value={reviewForm.review} onChange={(e) => setReviewForm({ ...reviewForm, review: e.target.value })} />
-                      </Grid>
-                    </Grid>
-                    <Button variant="contained" sx={{ mt: 2 }} onClick={handleReviewAdd}>Submit Review</Button>
+                    ) : (
+                      <Typography variant="body2" sx={{ color: '#6b7280', my: 1 }}>
+                        Reviews are enabled for products you have purchased and finalized at doorstep trial delivery.
+                      </Typography>
+                    )}
+                    {purchasedVariants.length > 0 && (
+                      <Button variant="contained" sx={{ mt: 2 }} onClick={handleReviewAdd}>Submit Review</Button>
+                    )}
                   </Paper>
 
                   {reviews.map((review) => (

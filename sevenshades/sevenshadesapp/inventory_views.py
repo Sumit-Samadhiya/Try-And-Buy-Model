@@ -26,14 +26,17 @@ def return_data(result):
     item = result.item
     return {'id': result.pk, 'item_id': item.pk, 'order_id': item.try_order.order_id,
         'product_name': item.product_name, 'size': item.size, 'color': item.color,
-        'condition': result.condition, 'status': result.status, 'tag_intact': result.tag_intact, 'steam_pressed_at': result.steam_pressed_at.isoformat() if result.steam_pressed_at else None}
+        'condition': result.condition, 'status': result.status, 'tag_intact': result.tag_intact,
+        'tag_verified': result.tag_verified, 'scanned_tag': result.scanned_tag,
+        'steam_pressed_at': result.steam_pressed_at.isoformat() if result.steam_pressed_at else None}
 
 
 def item_data(item):
     selected = FinalOrderItem.objects.filter(try_order_item=item).exists()
     result = TrialReturn.objects.filter(item=item).first()
     return {'id': item.pk, 'order_id': item.try_order.order_id, 'product_name': item.product_name,
-        'size': item.size, 'color': item.color, 'selected': selected, 'stock_reserved': item.stock_reserved,
+        'size': item.size, 'color': item.color, 'security_tag': item.security_tag,
+        'selected': selected, 'stock_reserved': item.stock_reserved,
         'return_status': result.status if result else None}
 
 
@@ -50,8 +53,12 @@ def mutation(callback):
 def ProcessReturn(request):
     if request.data.get('final_order_item_id') is not None:
         return failure('Finalized purchases are non-refundable. Items can be declined during the home trial.', 409)
-    return mutation(lambda: return_data(collect_return(request.account_role, request.account,
-        request.data.get('try_order_item_id'), request.data.get('condition'), request.data.get('tag_intact'))))
+    return mutation(lambda: return_data(collect_return(
+        request.account_role, request.account,
+        request.data.get('try_order_item_id'), request.data.get('condition'),
+        request.data.get('tag_intact'), request.data.get('scanned_tag')
+    )))
+
 
 
 @api_view(['POST'])

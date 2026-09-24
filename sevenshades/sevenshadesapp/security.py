@@ -23,7 +23,9 @@ CUSTOMER_FIELDS = {'customer_tickets': 'mobileno', 'create_ticket': 'mobileno',
 }
 ORDER_OPERATIONS = {'delivery_selection_update', 'submit_final_selection', 'final_payment_update', 'trial_return_items'}
 RIDER_OPERATIONS = {'delivery_assignment_update_status', 'delivery_rider_tasks',
-                    'scan_tamper_proof_tag', 'process_return'}
+                    'scan_tamper_proof_tag', 'process_return', 'rider_tickets', 'rider_create_ticket',
+                    'optimize_route'}
+
 
 
 def failure(message, status=403):
@@ -62,8 +64,12 @@ def authenticate_account(request, role, identifier, password):
     cache.add(key, 0, timeout=300)
     if cache.incr(key) > 10:
         return None, failure('Too many login attempts. Please try again later.', 429)
-    field = {'customer': 'mobileno', 'admin': 'emailid', 'rider': 'phone'}[role]
-    account = ACCOUNTS[role].objects.filter(**{field: identifier}).first()
+    if role == 'rider':
+        from django.db.models import Q
+        account = ACCOUNTS['rider'].objects.filter(Q(phone=identifier) | Q(rider_id=identifier)).first()
+    else:
+        field = {'customer': 'mobileno', 'admin': 'emailid'}[role]
+        account = ACCOUNTS[role].objects.filter(**{field: identifier}).first()
     if not account:
         make_password(password)  # Keep missing-account checks comparable to password checks.
         return None, failure('Invalid credentials', 401)

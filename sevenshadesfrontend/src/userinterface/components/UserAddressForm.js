@@ -50,7 +50,8 @@ export default function UserAddressForm() {
   const [addressList, setAddressList] = useState([]);
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(-1);
   const [deliveryMode, setDeliveryMode] = useState('standard');
-  const [deliverySlot, setDeliverySlot] = useState('10:00 AM - 02:00 PM (North Zone)');
+  const [deliverySlot, setDeliverySlot] = useState('10:00 AM - 02:00 PM');
+  const [deliveryDate, setDeliveryDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [billingPaymentMode, setBillingPaymentMode] = useState('upi');
   const [editingAddress, setEditingAddress] = useState(null);
 
@@ -101,6 +102,8 @@ export default function UserAddressForm() {
     let result;
     if (editingAddress) {
       result = await postData('address_update', {
+        id: editingAddress.id,
+        address_id: editingAddress.id,
         mobile: mobileno,
         old_address: editingAddress.address,
         old_city: editingAddress.city,
@@ -152,6 +155,8 @@ export default function UserAddressForm() {
     if (!confirmDelete) return;
 
     const result = await postData('address_delete', {
+      id: addressItem.id,
+      address_id: addressItem.id,
       mobile: mobileno,
       old_address: addressItem.address,
       old_city: addressItem.city,
@@ -208,7 +213,9 @@ export default function UserAddressForm() {
           address_type: selectedAddress.address_type || 'Residential',
         },
         delivery_mode: deliveryMode,
-        delivery_slot: deliverySlot,
+        delivery_slot: deliveryMode === 'emergency_sos' ? 'Immediate SOS Delivery (90-120 mins)' : deliverySlot,
+        delivery_date: deliveryDate,
+        scheduled_date: deliveryDate,
         try_payment_mode: billingAmount > 0 ? billingPaymentMode : 'free',
         items: billingItems.map((item) => ({
           product_details_id: item.id,
@@ -491,10 +498,33 @@ export default function UserAddressForm() {
                   {deliveryMode === 'standard' && (
                     <Box sx={{ mt: 1.5 }}>
                       <Typography variant="caption" sx={{ fontWeight: 700, color: '#374151' }}>
+                        Scheduled Delivery Date:
+                      </Typography>
+                      <Stack direction="row" spacing={1} sx={{ mt: 0.5, mb: 1.5 }}>
+                        {[0, 1, 2].map((offset) => {
+                          const d = new Date();
+                          d.setDate(d.getDate() + offset);
+                          const iso = d.toISOString().slice(0, 10);
+                          const label = offset === 0 ? 'Today' : offset === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                          return (
+                            <Button
+                              key={iso}
+                              size="small"
+                              variant={deliveryDate === iso ? 'contained' : 'outlined'}
+                              onClick={(e) => { e.stopPropagation(); setDeliveryDate(iso); }}
+                              sx={{ fontSize: 11, fontWeight: 700, py: 0.5, bgcolor: deliveryDate === iso ? '#111827' : undefined }}
+                            >
+                              {label}
+                            </Button>
+                          );
+                        })}
+                      </Stack>
+
+                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#374151' }}>
                         Route Slot:
                       </Typography>
                       <Stack spacing={0.5} sx={{ mt: 0.5 }}>
-                        {['10:00 AM - 02:00 PM (North Zone)', '04:00 PM - 08:00 PM (South Zone)'].map((slot) => (
+                        {['10:00 AM - 02:00 PM', '02:00 PM - 06:00 PM', '06:00 PM - 09:00 PM'].map((slot) => (
                           <Button
                             key={slot}
                             size="small"

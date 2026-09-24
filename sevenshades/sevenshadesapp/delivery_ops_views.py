@@ -3,7 +3,8 @@ from rest_framework.decorators import api_view
 from django.utils import timezone
 import requests
 from django.db import transaction, OperationalError
-from .delivery_workflow import assign_order, advance_assignment, generate_batches
+import uuid
+from .delivery_workflow import assign_order, advance_assignment, generate_batches, reassign_order
 from .inventory_workflow import InventoryError
 from .inventory_workflow import lock_order
 from django.contrib.auth.hashers import make_password
@@ -26,9 +27,14 @@ def DeliveryRiderCreate(request):
             validate_password(password)
         except ValidationError as exc:
             return failure(' '.join(exc.messages), 400)
-        rider_count = DeliveryRider.objects.count() + 1
+
+        while True:
+            candidate_id = f'RDR-{uuid.uuid4().hex[:8].upper()}'
+            if not DeliveryRider.objects.filter(rider_id=candidate_id).exists():
+                break
+
         rider = DeliveryRider.objects.create(
-            rider_id=f'RDR-{rider_count:04d}',
+            rider_id=candidate_id,
             name=request.data.get('name', ''),
             phone=phone,
             password=make_password(password),
@@ -42,6 +48,46 @@ def DeliveryRiderCreate(request):
         return JsonResponse({'status': False, 'message': 'Unable to create rider'}, safe=False)
 
 
+@api_view(['POST'])
+def DeliveryRiderUpdate(request):
+    try:
+        rider_id = request.data.get('rider_id')
+        rider = DeliveryRider.objects.filter(rider_id=rider_id).first()
+        if not rider:
+            return JsonResponse({'status': False, 'message': 'Rider not found'}, status=404)
+        if 'status' in request.data:
+            new_status = request.data.get('status')
+            if new_status in ('Active', 'Inactive'):
+                rider.status = new_status
+        if 'zone' in request.data and request.data.get('zone'):
+            rider.zone = request.data.get('zone')
+        if 'bike_number' in request.data and request.data.get('bike_number'):
+            rider.bike_number = request.data.get('bike_number')
+        if 'name' in request.data and request.data.get('name'):
+            rider.name = request.data.get('name')
+        rider.save()
+        return JsonResponse({'status': True, 'message': 'Rider updated successfully', 'data': DeliveryRiderSerializer(rider).data})
+    except Exception as e:
+        print('DeliveryRiderUpdate error:', e)
+        return JsonResponse({'status': False, 'message': 'Unable to update rider'}, status=400)
+
+
+@api_view(['POST'])
+def DeliveryOrderReassign(request):
+    try:
+        order_id = request.data.get('order_id')
+        new_rider_id = request.data.get('rider_id')
+        if not order_id or not new_rider_id:
+            return failure('Order ID and new Rider ID are required.', 400)
+        assignment = reassign_order(order_id, new_rider_id)
+        return JsonResponse({'status': True, 'message': 'Order reassigned successfully', 'data': DeliveryAssignmentWithRefSerializer(assignment).data})
+    except InventoryError as exc:
+        return failure(str(exc), 400)
+    except Exception as e:
+        print('DeliveryOrderReassign error:', e)
+        return JsonResponse({'status': False, 'message': 'Unable to reassign order'}, status=400)
+
+
 @api_view(['GET'])
 def DeliveryRiderList(request):
     try:
@@ -49,15 +95,16 @@ def DeliveryRiderList(request):
         return JsonResponse({'status': True, 'data': DeliveryRiderSerializer(riders, many=True).data}, safe=False)
     except Exception as e:
         print('DeliveryRiderList error:', e)
-        return JsonResponse({'status': False, 'data': []}, safe=False)
+        return JsonResponse({'status': False, 'data': [], 'message': 'Failed to fetch riders'}, status=500, safe=False)
 
 
 @api_view(['POST'])
 def DeliveryRiderLogin(request):
-    phone, password = request.data.get('phone'), request.data.get('password')
-    if not phone or not password or not isinstance(password, str):
-        return failure('Phone and password are required.', 400)
-    rider, error = authenticate_account(request, 'rider', phone, password)
+    identifier = request.data.get('phone') or request.data.get('rider_id') or request.data.get('username')
+    password = request.data.get('password')
+    if not identifier or not password or not isinstance(password, str):
+        return failure('Rider ID/Phone and password are required.', 400)
+    rider, error = authenticate_account(request, 'rider', identifier, password)
     if error is not None:
         return error
     return JsonResponse({'status': True, 'data': DeliveryRiderSerializer(rider).data})
@@ -85,7 +132,7 @@ def DeliveryAssignmentsList(request):
         return JsonResponse({'status': True, 'data': DeliveryAssignmentWithRefSerializer(assignments, many=True).data}, safe=False)
     except Exception as e:
         print('DeliveryAssignmentsList error:', e)
-        return JsonResponse({'status': False, 'data': []}, safe=False)
+        return JsonResponse({'status': False, 'data': [], 'message': 'Failed to fetch assignments'}, status=500, safe=False)
 
 
 @api_view(['POST'])
@@ -95,65 +142,18 @@ def DeliveryAssignmentUpdateStatus(request):
 
 
 @api_view(['POST'])
-def StartTrialTimer(request):
-    try:
-        assignment_id = request.data.get('assignment_id')
-        assignment = DeliveryAssignment.objects.filter(assignment_id=assignment_id).first()
-        if not assignment:
-            return JsonResponse({'status': False, 'message': 'Assignment not found'}, safe=False)
-
-        assignment.trial_start_time = timezone.now()
-        assignment.status = 'Trial Started'
-        assignment.save()
-
-        return JsonResponse({
-            'status': True,
-            'message': 'Trial timer started',
-            'start_time': assignment.trial_start_time
-        }, safe=False)
-    except Exception as e:
-        print('StartTrialTimer error:', e)
-        return JsonResponse({'status': False, 'message': 'Unable to start trial timer'}, safe=False)
-
-
-@api_view(['POST'])
-def EndTrialTimer(request):
-    try:
-        assignment_id = request.data.get('assignment_id')
-        assignment = DeliveryAssignment.objects.filter(assignment_id=assignment_id).first()
-        if not assignment:
-            return JsonResponse({'status': False, 'message': 'Assignment not found'}, safe=False)
-
-        assignment.trial_end_time = timezone.now()
-        assignment.status = 'Trial Ended'
-        assignment.save()
-
-        duration = (assignment.trial_end_time - assignment.trial_start_time).total_seconds() / 60 if assignment.trial_start_time else 0
-
-        return JsonResponse({
-            'status': True,
-            'message': 'Trial timer ended',
-            'end_time': assignment.trial_end_time,
-            'duration_minutes': round(duration, 2)
-        }, safe=False)
-    except Exception as e:
-        print('EndTrialTimer error:', e)
-        return JsonResponse({'status': False, 'message': 'Unable to end trial timer'}, safe=False)
-
-
-@api_view(['POST'])
 def DeliveryRiderTasks(request):
     try:
         phone = request.account.phone if request.account_role == 'rider' else request.data.get('phone')
         rider = DeliveryRider.objects.filter(phone=phone, status='Active').first()
         if not rider:
-            return JsonResponse({'status': False, 'message': 'Rider not found', 'data': []}, safe=False)
+            return JsonResponse({'status': False, 'message': 'Rider not found', 'data': []}, status=404, safe=False)
 
         assignments = DeliveryAssignment.objects.select_related('rider', 'try_order').filter(rider=rider).order_by('-id')
         return JsonResponse({'status': True, 'data': DeliveryAssignmentWithRefSerializer(assignments, many=True).data}, safe=False)
     except Exception as e:
         print('DeliveryRiderTasks error:', e)
-        return JsonResponse({'status': False, 'data': []}, safe=False)
+        return JsonResponse({'status': False, 'data': [], 'message': 'Failed to fetch rider tasks'}, status=500, safe=False)
 
 
 @api_view(['POST'])
@@ -162,17 +162,14 @@ def AssignSOSOrder(request):
         order_id = request.data.get('order_id')
         try_order = TryOrder.objects.filter(order_id=order_id, delivery_mode='emergency_sos').first()
         if not try_order:
-            return JsonResponse({'status': False, 'message': 'Invalid SOS order'}, safe=False)
+            return JsonResponse({'status': False, 'message': 'Invalid SOS order'}, status=404, safe=False)
 
-        # Basic logic: Find an active rider in the same city/zone
-        # In a real scenario, this would use geospatial data
         rider = DeliveryRider.objects.filter(zone=try_order.city, status='Active').first()
         if not rider:
-            # Fallback: any active rider
             rider = DeliveryRider.objects.filter(status='Active').first()
 
         if not rider:
-            return JsonResponse({'status': False, 'message': 'No active riders available for SOS'}, safe=False)
+            return JsonResponse({'status': False, 'message': 'No active riders available for SOS'}, status=400, safe=False)
 
         assignment_count = DeliveryAssignment.objects.count() + 1
         assignment = DeliveryAssignment.objects.create(
@@ -192,7 +189,7 @@ def AssignSOSOrder(request):
         }, safe=False)
     except Exception as e:
         print('AssignSOSOrder error:', e)
-        return JsonResponse({'status': False, 'message': 'Unable to assign SOS order'}, safe=False)
+        return JsonResponse({'status': False, 'message': 'Unable to assign SOS order'}, status=500, safe=False)
 
 
 @api_view(['POST'])
@@ -208,28 +205,131 @@ def DeliveryBatchList(request):
         order_ids=list(row.deliveryassignment_set.values_list('try_order__order_id', flat=True))) for row in rows]})
 
 
+import math
+
+
+def _haversine_km(lat1, lon1, lat2, lon2):
+    R = 6371.0  # Earth radius in kilometers
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2.0)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2.0)**2
+    c = 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
+    return R * c
+
+
 @api_view(['POST'])
 def OptimizeRoute(request):
     try:
         batch_id = request.data.get('batch_id')
         batch = DeliveryBatch.objects.filter(batch_id=batch_id).first()
         if not batch:
-            return JsonResponse({'status': False, 'message': 'Batch not found'}, safe=False)
+            return JsonResponse({'status': False, 'message': 'Batch not found'}, status=404, safe=False)
 
-        assignments = DeliveryAssignment.objects.filter(batch=batch)
-        
-        # 1. Get coordinates for each order (simplified: assume we have a way to get them)
-        # For now, we'll just return the order IDs in the batch as a placeholder for the route
-        order_ids = [a.try_order.order_id for a in assignments]
-        
-        # 2. Call OSRM API (placeholder for actual implementation)
-        # In a real scenario, we would geocode addresses and call OSRM
-        
+        assignments = list(DeliveryAssignment.objects.select_related('try_order', 'rider').filter(batch=batch))
+        if not assignments:
+            return JsonResponse({
+                'status': True,
+                'message': 'No orders in this batch to optimize',
+                'batch_id': batch.batch_id,
+                'order_sequence': [],
+                'total_distance_km': 0.0,
+                'estimated_duration_minutes': 0,
+                'waypoints': []
+            }, safe=False)
+
+        # Determine starting coordinates (Rider location, request coords, or city center)
+        rider = batch.rider
+        req_lat = request.data.get('start_lat')
+        req_lng = request.data.get('start_lng')
+        base_lat, base_lng = 22.7196, 75.8577  # Indore Center hub fallback
+        if req_lat is not None and req_lng is not None:
+            try:
+                base_lat, base_lng = float(req_lat), float(req_lng)
+            except (ValueError, TypeError):
+                pass
+        elif rider and rider.latitude is not None and rider.longitude is not None:
+            try:
+                base_lat, base_lng = float(rider.latitude), float(rider.longitude)
+            except (ValueError, TypeError):
+                pass
+
+        # Prepare unvisited stops
+        unvisited = []
+        for a in assignments:
+            order = a.try_order
+            order_lat = None
+            order_lng = None
+            if order.latitude is not None and order.longitude is not None:
+                try:
+                    order_lat = float(order.latitude)
+                    order_lng = float(order.longitude)
+                except (ValueError, TypeError):
+                    pass
+            if order_lat is None or order_lng is None:
+                # Deterministic offset for demo/orders without GPS
+                offset_val = (abs(hash(order.order_id)) % 200) / 1000.0
+                order_lat = base_lat + offset_val
+                order_lng = base_lng + offset_val
+
+            unvisited.append({
+                'order_id': order.order_id,
+                'assignment_id': a.assignment_id,
+                'address': f"{order.address_text}, {order.city} {order.postcode}".strip(),
+                'slot': order.delivery_slot,
+                'lat': order_lat,
+                'lng': order_lng,
+            })
+
+        # Nearest-Neighbor TSP heuristic
+        curr_lat, curr_lng = base_lat, base_lng
+        order_sequence = []
+        waypoints = []
+        total_distance = 0.0
+        total_time_mins = 0.0
+        stop_num = 1
+
+        while unvisited:
+            best_idx = 0
+            best_dist = float('inf')
+            for idx, stop in enumerate(unvisited):
+                dist = _haversine_km(curr_lat, curr_lng, stop['lat'], stop['lng'])
+                if dist < best_dist:
+                    best_dist = dist
+                    best_idx = idx
+
+            chosen = unvisited.pop(best_idx)
+            leg_distance = round(best_dist, 2)
+            total_distance += leg_distance
+            # Travel time assuming avg 25 km/h + 15 min doorstep trial window
+            leg_travel_mins = (leg_distance / 25.0) * 60.0
+            total_time_mins += leg_travel_mins + 15.0
+
+            order_sequence.append(chosen['order_id'])
+            waypoints.append({
+                'stop_number': stop_num,
+                'order_id': chosen['order_id'],
+                'assignment_id': chosen['assignment_id'],
+                'address': chosen['address'],
+                'delivery_slot': chosen['slot'],
+                'latitude': chosen['lat'],
+                'longitude': chosen['lng'],
+                'leg_distance_km': leg_distance,
+                'estimated_arrival_minutes': int(round(total_time_mins))
+            })
+            curr_lat, curr_lng = chosen['lat'], chosen['lng']
+            stop_num += 1
+
         return JsonResponse({
             'status': True,
-            'message': 'Route optimized (placeholder)',
-            'order_sequence': order_ids
+            'message': 'Route optimized successfully with nearest-neighbor sequencing',
+            'batch_id': batch.batch_id,
+            'order_sequence': order_sequence,
+            'waypoints': waypoints,
+            'total_distance_km': round(total_distance, 2),
+            'estimated_duration_minutes': int(round(total_time_mins)),
+            'stops_count': len(order_sequence)
         }, safe=False)
     except Exception as e:
         print('OptimizeRoute error:', e)
-        return JsonResponse({'status': False, 'message': 'Unable to optimize route'}, safe=False)
+        return JsonResponse({'status': False, 'message': 'Unable to optimize route'}, status=500, safe=False)
+

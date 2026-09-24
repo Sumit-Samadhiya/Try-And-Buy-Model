@@ -90,7 +90,14 @@ class CheckoutTests(TestCase):
         self.assertEqual(self.variant.qty, 1)
 
     def test_invalid_offer_falls_back_and_invalid_base_price_rejected(self):
-        for offer in [-100, 600]:
+        from django.db import IntegrityError, transaction
+        with transaction.atomic():
+            with self.assertRaises(IntegrityError):
+                self.variant.offerprice = -100
+                self.variant.save()
+        self.variant.refresh_from_db()
+
+        for offer in [0, 600]:
             self.variant.offerprice = offer
             self.variant.save()
             order = create_trial(self.user, self.payload())

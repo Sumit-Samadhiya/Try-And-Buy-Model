@@ -41,8 +41,34 @@ def create_trial(account, data):
         raise CheckoutError('Please complete your saved delivery address.')
     mode = data.get('delivery_mode', 'standard')
     slot = data.get('delivery_slot', '10 AM - 2 PM')
-    if mode not in ('standard', 'emergency_sos') or not isinstance(slot, str) or not slot.strip() or len(slot) > 50:
-        raise CheckoutError('Please select a valid delivery mode and time slot.')
+    if mode not in ('standard', 'emergency_sos'):
+        raise CheckoutError('Please select a valid delivery mode.')
+
+    today = timezone.localdate()
+    if mode == 'emergency_sos':
+        scheduled_date = today
+        slot = 'Immediate SOS Delivery (90-120 mins)'
+    else:
+        raw_date = data.get('delivery_date') or data.get('scheduled_date')
+        if raw_date:
+            try:
+                import datetime
+                if isinstance(raw_date, str):
+                    scheduled_date = datetime.date.fromisoformat(raw_date.strip())
+                elif isinstance(raw_date, datetime.date):
+                    scheduled_date = raw_date
+                else:
+                    raise ValueError
+            except Exception:
+                raise CheckoutError('Please select a valid scheduled delivery date (YYYY-MM-DD).')
+            if scheduled_date < today or scheduled_date > today + timedelta(days=3):
+                raise CheckoutError('Scheduled delivery date must be today or within the next 3 days.')
+        else:
+            scheduled_date = today
+
+        if not isinstance(slot, str) or not slot.strip() or len(slot) > 50:
+            raise CheckoutError('Please select a valid delivery time slot.')
+        slot = slot.strip()
     items = data.get('items')
     if not isinstance(items, list) or not 1 <= len(items) <= 4:
         raise CheckoutError('Choose 1 to 4 different variants for your home trial.')
@@ -80,15 +106,16 @@ def create_trial(account, data):
         order_id='TRL-' + uuid.uuid4().hex[:20].upper(), mobileno=user.pk,
         address_text=address.address, city=address.city, country=address.country, latitude=address.latitude, longitude=address.longitude,
         postcode=postcode, address_type=address.address_type, delivery_mode=mode, trial_type='SOS' if mode == 'emergency_sos' else 'STANDARD',
-        delivery_slot=slot, total_try_items=len(variants), reference_value=sum(price for _, price in variants),
+        delivery_slot=slot, scheduled_date=scheduled_date, total_try_items=len(variants), reference_value=sum(price for _, price in variants),
         reservation_expires_at=timezone.now()+timedelta(minutes=30) if fee else None,
         try_fee=fee, is_first_order=first, try_payment_mode='razorpay' if fee else 'free',
         try_payment_status='pending' if fee else 'not_required', status='AWAITING_TRIAL_PAYMENT' if fee else 'TRY_REQUESTED')
     for variant, price in variants:
+        tag_code = f"TAG-TRY-{uuid.uuid4().hex[:10].upper()}"
         TryOrderItem.objects.create(try_order=order, product_details=variant,
             product_name=variant.productid.productname, brand_name=variant.brandid.brandname,
             size=variant.size, color=variant.color, stock_reserved=True,
-            qty=1, unit_price=price, line_total=price)
+            qty=1, unit_price=price, line_total=price, security_tag=tag_code)
     from .order_events import order_changed
     order_changed(order, 'trial_payment_pending' if fee else 'order_created')
     return order

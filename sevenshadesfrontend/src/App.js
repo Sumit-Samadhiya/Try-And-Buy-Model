@@ -25,6 +25,7 @@ import DeliveryLogin from "./diliveryinterface/screens/DeliveryLogin";
 import DeliveryHome from "./diliveryinterface/screens/DeliveryHome";
 import DeliveryOrderDetails from "./diliveryinterface/screens/DeliveryOrderDetails";
 import DeliveryHelpCenter from "./diliveryinterface/screens/DeliveryHelpCenter";
+import NotFound from "./userinterface/screens/NotFound";
 
 function App() {
   const dispatch = useDispatch();
@@ -68,7 +69,7 @@ function App() {
         <Route element={<RequireSession role="rider"><DeliveryOrderDetails/></RequireSession>} path={"/delivery/order/:taskId"}/>
         <Route element={<RequireSession role="rider"><DeliveryHelpCenter/></RequireSession>} path={"/delivery/help-center"}/>
         <Route element={<Navigate to="/delivery/login" replace />} path={"/deliverydashboard"}/>
-
+        <Route path="*" element={<NotFound />} />
       </Routes>
       </BrowserRouter>
      

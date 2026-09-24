@@ -99,8 +99,8 @@ def expire_pending_trials(mobile=None, limit=100):
 
 
 @transaction.atomic
-def collect_return(role, account, item_id, condition, tag_intact=None):
-    if type(item_id) is not int or condition not in ('Good', 'Damaged') or type(tag_intact) is not bool:
+def collect_return(role, account, item_id, condition, tag_intact=None, scanned_tag=None):
+    if type(item_id) is not int or condition not in ('Good', 'Damaged') or (tag_intact is not None and type(tag_intact) is not bool):
         raise InventoryError('Select a trial item and its condition.')
     item = TryOrderItem.objects.select_related('try_order').filter(pk=item_id).first()
     if not item:
@@ -118,12 +118,34 @@ def collect_return(role, account, item_id, condition, tag_intact=None):
         raise InventoryError('Save the customer selection before recording returned items.')
     if FinalOrderItem.objects.filter(try_order_item=item).exists():
         raise InventoryError('This item is selected for purchase. Update the selection first.')
-    result = TrialReturn.objects.create(item=item, condition=condition, tag_intact=tag_intact, recorded_by=f'{role}:{account.pk}')
+
+    # Barcode / Security Tag Verification
+    tag_verified = False
+    clean_scanned = (str(scanned_tag).strip().upper() if scanned_tag else '')
+    expected_tag = (item.security_tag or '').strip().upper()
+
+    if clean_scanned:
+        if expected_tag and clean_scanned != expected_tag:
+            raise InventoryError(f'Scanned barcode "{clean_scanned}" does not match dispatched item security tag "{expected_tag}".')
+        tag_verified = True
+        tag_intact = True
+    elif tag_intact is None:
+        tag_intact = False
+
+    result = TrialReturn.objects.create(
+        item=item,
+        condition=condition,
+        tag_intact=bool(tag_intact),
+        tag_verified=tag_verified,
+        scanned_tag=clean_scanned,
+        recorded_by=f'{role}:{account.pk}'
+    )
     item.status = 'RETURNED'
     item.save(update_fields=['status'])
     from .order_events import order_changed
     order_changed(order, 'return_collected')
     return result
+
 
 
 @transaction.atomic

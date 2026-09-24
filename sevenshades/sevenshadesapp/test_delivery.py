@@ -17,7 +17,9 @@ class DeliveryTests(TestCase):
         cls.other = DeliveryRider.objects.create(rider_id='D2', phone='9000000063', password='Delivery-test-472!')
 
     def order(self, key='DORDER', **kwargs):
-        return TryOrder.objects.create(order_id=key, mobileno='9000000064', postcode='110001', delivery_slot='Morning', **kwargs)
+        defaults = {'mobileno': '9000000064', 'postcode': '110001', 'delivery_slot': 'Morning'}
+        defaults.update(kwargs)
+        return TryOrder.objects.create(order_id=key, **defaults)
 
     def test_assignment_updates_order_and_is_idempotent(self):
         order = self.order()
@@ -132,6 +134,83 @@ class DeliveryTests(TestCase):
         self.assertTrue(response.json()['status'])
         data = client.get('/api/delivery_batch_list').json()['data']
         self.assertEqual(data[0]['order_ids'], ['DORDER'])
+
+    def test_scheduled_delivery_date_and_slot_batching(self):
+        import datetime
+        from .serializer import DeliveryAssignmentWithRefSerializer
+        today = timezone.localdate()
+        tomorrow = today + datetime.timedelta(days=1)
+        self.order('ORD_TODAY', delivery_slot='10:00 AM - 02:00 PM', scheduled_date=today)
+        self.order('ORD_TOMORROW', delivery_slot='10:00 AM - 02:00 PM', scheduled_date=tomorrow)
+        batches = generate_batches(self.rider.rider_id)
+        # Separate batches created for different scheduled dates
+        self.assertEqual(len(batches), 2)
+
+    def test_trial_timer_overdue_and_sos_sla(self):
+        from .serializer import DeliveryAssignmentWithRefSerializer
+        import datetime
+        order = self.order('ORD_SLA', trial_type='SOS', delivery_mode='emergency_sos')
+        assignment = assign_order(order.order_id, self.rider.rider_id)
+        assignment.trial_start_time = timezone.now() - datetime.timedelta(minutes=20)
+        assignment.trial_end_time = timezone.now()
+        assignment.save()
+        serializer = DeliveryAssignmentWithRefSerializer(assignment)
+        self.assertTrue(serializer.data['is_sos'])
+        self.assertTrue(serializer.data['trial_overdue'])
+        self.assertGreater(serializer.data['trial_overdue_minutes'], 4.0)
+
+    def test_rider_zone_eligibility(self):
+        from .models import DeliveryZone
+        zone = DeliveryZone.objects.create(zone_name='Indore West', postcodes='452002, 452003')
+        
+        # Create a rider specifically bound to Indore West
+        zoned_rider = DeliveryRider.objects.create(rider_id='R_IND', phone='9000000099', password='Pass!', zone='Indore West')
+        
+        # 2 orders matching Indore West in same group, 1 order in different postcode (452010)
+        self.order('IND_1', postcode='452002', delivery_slot='Evening')
+        self.order('IND_2', postcode='452002', delivery_slot='Evening')
+        other = self.order('IND_OTHER', postcode='452010', delivery_slot='Evening')
+        
+        batches = generate_batches(zoned_rider.rider_id)
+        # Should only batch the 2 matching Indore West orders
+        self.assertEqual(len(batches), 1)
+        self.assertEqual(batches[0].deliveryassignment_set.count(), 2)
+        other.refresh_from_db()
+        self.assertIsNone(other.assigned_rider)
+
+    def test_batch_capacity_capped_at_five_orders(self):
+        # 7 orders in identical group
+        for i in range(7):
+            self.order(f'CAP_{i}', postcode='110001', delivery_slot='Night')
+        cap_batches = generate_batches(self.rider.rider_id)
+        # 7 orders must be split across batches of at most 5 orders: 5 + 2 = 2 batches
+        self.assertEqual(len(cap_batches), 2)
+        counts = sorted([b.deliveryassignment_set.count() for b in cap_batches])
+        self.assertEqual(counts, [2, 5])
+
+
+    def test_optimize_route_haversine_sequencing(self):
+        client = APIClient(enforce_csrf_checks=False)
+        token = client.get('/api/auth_csrf').json()['csrfToken']
+        client.post('/api/delivery_rider_login', {'phone': self.rider.phone, 'password': 'Delivery-test-472!'}, format='json', HTTP_X_CSRFTOKEN=token)
+        order1 = self.order('OPT_1', latitude=22.7196, longitude=75.8577)
+        order2 = self.order('OPT_2', latitude=22.7533, longitude=75.8937)
+        batch = DeliveryBatch.objects.create(batch_id='BAT-OPT-1', rider=self.rider, status='Pending')
+        from .delivery_workflow import attach
+        attach(order1, self.rider, batch)
+        attach(order2, self.rider, batch)
+
+        response = client.post('/api/optimize_route', {'batch_id': batch.batch_id}, format='json', HTTP_X_CSRFTOKEN=token)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['status'])
+        self.assertEqual(len(data['order_sequence']), 2)
+        self.assertGreater(data['total_distance_km'], 0.0)
+        self.assertGreater(data['estimated_duration_minutes'], 0)
+        self.assertEqual(len(data['waypoints']), 2)
+        self.assertIn('OPT_1', data['order_sequence'])
+
+
 
 
 class DeliveryConcurrencyTests(TransactionTestCase):
