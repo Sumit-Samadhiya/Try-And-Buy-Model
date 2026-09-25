@@ -2,6 +2,21 @@
 .fast2sms-key
 **/.fast2sms-key
 **/.local-secret
+**/.env*
+*.env*
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Databases and secrets
+*.sqlite3
+*.db
+sevenshades/db.sqlite3
+*.pem
+*.key
+*.cert
+
 **/__pycache__/
 *.py[cod]
 *$py.class
@@ -12,7 +27,6 @@ venv/
 ENV/
 env/
 **/node_modules/
-**/.env*
 .runtime/
 build/
 dist/
