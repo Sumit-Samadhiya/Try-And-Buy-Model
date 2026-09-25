@@ -78,10 +78,6 @@ def create_trial(account, data):
         raise CheckoutError('You already have an active order. Please complete it first.')
     first = not orders.exclude(status='CANCELLED', dispatched_at__isnull=True).exists()
     fee = 99 if mode == 'emergency_sos' else (0 if first else 49)
-    if fee:
-        from .payments import gateway_configured
-        if not gateway_configured():
-            raise CheckoutError('Online trial-fee payment is not configured yet. Please contact support.')
     variants = []
     seen = set()
     for item in items:
@@ -107,15 +103,15 @@ def create_trial(account, data):
         address_text=address.address, city=address.city, country=address.country, latitude=address.latitude, longitude=address.longitude,
         postcode=postcode, address_type=address.address_type, delivery_mode=mode, trial_type='SOS' if mode == 'emergency_sos' else 'STANDARD',
         delivery_slot=slot, scheduled_date=scheduled_date, total_try_items=len(variants), reference_value=sum(price for _, price in variants),
-        reservation_expires_at=timezone.now()+timedelta(minutes=30) if fee else None,
-        try_fee=fee, is_first_order=first, try_payment_mode='razorpay' if fee else 'free',
-        try_payment_status='pending' if fee else 'not_required', status='AWAITING_TRIAL_PAYMENT' if fee else 'TRY_REQUESTED')
+        reservation_expires_at=None,
+        try_fee=fee, is_first_order=first, try_payment_mode='cash',
+        try_payment_status='cod', status='TRY_REQUESTED')
     for variant, price in variants:
         tag_code = f"TAG-TRY-{uuid.uuid4().hex[:10].upper()}"
         TryOrderItem.objects.create(try_order=order, product_details=variant,
             product_name=variant.productid.productname, brand_name=variant.brandid.brandname,
             size=variant.size, color=variant.color, stock_reserved=True,
             qty=1, unit_price=price, line_total=price, security_tag=tag_code)
-    from .order_events import order_changed
-    order_changed(order, 'trial_payment_pending' if fee else 'order_created')
+    from sevenshadesapp.order_events import order_changed
+    order_changed(order, 'order_created')
     return order

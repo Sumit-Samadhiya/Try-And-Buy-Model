@@ -83,11 +83,17 @@ class CheckoutTests(TestCase):
         self.assertEqual(TryOrder.objects.count(), 1)
 
     def test_paid_trial_and_bad_mode_do_not_reserve_stock(self):
-        for mode in ['emergency_sos', 'free-for-me']:
+        for mode in ['free-for-me', 'invalid_slot']:
             with self.assertRaises(CheckoutError):
                 create_trial(self.user, self.payload(delivery_mode=mode))
         self.variant.refresh_from_db()
         self.assertEqual(self.variant.qty, 1)
+        sos_order = create_trial(self.user, self.payload(delivery_mode='emergency_sos'))
+        self.assertEqual(sos_order.try_fee, 99)
+        self.assertEqual(sos_order.try_payment_mode, 'cash')
+        sos_order.delete()
+        self.variant.qty = 1
+        self.variant.save()
 
     def test_invalid_offer_falls_back_and_invalid_base_price_rejected(self):
         from django.db import IntegrityError, transaction

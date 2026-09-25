@@ -178,63 +178,51 @@ class DoorstepWorkflowTests(TestCase):
         rows = self.post(self.admin_client, 'rider_suggestions', {'order_id': self.order_id}).json()['data']
         self.assertIsNone(next(row for row in rows if row['rider_id'] == self.rider.rider_id)['distance_km'])
 
-    @override_settings(RAZORPAY_KEY_ID='rzp_test_example', RAZORPAY_KEY_SECRET='test-secret', RAZORPAY_WEBHOOK_SECRET='webhook-secret')
-    @patch('sevenshadesapp.payments.gateway_request')
-    def test_paid_trial_then_online_final_capture_signatures_webhooks_and_replay(self, gateway):
+    def test_emergency_sos_cash_on_delivery_workflow_and_zero_purchase_cod_fee(self):
+        # 1. Emergency SOS trial order places directly with ₹0 prepaid (COD mode)
         order = self.place('emergency_sos')
-        self.assertEqual(order.status, 'AWAITING_TRIAL_PAYMENT')
-        self.assertEqual(self.post(self.admin_client, 'delivery_assign_order', {'order_id': self.order_id, 'rider_id': self.rider.rider_id}).status_code, 409)
-        gateway.return_value = {'id': 'order_Trial', 'amount': 9900, 'currency': 'INR'}
-        trial = self.post(self.customer, 'payment_create', {'order_id': self.order_id, 'purpose': 'trial', 'amount': 1})
-        self.assertEqual(trial.json()['data']['amount'], 9900)
-        entity = {'id': 'pay_Trial', 'order_id': 'order_Trial', 'amount': 9900, 'currency': 'INR', 'status': 'captured'}
-        gateway.return_value = entity
-        data = {'razorpay_order_id': 'order_Trial', 'razorpay_payment_id': 'pay_Trial', 'razorpay_signature': 'forged'}
-        self.assertEqual(self.post(self.customer, 'payment_verify', data).status_code, 409)
-        data['razorpay_signature'] = hmac.new(b'test-secret', b'order_Trial|pay_Trial', hashlib.sha256).hexdigest()
-        self.assertTrue(self.post(self.customer, 'payment_verify', data).json()['status'])
-        self.assertTrue(self.post(self.customer, 'payment_verify', data).json()['status'])
-        order.refresh_from_db()
-        self.assertTrue(order.trial_fee_paid)
         self.assertEqual(order.status, 'TRY_REQUESTED')
-        self.assertEqual(order.payment_status, 'PARTIAL_TRIAL_FEE')
+        self.assertEqual(order.try_fee, 99)
+        self.assertEqual(order.try_payment_mode, 'cash')
+        self.assertEqual(order.try_payment_status, 'cod')
+
+        # 2. Assignment to rider succeeds immediately without waiting for prepaid payment
         self.doorstep()
-        bill = self.bill()
-        self.assertEqual((bill['wallet_credit'], bill['final_payable']), (99, 801))
-        self.approve(mode='razorpay')
-        gateway.return_value = {'id': 'order_Final', 'amount': 80100, 'currency': 'INR'}
-        payload = {'order_id': self.order_id, 'purpose': 'final', 'bill_revision': 1}
-        self.assertTrue(self.post(self.customer, 'payment_create', payload).json()['status'])
-        calls = gateway.call_count
-        self.assertTrue(self.post(self.customer, 'payment_create', payload).json()['status'])
-        self.assertEqual(gateway.call_count, calls)
-        self.assertEqual(self.post(self.rider_client, 'submit_final_selection', {'order_id': self.order_id, 'selected_items': []}).status_code, 409)
-        self.assertEqual(self.post(self.rider_client, 'final_payment_update', {'order_id': self.order_id, 'bill_revision': 1, 'payment_mode': 'cash', 'payment_status': 'paid'}).status_code, 409)
-        entity = {'id': 'pay_Final', 'order_id': 'order_Final', 'amount': 80100, 'currency': 'INR', 'status': 'captured'}
-        raw = json.dumps({'event': 'payment.captured', 'payload': {'payment': {'entity': entity}}})
-        signature = hmac.new(b'webhook-secret', raw.encode(), hashlib.sha256).hexdigest()
-        gateway.return_value = dict(entity, amount=1)
-        self.assertEqual(self.customer.post('/payments/razorpay/webhook', raw, content_type='application/json', HTTP_X_RAZORPAY_SIGNATURE=signature).status_code, 409)
-        gateway.return_value = entity
-        self.assertEqual(self.customer.post('/payments/razorpay/webhook', raw, content_type='application/json', HTTP_X_RAZORPAY_SIGNATURE='bad').status_code, 403)
-        gateway.return_value = {'items': [dict(entity, status='authorized')]}
-        self.assertEqual(self.post(self.customer, 'payment_reconcile', payload).status_code, 409)
-        self.assertEqual(self.post(self.other_client, 'payment_reconcile', payload).status_code, 409)
-        self.assertEqual(self.post(self.customer, 'payment_reconcile', dict(payload, bill_revision={})).status_code, 400)
-        gateway.return_value = {'items': [entity]}
-        self.assertTrue(self.post(self.customer, 'payment_reconcile', payload).json()['status'])
-        gateway.return_value = entity
-        for _ in range(2):
-            self.assertTrue(self.customer.post('/payments/razorpay/webhook', raw, content_type='application/json', HTTP_X_RAZORPAY_SIGNATURE=signature).json()['status'])
-        self.assertEqual(GatewayPayment.objects.filter(state='CAPTURED').count(), 2)
-        self.assertEqual(FinalOrder.objects.get(try_order=order).payment_status, 'paid')
-        self.assertEqual(self.admin_client.get('/api/get_order_analytics').json()['data']['total_revenue'], 900)
+
+        # 3. Customer selects 1 item to purchase; urgent delivery fee is waived (effectively free)
+        bill = self.bill(count=1)
+        self.assertEqual(bill['items_total'], 450)
+        self.assertEqual(bill['final_payable'], 450)
+        self.assertEqual(bill['payment_mode'], '')
+
+        # 4. Customer approves COD payment
+        self.approve(mode='cash')
+        approved_final = FinalOrder.objects.get(try_order=order)
+        self.assertEqual(approved_final.payment_mode, 'cash')
+        self.assertEqual(approved_final.payment_status, 'pending')
+
+        # 5. Rider physically collects ₹450 cash at doorstep
+        cash = {'order_id': self.order_id, 'bill_revision': bill['bill_revision'], 'payment_mode': 'cash', 'payment_status': 'paid'}
+        self.assertTrue(self.post(self.rider_client, 'final_payment_update', cash).json()['status'])
+        approved_final.refresh_from_db()
+        self.assertEqual(approved_final.payment_status, 'paid')
+
+        # 6. Delivery completed and receipt available
+        complete = {'assignment_id': self.assignment_id, 'status': 'Delivered'}
+        self.collect(start=1)
+        self.assertTrue(self.post(self.rider_client, 'delivery_assignment_update_status', complete).json()['status'])
+        self.assertEqual(OrderReceipt.objects.count(), 1)
+        receipt = self.customer.get('/api/receipt_download', {'order_id': self.order_id})
+        self.assertEqual(receipt.status_code, 200)
+        self.assertIn('450', receipt.content.decode())
 
     @override_settings(RAZORPAY_KEY_ID='rzp_test_example', RAZORPAY_KEY_SECRET='test-secret')
     @patch('sevenshadesapp.payments.gateway_request')
     def test_uncertain_gateway_creation_does_not_create_second_payment(self, gateway):
         from .inventory_workflow import InventoryError
-        self.place('emergency_sos')
+        order = self.place('emergency_sos')
+        order.status = 'AWAITING_TRIAL_PAYMENT'
+        order.save()
         gateway.side_effect = InventoryError('Gateway timeout')
         payload = {'order_id': self.order_id, 'purpose': 'trial'}
         self.assertEqual(self.post(self.customer, 'payment_create', payload).status_code, 409)

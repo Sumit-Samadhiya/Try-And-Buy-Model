@@ -154,8 +154,8 @@ export default function MyBag(props) {
                     <div><h3>On purchase</h3></div>
                 </div>
                 <div className="summary-row">
-                    <div><h3>Billing Amount:</h3></div>
-                    <div><h3>₹{payableAmount}</h3></div>
+                    <div><h3>Upfront Payment:</h3></div>
+                    <div><h3>₹0 (Cash on Delivery)</h3></div>
                 </div>
                 <div className="billing-items-wrap">
                     <div className="trial-title">Items In This Billing</div>
@@ -173,15 +173,9 @@ export default function MyBag(props) {
                 <Alert severity="info" style={{ marginTop: 10 }}>
                     Delivery timing confirmation ke liye order place karne ke baad aapko call aayega.
                 </Alert>
-                {isFirstOrder ? (
-                    <Alert severity="success" style={{ marginTop: 10 }}>
-                        First order hai, isliye free trial billing hi show ho rahi hai.
-                    </Alert>
-                ) : (
-                    <Alert severity="warning" style={{ marginTop: 10 }}>
-                        This is not the first order. ₹49 trial billing address page par payment mode ke saath dikhegi.
-                    </Alert>
-                )}
+                <Alert severity="success" style={{ marginTop: 10 }}>
+                    100% Cash on Delivery: Koi prepaid charge nahi lagega. Pasand aane par hi rider ko cash dein!
+                </Alert>
                 <div className="checkout-button">
                     <Button onClick={handleScheduleTry} variant="contained" fullWidth style={{ backgroundColor: '#111', marginTop: 16 }} disabled={items.length === 0}>
                         Proceed To Address

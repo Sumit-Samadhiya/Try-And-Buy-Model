@@ -1,10 +1,10 @@
 """Versioned bills: only the customer may approve; the rider may collect cash."""
 from django.db import transaction
 from django.utils import timezone
-from .models import FinalOrder, FinalOrderItem, TryOrderItem, DeliveryAssignment, GatewayPayment
-from .inventory_workflow import lock_order, InventoryError
-from .security import owns_order
-from .order_events import order_changed
+from sevenshadesapp.models import FinalOrder, FinalOrderItem, TryOrderItem, DeliveryAssignment, GatewayPayment
+from sevenshadesapp.inventory_workflow import lock_order, InventoryError
+from sevenshadesapp.security import owns_order
+from sevenshadesapp.order_events import order_changed
 
 
 def approved(final):
@@ -23,8 +23,6 @@ def generate_bill(role, account, order_id, selected):
     current = FinalOrder.objects.filter(try_order=order).first()
     if current and current.payment_status == 'paid':
         raise InventoryError('A paid bill cannot be changed.')
-    if current and GatewayPayment.objects.filter(try_order=order, purpose='final', revision=current.bill_revision).exists():
-        raise InventoryError('An online payment is in progress. The bill is locked until payment is resolved.')
     items, seen = [], set()
     for entry in selected:
         if not isinstance(entry, dict) or type(entry.get('try_order_item_id')) is not int or type(entry.get('qty')) is not int:
@@ -43,8 +41,14 @@ def generate_bill(role, account, order_id, selected):
     else:
         current = FinalOrder(try_order=order, order_id='FIN-' + order.order_id)
     current.items_total = sum(item.line_total for item in items)
-    current.wallet_credit = min(current.items_total, order.try_fee) if items and order.trial_fee_paid else 0
-    current.final_payable = current.items_total - current.wallet_credit
+    if items:
+        # Items purchased: delivery charge is waived (effectively free)
+        current.wallet_credit = 0
+        current.final_payable = current.items_total
+    else:
+        # Zero items purchased: delivery charge is collected in cash at doorstep
+        current.wallet_credit = 0
+        current.final_payable = order.try_fee
     current.selected_items_count = len(items)
     current.payment_status, current.payment_mode, current.status = 'pending', '', 'awaiting_customer_approval'
     current.save()
@@ -68,16 +72,10 @@ def approve_bill(account, order_id, revision, mode):
         raise InventoryError('The bill has changed. Refresh and review the latest bill.')
     if final.payment_status == 'paid':
         return final
-    if order.status not in ('AWAITING_SELECTION_APPROVAL', 'SELECTION_SUBMITTED', 'PAYMENT_PENDING') or mode not in (None, 'cash', 'razorpay'):
+    if order.status not in ('AWAITING_SELECTION_APPROVAL', 'SELECTION_SUBMITTED', 'PAYMENT_PENDING') or mode not in (None, 'cash'):
         raise InventoryError('This bill cannot be approved with those payment details.')
     if mode is None and approved(final):
         return final
-    if mode == 'razorpay':
-        from .payments import gateway_configured
-        if not gateway_configured():
-            raise InventoryError('Online payments are not configured yet. You may choose cash.')
-    if GatewayPayment.objects.filter(try_order=order, purpose='final', revision=revision).exists() and final.payment_mode != mode:
-        raise InventoryError('The existing online payment must be resolved before changing payment mode.')
     final.approved_revision, final.approved_by, final.approved_at = revision, account.pk, timezone.now()
     final.payment_mode = mode or ''
     final.status = 'approved_awaiting_payment'

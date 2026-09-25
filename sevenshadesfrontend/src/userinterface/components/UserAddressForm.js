@@ -1,6 +1,5 @@
 import { validateFields } from '../../services/validation';
 import LocationButton from '../../services/LocationButton';
-import { payWithRazorpay } from '../../services/razorpayCheckout';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
@@ -216,7 +215,7 @@ export default function UserAddressForm() {
         delivery_slot: deliveryMode === 'emergency_sos' ? 'Immediate SOS Delivery (90-120 mins)' : deliverySlot,
         delivery_date: deliveryDate,
         scheduled_date: deliveryDate,
-        try_payment_mode: billingAmount > 0 ? billingPaymentMode : 'free',
+        try_payment_mode: 'cash',
         items: billingItems.map((item) => ({
           product_details_id: item.id,
           size: item.size,
@@ -229,14 +228,6 @@ export default function UserAddressForm() {
 
       const result = await postData('try_order_create', payload);
       if (result?.status && result?.data?.order_id) {
-        if (result.data.status === 'AWAITING_TRIAL_PAYMENT') {
-          try { await payWithRazorpay(result.data.order_id, 'trial'); }
-          catch (error) {
-            alert(error.message);
-            navigate('/maincart?order=' + encodeURIComponent(result.data.order_id));
-            return;
-          }
-        }
         billingItems.forEach((item) => {
           dispatch({ type: 'DELETE_PRODUCT', payLoad: [item.id] });
         });
@@ -591,36 +582,25 @@ export default function UserAddressForm() {
                   <Typography variant="body2" sx={{ fontWeight: 700 }}>₹{trialDetails.referenceValue || 0}</Typography>
                 </Stack>
                 <Stack direction="row" justifyContent="space-between">
-                  <Typography variant="body2" sx={{ color: '#6b7280' }}>Delivery & Trial Fee</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 800, color: '#111827' }}>₹{billingAmount}</Typography>
+                  <Typography variant="body2" sx={{ color: '#6b7280' }}>Upfront Payment</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 800, color: '#047857' }}>₹0 (No Prepaid Charges)</Typography>
+                </Stack>
+                <Stack direction="row" justifyContent="space-between">
+                  <Typography variant="body2" sx={{ color: '#6b7280' }}>Delivery Fee (if 0 items kept)</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: '#b45309' }}>₹{currentTryFee} COD</Typography>
                 </Stack>
               </Stack>
 
-              {billingAmount > 0 && (
-                <Box sx={{ mt: 2, mb: 2 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700, mb: 1.2, color: '#111827' }}>
-                    Choose Upfront Payment Mode
+              <Box sx={{ mt: 2, mb: 2 }}>
+                <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2, bgcolor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 800, color: '#166534' }}>
+                    💵 100% Cash on Delivery (COD)
                   </Typography>
-                  <Stack direction="row" spacing={1.2}>
-                    <Button
-                      fullWidth
-                      variant={billingPaymentMode === 'upi' ? 'contained' : 'outlined'}
-                      onClick={() => setBillingPaymentMode('upi')}
-                      sx={{ py: 1.2, fontWeight: 700, bgcolor: billingPaymentMode === 'upi' ? '#111827' : undefined }}
-                    >
-                      UPI
-                    </Button>
-                    <Button
-                      fullWidth
-                      variant={billingPaymentMode === 'cod' ? 'contained' : 'outlined'}
-                      onClick={() => setBillingPaymentMode('cod')}
-                      sx={{ py: 1.2, fontWeight: 700, bgcolor: billingPaymentMode === 'cod' ? '#111827' : undefined }}
-                    >
-                      COD
-                    </Button>
-                  </Stack>
-                </Box>
-              )}
+                  <Typography variant="caption" sx={{ color: '#15803d' }}>
+                    No prepaid charges or online payment needed. Hand cash directly to the rider at your doorstep.
+                  </Typography>
+                </Paper>
+              </Box>
 
               <Paper elevation={0} sx={{ p: 2, borderRadius: 3, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', mb: 2 }}>
                 <Typography variant="body2" sx={{ fontWeight: 700, color: '#111827', mb: 0.75 }}>
@@ -648,7 +628,7 @@ export default function UserAddressForm() {
                 onClick={handlePlaceOrder}
                 disabled={submitting || !billingItems.length}
               >
-                {billingAmount > 0 ? `Pay ₹${billingAmount} & Confirm Order` : 'Place Free Trial Order'}
+                Book Home Trial (Cash on Delivery)
               </Button>
             </Paper>
           </Grid>

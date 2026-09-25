@@ -46,7 +46,7 @@ def SettlementDetail(request):
         'trial_started_at': start.isoformat() if start else None,
         'trial_completed_at': assignment.trial_end_time.isoformat() if assignment and assignment.trial_end_time else None,
         'trial_ends_at': (start + timedelta(minutes=15)).isoformat() if start else None,
-        'server_time': timezone.now().isoformat(), 'online_available': gateway_configured(),
+        'server_time': timezone.now().isoformat(), 'online_available': False,
         'receipt_number': receipt.number if receipt else None,
     }})
 
@@ -59,7 +59,7 @@ def CustomerApproveBill(request):
 
 @api_view(['GET'])
 def PaymentCapabilities(request):
-    return JsonResponse({'status': True, 'data': {'razorpay': gateway_configured(), 'tax_invoice': False}})
+    return JsonResponse({'status': True, 'data': {'cod_only': True, 'razorpay': False, 'tax_invoice': False}})
 
 
 @api_view(['POST'])

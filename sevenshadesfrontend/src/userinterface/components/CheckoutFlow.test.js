@@ -37,7 +37,7 @@ test('bag preserves size and saved address in checkout and prevents double submi
   fireEvent.click(screen.getByRole('button', { name: /Proceed To Address/i }));
   await screen.findAllByText('Saved Home');
   expect(screen.getByText(/Once your purchase is finalized, returns and refunds are not available/)).toBeInTheDocument();
-  const button = screen.getByRole('button', { name: /Place Free Trial Order/i });
+  const button = screen.getByRole('button', { name: /Book Home Trial|Place Free Trial Order/i });
   fireEvent.click(button);
   fireEvent.click(button);
   await waitFor(() => expect(postData.mock.calls.filter(([endpoint]) => endpoint === 'try_order_create')).toHaveLength(1));

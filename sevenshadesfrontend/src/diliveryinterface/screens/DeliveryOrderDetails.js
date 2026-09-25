@@ -73,9 +73,8 @@ export default function DeliveryOrderDetails({ orderId, embedded = false }) {
           <Typography variant="h6">{data.customer_approved ? 'Approved bill' : 'Selection awaiting approval'} · version {final.bill_revision}</Typography>
           {data.customer_approved && <Typography>Items ₹{final.items_total} − verified trial fee ₹{final.wallet_credit} = ₹{final.final_payable}</Typography>}
           <Alert severity={data.customer_approved ? 'success' : 'warning'}>{data.customer_approved ? 'Customer approved this bill in their app.' : 'Waiting for customer in-app approval. Rider cannot approve on their behalf.'}</Alert>
-          <Typography>Payment: {final.payment_status} · {final.payment_mode || 'Not chosen by customer'}</Typography>
-          {final.payment_mode === 'cash' && final.payment_status !== 'paid' && <Button variant="contained" disabled={busy || !data.customer_approved} onClick={() => action('final_payment_update', { order_id: taskId, bill_revision: final.bill_revision, payment_mode: 'cash', payment_status: 'paid' })}>Confirm ₹{final.final_payable} Cash Physically Received</Button>}
-          {final.payment_mode === 'razorpay' && final.payment_status !== 'paid' && <Typography>Customer completes UPI/online payment on their phone. Await server verification.</Typography>}
+          <Typography>Payment Mode: Cash on Delivery (COD) · Status: {final.payment_status}</Typography>
+          {final.payment_status !== 'paid' && <Button variant="contained" disabled={busy || !data.customer_approved} onClick={() => action('final_payment_update', { order_id: taskId, bill_revision: final.bill_revision, payment_mode: 'cash', payment_status: 'paid' })}>Confirm ₹{final.final_payable} Cash Physically Received</Button>}
         </Stack></Paper>}
         {final && <TrialReturnCollection key={final.bill_revision} orderId={taskId} onCollected={load} />}
         {stage !== 'Delivered' && <Button variant="contained" color="success" disabled={busy || !data.customer_approved || final?.payment_status !== 'paid' || !collected || stage !== 'Trial Completed'} onClick={() => advance('Delivered')}>Confirm Delivery</Button>}

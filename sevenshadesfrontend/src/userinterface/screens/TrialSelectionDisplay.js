@@ -25,7 +25,7 @@ export default function TrialSelectionDisplay() {
   const [loading, setLoading] = useState(true);
   const [trialOrder, setTrialOrder] = useState(null);
   const [selectedItemIds, setSelectedItemIds] = useState([]);
-  const [paymentMode, setPaymentMode] = useState('upi');
+  const [paymentMode, setPaymentMode] = useState('cash');
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -138,12 +138,8 @@ export default function TrialSelectionDisplay() {
         </Box>
 
         <Box sx={{ mt: 3 }}>
-          <Typography sx={{ fontWeight: 700, mb: 1 }}>Preferred Payment Mode</Typography>
-          <Stack direction="row" spacing={1}>
-            <Button variant={paymentMode === 'upi' ? 'contained' : 'outlined'} onClick={() => setPaymentMode('upi')}>UPI</Button>
-            <Button variant={paymentMode === 'card' ? 'contained' : 'outlined'} onClick={() => setPaymentMode('card')}>Card</Button>
-            <Button variant={paymentMode === 'cash' ? 'contained' : 'outlined'} onClick={() => setPaymentMode('cash')}>Cash</Button>
-          </Stack>
+          <Typography sx={{ fontWeight: 700, mb: 1 }}>Payment Mode</Typography>
+          <Chip label="💵 Cash on Delivery (COD)" color="success" sx={{ fontWeight: 700 }} />
         </Box>
 
         <Paper sx={{ mt: 3, p: 2, borderRadius: 3, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
