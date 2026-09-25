@@ -10,7 +10,12 @@ export default function ProductByCategory(props) {
     const navigate = useNavigate();
 
     const handleNextPage = (item) => {
-        navigate('/productdetailspage', { state: { productid: item.id } });
+        const queryParams = new URLSearchParams();
+        if (item.id) queryParams.set('productid', item.id);
+        if (item.color) queryParams.set('color', item.color);
+        navigate(`/productdetailspage?${queryParams.toString()}`, {
+            state: { productid: item.id, color: item.color, size: item.available_sizes?.[0] || '' }
+        });
     };
 
     const items = props.data;
@@ -29,7 +34,7 @@ export default function ProductByCategory(props) {
             const isUnavailable = item.is_available === false || item.variants_count === 0;
             return (
                 <div
-                    key={index}
+                    key={item.listing_id || index}
                     onClick={() => handleNextPage(item)}
                     className="product-item"
                     style={{ position: 'relative', opacity: isUnavailable ? 0.78 : 1 }}
@@ -73,11 +78,34 @@ export default function ProductByCategory(props) {
                     )}
                     <img src={imageUrl(item.icon)} alt={item.productname || ''} className="product-image" />
                     <div className="product-details">
-                        <div style={{ fontWeight: 600 }}>{item.productname}</div>
-                        <div style={{ fontSize: '13px', color: '#6b7280' }}>{item.description}</div>
-                        {item.variants_count > 0 && (
-                            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
-                                {item.variants_count} option{item.variants_count > 1 ? 's' : ''} available
+                        <div style={{ fontWeight: 600 }}>{item.display_title || item.productname}</div>
+                        {item.color && (
+                            <div style={{ fontSize: '12px', color: '#4b5563', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.color.toLowerCase(), display: 'inline-block', border: '1px solid rgba(0,0,0,0.2)' }} />
+                                Color: <span style={{ fontWeight: 600, color: '#111827' }}>{item.color}</span>
+                            </div>
+                        )}
+                        <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '2px' }}>{item.description}</div>
+                        
+                        {item.available_sizes && item.available_sizes.length > 0 && (
+                            <div style={{ display: 'flex', gap: '4px', marginTop: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                <span style={{ fontSize: '11px', color: '#6b7280', fontWeight: 600 }}>Sizes:</span>
+                                {item.available_sizes.map((sz) => (
+                                    <span
+                                        key={sz}
+                                        style={{
+                                            fontSize: '11px',
+                                            fontWeight: 700,
+                                            padding: '1px 5px',
+                                            borderRadius: '4px',
+                                            backgroundColor: '#f3f4f6',
+                                            color: '#1f2937',
+                                            border: '1px solid #e5e7eb',
+                                        }}
+                                    >
+                                        {sz}
+                                    </span>
+                                ))}
                             </div>
                         )}
                         {(item.min_offerprice > 0 || item.min_price > 0) && (
@@ -113,6 +141,7 @@ export default function ProductByCategory(props) {
             );
         });
     };
+
 
     return (
         <div className={sm_matches ? "product-container-2" : "product-container"}>
