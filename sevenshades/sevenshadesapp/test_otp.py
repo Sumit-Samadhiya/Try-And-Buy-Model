@@ -7,7 +7,7 @@ from .models import SignUp, OtpChallenge
 
 PASSWORD = 'Example-Strong-472!'
 
-@override_settings(DEBUG=True, OTP_TEST_MODE=True)
+@override_settings(DEBUG=True, OTP_TEST_MODE=True, FAST2SMS_API_KEY='')
 class OtpTests(TestCase):
     def setUp(self):
         self.client = APIClient(enforce_csrf_checks=True)

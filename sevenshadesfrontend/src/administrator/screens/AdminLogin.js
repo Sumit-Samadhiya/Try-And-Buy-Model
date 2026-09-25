@@ -1,5 +1,6 @@
 import * as React from 'react';
 import Avatar from '@mui/material/Avatar';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
@@ -36,23 +37,21 @@ const defaultTheme = createTheme();
 
 export default function AdminLogin() {
   const [emailid,setEmailId]=useState('')
-  const [password,setPassword]=useState('') 
-  var navigate=useNavigate()
+  const [password,setPassword]=useState('')
+  const [error,setError]=useState('')
+  const navigate=useNavigate()
   const handleSubmit = async() => {
-    var body = {emailid, password}
-    var result = await postData('check_admin_login',body)
+    setError('')
+    const result = await postData('check_admin_login',{emailid, password})
     if(result?.status){
       clearCachedAccounts();
-    window.dispatchEvent(new Event('session-cleared'));
-      const {id,emailid,mobileno,picture,adminname}=result.data[0]
-      localStorage.setItem('ADMIN',JSON.stringify({id,emailid,mobileno,picture,adminname}))
+      window.dispatchEvent(new Event('session-cleared'));
+      // The httpOnly session cookie is the only credential; nothing about the
+      // admin is cached in localStorage.
       navigate('/admindashboard')
-
-
     }
     else
-      alert(result?.message || 'Unable to sign in')
-  
+      setError(result?.message || 'Unable to sign in')
   };
 
   return (
@@ -74,6 +73,7 @@ export default function AdminLogin() {
             Sign in
           </Typography>
           <Box sx={{ mt: 1 }}>
+            {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
             <TextField
               margin="normal"
               required

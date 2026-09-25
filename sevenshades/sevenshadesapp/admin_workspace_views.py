@@ -1,7 +1,9 @@
 from datetime import date, datetime, time, timedelta
 from functools import wraps
+import re
 from django.db import transaction
-from django.db.models import Q, F, Sum
+from django.db.models import Q, F, Sum, Case, When, Value, CharField
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.utils import timezone
 from rest_framework.decorators import api_view
@@ -12,6 +14,21 @@ from .security import failure
 STATUSES = {value for value, label in TryOrder._meta.get_field('status').choices}
 TICKET_STATUSES = ('Open','In Progress','Resolved','Closed')
 PRIORITIES = ('Low','Normal','High','Urgent')
+PINCODE = re.compile(r'^[1-9][0-9]{5}$')
+
+def clean_pincodes(raw):
+    """Validate a comma-separated pincode list and return it normalised.
+
+    Raises ValueError naming the first invalid entry. Indian PINs are six
+    digits and never start with zero.
+    """
+    codes = [code.strip() for code in raw.split(',') if code.strip()]
+    if not codes:
+        raise ValueError('Enter at least one 6-digit pincode.')
+    for code in codes:
+        if not PINCODE.match(code):
+            raise ValueError(f'"{code}" is not a valid 6-digit pincode.')
+    return ','.join(dict.fromkeys(codes))
 
 def query_errors(view):
     @wraps(view)
@@ -53,15 +70,24 @@ def SalesReport(request):
     if query:
         mobiles = SignUp.objects.filter(Q(fname__icontains=query)|Q(lname__icontains=query)|Q(emailid__icontains=query)).values('mobileno')
         orders = orders.filter(Q(order_id__icontains=query)|Q(mobileno__icontains=query)|Q(city__icontains=query)|Q(mobileno__in=mobiles))
-    finals = {row.try_order_id:row for row in FinalOrder.objects.filter(try_order__in=orders)}
+    # Resolve payment state/mode in the database so mode and payment filters discard
+    # rows before they are fetched. FinalOrder is a reverse one-to-one, so the outer
+    # join cannot fan out. Mirrors the per-row fallbacks used when building rows below.
+    orders = orders.annotate(
+        resolved_state=Coalesce('finalorder__payment_status', Value('pending')),
+        resolved_mode=Case(
+            When(Q(finalorder__payment_mode__isnull=False) & ~Q(finalorder__payment_mode=''),
+                 then=F('finalorder__payment_mode')),
+            default=F('try_payment_mode'), output_field=CharField()))
+    if mode: orders = orders.filter(resolved_mode=mode)
+    if payment: orders = orders.filter(resolved_state=payment)
+    finals = {row.try_order_id:row for row in FinalOrder.objects.filter(try_order__in=orders.values('pk'))}
     customers = {str(row.pk):row for row in SignUp.objects.filter(pk__in=orders.values('mobileno'))}
     rows=[]
     for order in orders.order_by('-created_at','-pk'):
         final=finals.get(order.pk)
         state=final.payment_status if final else 'pending'
         method=(final.payment_mode if final and final.payment_mode else order.try_payment_mode)
-        if mode and method != mode: continue
-        if payment and state != payment: continue
         trial=order.try_fee if order.trial_fee_paid else 0
         collected=final.final_payable if final and state=='paid' else 0
         rows.append({'order_id':order.order_id,'created_at':order.created_at.isoformat(),'customer':customer_data(customers.get(order.mobileno),order.mobileno),
@@ -208,7 +234,11 @@ def SaveDeliveryZone(request):
     postcodes = (data.get('postcodes') or '').strip()
     if not name or not postcodes:
         return failure('Zone name and postcodes are required.', 400)
-    
+    try:
+        postcodes = clean_pincodes(postcodes)
+    except ValueError as exc:
+        return failure(str(exc), 400)
+
     if zone_id:
         zone = DeliveryZone.objects.filter(pk=zone_id).first()
         if not zone:
@@ -261,6 +291,8 @@ def SaveExcludedArea(request):
     postcode = (data.get('postcode') or '').strip()
     if not name or not postcode:
         return failure('Area name and postcode are required.', 400)
+    if not PINCODE.match(postcode):
+        return failure(f'"{postcode}" is not a valid 6-digit pincode.', 400)
 
     if area_id:
         area = ExcludedArea.objects.filter(pk=area_id).first()

@@ -5,8 +5,8 @@ from unittest.mock import patch
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
-from . import test_checkout as fixtures
-from .models import (AdminLogin, DeliveryRider, ProductDetails, TryOrder, FinalOrder, GatewayPayment, OrderReceipt, TrialReturn)
+from sevenshadesapp.models import (AdminLogin, DeliveryRider, ProductDetails, TryOrder, FinalOrder, GatewayPayment, OrderReceipt, TrialReturn)
+import sevenshadesapp.test_checkout
 
 PASSWORD = 'Checkout-test-472!'
 
@@ -14,7 +14,7 @@ PASSWORD = 'Checkout-test-472!'
 class DoorstepWorkflowTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        fixtures.CheckoutTests.setUpTestData.__func__(cls)
+        sevenshadesapp.test_checkout.CheckoutTests.setUpTestData.__func__(cls)
         cls.admin = AdminLogin.objects.create(emailid='flow-admin@example.test', mobileno='9000000051', password=PASSWORD)
         cls.rider = DeliveryRider.objects.create(rider_id='FLOW', phone='9000000052', password=PASSWORD, name='Nearest', zone='Delhi')
         cls.far = DeliveryRider.objects.create(rider_id='FAR', phone='9000000053', password=PASSWORD, name='Far', zone='Delhi')
@@ -219,7 +219,7 @@ class DoorstepWorkflowTests(TestCase):
     @override_settings(RAZORPAY_KEY_ID='rzp_test_example', RAZORPAY_KEY_SECRET='test-secret')
     @patch('sevenshadesapp.payments.gateway_request')
     def test_uncertain_gateway_creation_does_not_create_second_payment(self, gateway):
-        from .inventory_workflow import InventoryError
+        from sevenshadesapp.inventory_workflow import InventoryError
         order = self.place('emergency_sos')
         order.status = 'AWAITING_TRIAL_PAYMENT'
         order.save()

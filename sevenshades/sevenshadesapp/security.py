@@ -12,7 +12,7 @@ from .models import AdminLogin, SignUp, DeliveryRider, DeliveryAssignment, TryOr
 
 
 ACCOUNTS = {'customer': SignUp, 'admin': AdminLogin, 'rider': DeliveryRider}
-PUBLIC = {'otp_config', 'otp_request', 'otp_login', 'reset_password', 'signup_submit', 'check_costumer_login', 'check_admin_login', 'delivery_rider_login',
+PUBLIC = {'auth/send-otp', 'auth/verify-otp', 'otp_config', 'otp_request', 'otp_login', 'reset_password', 'signup_submit', 'check_costumer_login', 'check_admin_login', 'delivery_rider_login',
           'auth_csrf', 'auth_session', 'auth_logout', 'fetch_product_reviews', 'payment_capabilities'}
 CUSTOMER_FIELDS = {'customer_tickets': 'mobileno', 'create_ticket': 'mobileno',
     'fetch_user_address': 'mobile', 'address_submit': 'mobileno',
@@ -98,6 +98,12 @@ def protect_api(view, endpoint, public_catalog=False):
     @wraps(view)
     def guarded(request, *args, **kwargs):
         role, account = session_actor(request.session)
+        bearer = request.META.get('HTTP_AUTHORIZATION', '').startswith('Bearer ')
+        if bearer:
+            from .mobile_tokens import bearer_actor
+            role, account = bearer_actor(request)
+            if not account:
+                return failure('Invalid or expired authentication token.', 401)
         request.account_role, request.account = role, account
         public = endpoint in PUBLIC or public_catalog
         if not public and not account:
@@ -117,7 +123,7 @@ def protect_api(view, endpoint, public_catalog=False):
         if not public and role not in allowed:
             return failure('You do not have access to this action.')
 
-        if request.method not in ('GET', 'HEAD', 'OPTIONS'):
+        if request.method not in ('GET', 'HEAD', 'OPTIONS') and not (bearer and account):
             csrf = JsonCsrfCheck(lambda req: None)
             csrf.process_request(request)
             rejected = csrf.process_view(request, lambda req: None, (), {})

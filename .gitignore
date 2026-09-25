@@ -1,4 +1,6 @@
 .local-secret
+.fast2sms-key
+**/.fast2sms-key
 **/.local-secret
 **/__pycache__/
 *.py[cod]

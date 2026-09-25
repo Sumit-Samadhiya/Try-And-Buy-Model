@@ -282,11 +282,5 @@ class TamperProofTagSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-# class  SearchSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model=Search
-#         fields = '__all__'
-
-
 
 

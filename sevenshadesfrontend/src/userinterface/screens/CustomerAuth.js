@@ -31,10 +31,10 @@ export default function CustomerAuth({ kind = 'login' }) {
   const requestOtp = () => run(async () => {
     const check = signup ? validateFields('signup_submit', { ...form, otp:'123456', challenge_id:'pending' }) : reset ? validateFields('reset_password', { mobileno:form.mobileno, password:form.password, confirm_password:form.confirm_password, otp:'123456', challenge_id:'pending' }) : validateFields('otp_request', { mobileno:form.mobileno, purpose });
     if (Object.keys(check).length) { setErrors(check); return; }
-    const result = await postData('otp_request', { mobileno:form.mobileno, purpose });
+    const result = await postData(purpose === 'login' ? 'auth/send-otp/' : 'otp_request', purpose === 'login' ? { phone:form.mobileno } : { mobileno:form.mobileno, purpose });
     if (!result.status) { setResult(result); return; }
     const timestamp = Date.now();
-    setChallenge({ id:result.data.challenge_id, resendAt:timestamp+result.data.resend_after*1000, expiresAt:timestamp+result.data.expires_in*1000 });
+    setChallenge({ id:result.data.challenge_id || 'mobile-login', resendAt:timestamp+result.data.resend_after*1000, expiresAt:timestamp+result.data.expires_in*1000 });
     setForm(old => ({ ...old, otp:'' })); setErrors({}); setMessage(result.message);
   });
   const submit = event => {
@@ -45,7 +45,7 @@ export default function CustomerAuth({ kind = 'login' }) {
       const body = signup ? { ...form, challenge_id:challenge?.id } : reset ? { mobileno:form.mobileno, password:form.password, confirm_password:form.confirm_password, otp:form.otp, challenge_id:challenge?.id } : usesOtp ? { mobileno:form.mobileno, otp:form.otp, challenge_id:challenge.id } : { mobileno:form.mobileno, password:form.password };
       const check = validateFields(endpoint, body);
       if (Object.keys(check).length) { setErrors(check); return; }
-      const result = await postData(endpoint, body);
+      const result = await postData(endpoint === 'otp_login' ? 'auth/verify-otp/' : endpoint, endpoint === 'otp_login' ? { phone:form.mobileno, otp:form.otp } : body);
       if (!result.status) { setResult(result); return; }
       if (signup || reset) {
         if (reset) { clearCachedAccounts(); dispatch({ type:'CLEAR_USER' }); }

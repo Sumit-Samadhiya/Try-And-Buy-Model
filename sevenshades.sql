@@ -307,9 +307,12 @@ CREATE TABLE `sevenshadesapp_adminlogin` (
 -- Dumping data for table `sevenshadesapp_adminlogin`
 --
 
+-- Passwords are redacted. This legacy dump previously carried plaintext values.
+-- The live application stores only hashes (see migration 0023_hash_account_passwords);
+-- set a real password through the app instead of restoring one from here.
 INSERT INTO `sevenshadesapp_adminlogin` (`id`, `emailid`, `mobileno`, `adminname`, `password`, `picture`) VALUES
-(1, 'ss@gmail.com', '9826208618', 'harry singh', '12345', '1.2jpg'),
-(2, 'kk@gmail.com', '9826208518', 'karan singh', '123456', '1.3.jpg');
+(1, 'ss@gmail.com', '9826208618', 'harry singh', 'REDACTED', '1.2jpg'),
+(2, 'kk@gmail.com', '9826208518', 'karan singh', 'REDACTED', '1.3.jpg');
 
 -- --------------------------------------------------------
 
@@ -489,10 +492,11 @@ CREATE TABLE `sevenshadesapp_signup` (
 -- Dumping data for table `sevenshadesapp_signup`
 --
 
+-- Passwords are redacted; see the note on the adminlogin insert above.
 INSERT INTO `sevenshadesapp_signup` (`fname`, `lname`, `emailid`, `password`, `mobileno`) VALUES
-('sumit', 'singh', 'examples@gmail.com', '1234', '454575735'),
-('sumit', 'singh', 'sumit@gmail.com', '12345', '8319651630'),
-('ansh', 'singh', 'example@gmail.com', '12345', '8319651640');
+('sumit', 'singh', 'examples@gmail.com', 'REDACTED', '454575735'),
+('sumit', 'singh', 'sumit@gmail.com', 'REDACTED', '8319651630'),
+('ansh', 'singh', 'example@gmail.com', 'REDACTED', '8319651640');
 
 -- --------------------------------------------------------
 

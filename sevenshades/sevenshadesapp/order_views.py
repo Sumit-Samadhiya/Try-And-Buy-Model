@@ -1,14 +1,12 @@
 from django.http.response import JsonResponse
-from django.db import transaction
 from .security import failure
-from .inventory_workflow import lock_order
 from rest_framework.decorators import api_view
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
-import uuid
+import logging
 
-from sevenshadesapp.models import SignUp, ProductDetails, WalletAccount, TryOrder, TryOrderItem, FinalOrder, FinalOrderItem, ProductReview, DeliveryRider, ExcludedArea, DeliveryZone
+from sevenshadesapp.models import SignUp, ProductDetails, WalletAccount, TryOrder, FinalOrderItem, ProductReview
 from sevenshadesapp.serializer import TryOrderWithItemsSerializer, FinalOrderWithItemsSerializer, WalletAccountSerializer, ProductReviewSerializer
+
+logger = logging.getLogger(__name__)
 
 
 def _get_user(mobile):
@@ -20,16 +18,6 @@ def _get_user(mobile):
 def _get_wallet(mobile):
     wallet, _ = WalletAccount.objects.get_or_create(mobileno=mobile)
     return wallet
-
-def _emit_order_update(order_id, data):
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        f'order_{order_id}',
-        {
-            'type': 'order_status_updated',
-            'data': data
-        }
-    )
 
 
 @api_view(['POST'])
@@ -108,128 +96,43 @@ def UserOrderLifecycleList(request):
             },
             safe=False,
         )
-    except Exception as e:
-        print('UserOrderLifecycleList error:', e)
+    except Exception:
+        logger.exception('UserOrderLifecycleList failed')
         return JsonResponse({'status': False, 'data': []}, safe=False)
-
-
-@api_view(['POST'])
-def DeleteOldOrders(request):
-    try:
-        # Delete orders that are 'Completed' (old status)
-        TryOrder.objects.filter(status='Completed').delete()
-        return JsonResponse({'status': True, 'message': 'Old orders deleted'})
-    except Exception as e:
-        return JsonResponse({'status': False, 'message': str(e)}, status=400)
 
 
 @api_view(['GET'])
 def AdminOrderLifecycleList(request):
+    from django.db.models import Q
     try:
         status_filter = request.GET.get('status', '')
         limit = min(int(request.GET.get('limit', 100)), 500)
         try_orders = (
             TryOrder.objects.select_related('finalorder')
             .prefetch_related('tryorderitem_set', 'finalorder__finalorderitem_set')
-            .all()
             .order_by('-id')
         )
-        rows = []
-        for order in try_orders:
-            final_order = getattr(order, 'finalorder', None)
-            final_status = final_order.status if final_order else 'pending_selection'
-            if status_filter and final_status != status_filter and order.status != status_filter:
-                continue
+        if status_filter:
+            # Match either the trial status or the final-order status. An order with
+            # no FinalOrder yet is reported as 'pending_selection'.
+            condition = Q(status=status_filter) | Q(finalorder__status=status_filter)
+            if status_filter == 'pending_selection':
+                condition |= Q(finalorder__isnull=True)
+            try_orders = try_orders.filter(condition)
 
-            rows.append(
-                {
-                    'try_order': TryOrderWithItemsSerializer(order).data,
-                    'final_order': FinalOrderWithItemsSerializer(final_order).data if final_order else None,
-                }
-            )
-            if len(rows) >= limit:
-                break
-
+        rows = [
+            {
+                'try_order': TryOrderWithItemsSerializer(order).data,
+                'final_order': FinalOrderWithItemsSerializer(order.finalorder).data
+                if getattr(order, 'finalorder', None) else None,
+            }
+            for order in try_orders[:limit]
+        ]
         return JsonResponse({'status': True, 'data': rows}, safe=False)
-    except Exception as e:
-        print('AdminOrderLifecycleList error:', e)
+    except Exception:
+        logger.exception('AdminOrderLifecycleList failed')
         return JsonResponse({'status': False, 'data': []}, status=500, safe=False)
 
-
-@api_view(['POST'])
-def AssignRider(request):
-    try:
-        order_id = request.data.get('order_id')
-        rider_id = request.data.get('rider_id')
-        
-        try_order = TryOrder.objects.get(order_id=order_id)
-        rider = DeliveryRider.objects.get(rider_id=rider_id)
-        
-        try_order.assigned_rider = rider
-        try_order.status = 'ASSIGNED'
-        try_order.save()
-        
-        _emit_order_update(order_id, {'status': 'ASSIGNED'})
-        
-        return JsonResponse({'status': True, 'message': 'Rider assigned successfully'})
-    except Exception as e:
-        return JsonResponse({'status': False, 'message': str(e)}, status=400)
-
-@api_view(['PATCH'])
-def UpdateRiderStatus(request, order_id):
-    try:
-        status = request.data.get('status')
-        try_order = TryOrder.objects.get(order_id=order_id)
-        
-        if status in ['OUT_FOR_TRIAL', 'TRIAL_IN_PROGRESS']:
-            try_order.status = status
-            try_order.save()
-            
-            _emit_order_update(order_id, {'status': status})
-            
-            return JsonResponse({'status': True, 'message': 'Status updated'})
-        return JsonResponse({'status': False, 'message': 'Invalid status'}, status=400)
-    except Exception as e:
-        return JsonResponse({'status': False, 'message': str(e)}, status=400)
-
-@api_view(['POST'])
-def DoorstepSelection(request, order_id):
-    try:
-        items = request.data.get('items', []) # List of {id, status: 'PURCHASED' | 'RETURNED'}
-        
-        with transaction.atomic():
-            try_order = TryOrder.objects.get(order_id=order_id)
-            
-            subtotal = 0
-            for item_data in items:
-                item = TryOrderItem.objects.get(id=item_data['id'], try_order=try_order)
-                item.status = item_data['status']
-                item.save()
-                if item.status == 'PURCHASED':
-                    subtotal += item.line_total
-            
-            # Adjust trial fee
-            trial_fee_adjustment = try_order.try_fee if subtotal > 0 else 0
-            final_payable = subtotal - trial_fee_adjustment
-            
-            try_order.final_bill = {
-                'subtotal': subtotal,
-                'trial_fee_adjustment': trial_fee_adjustment,
-                'final_payable': final_payable
-            }
-            try_order.status = 'SELECTION_SUBMITTED'
-            try_order.save()
-            
-            _emit_order_update(order_id, {'status': 'SELECTION_SUBMITTED', 'bill': try_order.final_bill})
-            
-            return JsonResponse({'status': True, 'message': 'Selection submitted', 'bill': try_order.final_bill})
-    except Exception as e:
-        return JsonResponse({'status': False, 'message': str(e)}, status=400)
-
-@api_view(['POST'])
-def CustomerApprovePay(request, order_id):
-    # Legacy placeholder: never accept a client-declared online payment.
-    return failure('Online payments require verified gateway confirmation.', 409)
 
 @api_view(['GET', 'POST'])
 def GenerateInvoice(request, order_id=None):
@@ -254,8 +157,9 @@ def GenerateInvoice(request, order_id=None):
             'is_tax_invoice': False,
             'message': 'Official payment receipt generated. Download via receipt_url.'
         })
-    except Exception as e:
-        return JsonResponse({'status': False, 'message': str(e)}, status=500)
+    except Exception:
+        logger.exception('GenerateInvoice failed')
+        return JsonResponse({'status': False, 'message': 'Unable to generate the receipt.'}, status=500)
 
 
 
@@ -324,6 +228,6 @@ def FetchProductReviews(request):
         product_details_id = request.data.get('product_details_id') or request.GET.get('product_details_id')
         reviews = ProductReview.objects.filter(product_details_id=product_details_id).order_by('-id')
         return JsonResponse({'status': True, 'data': ProductReviewSerializer(reviews, many=True).data}, safe=False)
-    except Exception as e:
-        print('FetchProductReviews error:', e)
+    except Exception:
+        logger.exception('FetchProductReviews failed')
         return JsonResponse({'status': False, 'data': []}, safe=False)

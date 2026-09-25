@@ -16,14 +16,14 @@ test('invalid login fields show inline errors without a request', async()=>{
   expect(await screen.findByText(/10-digit mobile/)).toBeInTheDocument(); expect(postData).not.toHaveBeenCalled();
 });
 test('OTP login requires a request before verification and establishes login',async()=>{
-  postData.mockImplementation(async endpoint=>endpoint==='otp_request'?{status:true,data:{challenge_id:'challenge',resend_after:60,expires_in:300}}:{status:true,data:[{mobileno:'9000000091',fname:'Test'}]});
+  postData.mockImplementation(async endpoint=>endpoint==='auth/send-otp/'?{status:true,data:{resend_after:60,expires_in:300}}:{status:true,data:[{mobileno:'9000000091',fname:'Test'}]});
   show(); await act(async()=>{fireEvent.click(screen.getByRole('button',{name:'Login with OTP'}));});
   fill(/Mobile number/,'9000000091');
   await act(async()=>{fireEvent.click(screen.getByRole('button',{name:'Get OTP'}));});
-  expect(postData).toHaveBeenCalledWith('otp_request',{mobileno:'9000000091',purpose:'login'});
+  expect(postData).toHaveBeenCalledWith('auth/send-otp/',{phone:'9000000091'});
   fill(/6-digit OTP/,'123456');
   await act(async()=>{fireEvent.click(screen.getByRole('button',{name:'Verify & sign in'}));});
-  expect(postData).toHaveBeenCalledWith('otp_login',{mobileno:'9000000091',otp:'123456',challenge_id:'challenge'});
+  expect(postData).toHaveBeenCalledWith('auth/verify-otp/',{phone:'9000000091',otp:'123456'});
   expect(await screen.findByText('Signed in home')).toBeInTheDocument();
 });
 test('signup rejects mismatched confirmation before issuing an OTP',async()=>{

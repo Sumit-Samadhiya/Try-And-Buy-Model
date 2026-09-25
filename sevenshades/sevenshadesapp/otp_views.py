@@ -14,10 +14,11 @@ from rest_framework.decorators import api_view
 from .models import OtpChallenge, SignUp
 from .serializer import SignUpSerializer, SignUpSafeSerializer
 from .security import failure, establish_session
+from .sms_provider import available, test_mode, new_code, send_sms, SmsError
 
 
 def enabled():
-    return settings.DEBUG and settings.OTP_TEST_MODE
+    return available()
 
 
 def digest(value):
@@ -26,7 +27,7 @@ def digest(value):
 
 @api_view(['GET'])
 def OtpConfig(request):
-    return JsonResponse({'status': True, 'data': {'available': enabled(), 'test_mode': enabled(), 'expires_in': 300, 'resend_after': 60}})
+    return JsonResponse({'status': True, 'data': {'available': enabled(), 'test_mode': test_mode(), 'expires_in': 300, 'resend_after': 60}})
 
 
 @api_view(['POST'])
@@ -51,10 +52,17 @@ def RequestOtp(request):
     session_hash = digest(request.session.session_key)
     OtpChallenge.objects.filter(mobile=mobile, purpose=purpose, session_hash=session_hash, consumed=False).update(consumed=True)
     key = str(uuid.uuid4())
-    OtpChallenge.objects.create(challenge_id=key, mobile=mobile, purpose=purpose, session_hash=session_hash,
-        ip_hash=ip_hash, code_hash=digest(key + ':123456'), expires_at=now+timedelta(minutes=5))
-    return JsonResponse({'status': True, 'message': 'Development OTP is ready. No SMS is sent.',
-        'data': {'challenge_id': key, 'expires_in': 300, 'resend_after': 60, 'test_mode': True}})
+    code = new_code()
+    challenge = OtpChallenge.objects.create(challenge_id=key, mobile=mobile, purpose=purpose, session_hash=session_hash,
+        ip_hash=ip_hash, code_hash=digest(key + ':' + code), expires_at=now+timedelta(minutes=5), consumed=True)
+    try:
+        send_sms(mobile, code)
+    except SmsError as exc:
+        return failure(str(exc), 502)
+    challenge.consumed = False
+    challenge.save(update_fields=['consumed'])
+    return JsonResponse({'status': True, 'message': 'Development OTP is ready. No SMS is sent.' if test_mode() else 'OTP sent to your mobile number.',
+        'data': {'challenge_id': key, 'expires_in': 300, 'resend_after': 60, 'test_mode': test_mode()}})
 
 
 def consume(request, purpose):

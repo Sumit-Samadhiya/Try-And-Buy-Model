@@ -1,17 +1,18 @@
 from django.http.response import JsonResponse
 from rest_framework.decorators import api_view
-from django.utils import timezone
-import requests
-from django.db import transaction, OperationalError
+from django.db import OperationalError
+import logging
 import uuid
 from sevenshadesapp.delivery_workflow import assign_order, advance_assignment, generate_batches, reassign_order
-from sevenshadesapp.inventory_workflow import InventoryError, lock_order
+from sevenshadesapp.inventory_workflow import InventoryError
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from sevenshadesapp.security import authenticate_account, failure
-from sevenshadesapp.models import DeliveryRider, DeliveryAssignment, TryOrder, DeliveryBatch
+from sevenshadesapp.models import DeliveryRider, DeliveryAssignment, DeliveryBatch
 from sevenshadesapp.serializer import DeliveryRiderSerializer, DeliveryAssignmentWithRefSerializer, DeliveryBatchSerializer
+
+logger = logging.getLogger(__name__)
 
 
 @api_view(['POST'])
@@ -42,8 +43,8 @@ def DeliveryRiderCreate(request):
             status=request.data.get('status', 'Active'),
         )
         return JsonResponse({'status': True, 'message': 'Rider created', 'data': DeliveryRiderSerializer(rider).data}, safe=False)
-    except Exception as e:
-        print('DeliveryRiderCreate error:', e)
+    except Exception:
+        logger.exception('DeliveryRiderCreate failed')
         return JsonResponse({'status': False, 'message': 'Unable to create rider'}, safe=False)
 
 
@@ -66,8 +67,8 @@ def DeliveryRiderUpdate(request):
             rider.name = request.data.get('name')
         rider.save()
         return JsonResponse({'status': True, 'message': 'Rider updated successfully', 'data': DeliveryRiderSerializer(rider).data})
-    except Exception as e:
-        print('DeliveryRiderUpdate error:', e)
+    except Exception:
+        logger.exception('DeliveryRiderUpdate failed')
         return JsonResponse({'status': False, 'message': 'Unable to update rider'}, status=400)
 
 
@@ -82,8 +83,8 @@ def DeliveryOrderReassign(request):
         return JsonResponse({'status': True, 'message': 'Order reassigned successfully', 'data': DeliveryAssignmentWithRefSerializer(assignment).data})
     except InventoryError as exc:
         return failure(str(exc), 400)
-    except Exception as e:
-        print('DeliveryOrderReassign error:', e)
+    except Exception:
+        logger.exception('DeliveryOrderReassign failed')
         return JsonResponse({'status': False, 'message': 'Unable to reassign order'}, status=400)
 
 
@@ -92,8 +93,8 @@ def DeliveryRiderList(request):
     try:
         riders = DeliveryRider.objects.all().order_by('-id')
         return JsonResponse({'status': True, 'data': DeliveryRiderSerializer(riders, many=True).data}, safe=False)
-    except Exception as e:
-        print('DeliveryRiderList error:', e)
+    except Exception:
+        logger.exception('DeliveryRiderList failed')
         return JsonResponse({'status': False, 'data': [], 'message': 'Failed to fetch riders'}, status=500, safe=False)
 
 
@@ -129,8 +130,8 @@ def DeliveryAssignmentsList(request):
     try:
         assignments = DeliveryAssignment.objects.select_related('rider', 'try_order').all().order_by('-id')
         return JsonResponse({'status': True, 'data': DeliveryAssignmentWithRefSerializer(assignments, many=True).data}, safe=False)
-    except Exception as e:
-        print('DeliveryAssignmentsList error:', e)
+    except Exception:
+        logger.exception('DeliveryAssignmentsList failed')
         return JsonResponse({'status': False, 'data': [], 'message': 'Failed to fetch assignments'}, status=500, safe=False)
 
 
@@ -150,45 +151,9 @@ def DeliveryRiderTasks(request):
 
         assignments = DeliveryAssignment.objects.select_related('rider', 'try_order').filter(rider=rider).order_by('-id')
         return JsonResponse({'status': True, 'data': DeliveryAssignmentWithRefSerializer(assignments, many=True).data}, safe=False)
-    except Exception as e:
-        print('DeliveryRiderTasks error:', e)
+    except Exception:
+        logger.exception('DeliveryRiderTasks failed')
         return JsonResponse({'status': False, 'data': [], 'message': 'Failed to fetch rider tasks'}, status=500, safe=False)
-
-
-@api_view(['POST'])
-def AssignSOSOrder(request):
-    try:
-        order_id = request.data.get('order_id')
-        try_order = TryOrder.objects.filter(order_id=order_id, delivery_mode='emergency_sos').first()
-        if not try_order:
-            return JsonResponse({'status': False, 'message': 'Invalid SOS order'}, status=404, safe=False)
-
-        rider = DeliveryRider.objects.filter(zone=try_order.city, status='Active').first()
-        if not rider:
-            rider = DeliveryRider.objects.filter(status='Active').first()
-
-        if not rider:
-            return JsonResponse({'status': False, 'message': 'No active riders available for SOS'}, status=400, safe=False)
-
-        assignment_count = DeliveryAssignment.objects.count() + 1
-        assignment = DeliveryAssignment.objects.create(
-            assignment_id=f'ASG-SOS-{assignment_count:06d}',
-            try_order=try_order,
-            rider=rider,
-            status='Assigned (SOS)',
-        )
-
-        try_order.status = 'SOS Dispatching'
-        try_order.save()
-
-        return JsonResponse({
-            'status': True,
-            'message': 'SOS Order assigned automatically',
-            'data': DeliveryAssignmentWithRefSerializer(assignment).data
-        }, safe=False)
-    except Exception as e:
-        print('AssignSOSOrder error:', e)
-        return JsonResponse({'status': False, 'message': 'Unable to assign SOS order'}, status=500, safe=False)
 
 
 @api_view(['POST'])
@@ -333,7 +298,7 @@ def OptimizeRoute(request):
             'estimated_duration_minutes': int(round(total_time_mins)),
             'stops_count': len(order_sequence)
         }, safe=False)
-    except Exception as e:
-        print('OptimizeRoute error:', e)
+    except Exception:
+        logger.exception('OptimizeRoute failed')
         return JsonResponse({'status': False, 'message': 'Unable to optimize route'}, status=500, safe=False)
 

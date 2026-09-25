@@ -1,8 +1,8 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
-from .models import (SignUp, UserAddress, MainCategory, MySubCategory, Brands, Product,
+from sevenshadesapp.models import (SignUp, UserAddress, MainCategory, MySubCategory, Brands, Product,
     ProductDetails, DeliveryZone, ExcludedArea, TryOrder, TryOrderItem, FinalOrderItem, AdminLogin)
-from .checkout import create_trial, CheckoutError
+from sevenshadesapp.checkout import create_trial, CheckoutError
 
 
 class CheckoutTests(TestCase):

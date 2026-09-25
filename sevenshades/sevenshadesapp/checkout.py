@@ -5,7 +5,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import F
-from .models import SignUp, UserAddress, ProductDetails, TryOrder, TryOrderItem, DeliveryZone, ExcludedArea
+from sevenshadesapp.models import SignUp, UserAddress, ProductDetails, TryOrder, TryOrderItem, DeliveryZone, ExcludedArea
 
 
 class CheckoutError(ValueError):

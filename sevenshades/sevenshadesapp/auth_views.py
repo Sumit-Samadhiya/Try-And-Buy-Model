@@ -12,7 +12,7 @@ def CsrfToken(request):
 
 @api_view(['GET'])
 def CurrentSession(request):
-    role, account = session_actor(request.session)
+    role, account = request.account_role, request.account
     if not account:
         return failure('Please sign in.', 401)
     serializer = {'customer': SignUpSafeSerializer, 'admin': AdminLoginSerializer, 'rider': DeliveryRiderSerializer}[role]
@@ -21,5 +21,7 @@ def CurrentSession(request):
 
 @api_view(['POST'])
 def Logout(request):
+    from .mobile_tokens import revoke_token
+    revoke_token(request)
     request.session.flush()
     return JsonResponse({'status': True, 'message': 'Signed out.'})

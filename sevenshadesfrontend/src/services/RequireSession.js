@@ -15,8 +15,12 @@ export default function RequireSession({ role, children }) {
       if (result.status && result.role === role) {
         clearCachedAccounts();
         if (role === 'customer') dispatch({ type: 'ADD_USER', payLoad: [result.data.mobileno, result.data] });
-        if (role === 'admin') localStorage.setItem('ADMIN', JSON.stringify(result.data));
-        if (role === 'rider') localStorage.setItem('delivery_boy_auth_v1', JSON.stringify(result.data));
+        // Riders read this back to look up their own tasks, so keep only the
+        // fields those screens need rather than mirroring the whole account.
+        if (role === 'rider') localStorage.setItem('delivery_boy_auth_v1', JSON.stringify({
+          rider_id: result.data.rider_id, name: result.data.name,
+          phone: result.data.phone, zone: result.data.zone,
+        }));
         setStatus('allowed');
       } else setStatus('denied');
     });

@@ -1,6 +1,6 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
-from django.contrib.auth.hashers import make_password, identify_hasher
+from django.contrib.auth.hashers import make_password, identify_hasher, is_password_usable
 
 
 class PasswordAccount(models.Model):
@@ -8,6 +8,8 @@ class PasswordAccount(models.Model):
         abstract = True
 
     def save(self, *args, **kwargs):
+        if not is_password_usable(self.password):
+            return super().save(*args, **kwargs)
         try:
             identify_hasher(self.password)
         except ValueError:
@@ -102,7 +104,7 @@ class SignUp(PasswordAccount):
     mobileno=models.CharField(max_length=15,blank=False,primary_key=True,default='')
     fname=models.CharField(max_length=70,blank=False,default='')
     lname=models.CharField(max_length=70,blank=False,default='')
-    emailid=models.CharField(max_length=70,blank=False,default='',unique=True)
+    emailid=models.CharField(max_length=70,blank=True,null=True,default=None,unique=True)
     password=models.CharField(max_length=128,blank=False,default='')
 
 class UserAddress(models.Model):
@@ -274,11 +276,6 @@ class ExcludedArea(models.Model):
     area_name = models.CharField(max_length=70, unique=True)
     postcode = models.CharField(max_length=20)
 
-# class Search(models.Model):
-    
-#     name=models.CharField(max_length=70,blank=False,default='')
-    
-
 
 class TrialReturn(models.Model):
     tag_intact = models.BooleanField(default=False)
@@ -332,6 +329,18 @@ class OtpChallenge(models.Model):
     consumed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
+
+
+class RevokedToken(models.Model):
+    """Revoked customer JWTs.
+
+    The cache alone is not durable: under the default LocMemCache a restart
+    would drop every revocation and silently make logged-out tokens valid
+    again until they expired. Rows are prunable once expires_at has passed.
+    """
+    jti = models.CharField(max_length=32, unique=True)
+    expires_at = models.DateTimeField(db_index=True)
+    revoked_at = models.DateTimeField(auto_now_add=True)
 
 
 class SupportTicket(models.Model):
@@ -391,4 +400,3 @@ def cleanup_brand_image_on_delete(sender, instance, **kwargs):
             os.remove(instance.icon.path)
         except OSError:
             pass
-

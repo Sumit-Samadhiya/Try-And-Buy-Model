@@ -1,4 +1,5 @@
 # Sevenshades Backend Dependencies
+PyJWT==2.10.1
 asgiref==3.11.1
 attrs==26.1.0
 autobahn==26.7.1

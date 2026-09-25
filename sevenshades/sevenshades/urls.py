@@ -1,4 +1,5 @@
 from sevenshadesapp import payment_recovery_views
+from sevenshadesapp import mobile_auth_views
 from sevenshadesapp import admin_workspace_views
 from sevenshadesapp import otp_views
 from sevenshadesapp import location_views
@@ -29,6 +30,8 @@ from sevenshadesapp.security import protect_api
 
 
 urlpatterns = [
+    path('api/auth/send-otp/', mobile_auth_views.send_otp),
+    path('api/auth/verify-otp/', mobile_auth_views.verify_otp),
     path('api/admin_payment_recovery', payment_recovery_views.RecoveryQueue),
     path('api/admin_expire_reservations', payment_recovery_views.ExpireReservations),
     path('api/admin_recover_payment', payment_recovery_views.RecoverPayment),
@@ -150,6 +153,5 @@ urlpatterns = [
 for route in urlpatterns:
     pattern = str(route.pattern)
     if pattern.startswith('api/'):
-        endpoint = pattern[4:].split('/')[0]
+        endpoint = pattern[4:].strip('/') if pattern.startswith('api/auth/') else pattern[4:].split('/')[0]
         route.callback = protect_api(route.callback, endpoint, route.callback.__module__ == userinterface.__name__)
-

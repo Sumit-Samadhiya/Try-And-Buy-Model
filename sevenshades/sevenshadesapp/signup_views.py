@@ -3,11 +3,14 @@ from django.http.response import JsonResponse
 from rest_framework.parsers import JSONParser
 from rest_framework import status
 from django.shortcuts import render
+import logging
 
 from sevenshadesapp.models import SignUp,UserAddress
 from sevenshadesapp.serializer import SignUpSerializer,UserAddressGetSerializer,UserAddressSerializer
 from rest_framework.decorators import api_view
 from sevenshadesapp.security import authenticate_account, failure
+
+logger = logging.getLogger(__name__)
 
 @api_view(['POST'])
 def SignUp_Submit(request):
@@ -29,43 +32,33 @@ def CheckCostumerLogin(request):
     return JsonResponse({'status': True, 'data': [SignUpSerializer(account).data]})
 
 
-@api_view(['GET','POST','DELETE'])
+@api_view(['POST'])
 def FetchUserAddress(request):
     try:
-        if request.method=='POST':
-            mobile=request.account.mobileno
-            
-           
-            userAddress=UserAddress.objects.all().filter(mobileno=mobile)
-            user_AddressSerializer=UserAddressGetSerializer(userAddress,many=True)
-            
-            if(len(user_AddressSerializer.data)>0):    
-             return JsonResponse({"data":user_AddressSerializer.data,"status":True},safe=False)
-            else:
-             return JsonResponse({"data":user_AddressSerializer.data,"status":False},safe=True)   
-        else:
-             return JsonResponse({"data":[],"message":'Fail ',"status":False},safe=False)
-    except Exception as e:
-        print("Error submit:",e)
-        return JsonResponse({"message":'Fail',"status":False},safe=False)
-    
+        mobile = request.account.mobileno
+        userAddress = UserAddress.objects.filter(mobileno=mobile)
+        user_AddressSerializer = UserAddressGetSerializer(userAddress, many=True)
+        return JsonResponse({"data": user_AddressSerializer.data,
+                             "status": len(user_AddressSerializer.data) > 0}, safe=False)
+    except Exception:
+        logger.exception('FetchUserAddress failed')
+        return JsonResponse({"message": 'Fail', "status": False}, safe=False)
 
-@api_view(['GET','POST','DELETE'])
+
+@api_view(['POST'])
 def Address_Submit(request):
     try:
-        
-        if request.method=='POST':
-            payload = request.data.copy()
-            payload['mobileno'] = request.account.mobileno
-            address_serializer=UserAddressSerializer(data=payload)
-        if(address_serializer.is_valid()):
-                address_serializer.save()
-                return JsonResponse({"message":'Data Submitted Successfully',"status":True},safe=False)
-        else:
-             return JsonResponse({"message":'Fail to submit ',"status":False},safe=False)
-    except Exception as e:
-        print("Error submit:",e)
-        return JsonResponse({"message":'Fail to submit ',"status":False},safe=False)
+        payload = request.data.copy()
+        payload['mobileno'] = request.account.mobileno
+        address_serializer = UserAddressSerializer(data=payload)
+        if address_serializer.is_valid():
+            address_serializer.save()
+            return JsonResponse({"message": 'Data Submitted Successfully', "status": True}, safe=False)
+        return JsonResponse({"message": 'Fail to submit ', "status": False,
+                             "errors": address_serializer.errors}, safe=False)
+    except Exception:
+        logger.exception('Address_Submit failed')
+        return JsonResponse({"message": 'Fail to submit ', "status": False}, safe=False)
 
 
 @api_view(['POST'])
@@ -103,8 +96,8 @@ def Address_Update(request):
         address_obj.save()
 
         return JsonResponse({"message": 'Address updated successfully', "status": True}, safe=False)
-    except Exception as e:
-        print("Address update error:", e)
+    except Exception:
+        logger.exception('Address_Update failed')
         return JsonResponse({"message": 'Fail to update address', "status": False}, safe=False)
 
 
@@ -135,6 +128,6 @@ def Address_Delete(request):
 
         address_obj.delete()
         return JsonResponse({"message": 'Address deleted successfully', "status": True}, safe=False)
-    except Exception as e:
-        print("Address delete error:", e)
+    except Exception:
+        logger.exception('Address_Delete failed')
         return JsonResponse({"message": 'Fail to delete address', "status": False}, safe=False)

@@ -133,7 +133,7 @@ class AccountSecurityTests(TestCase):
         self.assertEqual(self.client.get('/api/auth_session').json()['data']['mobileno'], self.bob.pk)
         self.assertEqual(self.post('fetch_user_address', {'mobile': self.alice.pk}).status_code, 403)
 
-    @override_settings(DEBUG=True, OTP_TEST_MODE=True)
+    @override_settings(DEBUG=True, OTP_TEST_MODE=True, FAST2SMS_API_KEY='')
     def test_signup_validates_and_hashes_password_without_signing_in(self):
         data = {'mobileno': '9000000009', 'emailid': 'new@example.test', 'fname': 'New', 'lname': 'User', 'password': '123'}
         self.assertEqual(self.post('signup_submit', data).status_code, 400)
