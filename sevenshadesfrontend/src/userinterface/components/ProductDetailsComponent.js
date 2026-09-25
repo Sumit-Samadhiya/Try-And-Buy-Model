@@ -24,9 +24,20 @@ export default function ProductDetailsComponent(props) {
     const dispatch = useDispatch();
     const initialIndex = React.useMemo(() => {
         if (!props.productList || props.productList.length === 0) return 0;
+        if (props.initialColor || props.initialSize) {
+            const exactMatch = props.productList.findIndex((v) =>
+                (!props.initialColor || v.color?.toLowerCase() === props.initialColor.toLowerCase()) &&
+                (!props.initialSize || v.size?.toLowerCase() === props.initialSize.toLowerCase())
+            );
+            if (exactMatch >= 0) return exactMatch;
+            const colorMatch = props.productList.findIndex((v) =>
+                (!props.initialColor || v.color?.toLowerCase() === props.initialColor.toLowerCase()) && v.qty > 0
+            );
+            if (colorMatch >= 0) return colorMatch;
+        }
         const inStock = props.productList.findIndex((v) => v.qty > 0 && v.size);
         return inStock >= 0 ? inStock : 0;
-    }, [props.productList]);
+    }, [props.productList, props.initialColor, props.initialSize]);
 
     const [index, setIndex] = useState(initialIndex);
     const [activeImgIndex, setActiveImgIndex] = useState(0);
@@ -70,6 +81,25 @@ export default function ProductDetailsComponent(props) {
     React.useEffect(() => {
         loadReviews();
     }, [loadReviews]);
+
+    React.useEffect(() => {
+        if (product && product.color && product.size) {
+            try {
+                if (typeof window !== 'undefined' && window.location) {
+                    const currentUrl = new URL(window.location.href);
+                    const pid = product.productid?.id || product.productid;
+                    if (pid && (currentUrl.searchParams.get('color') !== product.color || currentUrl.searchParams.get('size') !== product.size)) {
+                        currentUrl.searchParams.set('productid', pid);
+                        currentUrl.searchParams.set('color', product.color);
+                        currentUrl.searchParams.set('size', product.size);
+                        window.history.replaceState({}, '', currentUrl.toString());
+                    }
+                }
+            } catch (e) {
+                // Ignore in non-browser testing
+            }
+        }
+    }, [product]);
 
     const settings = {
         dots: false,
@@ -294,15 +324,17 @@ export default function ProductDetailsComponent(props) {
                             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                 {distinctColors.map((colorName) => {
                                     const isSelected = product.color === colorName;
-                                    const hasStock = props.productList.some((v) => v.color === colorName && v.qty > 0);
+                                    const colorVariants = props.productList.filter((v) => v.color === colorName);
+                                    const hasStock = colorVariants.some((v) => v.qty > 0);
+                                    const previewImg = colorVariants[0]?.icon?.split(',')[0] || '';
                                     return (
                                         <button
                                             key={colorName}
                                             type="button"
                                             onClick={() => handleColorClick(colorName)}
                                             style={{
-                                                padding: '6px 14px',
-                                                borderRadius: '20px',
+                                                padding: '4px 12px 4px 6px',
+                                                borderRadius: '24px',
                                                 border: isSelected ? '2px solid #111827' : '1px solid #d1d5db',
                                                 backgroundColor: isSelected ? '#111827' : '#ffffff',
                                                 color: isSelected ? '#ffffff' : '#374151',
@@ -311,21 +343,36 @@ export default function ProductDetailsComponent(props) {
                                                 cursor: 'pointer',
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                gap: '6px',
+                                                gap: '8px',
                                                 opacity: hasStock ? 1 : 0.6,
                                                 transition: 'all 0.15s ease-in-out',
+                                                boxShadow: isSelected ? '0 2px 5px rgba(0,0,0,0.12)' : 'none',
                                             }}
                                         >
-                                            <span
-                                                style={{
-                                                    width: '10px',
-                                                    height: '10px',
-                                                    borderRadius: '50%',
-                                                    backgroundColor: colorName.toLowerCase(),
-                                                    border: '1px solid rgba(0,0,0,0.2)',
-                                                    display: 'inline-block',
-                                                }}
-                                            />
+                                            {previewImg ? (
+                                                <img
+                                                    src={imageUrl(previewImg)}
+                                                    alt={colorName}
+                                                    style={{
+                                                        width: '24px',
+                                                        height: '24px',
+                                                        borderRadius: '50%',
+                                                        objectFit: 'cover',
+                                                        border: isSelected ? '1px solid #ffffff' : '1px solid #e5e7eb',
+                                                    }}
+                                                />
+                                            ) : (
+                                                <span
+                                                    style={{
+                                                        width: '12px',
+                                                        height: '12px',
+                                                        borderRadius: '50%',
+                                                        backgroundColor: colorName.toLowerCase(),
+                                                        border: '1px solid rgba(0,0,0,0.2)',
+                                                        display: 'inline-block',
+                                                    }}
+                                                />
+                                            )}
                                             {colorName}
                                             {!hasStock && ' (Out of stock)'}
                                         </button>

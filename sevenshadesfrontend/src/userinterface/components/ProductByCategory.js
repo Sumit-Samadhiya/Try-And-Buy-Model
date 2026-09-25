@@ -34,7 +34,7 @@ export default function ProductByCategory(props) {
                     className="product-item"
                     style={{ position: 'relative', opacity: isUnavailable ? 0.78 : 1 }}
                 >
-                    {isUnavailable && (
+                    {isUnavailable ? (
                         <span
                             style={{
                                 position: 'absolute',
@@ -52,11 +52,34 @@ export default function ProductByCategory(props) {
                         >
                             Unavailable
                         </span>
+                    ) : (
+                        <span
+                            style={{
+                                position: 'absolute',
+                                top: 10,
+                                left: 10,
+                                background: '#111827',
+                                color: '#ffffff',
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                padding: '3px 8px',
+                                borderRadius: '4px',
+                                letterSpacing: '0.4px',
+                                zIndex: 2,
+                            }}
+                        >
+                            ⚡ Try & Buy
+                        </span>
                     )}
                     <img src={imageUrl(item.icon)} alt={item.productname || ''} className="product-image" />
                     <div className="product-details">
                         <div style={{ fontWeight: 600 }}>{item.productname}</div>
                         <div style={{ fontSize: '13px', color: '#6b7280' }}>{item.description}</div>
+                        {item.variants_count > 0 && (
+                            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
+                                {item.variants_count} option{item.variants_count > 1 ? 's' : ''} available
+                            </div>
+                        )}
                         {(item.min_offerprice > 0 || item.min_price > 0) && (
                             <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <span style={{ fontWeight: 800, fontSize: '15px', color: '#111827' }}>

@@ -69,7 +69,13 @@ export default function ProductDetailsPage(props){
 
     return (
         <div>
-            <ProductDetailsComponent pageRefresh={pageRefresh} setPageRefresh={setPageRefresh} productList={productList} />
+            <ProductDetailsComponent
+                pageRefresh={pageRefresh}
+                setPageRefresh={setPageRefresh}
+                productList={productList}
+                initialColor={location.state?.color || searchParams.get('color')}
+                initialSize={location.state?.size || searchParams.get('size')}
+            />
         </div>
     )
 }
