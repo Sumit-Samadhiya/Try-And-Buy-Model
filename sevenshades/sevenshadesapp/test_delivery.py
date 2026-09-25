@@ -210,6 +210,15 @@ class DeliveryTests(TestCase):
         self.assertEqual(len(data['waypoints']), 2)
         self.assertIn('OPT_1', data['order_sequence'])
 
+        # Unauthorized rider cannot view or optimize another rider's batch route
+        other_client = APIClient(enforce_csrf_checks=False)
+        token2 = other_client.get('/api/auth_csrf').json()['csrfToken']
+        other_client.post('/api/delivery_rider_login', {'phone': self.other.phone, 'password': 'Delivery-test-472!'}, format='json', HTTP_X_CSRFTOKEN=token2)
+        unauth_response = other_client.post('/api/optimize_route', {'batch_id': batch.batch_id}, format='json', HTTP_X_CSRFTOKEN=token2)
+        self.assertEqual(unauth_response.status_code, 403)
+        self.assertFalse(unauth_response.json()['status'])
+
+
 
 
 

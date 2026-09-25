@@ -113,7 +113,12 @@ class DoorstepWorkflowTests(TestCase):
         self.assertEqual(receipt.status_code, 200)
         self.assertIn('not a tax invoice', receipt.content.decode())
         self.assertIn('900', receipt.content.decode())
+        inv_res = self.customer.get(f'/api/generate_invoice/{self.order_id}')
+        self.assertEqual(inv_res.status_code, 200)
+        self.assertTrue(inv_res.json()['status'])
+        self.assertIn('receipt_url', inv_res.json())
         self.assertEqual(self.other_client.get('/api/receipt_download', {'order_id': self.order_id}).status_code, 404)
+
         for return_id in returns:
             self.assertTrue(self.post(self.admin_client, 'update_hygiene_status', {'return_id': return_id, 'action': 'receive'}).json()['status'])
             self.assertEqual(self.post(self.admin_client, 'update_hygiene_status', {'return_id': return_id, 'action': 'approve'}).status_code, 409)

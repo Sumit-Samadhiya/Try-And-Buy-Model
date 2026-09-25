@@ -225,7 +225,12 @@ def OptimizeRoute(request):
         if not batch:
             return JsonResponse({'status': False, 'message': 'Batch not found'}, status=404, safe=False)
 
+        # Authorization check: only admin or the rider assigned to this batch can view/optimize it
+        if request.account_role == 'rider' and batch.rider != request.account:
+            return failure('You do not have permission to view or optimize another rider’s batch route.', 403)
+
         assignments = list(DeliveryAssignment.objects.select_related('try_order', 'rider').filter(batch=batch))
+
         if not assignments:
             return JsonResponse({
                 'status': True,

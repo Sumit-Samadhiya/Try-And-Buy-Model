@@ -105,8 +105,9 @@ def protect_api(view, endpoint, public_catalog=False):
         allowed = {'admin'}
         if endpoint == 'rider_location':
             allowed = {'rider'}
-        elif endpoint in {'settlement_detail', 'receipt_download'}:
+        elif endpoint in {'settlement_detail', 'receipt_download', 'generate_invoice'}:
             allowed = {'customer', 'rider', 'admin'}
+
         elif endpoint == 'cancel_trial':
             allowed = {'customer', 'admin'}
         elif endpoint in CUSTOMER_FIELDS:

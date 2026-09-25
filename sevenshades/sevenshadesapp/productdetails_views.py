@@ -17,7 +17,7 @@ def Upload_Files(files):
     except Exception:
         for name in saved: default_storage.delete(name)
         raise
-    return ','.join(name.removeprefix('static/') for name in saved)
+    return ','.join((name[7:] if name.startswith('static/') else name) for name in saved)
 
 def cleanup(names):
     for name in names.split(','):

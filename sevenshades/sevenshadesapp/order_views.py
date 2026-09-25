@@ -231,14 +231,33 @@ def CustomerApprovePay(request, order_id):
     # Legacy placeholder: never accept a client-declared online payment.
     return failure('Online payments require verified gateway confirmation.', 409)
 
-@api_view(['GET'])
-def GenerateInvoice(request, order_id):
+@api_view(['GET', 'POST'])
+def GenerateInvoice(request, order_id=None):
+    from .models import OrderReceipt
+    from .security import owns_order
     try:
-        # Logic to generate PDF
-        # ...
-        return JsonResponse({'status': True, 'invoice_url': '...'})
+        oid = order_id or request.GET.get('order_id') or request.data.get('order_id')
+        if not oid:
+            return failure('Order ID is required.', 400)
+        order = TryOrder.objects.filter(order_id=oid).first()
+        if not order:
+            return failure('Order not found.', 404)
+        if not owns_order(request.account_role, request.account, order):
+            return failure('You do not have access to this order receipt.', 403)
+        receipt = OrderReceipt.objects.select_related('final_order').filter(final_order__try_order=order).first()
+        if not receipt:
+            return failure('Payment receipt is generated upon successful delivery and final payment settlement.', 404)
+        return JsonResponse({
+            'status': True,
+            'receipt_number': receipt.number,
+            'receipt_url': f'/api/receipt_download?order_id={order.order_id}',
+            'is_tax_invoice': False,
+            'message': 'Official payment receipt generated. Download via receipt_url.'
+        })
     except Exception as e:
-        return JsonResponse({'status': False, 'message': str(e)}, status=400)
+        return JsonResponse({'status': False, 'message': str(e)}, status=500)
+
+
 
 @api_view(['POST'])
 def SubmitFinalSelection(request):

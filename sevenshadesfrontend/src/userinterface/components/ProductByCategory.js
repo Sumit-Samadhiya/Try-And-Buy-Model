@@ -57,8 +57,19 @@ export default function ProductByCategory(props) {
                     <div className="product-details">
                         <div style={{ fontWeight: 600 }}>{item.productname}</div>
                         <div style={{ fontSize: '13px', color: '#6b7280' }}>{item.description}</div>
+                        {item.total_reviews > 0 && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                                <span style={{ fontSize: '12px', fontWeight: 700, color: '#f59e0b' }}>
+                                    ⭐ {Number(item.avg_rating || 0).toFixed(1)}
+                                </span>
+                                <span style={{ fontSize: '11px', color: '#9ca3af' }}>
+                                    ({item.total_reviews})
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </div>
+
             );
         });
     };

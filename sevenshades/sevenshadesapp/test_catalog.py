@@ -155,3 +155,16 @@ class CatalogTests(TestCase):
         self.assertEqual(result.status_code,409)
         self.assertFalse(ProductReview.objects.exists())
         variant.refresh_from_db();self.assertEqual((variant.qty,variant.total_reviews),(4,0))
+
+    def test_database_review_uniqueness_and_rating_range_constraints(self):
+        from django.db import IntegrityError, transaction
+        from .models import ProductReview
+        variant = self.setup_purchased_review()
+        ProductReview.objects.create(product_details=variant, user_mobile='9000000055', rating=5, review_text='First')
+        # Duplicate review for same user and variant must raise IntegrityError at DB level
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            ProductReview.objects.create(product_details=variant, user_mobile='9000000055', rating=4, review_text='Duplicate')
+        # Rating out of range (1-5) must raise IntegrityError
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            ProductReview.objects.create(product_details=variant, user_mobile='9000000099', rating=6, review_text='Invalid')
+

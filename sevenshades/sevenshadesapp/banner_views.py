@@ -15,7 +15,7 @@ def Upload_Files(files):
      for uploaded_file in files.getlist('icon'):
           file_path = default_storage.save('static/' + uploaded_file.name,uploaded_file)
           print(file_path)
-          iconname.append(file_path.removeprefix('static/'))
+          iconname.append(file_path[7:] if file_path.startswith('static/') else file_path)
      return ",".join(iconname)
 
 
@@ -37,7 +37,7 @@ def Banner_Submit(request):
         for uploaded_file in uploaded_files:
             file_path = default_storage.save('static/' + uploaded_file.name, uploaded_file)
             saved_files.append(file_path)
-            iconname.append(file_path.removeprefix('static/'))
+            iconname.append(file_path[7:] if file_path.startswith('static/') else file_path)
 
         payload = {
             'bannerdescription': bannerdescription,

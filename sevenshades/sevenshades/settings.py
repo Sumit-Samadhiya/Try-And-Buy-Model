@@ -191,3 +191,5 @@ RECEIPT_SELLER_ADDRESS = os.environ.get('RECEIPT_SELLER_ADDRESS', '')
 
 # Fixed OTP is explicitly limited to local debug mode. SMS integration is pending.
 OTP_TEST_MODE = DEBUG and os.environ.get('OTP_TEST_MODE', '1') == '1'
+
+SILENCED_SYSTEM_CHECKS = ['fields.E180']

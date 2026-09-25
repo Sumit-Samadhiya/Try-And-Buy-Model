@@ -17,8 +17,10 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import PlusMinusComponent from './PlusMinuComponent'
 import Select from '@mui/material/Select';
+import Rating from '@mui/material/Rating';
 
 export default function ProductDetailsComponent(props) {
+
     const dispatch = useDispatch();
     const [index, setIndex] = useState(0);
     const theme = useTheme();
@@ -148,7 +150,7 @@ export default function ProductDetailsComponent(props) {
             setReviewModalOpen(false);
             loadReviews();
         } else {
-            alert('Unable to post review right now.');
+            alert(res?.message || 'Unable to post review right now. (Only verified buyers who completed a trial purchase can review)');
         }
     };
 
@@ -163,21 +165,23 @@ export default function ProductDetailsComponent(props) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
                         {(product.total_reviews > 0 || reviewsList.length > 0) ? (
                             <>
-                                <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#f59e0b' }}>
-                                    ⭐ {(product.avg_rating || 0).toFixed(1)}
+                                <Rating value={Number(product.avg_rating || 0)} precision={0.5} readOnly size="small" />
+                                <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#f59e0b' }}>
+                                    {(product.avg_rating || 0).toFixed(1)}
                                 </span>
-                                <span style={{ fontSize: '14px', color: '#6b7280' }}>
+                                <span style={{ fontSize: '13px', color: '#6b7280' }}>
                                     ({product.total_reviews || reviewsList.length} Verified Customer Reviews)
                                 </span>
                             </>
                         ) : (
-                            <span style={{ fontSize: '14px', color: '#9ca3af', fontStyle: 'italic' }}>
+                            <span style={{ fontSize: '13px', color: '#9ca3af', fontStyle: 'italic' }}>
                                 No reviews yet
                             </span>
                         )}
                     </div>
 
                     <div style={styles.color}>Color: {product.color}</div>
+
                     <div style={styles.price}>
                         Reference Value: ₹{product.offerprice > 0 && product.offerprice <= product.price ? product.offerprice : product.price}
                     </div>
@@ -236,19 +240,16 @@ export default function ProductDetailsComponent(props) {
                         {reviewModalOpen && (
                             <div style={{ backgroundColor: '#f9fafb', padding: '15px', borderRadius: '8px', border: '1px solid #e5e7eb', marginBottom: '20px' }}>
                                 <h4 style={{ margin: '0 0 10px 0' }}>Write Your Review</h4>
-                                <div style={{ marginBottom: '10px' }}>
-                                    <label style={{ fontWeight: 'bold', marginRight: '10px' }}>Rating: </label>
-                                    <select
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                                    <label style={{ fontWeight: 'bold' }}>Rating: </label>
+                                    <Rating
+                                        name="user-review-rating"
                                         value={userRating}
-                                        onChange={(e) => setUserRating(Number(e.target.value))}
-                                        style={{ padding: '6px', borderRadius: '4px' }}
-                                    >
-                                        <option value={5}>5 Stars - Excellent</option>
-                                        <option value={4}>4 Stars - Good</option>
-                                        <option value={3}>3 Stars - Average</option>
-                                        <option value={2}>2 Stars - Poor</option>
-                                        <option value={1}>1 Star - Terrible</option>
-                                    </select>
+                                        onChange={(e, val) => {
+                                            if (val) setUserRating(val);
+                                        }}
+                                        size="medium"
+                                    />
                                 </div>
                                 <textarea
                                     rows={3}
@@ -282,13 +283,14 @@ export default function ProductDetailsComponent(props) {
                                     <div key={rev.id} style={{ padding: '12px', backgroundColor: '#f8fafc', borderRadius: '6px', border: '1px solid #f1f5f9' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <span style={{ fontWeight: 'bold', color: '#111827' }}>{rev.user_name}</span>
-                                            <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>{'⭐'.repeat(rev.rating)}</span>
+                                            <Rating value={Number(rev.rating || 5)} readOnly size="small" />
                                         </div>
                                         <p style={{ margin: '6px 0 0 0', fontSize: '14px', color: '#374151' }}>{rev.review_text}</p>
                                     </div>
                                 ))
                             )}
                         </div>
+
                     </div>
                 </div>
             );

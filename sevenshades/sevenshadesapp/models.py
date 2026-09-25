@@ -78,6 +78,13 @@ class ProductReview(models.Model):
     review_text = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['product_details', 'user_mobile'], name='unique_customer_product_review'),
+            models.CheckConstraint(check=models.Q(rating__gte=1, rating__lte=5), name='product_review_rating_1_to_5'),
+        ]
+
+
 
 class AdminLogin(PasswordAccount):
     emailid=models.CharField(max_length=70,blank=False,default='',unique=True)

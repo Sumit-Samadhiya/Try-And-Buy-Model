@@ -114,6 +114,10 @@ urlpatterns = [
     path('api/final_payment_update', order_views.FinalPaymentUpdate),
     path('api/user_order_lifecycle_list', order_views.UserOrderLifecycleList),
     path('api/admin_order_lifecycle_list', order_views.AdminOrderLifecycleList),
+    path('api/generate_invoice', order_views.GenerateInvoice),
+    path('api/generate_invoice/<str:order_id>', order_views.GenerateInvoice),
+
+
     path('api/delivery_rider_create', delivery_ops_views.DeliveryRiderCreate),
     path('api/delivery_rider_update', delivery_ops_views.DeliveryRiderUpdate),
     path('api/delivery_rider_list', delivery_ops_views.DeliveryRiderList),
@@ -146,5 +150,6 @@ urlpatterns = [
 for route in urlpatterns:
     pattern = str(route.pattern)
     if pattern.startswith('api/'):
-        endpoint = pattern.removeprefix('api/')
+        endpoint = pattern[4:].split('/')[0]
         route.callback = protect_api(route.callback, endpoint, route.callback.__module__ == userinterface.__name__)
+

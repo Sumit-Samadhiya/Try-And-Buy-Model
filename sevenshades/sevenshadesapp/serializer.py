@@ -58,6 +58,8 @@ class  ProductGetSerializer(serializers.ModelSerializer):
     brandid= BrandsSerializer(many=False)
     is_available = serializers.SerializerMethodField()
     variants_count = serializers.SerializerMethodField()
+    avg_rating = serializers.SerializerMethodField()
+    total_reviews = serializers.SerializerMethodField()
     
     class Meta:
         model=Product
@@ -68,6 +70,17 @@ class  ProductGetSerializer(serializers.ModelSerializer):
 
     def get_variants_count(self, obj):
         return obj.productdetails_set.count()
+
+    def get_avg_rating(self, obj):
+        from django.db.models import Avg
+        val = obj.productdetails_set.filter(total_reviews__gt=0).aggregate(Avg('avg_rating'))['avg_rating__avg']
+        return round(val, 1) if val is not None else 0.0
+
+    def get_total_reviews(self, obj):
+        from django.db.models import Sum
+        val = obj.productdetails_set.aggregate(Sum('total_reviews'))['total_reviews__sum']
+        return val or 0
+
 
 
 class  ProductSerializer(serializers.ModelSerializer):
