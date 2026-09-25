@@ -27,7 +27,7 @@ def cleanup(names):
 @transaction.atomic
 def ProductDetails_Submit(request):
     # Validate a plain copy before saving files; multipart request.data may be immutable.
-    data={key:request.data.get(key) for key in FIELDS}
+    data={key:(request.data.get(key).strip() if key in ('color','size') and isinstance(request.data.get(key),str) else request.data.get(key)) for key in FIELDS}
     serializer=ProductDetailsSerializer(data=data)
     if not serializer.is_valid():
         return JsonResponse({'status':False,'message':'Check variant fields.','errors':serializer.errors},status=400)
@@ -81,7 +81,8 @@ def EditProductDetails_Data(request):
         return failure('Stock changed while this form was open. Close and refresh the list before saving.',409)
     if TryOrderItem.objects.filter(product_details=variant).exists() and any(str(getattr(variant,key+'_id') if key in ('productid','maincategoryid','subcategoryid','brandid') else getattr(variant,key))!=str(request.data.get(key)) for key in ('productid','maincategoryid','subcategoryid','brandid','size','color')):
         return failure('An ordered variant cannot change product, category, brand, size or colour. Create a new variant instead.',409)
-    serializer=ProductDetailsSerializer(variant,data={key:request.data.get(key) for key in FIELDS},partial=True)
+    edit_data={key:(request.data.get(key).strip() if key in ('color','size') and isinstance(request.data.get(key),str) else request.data.get(key)) for key in FIELDS}
+    serializer=ProductDetailsSerializer(variant,data=edit_data,partial=True)
     if not serializer.is_valid():
         return JsonResponse({'status':False,'message':'Check variant fields.','errors':serializer.errors},status=400)
     serializer.save()

@@ -22,12 +22,24 @@ import Rating from '@mui/material/Rating';
 export default function ProductDetailsComponent(props) {
 
     const dispatch = useDispatch();
-    const [index, setIndex] = useState(0);
+    const initialIndex = React.useMemo(() => {
+        if (!props.productList || props.productList.length === 0) return 0;
+        const inStock = props.productList.findIndex((v) => v.qty > 0 && v.size);
+        return inStock >= 0 ? inStock : 0;
+    }, [props.productList]);
+
+    const [index, setIndex] = useState(initialIndex);
+    const [activeImgIndex, setActiveImgIndex] = useState(0);
     const theme = useTheme();
     const sm_matches = useMediaQuery(theme.breakpoints.down('sm'));
     const bagItems = useSelector((state) => state.product);
     const totalTryItems = Object.values(bagItems).reduce((total, item) => total + (item.qty > 0 ? 1 : 0), 0);
     const sldr = createRef(null);
+
+    React.useEffect(() => {
+        setIndex(initialIndex);
+        setActiveImgIndex(0);
+    }, [initialIndex]);
 
     const [reviewsList, setReviewsList] = useState([]);
     const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -38,8 +50,9 @@ export default function ProductDetailsComponent(props) {
 
     let product, items;
     try {
-        product = props.productList?.[index];
-        items = product?.icon?.split(",") || [];
+        product = props.productList?.[index] || {};
+        items = product?.icon?.split(",").filter(Boolean) || [];
+        if (items.length === 0 && product?.icon) items = [product.icon];
     } catch (e) {
         items = [""];
         product = {};
@@ -60,12 +73,12 @@ export default function ProductDetailsComponent(props) {
 
     const settings = {
         dots: false,
-        infinite: true,
-        speed: 500,
-        autoPlaySpeed: 3000,
+        infinite: items.length > 1,
+        speed: 400,
         slidesToShow: 1,
         slidesToScroll: 1,
         arrows: false,
+        afterChange: (current) => setActiveImgIndex(current),
     };
 
     if (!props.productList || props.productList.length === 0 || !props.productList[index]) {
@@ -82,11 +95,16 @@ export default function ProductDetailsComponent(props) {
     }
 
     const handlePrevious = () => {
-        sldr.current.slickPrev();
+        sldr.current?.slickPrev();
     };
 
     const handleNext = () => {
-        sldr.current.slickNext();
+        sldr.current?.slickNext();
+    };
+
+    const handleThumbnailClick = (itemIndex) => {
+        setActiveImgIndex(itemIndex);
+        sldr.current?.slickGoTo(itemIndex);
     };
 
     const handleChange = (v, product) => {
@@ -108,27 +126,77 @@ export default function ProductDetailsComponent(props) {
     };
 
     const handleSizeChange = (event) => {
-        setIndex(Number(event.target.value));
+        const newIndex = Number(event.target.value);
+        setIndex(newIndex);
+        setActiveImgIndex(0);
+        sldr.current?.slickGoTo(0);
+    };
+
+    const distinctColors = Array.from(new Set((props.productList || []).map((v) => v.color).filter(Boolean)));
+    const sizesForCurrentColor = (props.productList || []).filter((v) => v.color === product?.color);
+
+    const handleColorClick = (chosenColor) => {
+        const matchingCurrentSizeInStock = props.productList.findIndex(
+            (v) => v.color === chosenColor && v.size === product.size && v.qty > 0
+        );
+        if (matchingCurrentSizeInStock >= 0) {
+            setIndex(matchingCurrentSizeInStock);
+            setActiveImgIndex(0);
+            sldr.current?.slickGoTo(0);
+            return;
+        }
+        const firstInStockOfColor = props.productList.findIndex(
+            (v) => v.color === chosenColor && v.qty > 0
+        );
+        if (firstInStockOfColor >= 0) {
+            setIndex(firstInStockOfColor);
+            setActiveImgIndex(0);
+            sldr.current?.slickGoTo(0);
+            return;
+        }
+        const anyOfColor = props.productList.findIndex((v) => v.color === chosenColor);
+        if (anyOfColor >= 0) {
+            setIndex(anyOfColor);
+            setActiveImgIndex(0);
+            sldr.current?.slickGoTo(0);
+        }
+    };
+
+    const handleSizeSelect = (chosenVariantId) => {
+        const target = props.productList.findIndex((v) => v.id === chosenVariantId);
+        if (target >= 0) {
+            setIndex(target);
+        }
     };
 
     const show = () => {
-        return items.map((item) => (
-            <div key={item} style={styles.thumbnail}>
+        return items.map((item, itemIndex) => (
+            <div
+                key={item + '-' + itemIndex}
+                onClick={() => handleThumbnailClick(itemIndex)}
+                style={{
+                    ...styles.thumbnail,
+                    border: activeImgIndex === itemIndex ? '2px solid #111827' : '2px solid #e5e7eb',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: activeImgIndex === itemIndex ? '0 2px 6px rgba(0,0,0,0.15)' : 'none',
+                }}
+            >
                 <img src={imageUrl(item)} alt="" style={styles.thumbnailImage} />
             </div>
         ));
     };
 
     const productde = () => {
-        return items.map((item) => (
-            <div key={item}>
+        return items.map((item, itemIndex) => (
+            <div key={item + '-' + itemIndex}>
                 <div>
                     <img src={imageUrl(item)} alt="" style={styles.productImage} />
                 </div>
             </div>
         ));
     };
-
 
     const handlePostReview = async () => {
         if (!userComment) {
@@ -154,15 +222,25 @@ export default function ProductDetailsComponent(props) {
         }
     };
 
+    const effectivePrice = product.offerprice > 0 && product.offerprice <= product.price ? product.offerprice : product.price;
+    const hasDiscount = product.price > effectivePrice;
+    const discountPercent = hasDiscount ? Math.round(((product.price - effectivePrice) / product.price) * 100) : 0;
+    const isOutOfStock = product.qty < 1 || !product.size;
+
     const productdetails = () => {
         if (product && product.productid) {
             return (
                 <div style={styles.details}>
-                    <div style={styles.productName}>{product.productid.productname}</div>
-                    <div style={styles.brandName}>{product.brandid.brandname}</div>
+                    <div style={styles.brandName}>{product.brandid?.brandname}</div>
+                    <div style={styles.productName}>{product.productid?.productname}</div>
+                    {product.description && (
+                        <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>
+                            {product.description}
+                        </div>
+                    )}
                     
                     {/* RATING DISPLAY */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' }}>
                         {(product.total_reviews > 0 || reviewsList.length > 0) ? (
                             <>
                                 <Rating value={Number(product.avg_rating || 0)} precision={0.5} readOnly size="small" />
@@ -180,20 +258,142 @@ export default function ProductDetailsComponent(props) {
                         )}
                     </div>
 
-                    <div style={styles.color}>Color: {product.color}</div>
-
-                    <div style={styles.price}>
-                        Reference Value: ₹{product.offerprice > 0 && product.offerprice <= product.price ? product.offerprice : product.price}
+                    {/* PRICING WITH REAL-WORLD MRP & DISCOUNT BADGE */}
+                    <div style={{ marginTop: '16px', display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '28px', fontWeight: 800, color: '#111827' }}>
+                            ₹{effectivePrice}
+                        </span>
+                        {hasDiscount && (
+                            <>
+                                <span style={{ fontSize: '18px', color: '#9ca3af', textDecoration: 'line-through' }}>
+                                    ₹{product.price}
+                                </span>
+                                <span style={{
+                                    fontSize: '13px',
+                                    fontWeight: 700,
+                                    color: '#15803d',
+                                    backgroundColor: '#dcfce7',
+                                    padding: '3px 8px',
+                                    borderRadius: '4px',
+                                }}>
+                                    {discountPercent}% OFF
+                                </span>
+                            </>
+                        )}
                     </div>
-                    <div style={styles.size}>
-                        <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
-                            <InputLabel id="demo-simple-select-standard-label">Size</InputLabel>
+                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                        MRP inclusive of all taxes • Pay at doorstep only if you decide to buy
+                    </div>
+
+                    {/* REAL-WORLD COLOR SELECTOR */}
+                    {distinctColors.length > 0 && (
+                        <div style={{ marginTop: '20px' }}>
+                            <div style={{ fontSize: '14px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
+                                Color: <span style={{ fontWeight: 700, color: '#111827' }}>{product.color}</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                {distinctColors.map((colorName) => {
+                                    const isSelected = product.color === colorName;
+                                    const hasStock = props.productList.some((v) => v.color === colorName && v.qty > 0);
+                                    return (
+                                        <button
+                                            key={colorName}
+                                            type="button"
+                                            onClick={() => handleColorClick(colorName)}
+                                            style={{
+                                                padding: '6px 14px',
+                                                borderRadius: '20px',
+                                                border: isSelected ? '2px solid #111827' : '1px solid #d1d5db',
+                                                backgroundColor: isSelected ? '#111827' : '#ffffff',
+                                                color: isSelected ? '#ffffff' : '#374151',
+                                                fontSize: '13px',
+                                                fontWeight: isSelected ? 700 : 500,
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                opacity: hasStock ? 1 : 0.6,
+                                                transition: 'all 0.15s ease-in-out',
+                                            }}
+                                        >
+                                            <span
+                                                style={{
+                                                    width: '10px',
+                                                    height: '10px',
+                                                    borderRadius: '50%',
+                                                    backgroundColor: colorName.toLowerCase(),
+                                                    border: '1px solid rgba(0,0,0,0.2)',
+                                                    display: 'inline-block',
+                                                }}
+                                            />
+                                            {colorName}
+                                            {!hasStock && ' (Out of stock)'}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* REAL-WORLD SIZE PILLS & INVENTORY STATUS */}
+                    <div style={{ marginTop: '20px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <span style={{ fontSize: '14px', fontWeight: 600, color: '#374151' }}>
+                                Select Size: <span style={{ fontWeight: 700, color: '#111827' }}>{product.size || 'None'}</span>
+                            </span>
+                            {product.qty > 0 && product.qty <= 3 && (
+                                <span style={{ fontSize: '12px', fontWeight: 700, color: '#d97706' }}>
+                                    🔥 Only {product.qty} left in stock!
+                                </span>
+                            )}
+                            {product.qty < 1 && (
+                                <span style={{ fontSize: '12px', fontWeight: 700, color: '#dc2626' }}>
+                                    Out of Stock
+                                </span>
+                            )}
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            {sizesForCurrentColor.map((v) => {
+                                const isSelected = v.id === product.id;
+                                const isOut = v.qty < 1;
+                                return (
+                                    <button
+                                        key={v.id}
+                                        type="button"
+                                        disabled={isOut}
+                                        onClick={() => handleSizeSelect(v.id)}
+                                        style={{
+                                            minWidth: '50px',
+                                            height: '42px',
+                                            padding: '0 14px',
+                                            borderRadius: '8px',
+                                            border: isSelected ? '2px solid #111827' : '1px solid #d1d5db',
+                                            backgroundColor: isSelected ? '#111827' : isOut ? '#f3f4f6' : '#ffffff',
+                                            color: isSelected ? '#ffffff' : isOut ? '#9ca3af' : '#111827',
+                                            fontWeight: 700,
+                                            fontSize: '14px',
+                                            cursor: isOut ? 'not-allowed' : 'pointer',
+                                            textDecoration: isOut ? 'line-through' : 'none',
+                                            transition: 'all 0.15s ease-in-out',
+                                        }}
+                                    >
+                                        {v.size}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* QUICK SELECT DROPDOWN (Accessible & backwards compatible) */}
+                    <div style={{ marginTop: '16px' }}>
+                        <FormControl variant="standard" sx={{ minWidth: 200 }}>
+                            <InputLabel id="demo-simple-select-standard-label">All Available Variants</InputLabel>
                             <Select
                                 labelId="demo-simple-select-standard-label"
                                 id="demo-simple-select-standard"
                                 value={index}
                                 onChange={handleSizeChange}
-                                label="Size"
+                                label="Variant"
                             >
                                 {(props.productList || []).map((variant, variantIndex) => (
                                     <MenuItem key={variant.id} value={variantIndex} disabled={variant.qty < 1 || !variant.size}>
@@ -203,18 +403,38 @@ export default function ProductDetailsComponent(props) {
                             </Select>
                         </FormControl>
                     </div>
+
+                    {/* TRY BAG STATUS BADGE */}
+                    {bagItems[product.id]?.qty >= 1 && (
+                        <div style={{
+                            marginTop: '14px',
+                            padding: '6px 12px',
+                            backgroundColor: '#ecfdf5',
+                            border: '1px solid #a7f3d0',
+                            borderRadius: '6px',
+                            color: '#065f46',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                        }}>
+                            ✓ Added to Try Bag ({product.size} / {product.color})
+                        </div>
+                    )}
+
                     <div style={styles.plusMinus}>
                         <PlusMinusComponent
                             value={bagItems[product.id]?.qty || 0}
                             onChange={(v) => handleChange(v, product)}
                             addLabel="Add to Try Bag"
-                            disableIncrement={totalTryItems >= 4 || product.qty < 1 || !product.size || bagItems[product.id]?.qty >= 1}
+                            disableIncrement={totalTryItems >= 4 || isOutOfStock || bagItems[product.id]?.qty >= 1}
                             helperText={product.qty < 1 ? 'This variant is out of stock.' : !product.size ? 'Size unavailable.' : 'Choose up to 4 variants, one piece of each.'}
                         />
                     </div>
                     <div style={styles.delivery}>
                         <p><LocalShippingOutlinedIcon /> Home trial available with call-based timing confirmation.</p>
-                        <p>First try is free. Repeat try fee gets credited to wallet when you buy any item.</p>
+                        <p>100% Cash on Delivery at doorstep. Pay only for what you keep.</p>
                     </div>
 
                     {/* CUSTOMER REVIEWS SECTION */}

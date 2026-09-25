@@ -57,6 +57,23 @@ export default function ProductByCategory(props) {
                     <div className="product-details">
                         <div style={{ fontWeight: 600 }}>{item.productname}</div>
                         <div style={{ fontSize: '13px', color: '#6b7280' }}>{item.description}</div>
+                        {(item.min_offerprice > 0 || item.min_price > 0) && (
+                            <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontWeight: 800, fontSize: '15px', color: '#111827' }}>
+                                    ₹{item.min_offerprice > 0 ? item.min_offerprice : item.min_price}
+                                </span>
+                                {item.min_offerprice > 0 && item.min_price > item.min_offerprice && (
+                                    <>
+                                        <span style={{ fontSize: '12px', color: '#9ca3af', textDecoration: 'line-through' }}>
+                                            ₹{item.min_price}
+                                        </span>
+                                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#15803d' }}>
+                                            {Math.round(((item.min_price - item.min_offerprice) / item.min_price) * 100)}% OFF
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+                        )}
                         {item.total_reviews > 0 && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                                 <span style={{ fontSize: '12px', fontWeight: 700, color: '#f59e0b' }}>

@@ -59,7 +59,8 @@ class  ProductGetSerializer(serializers.ModelSerializer):
     is_available = serializers.SerializerMethodField()
     variants_count = serializers.SerializerMethodField()
     avg_rating = serializers.SerializerMethodField()
-    total_reviews = serializers.SerializerMethodField()
+    min_price = serializers.SerializerMethodField()
+    min_offerprice = serializers.SerializerMethodField()
     
     class Meta:
         model=Product
@@ -79,6 +80,16 @@ class  ProductGetSerializer(serializers.ModelSerializer):
     def get_total_reviews(self, obj):
         from django.db.models import Sum
         val = obj.productdetails_set.aggregate(Sum('total_reviews'))['total_reviews__sum']
+        return val or 0
+
+    def get_min_price(self, obj):
+        from django.db.models import Min
+        val = obj.productdetails_set.aggregate(Min('price'))['price__min']
+        return val or 0
+
+    def get_min_offerprice(self, obj):
+        from django.db.models import Min
+        val = obj.productdetails_set.filter(offerprice__gt=0).aggregate(Min('offerprice'))['offerprice__min']
         return val or 0
 
 
