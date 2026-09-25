@@ -41,8 +41,12 @@ def Brands_List(request):
 def EditBrands_Icon(request):
     try:
         if request.method=='POST':
+                from .upload_security import sanitize_filename
                 brands_data=Brands.objects.get(pk=request.data['id'])
-                brands_data.icon=request.data['icon']
+                icon_file = request.FILES.get('icon') or request.data.get('icon')
+                if hasattr(icon_file, 'name'):
+                    icon_file.name = sanitize_filename(icon_file.name, fallback_ext='.png')
+                brands_data.icon=icon_file
                 brands_data.save()
                 return JsonResponse({"message":'Brand Icon Updated',"status":True},safe=False)
         else:

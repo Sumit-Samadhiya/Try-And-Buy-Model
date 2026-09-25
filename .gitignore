@@ -32,3 +32,6 @@ build/
 dist/
 *.log
 .DS_Store
+media/
+sevenshades/media/*
+!sevenshades/media/.gitkeep

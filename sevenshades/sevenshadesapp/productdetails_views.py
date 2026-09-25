@@ -7,13 +7,16 @@ from .models import Product, ProductDetails, TryOrderItem
 from .serializer import ProductGetSerializer, ProductDetailsSerializer, ProductDetailsGetSerializer
 from .security import failure
 
+from .upload_security import sanitize_filename
+
 FIELDS=('maincategoryid','subcategoryid','brandid','productid','productsubname','description','qty','price','color','size','offerprice','offertype')
 
 def Upload_Files(files):
     saved=[]
     try:
         for upload in files.getlist('icon'):
-            saved.append(default_storage.save('static/'+upload.name.replace(',', '_'),upload))
+            safe_name = sanitize_filename(upload.name, fallback_ext='.png')
+            saved.append(default_storage.save('static/' + safe_name, upload))
     except Exception:
         for name in saved: default_storage.delete(name)
         raise

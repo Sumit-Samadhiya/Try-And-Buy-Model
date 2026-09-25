@@ -27,6 +27,7 @@ from sevenshadesapp import maincategory_views,mysubcategory_views,brands_views,p
 from django.urls import include,re_path
 from sevenshadesapp import auth_views
 from sevenshadesapp.security import protect_api
+from sevenshadesapp.upload_security import secure_media_serve
 
 
 urlpatterns = [
@@ -146,6 +147,7 @@ urlpatterns = [
     path('api/list_excluded_areas', admin_workspace_views.ListExcludedAreas),
     path('api/save_excluded_area', admin_workspace_views.SaveExcludedArea),
     path('api/delete_excluded_area', admin_workspace_views.DeleteExcludedArea),
+    re_path(r'^media/(?P<path>.*)$', secure_media_serve, name='media_serve'),
 ]
 
 

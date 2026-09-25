@@ -8,9 +8,13 @@ from .security import failure
 
 
 def save_product(request, instance=None, image_only=False):
+    from .upload_security import sanitize_filename
     fields = ['icon'] if image_only else ['maincategoryid','subcategoryid','brandid','productname','description']
     if instance is None: fields.append('icon')
-    serializer = ProductSerializer(instance, data={key:request.data.get(key) for key in fields}, partial=image_only or instance is not None)
+    raw_icon = request.FILES.get('icon') or request.data.get('icon')
+    if hasattr(raw_icon, 'name'):
+        raw_icon.name = sanitize_filename(raw_icon.name, fallback_ext='.png')
+    serializer = ProductSerializer(instance, data={key: (raw_icon if key == 'icon' else request.data.get(key)) for key in fields}, partial=image_only or instance is not None)
     if not serializer.is_valid():
         return JsonResponse({'status':False,'message':'Check the product fields.','errors':serializer.errors},status=400)
     serializer.save()

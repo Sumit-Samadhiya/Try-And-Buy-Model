@@ -630,19 +630,14 @@ def validate_request(endpoint, data, files):
     if sum(len(files.getlist(key)) for key in files) > 10:
         errors['icon'] = ['Upload at most 10 images at a time.']
 
+    from .upload_security import validate_uploaded_image
     for field in files:
         for upload in files.getlist(field):
-            if upload.size > 5 * 1024 * 1024:
-                errors[field] = ['Each image must be 5 MB or smaller.']
-                continue
-            try:
-                image = Image.open(upload)
-                if image.format not in ('JPEG', 'PNG', 'WEBP', 'AVIF', 'GIF') or image.width * image.height > 25000000:
-                    raise ValueError('image')
-                image.verify()
-            except (ValueError, OSError, Image.DecompressionBombError):
-                errors[field] = ['Upload a valid JPG, PNG, WebP, AVIF or GIF image up to 25 megapixels.']
-            finally:
-                upload.seek(0)
+            file_errors = validate_uploaded_image(upload)
+            if file_errors:
+                errors[field] = file_errors
+                break
+        if field in errors:
+            break
 
     return errors

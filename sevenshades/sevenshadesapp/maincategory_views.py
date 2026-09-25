@@ -40,8 +40,12 @@ def MainCategory_List(request):
 def EditCategory_Icon(request):
     try:
         if request.method=='POST':
+                from .upload_security import sanitize_filename
                 maincategory_data=MainCategory.objects.get(pk=request.data['id'])
-                maincategory_data.icon=request.data['icon']
+                icon_file = request.FILES.get('icon') or request.data.get('icon')
+                if hasattr(icon_file, 'name'):
+                    icon_file.name = sanitize_filename(icon_file.name, fallback_ext='.png')
+                maincategory_data.icon=icon_file
                 maincategory_data.save()
                 return JsonResponse({"message":'MainCategory Icon Updated',"status":True},safe=False)
         else:
