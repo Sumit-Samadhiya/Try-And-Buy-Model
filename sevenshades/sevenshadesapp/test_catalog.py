@@ -13,6 +13,8 @@ class CatalogTests(TestCase):
         self.settings_override=override_settings(MEDIA_ROOT=self.media.name)
         self.settings_override.enable()
         self.addCleanup(self.settings_override.disable)
+        from django.core.cache import cache
+        cache.clear()
         self.admin=AdminLogin.objects.create(emailid='catalog@example.test',mobileno='9000000055',password='Catalog-test-872!')
         self.client=APIClient(enforce_csrf_checks=True)
         self.post('check_admin_login',{'emailid':self.admin.emailid,'password':'Catalog-test-872!'})

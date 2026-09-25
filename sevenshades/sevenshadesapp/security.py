@@ -162,7 +162,12 @@ def protect_api(view, endpoint, public_catalog=False):
         try:
             if request.content_type == 'application/json' and len(request.body) > 1048576:
                 return failure('Request is too large.', 413)
-            data = json.loads(request.body or b'{}') if request.content_type == 'application/json' else request.POST
+            if request.content_type == 'application/json':
+                data = json.loads(request.body or b'{}')
+            elif request.method == 'GET':
+                data = request.GET
+            else:
+                data = request.POST
             if not hasattr(data, 'get'):
                 return failure('Expected an object.', 400)
         except (ValueError, UnicodeError):
@@ -184,10 +189,6 @@ def protect_api(view, endpoint, public_catalog=False):
             supplied = data.get(CUSTOMER_FIELDS[endpoint])
             if supplied is not None and str(supplied) != str(account.pk):
                 return failure('You can only access your own account.')
-        from .request_validation import validate_request
-        errors = validate_request(endpoint, data, request.FILES)
-        if errors:
-            return JsonResponse({'status': False, 'message': ' '.join(messages[0] for messages in errors.values()), 'errors': errors}, status=400)
         if endpoint == 'delivery_rider_tasks' and role == 'rider':
             if data.get('phone') not in (None, account.phone):
                 return failure('You can only access your own tasks.')
@@ -203,6 +204,11 @@ def protect_api(view, endpoint, public_catalog=False):
             item = tag.final_order_item if tag else None
             if not item or not owns_order(role, account, item.final_order.try_order):
                 return failure('Item not found.', 404)
+
+        from .request_validation import validate_request
+        errors = validate_request(endpoint, data, request.FILES)
+        if errors:
+            return JsonResponse({'status': False, 'message': ' '.join(messages[0] for messages in errors.values()), 'errors': errors}, status=400)
 
         response = view(request, *args, **kwargs)
 

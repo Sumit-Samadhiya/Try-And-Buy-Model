@@ -24,10 +24,16 @@ class DoorstepWorkflowTests(TestCase):
         cls.variants = [cls.variant, cls.empty, ProductDetails.objects.create(**common, size='S', qty=1), ProductDetails.objects.create(**common, size='L', qty=1)]
 
     def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
         self.customer = self.login('customer')
         self.admin_client = self.login('admin')
         self.rider_client = self.login('rider')
         self.other_client = self.login('customer', self.other)
+
+    def tearDown(self):
+        from django.core.cache import cache
+        cache.clear()
 
     def post(self, client, endpoint, data):
         token = client.get('/api/auth_csrf').json()['csrfToken']
