@@ -4,13 +4,12 @@ from django.utils import timezone
 import requests
 from django.db import transaction, OperationalError
 import uuid
-from .delivery_workflow import assign_order, advance_assignment, generate_batches, reassign_order
-from .inventory_workflow import InventoryError
-from .inventory_workflow import lock_order
+from sevenshadesapp.delivery_workflow import assign_order, advance_assignment, generate_batches, reassign_order
+from sevenshadesapp.inventory_workflow import InventoryError, lock_order
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from .security import authenticate_account, failure
+from sevenshadesapp.security import authenticate_account, failure
 from sevenshadesapp.models import DeliveryRider, DeliveryAssignment, TryOrder, DeliveryBatch
 from sevenshadesapp.serializer import DeliveryRiderSerializer, DeliveryAssignmentWithRefSerializer, DeliveryBatchSerializer
 

@@ -4,13 +4,13 @@ from django.http import JsonResponse, HttpResponse
 from django.db import OperationalError, IntegrityError
 from django.utils import timezone
 from rest_framework.decorators import api_view
-from .models import TryOrder, FinalOrder, DeliveryAssignment, GatewayPayment, OrderReceipt
-from .serializer import TryOrderWithItemsSerializer, FinalOrderWithItemsSerializer
-from .security import failure, owns_order
-from .inventory_workflow import InventoryError
-from .settlement import approve_bill, approved
-from .payments import gateway_configured, create_payment, verify_checkout, verify_webhook, verified_entity, apply_capture, reconcile_payment
-from .receipts import receipt_html
+from sevenshadesapp.models import TryOrder, FinalOrder, DeliveryAssignment, GatewayPayment, OrderReceipt
+from sevenshadesapp.serializer import TryOrderWithItemsSerializer, FinalOrderWithItemsSerializer
+from sevenshadesapp.security import failure, owns_order
+from sevenshadesapp.inventory_workflow import InventoryError
+from sevenshadesapp.settlement import approve_bill, approved
+from sevenshadesapp.payments import gateway_configured, create_payment, verify_checkout, verify_webhook, verified_entity, apply_capture, reconcile_payment
+from sevenshadesapp.receipts import receipt_html
 
 
 def mutation(callback):
@@ -26,7 +26,7 @@ def mutation(callback):
 def SettlementDetail(request):
     if not isinstance(request.data.get('order_id'), str):
         return failure('Invalid order identifier.', 400)
-    from .inventory_workflow import expire_pending_trials, cancellation_blocker
+    from sevenshadesapp.inventory_workflow import expire_pending_trials, cancellation_blocker
     if request.account_role == 'customer': expire_pending_trials(request.account.pk)
     order = TryOrder.objects.filter(order_id=request.data.get('order_id')).first()
     if not order or not owns_order(request.account_role, request.account, order):

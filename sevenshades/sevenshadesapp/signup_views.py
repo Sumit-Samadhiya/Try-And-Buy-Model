@@ -7,7 +7,7 @@ from django.shortcuts import render
 from sevenshadesapp.models import SignUp,UserAddress
 from sevenshadesapp.serializer import SignUpSerializer,UserAddressGetSerializer,UserAddressSerializer
 from rest_framework.decorators import api_view
-from .security import authenticate_account, failure
+from sevenshadesapp.security import authenticate_account, failure
 
 @api_view(['POST'])
 def SignUp_Submit(request):
