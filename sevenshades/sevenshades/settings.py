@@ -199,3 +199,23 @@ RECEIPT_SELLER_ADDRESS = os.environ.get('RECEIPT_SELLER_ADDRESS', '')
 OTP_TEST_MODE = DEBUG and os.environ.get('OTP_TEST_MODE', '1') == '1'
 
 SILENCED_SYSTEM_CHECKS = ['fields.E180']
+
+RATE_LIMITS = {
+    'AUTH': {
+        'IP_MAX_REQUESTS': int(os.environ.get('RATE_LIMIT_AUTH_IP_MAX', 100)),
+        'IP_WINDOW': int(os.environ.get('RATE_LIMIT_AUTH_IP_WINDOW', 60)),
+        'ACCOUNT_MAX_ATTEMPTS': int(os.environ.get('RATE_LIMIT_AUTH_ACC_MAX', 10)),
+        'ACCOUNT_WINDOW': int(os.environ.get('RATE_LIMIT_AUTH_ACC_WINDOW', 900)),
+        'BACKOFF_BASE': float(os.environ.get('RATE_LIMIT_AUTH_BACKOFF_BASE', 2.0)),
+        'BACKOFF_FACTOR': float(os.environ.get('RATE_LIMIT_AUTH_BACKOFF_FACTOR', 2.0)),
+        'BACKOFF_MAX': int(os.environ.get('RATE_LIMIT_AUTH_BACKOFF_MAX', 300)),
+    },
+    'PUBLIC': {
+        'MAX_REQUESTS': int(os.environ.get('RATE_LIMIT_PUBLIC_MAX', 120)),
+        'WINDOW': int(os.environ.get('RATE_LIMIT_PUBLIC_WINDOW', 60)),
+    },
+    'AUTHENTICATED': {
+        'MAX_REQUESTS': int(os.environ.get('RATE_LIMIT_AUTHED_MAX', 300)),
+        'WINDOW': int(os.environ.get('RATE_LIMIT_AUTHED_WINDOW', 60)),
+    },
+}

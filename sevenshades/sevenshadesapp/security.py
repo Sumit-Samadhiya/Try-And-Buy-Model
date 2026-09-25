@@ -59,11 +59,13 @@ def establish_session(request, role, account):
 
 
 def authenticate_account(request, role, identifier, password):
-    # Limit repeated guesses without storing the submitted credentials in cache/logs.
-    key = 'login:' + salted_hmac('login-limit', f'{role}:{identifier}:{request.META.get("REMOTE_ADDR", "")}').hexdigest()
-    cache.add(key, 0, timeout=300)
-    if cache.incr(key) > 10:
-        return None, failure('Too many login attempts. Please try again later.', 429)
+    from .rate_limiter import check_account_backoff, record_auth_failure, reset_account_backoff, rate_limit_response
+    is_blocked, retry_after = check_account_backoff(identifier)
+    if is_blocked:
+        return None, rate_limit_response(
+            f'Too many login attempts. Please try again in {retry_after} second{"s" if retry_after != 1 else ""}.',
+            retry_after=retry_after
+        )
     if role == 'rider':
         from django.db.models import Q
         account = ACCOUNTS['rider'].objects.filter(Q(phone=identifier) | Q(rider_id=identifier)).first()
@@ -72,10 +74,12 @@ def authenticate_account(request, role, identifier, password):
         account = ACCOUNTS[role].objects.filter(**{field: identifier}).first()
     if not account:
         make_password(password)  # Keep missing-account checks comparable to password checks.
+        record_auth_failure(identifier)
         return None, failure('Invalid credentials', 401)
     if not check_password(password, account.password) or (role == 'rider' and account.status != 'Active'):
+        record_auth_failure(identifier)
         return None, failure('Invalid credentials', 401)
-    cache.delete(key)
+    reset_account_backoff(identifier)
     establish_session(request, role, account)
     return account, None
 
@@ -123,6 +127,30 @@ def protect_api(view, endpoint, public_catalog=False):
         if not public and role not in allowed:
             return failure('You do not have access to this action.')
 
+        from .rate_limiter import (
+            get_endpoint_category, check_ip_rate_limit, check_user_rate_limit,
+            check_account_backoff, record_auth_failure, reset_account_backoff,
+            extract_auth_identifier, rate_limit_response
+        )
+        category = get_endpoint_category(endpoint, bool(account), public_catalog)
+
+        # IP-level rate limiting (stricter on auth, moderate on public)
+        ip_allowed, ip_retry_after = check_ip_rate_limit(request, category)
+        if not ip_allowed:
+            return rate_limit_response(
+                f'Too many requests. Please try again in {ip_retry_after} second{"s" if ip_retry_after != 1 else ""}.',
+                retry_after=ip_retry_after
+            )
+
+        # User-level rate limiting for authenticated user actions (looser limits)
+        if category == 'AUTHENTICATED':
+            user_allowed, user_retry_after = check_user_rate_limit(role, account.pk)
+            if not user_allowed:
+                return rate_limit_response(
+                    f'Request rate limit exceeded. Please wait {user_retry_after} second{"s" if user_retry_after != 1 else ""}.',
+                    retry_after=user_retry_after
+                )
+
         if request.method not in ('GET', 'HEAD', 'OPTIONS') and not (bearer and account):
             csrf = JsonCsrfCheck(lambda req: None)
             csrf.process_request(request)
@@ -139,6 +167,18 @@ def protect_api(view, endpoint, public_catalog=False):
                 return failure('Expected an object.', 400)
         except (ValueError, UnicodeError):
             return failure('Invalid request body.', 400)
+
+        # Account-level exponential backoff check for auth routes
+        auth_identifier = None
+        if category == 'AUTH':
+            auth_identifier = extract_auth_identifier(data)
+            if auth_identifier:
+                is_blocked, acc_retry_after = check_account_backoff(auth_identifier)
+                if is_blocked:
+                    return rate_limit_response(
+                        f'Too many attempts for this account. Please wait {acc_retry_after} second{"s" if acc_retry_after != 1 else ""}.',
+                        retry_after=acc_retry_after
+                    )
 
         if endpoint in CUSTOMER_FIELDS:
             supplied = data.get(CUSTOMER_FIELDS[endpoint])
@@ -163,5 +203,15 @@ def protect_api(view, endpoint, public_catalog=False):
             item = tag.final_order_item if tag else None
             if not item or not owns_order(role, account, item.final_order.try_order):
                 return failure('Item not found.', 404)
-        return view(request, *args, **kwargs)
+
+        response = view(request, *args, **kwargs)
+
+        # Update auth backoff state based on response
+        if category == 'AUTH' and auth_identifier and hasattr(response, 'status_code'):
+            if 200 <= response.status_code < 300:
+                reset_account_backoff(auth_identifier)
+            elif response.status_code in (400, 401) and endpoint in {'reset_password', 'otp_login', 'signup_submit', 'auth/verify-otp'}:
+                record_auth_failure(auth_identifier)
+
+        return response
     return guarded

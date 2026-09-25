@@ -10,6 +10,8 @@ PASSWORD = 'Example-Strong-472!'
 @override_settings(DEBUG=True, OTP_TEST_MODE=True, FAST2SMS_API_KEY='')
 class OtpTests(TestCase):
     def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
         self.client = APIClient(enforce_csrf_checks=True)
         self.mobile = '9000000091'
         self.user = SignUp.objects.create(mobileno=self.mobile, emailid='otp@example.test', fname='Test', lname='User', password=PASSWORD)

@@ -19,10 +19,20 @@ Uploads require actual supported image content, at most ten files, 5 MB per file
 
 Frontend shared postData applies field and form rules before network writes, returning field-specific errors. Auth and checkout address forms render inline errors; existing admin forms continue to use their message dialogs. Server checks remain authoritative. Existing checkout price/stock ownership, payment verification, role/CSRF rules, forward-only delivery, customer approval and returns checks remain in place.
 
-## Verification and boundaries
+## Rate limiting & exponential backoff
 
-OTP tests cover expiry, wrong code lockout, replay, session/mobile/purpose isolation, resend revocation, verified signup, duplicates, reset revocation, missing CSRF and production disablement. Shared validation tests cover invalid values, inconsistent category references and fake images. Frontend tests cover inline errors, OTP login, signup confirmation and password reset in addition to order regressions.
+Backend routed APIs implement sliding-window rate limiting tailored to endpoint sensitivity, configured in `settings.RATE_LIMITS` and customizable via environment variables:
 
-This is validation coverage for the current routed application and its shared mutation client, not a claim that all future forms or every possible input are covered. Legacy unrouted prototype code is not enabled. Prior CRA/style warnings are unchanged. Real SMS delivery and production activation remain outside this development OTP setup.
-
-Verification result: 66 backend tests passed; 27 frontend regression/auth tests plus 3 shared-validation tests passed. The final whitespace-password check also passed the four-test backend validation rerun. Migration 0030 applied; no migration drift. Login/signup desktop and forgot-password mobile layouts inspected in the running browser.
+1. **Authentication routes (`RATE_LIMITS['AUTH']`)**:
+   - Strictest limits: per-IP sliding window (default 100 req/min) plus per-account limits.
+   - Per-account protection employs exponential backoff rather than a hard lockout:
+     - Allows up to `ACCOUNT_MAX_ATTEMPTS` (default 10, configurable).
+     - Upon reaching the limit, each subsequent failure doubles the delay: `min(BACKOFF_BASE * (BACKOFF_FACTOR ** (excess - 1)), BACKOFF_MAX)` (defaults: base 2.0s, factor 2.0, max 300s, window 900s).
+     - Requests sent during cooldown are rejected with HTTP 429 and `Retry-After: <seconds>`.
+     - Once the cooldown interval has passed, the user is permitted to retry. Successful authentication clears the backoff state immediately.
+2. **Public endpoints (`RATE_LIMITS['PUBLIC']`)**:
+   - Moderate limits (default 120 req/min per IP) on unauthenticated read endpoints (e.g. catalog, category lists, reviews, CSRF token).
+3. **Authenticated user actions (`RATE_LIMITS['AUTHENTICATED']`)**:
+   - Looser limits (default 300 req/min per account) on customer, rider, and admin operations.
+4. **Configurability**:
+   - Zero hardcoded thresholds; all windows, request counts, backoff bases, factors, and caps are dynamically loaded from Django `settings.RATE_LIMITS` and overrideable in tests with `@override_settings(RATE_LIMITS=...)`.
