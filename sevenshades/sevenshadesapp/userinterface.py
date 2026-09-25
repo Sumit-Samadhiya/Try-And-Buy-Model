@@ -1,42 +1,40 @@
+import logging
 from django.shortcuts import render
 from django.http.response import JsonResponse
 from rest_framework.parsers import JSONParser
 from rest_framework import status
-from django.shortcuts import render
 from sevenshadesapp.models import MainCategory,MySubCategory,Brands,Product,Banner,ProductDetails
 from sevenshadesapp.serializer import MainCategorySerializer,MySubCategorySerializer,MySubCategoryGetSerializer,BrandsSerializer,ProductGetSerializer,BannerSerializer,ProductDetailsGetSerializer
 from rest_framework.decorators import api_view
+
+logger = logging.getLogger(__name__)
 
 
 @api_view(['GET','POST','DELETE'])
 def User_MainCategory_List(request):
      try:
           if request.method=='GET':
-            #    maincategory_list=MainCategory.get()
                maincategory_list=MainCategory.objects.all()
                maincategory_serializer_list=MainCategorySerializer(maincategory_list,many=True)
                return JsonResponse({"data":maincategory_serializer_list.data, "status":True})
           else:
                return JsonResponse({"data":[],"status":False},safe=False)
-     except Exception as e :
-          print('Error in Listing data',e)
+     except Exception as e:
+          logger.exception('Error in User_MainCategory_List: %s', e)
           return JsonResponse({"data":[],"status":False},safe=False)
                
 @api_view(['GET','POST','DELETE'])
 def user_mysubcategory_list_by_maincategoryid(request):
      try:
           if request.method=='POST':
-            #    maincategory_list=MainCategory.get()
                maincategoryid=request.data['maincategoryid']
                mysubcategory_list=MySubCategory.objects.all().filter(maincategoryid=maincategoryid)
                mysubcategory_serializer_list=MySubCategoryGetSerializer(mysubcategory_list,many=True)
-            #    print(mysubcategory_serializer_list.data)
-               print("hey")
                return JsonResponse({"data":mysubcategory_serializer_list.data, "status":True})
           else:
                return JsonResponse({"data":[],"status":False},safe=False)
-     except Exception as e :
-          print('Error in Listing data',e)
+     except Exception as e:
+          logger.exception('Error in user_mysubcategory_list_by_maincategoryid: %s', e)
           return JsonResponse({"data":[],"status":False},safe=False)
      
 
@@ -62,8 +60,8 @@ def Brands_List(request):
                return JsonResponse({"data":brand_serializer_list.data, "status":True})
           else:
                return JsonResponse({"data":[],"status":False},safe=False)
-     except Exception as e :
-          print('Error in Listing data',e)
+     except Exception as e:
+          logger.exception('Error in Brands_List: %s', e)
           return JsonResponse({"data":[],"status":False},safe=False)
      
 def fetchData(field,data):
@@ -71,7 +69,6 @@ def fetchData(field,data):
      result={}
      for row in data:
           mydata=dict(row)
-          print(dict(mydata[field]))
           record=(dict(mydata[field]))
           result[record['id']]=record
      finalresult=list(result.values())
@@ -90,8 +87,8 @@ def Banner_List(request):
                return JsonResponse({"data":banner_serializer_list.data, "status":True})
           else:
                return JsonResponse({"data":[],"status":False},safe=False)
-     except Exception as e :
-          print('Error in Listing data',e)
+     except Exception as e:
+          logger.exception('Error in Banner_List: %s', e)
           return JsonResponse({"data":[],"status":False},safe=False)
      
 
@@ -105,8 +102,8 @@ def Subcategory_List(request):
                return JsonResponse({"data":mysubcategory_serializer_list.data, "status":True})
           else:
                return JsonResponse({"data":[],"status":False},safe=False)
-     except Exception as e :
-          print('Error in Listing data',e)
+     except Exception as e:
+          logger.exception('Error in Subcategory_List: %s', e)
           return JsonResponse({"data":[],"status":False},safe=False)
      
 @api_view(['GET','POST','DELETE'])
@@ -119,8 +116,8 @@ def Category_List(request):
                return JsonResponse({"data":maincategory_serializer_list.data, "status":True})
           else:
                return JsonResponse({"data":[],"status":False},safe=False)
-     except Exception as e :
-          print('Error in Listing data',e)
+     except Exception as e:
+          logger.exception('Error in Category_List: %s', e)
           return JsonResponse({"data":[],"status":False},safe=False)
      
 
@@ -134,8 +131,8 @@ def MainCategory_List(request):
                return JsonResponse({"data":maincategory_serializer_list.data, "status":True})
           else:
                return JsonResponse({"data":[],"status":False},safe=False)
-     except Exception as e :
-          print('Error in Listing data',e)
+     except Exception as e:
+          logger.exception('Error in MainCategory_List: %s', e)
           return JsonResponse({"data":[],"status":False},safe=False)
      
 
@@ -237,8 +234,8 @@ def User_Products_Maincategory(request):
                return JsonResponse({"data": data, "status": True})
           else:
                return JsonResponse({"data":[],"status":False},safe=False)
-     except Exception as e :
-          print('Error in Listing data',e)
+     except Exception as e:
+          logger.exception('Error in User_Products_Maincategory: %s', e)
           return JsonResponse({"data":[],"status":False},safe=False)
 
      
@@ -247,18 +244,14 @@ def User_Products_Maincategory(request):
 def User_ProductsDetails_By_Id(request):
      try:
           if request.method=='POST':
-            
                productid=request.data['productid']
                productdetails_list=ProductDetails.objects.all().filter(productid_id=productid)
                productdetails_serializer_list=ProductDetailsGetSerializer(productdetails_list,many=True)
-               print(productdetails_serializer_list.data)
-               
-              
                return JsonResponse({"data":productdetails_serializer_list.data, "status":True})
           else:
                return JsonResponse({"data":[],"status":False},safe=False)
-     except Exception as e :
-          print('Error in Listing data',e)
+     except Exception as e:
+          logger.exception('Error in User_ProductsDetails_By_Id: %s', e)
           return JsonResponse({"data":[],"status":False},safe=False)
 
 
@@ -269,5 +262,5 @@ def User_Product_List(request):
           data = serialize_flipkart_color_listings(product_list)
           return JsonResponse({"data": data, "status": True})
      except Exception as e:
-          print('Error in User_Product_List:', e)
+          logger.exception('Error in User_Product_List: %s', e)
           return JsonResponse({"data": [], "status": False}, safe=False)

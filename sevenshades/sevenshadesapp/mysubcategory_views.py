@@ -1,13 +1,15 @@
+import logging
 from django.shortcuts import render
 from django.http.response import JsonResponse
 from rest_framework.parsers import JSONParser
 from rest_framework import status
-from django.shortcuts import render
 
 from sevenshadesapp.models import MySubCategory
 from sevenshadesapp.serializer import MySubCategorySerializer
 from sevenshadesapp.serializer import MySubCategoryGetSerializer
 from rest_framework.decorators import api_view
+
+logger = logging.getLogger(__name__)
 
 
 @api_view(['GET','POST','DELETE'])
@@ -21,7 +23,7 @@ def MySubCategory_Submit(request):
         else:
              return JsonResponse({"message":'Fail to submit ',"status":False},safe=False)
     except Exception as e:
-        print("Error submit:",e)
+        logger.exception("Error in MySubCategory_Submit: %s", e)
         return JsonResponse({"message":'Fail to submit ',"status":False},safe=False)
     
 
@@ -31,15 +33,13 @@ def MySubCategory_Submit(request):
 def MySubCategory_List(request):
      try:
           if request.method=='GET':
-            #    maincategory_list=MainCategory.get()
                mysubcategory_list=MySubCategory.objects.all()
                mysubcategory_serializer_list=MySubCategoryGetSerializer(mysubcategory_list,many=True)
-            #    print(mysubcategory_serializer_list.data)
                return JsonResponse({"data":mysubcategory_serializer_list.data, "status":True})
           else:
                return JsonResponse({"data":[],"status":False},safe=False)
-     except Exception as e :
-          print('Error in Listing data',e)
+     except Exception as e:
+          logger.exception('Error in MySubCategory_List: %s', e)
           return JsonResponse({"data":[],"status":False},safe=False)
 
 
@@ -55,7 +55,7 @@ def EditMySubCategory_Icon(request):
         else:
              return JsonResponse({"message":'Fail to update Icon ',"status":False},safe=False)
     except Exception as e:
-        print("Error submit:",e)
+        logger.exception("Error in EditMySubCategory_Icon: %s", e)
         return JsonResponse({"message":'Fail to submit ',"status":False},safe=False)
 
 
@@ -82,7 +82,7 @@ def EditMySubCategory_Data(request):
     except MySubCategory.DoesNotExist:
         return JsonResponse({"message": 'Subcategory not found', "status": False}, status=404)
     except Exception as e:
-        print("Error submit:", e)
+        logger.exception("Error in EditMySubCategory_Data: %s", e)
         return JsonResponse({"message": 'Fail to update Data', "status": False}, status=400)
 
 

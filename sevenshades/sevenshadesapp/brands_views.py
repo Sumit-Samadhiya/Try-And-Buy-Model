@@ -1,11 +1,13 @@
+import logging
 from django.shortcuts import render
 from django.http.response import JsonResponse
 from rest_framework.parsers import JSONParser
 from rest_framework import status
-from django.shortcuts import render
 from sevenshadesapp.models import MainCategory,Brands,Product
 from sevenshadesapp.serializer import MainCategorySerializer,BrandsSerializer
 from rest_framework.decorators import api_view
+
+logger = logging.getLogger(__name__)
 
 
 @api_view(['GET','POST','DELETE'])
@@ -19,21 +21,20 @@ def Brands_Submit(request):
         else:
              return JsonResponse({"message":'Fail to submit ',"status":False},safe=False)
     except Exception as e:
-        print("Error submit:",e)
+        logger.exception("Error in Brands_Submit: %s", e)
         return JsonResponse({"message":'Fail to submit ',"status":False},safe=False)
     
 @api_view(['GET','POST','DELETE'])
 def Brands_List(request):
      try:
           if request.method=='GET':
-            #    maincategory_list=MainCategory.get()
                brands_list=Brands.objects.all()
                brands_serializer_list=BrandsSerializer(brands_list,many=True)
                return JsonResponse({"data":brands_serializer_list.data, "status":True})
           else:
                return JsonResponse({"data":[],"status":False},safe=False)
-     except Exception as e :
-          print('Error in Listing data',e)
+     except Exception as e:
+          logger.exception('Error in Brands_List: %s', e)
           return JsonResponse({"data":[],"status":False},safe=False)
                
 @api_view(['GET','POST','DELETE'])
@@ -47,8 +48,8 @@ def EditBrands_Icon(request):
         else:
              return JsonResponse({"message":'Fail to update Icon ',"status":False},safe=False)
     except Exception as e:
-        print("Error submit:",e)
-        return JsonResponse({"message":'Fail to submit ',"status":False},safe=False)
+        logger.exception("Error in EditBrands_Icon: %s", e)
+        return JsonResponse({"message":'Fail to update Icon',"status":False},safe=False)
 
 
 
@@ -61,10 +62,10 @@ def EditBrands_Data(request):
                 brands_data.save()
                 return JsonResponse({"message":'Brand Data Updated',"status":True},safe=False)
          else:
-             return JsonResponse({"message":'Fail to delete Data ',"status":False},safe=False)
+             return JsonResponse({"message":'Fail to update Data ',"status":False},safe=False)
     except Exception as e:
-        print("Error submit:",e)
-        return JsonResponse({"message":'Fail to delete ',"status":False},safe=False)
+        logger.exception("Error in EditBrands_Data: %s", e)
+        return JsonResponse({"message":'Fail to update Data',"status":False},safe=False)
 
 
 

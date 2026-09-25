@@ -13,8 +13,26 @@ const apiError = error => {
     clearCachedAccounts();
     window.dispatchEvent(new Event('session-cleared'));
   }
-  return { status: false, data: [], ...error.response?.data, httpStatus: error.response?.status,
-    message: error.response?.data?.message || 'Unable to connect. Please try again.' };
+  const responseData = typeof error.response?.data === 'object' && error.response?.data !== null
+    ? error.response.data
+    : {};
+  let safeMessage = responseData.message;
+  if (
+    !safeMessage ||
+    typeof safeMessage !== 'string' ||
+    /Traceback|OperationalError|IntegrityError|DatabaseError|sqlite3|pymysql/i.test(safeMessage)
+  ) {
+    safeMessage = error.response?.status === 500
+      ? 'An unexpected server error occurred. Please try again later.'
+      : (responseData.message && typeof responseData.message === 'string' ? responseData.message : 'Unable to connect. Please try again.');
+  }
+  return {
+    status: false,
+    data: [],
+    ...responseData,
+    httpStatus: error.response?.status,
+    message: safeMessage,
+  };
 };
 
 const getData = async url => {

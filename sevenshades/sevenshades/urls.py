@@ -155,3 +155,8 @@ for route in urlpatterns:
     if pattern.startswith('api/'):
         endpoint = pattern[4:].strip('/') if pattern.startswith('api/auth/') else pattern[4:].split('/')[0]
         route.callback = protect_api(route.callback, endpoint, route.callback.__module__ == userinterface.__name__)
+
+handler400 = 'sevenshadesapp.error_handling.custom_bad_request'
+handler403 = 'sevenshadesapp.error_handling.custom_permission_denied'
+handler404 = 'sevenshadesapp.error_handling.custom_page_not_found'
+handler500 = 'sevenshadesapp.error_handling.custom_server_error'

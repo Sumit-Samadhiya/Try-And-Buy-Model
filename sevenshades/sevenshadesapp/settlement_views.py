@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import timedelta
 from django.http import JsonResponse, HttpResponse
 from django.db import OperationalError, IntegrityError
@@ -12,14 +13,20 @@ from sevenshadesapp.settlement import approve_bill, approved
 from sevenshadesapp.payments import gateway_configured, create_payment, verify_checkout, verify_webhook, verified_entity, apply_capture, reconcile_payment
 from sevenshadesapp.receipts import receipt_html
 
+logger = logging.getLogger(__name__)
+
 
 def mutation(callback):
     try:
         return JsonResponse({'status': True, 'data': callback()})
     except InventoryError as error:
         return failure(str(error), 409)
-    except (OperationalError, IntegrityError):
+    except (OperationalError, IntegrityError) as exc:
+        logger.exception('Database error in settlement mutation: %s', exc)
         return failure('This operation needs a refresh. Please check order status before retrying.', 409)
+    except Exception as exc:
+        logger.exception('Unexpected error in settlement mutation: %s', exc)
+        return failure('An unexpected error occurred while processing settlement.', 500)
 
 
 @api_view(['POST'])

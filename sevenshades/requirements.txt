@@ -1,5 +1,5 @@
 # Sevenshades Backend Dependencies
-PyJWT==2.10.1
+PyJWT==2.15.0
 asgiref==3.11.1
 attrs==26.1.0
 autobahn==26.7.1
@@ -13,22 +13,22 @@ charset-normalizer==3.5.1
 constantly==23.10.4
 cryptography==50.0.1
 daphne==4.2.3
-Django==5.0.2
+Django==5.2.17
 django-cors-headers==4.9.0
-djangorestframework==3.17.1
+djangorestframework==3.17.2
 hyperlink==21.0.0
 idna==3.20
 Incremental==24.11.0
 msgpack==1.2.2
 packaging==26.3
-pillow==12.2.0
+pillow==12.3.0
 pycparser==3.0
 PyMySQL==1.1.2
 pyOpenSSL==26.4.0
 redis==8.1.0
 requests==2.34.2
 service-identity==26.1.0
-sqlparse==0.5.5
+sqlparse==0.6.0
 Twisted==26.4.0
 txaio==26.6.1
 typing_extensions==4.16.0

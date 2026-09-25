@@ -62,21 +62,22 @@ def send_sms(phone, code):
             json={'route': 'otp', 'variables_values': str(code), 'numbers': str(phone)}, timeout=(5, 15))
     except requests.RequestException as exc:
         logger.warning('Fast2SMS network failure: %s', type(exc).__name__)
-        raise SmsError('Unable to reach Fast2SMS. Please try again later.') from None
+        raise SmsError('Unable to send OTP via SMS. Please try again later.') from None
     if settings.DEBUG:
         logger.warning('Fast2SMS HTTP %s response: %s', response.status_code, redact(response.text))
     try:
         result = response.json()
     except ValueError:
         logger.warning('Fast2SMS returned non-JSON: HTTP %s', response.status_code)
-        raise SmsError(f'Fast2SMS returned an invalid response (HTTP {response.status_code}).') from None
+        raise SmsError('SMS delivery service returned an invalid response. Please try again later.') from None
     if not response.ok or not isinstance(result, dict) or result.get('return') is not True:
         raw_code = result.get('status_code') if isinstance(result, dict) else None
         provider_code = str(raw_code) if type(raw_code) in (int, str) else ''
         provider_code = provider_code if provider_code.isascii() and provider_code.isdigit() and len(provider_code) <= 4 else 'unknown'
-        logger.warning('Fast2SMS rejected SMS: HTTP %s, provider code %s', response.status_code, provider_code)
+        actual = result.get('message') if isinstance(result, dict) else None
+        reason = redact(actual) if isinstance(actual, (str, list)) and actual else PROVIDER_ERRORS.get(provider_code, 'SMS provider rejected the request.')
+        logger.warning('Fast2SMS rejected SMS: HTTP %s, provider code %s, reason: %s', response.status_code, provider_code, reason)
         if settings.DEBUG:
-            actual = result.get('message') if isinstance(result, dict) else None
-            reason = redact(actual) if isinstance(actual, (str, list)) and actual else PROVIDER_ERRORS.get(provider_code, 'SMS provider rejected the request.')
             raise SmsError(f'{reason} (Fast2SMS code: {provider_code}, HTTP {response.status_code})')
-        raise SmsError('SMS provider could not send the OTP. Please contact support or try later.')
+        raise SmsError('Unable to deliver OTP at this time. Please contact support or try again later.')
+

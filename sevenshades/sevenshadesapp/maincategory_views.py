@@ -1,11 +1,13 @@
+import logging
 from django.shortcuts import render
 from django.http.response import JsonResponse
 from rest_framework.parsers import JSONParser
 from rest_framework import status
-from django.shortcuts import render
 from sevenshadesapp.models import MainCategory
 from sevenshadesapp.serializer import MainCategorySerializer
 from rest_framework.decorators import api_view
+
+logger = logging.getLogger(__name__)
 
 
 @api_view(['GET','POST','DELETE'])
@@ -19,20 +21,19 @@ def MainCategory_Submit(request):
         else:
              return JsonResponse({"message":'Fail to submit ',"status":False},safe=False)
     except Exception as e:
-        print("Error submit:",e)
+        logger.exception("Error in MainCategory_Submit: %s", e)
         return JsonResponse({"message":'Fail to submit ',"status":False},safe=False)
 
 def MainCategory_List(request):
      try:
           if request.method=='GET':
-            #    maincategory_list=MainCategory.get()
                maincategory_list=MainCategory.objects.all()
                maincategory_serializer_list=MainCategorySerializer(maincategory_list,many=True)
                return JsonResponse({"data":maincategory_serializer_list.data, "status":True})
           else:
                return JsonResponse({"data":[],"status":False},safe=False)
-     except Exception as e :
-          print('Error in Listing data',e)
+     except Exception as e:
+          logger.exception('Error in MainCategory_List: %s', e)
           return JsonResponse({"data":[],"status":False},safe=False)
                
 @api_view(['GET','POST','DELETE'])
@@ -46,8 +47,8 @@ def EditCategory_Icon(request):
         else:
              return JsonResponse({"message":'Fail to update Icon ',"status":False},safe=False)
     except Exception as e:
-        print("Error submit:",e)
-        return JsonResponse({"message":'Fail to submit ',"status":False},safe=False)
+        logger.exception("Error in EditCategory_Icon: %s", e)
+        return JsonResponse({"message":'Fail to update Icon',"status":False},safe=False)
 
 
 
@@ -60,10 +61,10 @@ def EditCategory_Data(request):
                 maincategory_data.save()
                 return JsonResponse({"message":'MainCategory Data Updated',"status":True},safe=False)
          else:
-             return JsonResponse({"message":'Fail to delete Data ',"status":False},safe=False)
+             return JsonResponse({"message":'Fail to update Data ',"status":False},safe=False)
     except Exception as e:
-        print("Error submit:",e)
-        return JsonResponse({"message":'Fail to delete ',"status":False},safe=False)
+        logger.exception("Error in EditCategory_Data: %s", e)
+        return JsonResponse({"message":'Fail to update Data',"status":False},safe=False)
 
 
 

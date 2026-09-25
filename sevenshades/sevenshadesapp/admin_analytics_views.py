@@ -1,7 +1,10 @@
+import logging
 from django.http.response import JsonResponse
 from rest_framework.decorators import api_view
 from django.db import models
 from sevenshadesapp.models import TryOrder, FinalOrder
+
+logger = logging.getLogger(__name__)
 
 @api_view(['GET'])
 def GetOrderAnalytics(request):
@@ -21,5 +24,5 @@ def GetOrderAnalytics(request):
             }
         }, safe=False)
     except Exception as e:
-        print('GetOrderAnalytics error:', e)
+        logger.exception('GetOrderAnalytics error: %s', e)
         return JsonResponse({'status': False, 'message': 'Unable to fetch analytics'}, safe=False)

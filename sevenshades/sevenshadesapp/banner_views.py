@@ -1,20 +1,20 @@
+import logging
 from rest_framework.decorators import api_view
 from django.core.files.storage import default_storage
 from django.shortcuts import render
 from django.http.response import JsonResponse
 from rest_framework.parsers import JSONParser
 from rest_framework import status
-from django.shortcuts import render
 from sevenshadesapp.models import Banner
 from sevenshadesapp.serializer import BannerSerializer
 
+logger = logging.getLogger(__name__)
 
 
 def Upload_Files(files):
      iconname=[]
      for uploaded_file in files.getlist('icon'):
           file_path = default_storage.save('static/' + uploaded_file.name,uploaded_file)
-          print(file_path)
           iconname.append(file_path[7:] if file_path.startswith('static/') else file_path)
      return ",".join(iconname)
 
@@ -51,10 +51,12 @@ def Banner_Submit(request):
             for path in saved_files:
                 try: default_storage.delete(path)
                 except Exception: pass
-            return JsonResponse({"message": 'Validation error: ' + str(banner_serializer.errors), "status": False}, status=400)
+            first_err = next(iter(banner_serializer.errors.values()), ['Please check banner input fields.'])
+            msg = first_err[0] if isinstance(first_err, list) and first_err else 'Please check banner input fields.'
+            return JsonResponse({"message": str(msg), "status": False, "errors": banner_serializer.errors}, status=400)
     except Exception as e:
         for path in saved_files:
             try: default_storage.delete(path)
             except Exception: pass
-        print("Error banner submit:", e)
+        logger.exception("Error in Banner_Submit: %s", e)
         return JsonResponse({"message": 'Fail to submit banner.', "status": False}, status=500)

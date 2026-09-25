@@ -1,7 +1,14 @@
+import logging
 from django.http.response import JsonResponse
 from rest_framework.decorators import api_view
+from django.db import OperationalError, IntegrityError, DatabaseError
 from sevenshadesapp.models import ReturnedItem, TamperProofTag, FinalOrderItem
 from sevenshadesapp.serializer import ReturnedItemSerializer, TamperProofTagSerializer
+from .models import TryOrderItem, TrialReturn, FinalOrderItem
+from .inventory_workflow import InventoryError, collect_return, review_return, cancel_trial
+from .security import failure
+
+logger = logging.getLogger(__name__)
 
 @api_view(['POST'])
 def ScanTamperProofTag(request):
@@ -13,13 +20,8 @@ def ScanTamperProofTag(request):
         
         return JsonResponse({'status': True, 'message': 'Tag valid', 'data': TamperProofTagSerializer(tag).data}, safe=False)
     except Exception as e:
-        print('ScanTamperProofTag error:', e)
+        logger.exception('ScanTamperProofTag error: %s', e)
         return JsonResponse({'status': False, 'message': 'Unable to scan tag'}, safe=False)
-
-from django.db import OperationalError
-from .models import TryOrderItem, TrialReturn, FinalOrderItem
-from .inventory_workflow import InventoryError, collect_return, review_return, cancel_trial
-from .security import failure
 
 
 def return_data(result):
@@ -46,7 +48,14 @@ def mutation(callback):
     except InventoryError as error:
         return failure(str(error), 409)
     except OperationalError:
+        logger.exception('OperationalError in inventory mutation')
         return failure('Inventory is busy. Refresh and retry.', 503)
+    except IntegrityError:
+        logger.exception('IntegrityError in inventory mutation')
+        return failure('This inventory operation could not be completed. Refresh and retry.', 409)
+    except Exception as error:
+        logger.exception('Unexpected error in inventory mutation: %s', error)
+        return failure('An unexpected error occurred while processing inventory.', 500)
 
 
 @api_view(['POST'])

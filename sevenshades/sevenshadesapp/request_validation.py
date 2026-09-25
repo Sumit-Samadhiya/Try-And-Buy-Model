@@ -157,7 +157,7 @@ ENDPOINT_SCHEMAS = {
     },
     'process_return': {
         'required': [],
-        'allowed': {'try_order_item_id', 'return_id', 'condition', 'tag_intact', 'status'}
+        'allowed': {'try_order_item_id', 'final_order_item_id', 'return_id', 'condition', 'tag_intact', 'scanned_tag', 'status'}
     },
     'trial_return_items': {
         'required': ['order_id'],
@@ -173,7 +173,7 @@ ENDPOINT_SCHEMAS = {
     },
     'create_ticket': {
         'required': ['subject', 'message'],
-        'allowed': {'subject', 'message', 'mobileno', 'order_id'}
+        'allowed': {'subject', 'message', 'mobileno', 'order_id', 'customer', 'status', 'priority'}
     },
     'customer_tickets': {
         'required': [],
@@ -188,8 +188,8 @@ ENDPOINT_SCHEMAS = {
         'allowed': {'phone'}
     },
     'admin_ticket_update': {
-        'required': ['ticket_id', 'status'],
-        'allowed': {'ticket_id', 'status', 'resolution'}
+        'required': ['status'],
+        'allowed': {'id', 'ticket_id', 'version', 'status', 'priority', 'response', 'resolution'}
     },
     'settlement_detail': {
         'required': ['order_id'],
@@ -324,16 +324,16 @@ ENDPOINT_SCHEMAS = {
         'allowed': {'maincategoryid'}
     },
     'save_delivery_zone': {
-        'required': ['zone_name', 'pincodes'],
-        'allowed': {'zone_name', 'pincodes', 'is_active', 'id'}
+        'required': ['zone_name'],
+        'allowed': {'zone_name', 'postcodes', 'pincodes', 'is_active', 'id'}
     },
     'delete_delivery_zone': {
         'required': [],
         'allowed': {'zone_id', 'id'}
     },
     'save_excluded_area': {
-        'required': ['name', 'pincode'],
-        'allowed': {'name', 'pincode', 'reason', 'id'}
+        'required': [],
+        'allowed': {'area_name', 'name', 'postcode', 'pincode', 'reason', 'id'}
     },
     'delete_excluded_area': {
         'required': [],
@@ -350,7 +350,8 @@ TEXT_LIMITS = {
     'zone': 70, 'zone_name': 70, 'bike_number': 40, 'order_id': 40,
     'assignment_id': 40, 'rider_id': 30, 'tag_id': 40, 'batch_id': 40,
     'subject': 150, 'message': 2000, 'review_text': 2000, 'notes': 500,
-    'resolution': 2000, 'reason': 255, 'filter': 40,
+    'resolution': 2000, 'response': 2000, 'reason': 255, 'filter': 40,
+    'area_name': 70, 'postcodes': 500, 'priority': 40, 'customer': 70, 'source': 40,
 }
 
 ENUM_CHOICES = {
@@ -363,8 +364,10 @@ ENUM_CHOICES = {
         'Active', 'Inactive', 'Assigned', 'On Route', 'Arrived',
         'Trial Started', 'Trial In Progress', 'Trial Completed', 'Delivered',
         'Completed', 'Cancelled', 'OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED',
+        'Open', 'In Progress', 'Resolved', 'Closed',
         'Received', 'Approved', 'Rejected'
     },
+    'priority': {'Low', 'Normal', 'High', 'Urgent', 'low', 'normal', 'high', 'urgent'},
     'condition': {'Good', 'Damaged', 'Missing', 'Defective'},
     'action': {'receive', 'steam_press', 'approve', 'reject', 'scan', 'verify', 'wash', 'iron', 'quarantine'},
     'hygiene_status': {'pending', 'passed', 'failed', 'sanitized'},
@@ -386,12 +389,14 @@ INTEGER_LIMITS = {
     'product_details_id': (1, 2147483647),
     'product_id': (1, 2147483647),
     'try_order_item_id': (1, 2147483647),
+    'final_order_item_id': (1, 2147483647),
     'return_id': (1, 2147483647),
     'item_id': (1, 2147483647),
     'address_id': (1, 2147483647),
     'ticket_id': (1, 2147483647),
     'area_id': (1, 2147483647),
     'zone_id': (1, 2147483647),
+    'version': (0, 1000000),
 }
 
 FLOAT_LIMITS = {

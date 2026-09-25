@@ -1,14 +1,19 @@
 """Session authentication and fail-closed authorization for the custom account models."""
 import json
+import logging
 from functools import wraps
 
 from django.contrib.auth.hashers import check_password, make_password
 from django.core.cache import cache
+from django.db import DatabaseError, OperationalError, IntegrityError
 from django.http import JsonResponse
 from django.middleware.csrf import CsrfViewMiddleware, rotate_token
 from django.utils.crypto import constant_time_compare, salted_hmac
 
 from .models import AdminLogin, SignUp, DeliveryRider, DeliveryAssignment, TryOrder, TamperProofTag, FinalOrderItem
+from .error_handling import sanitize_error_message
+
+logger = logging.getLogger(__name__)
 
 
 ACCOUNTS = {'customer': SignUp, 'admin': AdminLogin, 'rider': DeliveryRider}
@@ -29,7 +34,8 @@ RIDER_OPERATIONS = {'delivery_assignment_update_status', 'delivery_rider_tasks',
 
 
 def failure(message, status=403):
-    return JsonResponse({'status': False, 'message': message, 'data': []}, status=status)
+    safe_msg = sanitize_error_message(str(message) if message else 'Access denied.')
+    return JsonResponse({'status': False, 'message': safe_msg, 'data': []}, status=status)
 
 
 def fingerprint(account):
@@ -210,7 +216,17 @@ def protect_api(view, endpoint, public_catalog=False):
         if errors:
             return JsonResponse({'status': False, 'message': ' '.join(messages[0] for messages in errors.values()), 'errors': errors}, status=400)
 
-        response = view(request, *args, **kwargs)
+        try:
+            response = view(request, *args, **kwargs)
+        except OperationalError:
+            logger.exception("Database operational error during %s [%s]", endpoint, request.path)
+            return failure('The database is currently busy. Please retry shortly.', 503)
+        except (DatabaseError, IntegrityError):
+            logger.exception("Database error during %s [%s]", endpoint, request.path)
+            return failure('A database operation could not be completed. Please try again.', 500)
+        except Exception as exc:
+            logger.exception("Unhandled server exception during %s [%s]: %s", endpoint, request.path, exc)
+            return failure('An unexpected server error occurred. Please try again later.', 500)
 
         # Update auth backoff state based on response
         if category == 'AUTH' and auth_identifier and hasattr(response, 'status_code'):
