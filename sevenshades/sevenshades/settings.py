@@ -110,8 +110,29 @@ WSGI_APPLICATION = 'sevenshades.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
 DB_ENGINE = os.environ.get('DB_ENGINE', '')
-if DB_ENGINE:
+
+if DATABASE_URL:
+    try:
+        import dj_database_url
+        DATABASES = {
+            'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
+        }
+    except ImportError:
+        import urllib.parse
+        parsed = urllib.parse.urlparse(DATABASE_URL)
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': parsed.path.lstrip('/'),
+                'USER': parsed.username,
+                'PASSWORD': parsed.password,
+                'HOST': parsed.hostname,
+                'PORT': parsed.port or 5432,
+            }
+        }
+elif DB_ENGINE:
     DATABASES = {
         'default': {
             'ENGINE': DB_ENGINE,

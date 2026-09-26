@@ -1,0 +1,3723 @@
+[
+{
+  "model": "sevenshadesapp.maincategory",
+  "pk": 4,
+  "fields": {
+    "maincategoryname": "Women",
+    "icon": "static/women.png"
+  }
+},
+{
+  "model": "sevenshadesapp.maincategory",
+  "pk": 5,
+  "fields": {
+    "maincategoryname": "Men",
+    "icon": "static/men.png"
+  }
+},
+{
+  "model": "sevenshadesapp.mysubcategory",
+  "pk": 7,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryname": "Shirts",
+    "icon": "static/103.webp"
+  }
+},
+{
+  "model": "sevenshadesapp.mysubcategory",
+  "pk": 8,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryname": "Shoes",
+    "icon": "static/shoes.png"
+  }
+},
+{
+  "model": "sevenshadesapp.mysubcategory",
+  "pk": 9,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryname": "Baggy Jeans",
+    "icon": "static/baggy_q1QqnWE.png"
+  }
+},
+{
+  "model": "sevenshadesapp.mysubcategory",
+  "pk": 10,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryname": "Oversized T-Shirts",
+    "icon": "static/oversized.png"
+  }
+},
+{
+  "model": "sevenshadesapp.mysubcategory",
+  "pk": 11,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryname": "Shorts",
+    "icon": "static/shorts.png"
+  }
+},
+{
+  "model": "sevenshadesapp.mysubcategory",
+  "pk": 12,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryname": "Western Dress",
+    "icon": "static/western_dress.png"
+  }
+},
+{
+  "model": "sevenshadesapp.mysubcategory",
+  "pk": 13,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryname": "Kurtis",
+    "icon": "static/Kurti.png"
+  }
+},
+{
+  "model": "sevenshadesapp.mysubcategory",
+  "pk": 15,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryname": "Boots",
+    "icon": "static/Boots.png"
+  }
+},
+{
+  "model": "sevenshadesapp.mysubcategory",
+  "pk": 16,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryname": "Tops",
+    "icon": "static/top.png"
+  }
+},
+{
+  "model": "sevenshadesapp.brands",
+  "pk": 5,
+  "fields": {
+    "brandname": "Rare Rabbit",
+    "icon": "static/rr.png"
+  }
+},
+{
+  "model": "sevenshadesapp.brands",
+  "pk": 6,
+  "fields": {
+    "brandname": "Nike",
+    "icon": "static/nike.png"
+  }
+},
+{
+  "model": "sevenshadesapp.brands",
+  "pk": 7,
+  "fields": {
+    "brandname": "Lee",
+    "icon": "static/lee.png"
+  }
+},
+{
+  "model": "sevenshadesapp.brands",
+  "pk": 8,
+  "fields": {
+    "brandname": "Puma",
+    "icon": "static/puma1.png"
+  }
+},
+{
+  "model": "sevenshadesapp.brands",
+  "pk": 9,
+  "fields": {
+    "brandname": "H&M",
+    "icon": "static/hm.png"
+  }
+},
+{
+  "model": "sevenshadesapp.brands",
+  "pk": 11,
+  "fields": {
+    "brandname": "Pepe Jeans",
+    "icon": "static/pepe.png"
+  }
+},
+{
+  "model": "sevenshadesapp.brands",
+  "pk": 13,
+  "fields": {
+    "brandname": "Reebok",
+    "icon": "static/reebok.png"
+  }
+},
+{
+  "model": "sevenshadesapp.brands",
+  "pk": 14,
+  "fields": {
+    "brandname": "Red Tape",
+    "icon": "static/red_tape.png"
+  }
+},
+{
+  "model": "sevenshadesapp.brands",
+  "pk": 17,
+  "fields": {
+    "brandname": "Levi's",
+    "icon": "static/levis.png"
+  }
+},
+{
+  "model": "sevenshadesapp.brands",
+  "pk": 18,
+  "fields": {
+    "brandname": "Adidas",
+    "icon": "static/adidas.png"
+  }
+},
+{
+  "model": "sevenshadesapp.brands",
+  "pk": 19,
+  "fields": {
+    "brandname": "SevenShades",
+    "icon": "static/sevenshades-logo.png"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 5,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 7,
+    "brandid": 5,
+    "productname": "Rare Rabbit Silk Touch Formal Shirt",
+    "description": "Premium silk-blend formal shirt tailored for comfort, breathability and effortless elegance.",
+    "icon": "static/rr1.webp"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 6,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 7,
+    "brandid": 5,
+    "productname": "Rare Rabbit Abstract Printed Casual Shirt",
+    "description": "Contemporary printed casual shirt featuring breathable lightweight cotton fabric.",
+    "icon": "static/rr2.webp"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 9,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 9,
+    "brandid": 9,
+    "productname": "H&M Relaxed Fit Baggy Jeans",
+    "description": "Relaxed-fit 5-pocket denim jeans with wide leg silhouette and clean washed finish.",
+    "icon": "static/hm3.jpeg"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 10,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 9,
+    "productname": "H&M Heavyweight Oversized Cotton Tee",
+    "description": "Heavyweight cotton jersey oversized tee with drop-shoulder fit and ribbed collar.",
+    "icon": "static/hm2.webp"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 12,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 6,
+    "productname": "Nike Court Vision Low Sneakers",
+    "description": "Retro 80s basketball-inspired low-top sneakers with durable rubber cupsole.",
+    "icon": "static/nike2.png"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 13,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 6,
+    "productname": "Nike City Rep TR Training Shoes",
+    "description": "Versatile cross-training athletic shoes built for workout stability and everyday traction.",
+    "icon": "static/nike1.png"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 14,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 8,
+    "productname": "Puma Softride Rift Tech Runners",
+    "description": "Plush Softride cushioning running shoes with breathable mesh upper and slip-on ease.",
+    "icon": "static/puma2.webp"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 15,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 8,
+    "productname": "Puma Flyer Flex Mesh Sneakers",
+    "description": "Lightweight everyday athletic sneakers engineered with flexible grooves and EVA midsole.",
+    "icon": "static/puma1.webp"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 18,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 6,
+    "productname": "Nike Sportswear Club Graphic Tee",
+    "description": "Classic fit athletic cotton tee highlighted with the iconic Nike Swoosh chest print.",
+    "icon": "static/nike3.png"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 20,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 8,
+    "productname": "Puma Active DryCELL Training Tee",
+    "description": "Moisture-wicking dryCELL technology athletic t-shirt for gym workouts and running.",
+    "icon": "static/puma3.jpg"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 21,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 8,
+    "productname": "Puma Poly Tracksuit Set",
+    "description": "Complete sporty tracksuit set with zip-front track jacket and tapered jogger pants.",
+    "icon": "static/puma4.jpg"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 22,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 15,
+    "brandid": 7,
+    "productname": "Lee Urban Leather Ankle Chelsea Boots",
+    "description": "Sophisticated genuine leather ankle boots with elastic side gussets and sturdy block heel.",
+    "icon": "static/Boots_CidJb16.png"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 23,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 12,
+    "brandid": 19,
+    "productname": "SevenShades Floral Tiered Maxi Dress",
+    "description": "Elegantly draped flowy floral maxi dress featuring feminine tiered ruffles and soft lining.",
+    "icon": "static/d66cf6a4-83af-4822-9808-5a13356df2c2.png"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 24,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 9,
+    "brandid": 17,
+    "productname": "Levi's 568 Loose Straight Jeans",
+    "description": "90s-inspired vintage loose straight fit jeans in premium heavyweight cotton denim.",
+    "icon": "static/baggy_q1QqnWE.png"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 25,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 9,
+    "brandid": 11,
+    "productname": "Pepe Jeans London Streetwear Denims",
+    "description": "Comfortable wide-leg street style washed jeans with signature contrast stitching.",
+    "icon": "static/baggy.png"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 26,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 11,
+    "brandid": 6,
+    "productname": "Nike Club French Terry Shorts",
+    "description": "Soft French terry casual lounge shorts with adjustable elastic drawstring waistband.",
+    "icon": "static/shorts.png"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 27,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 11,
+    "brandid": 8,
+    "productname": "Puma Core Essentials Fleece Shorts",
+    "description": "Athletic sweat shorts with side pockets and subtle Puma Cat embroidery.",
+    "icon": "static/shorts.png"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 28,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 7,
+    "brandid": 7,
+    "productname": "Lee Western Regular Fit Denim Shirt",
+    "description": "Authentic western-style snap button denim shirt with dual chest flap pockets.",
+    "icon": "static/103.webp"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 29,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 12,
+    "brandid": 9,
+    "productname": "H&M Ribbed Bodycon Midi Dress",
+    "description": "Sleek ribbed-knit midi dress with square neckline and body-hugging contour silhouette.",
+    "icon": "static/western_dress.png"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 30,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 12,
+    "brandid": 11,
+    "productname": "Pepe Jeans Denim Shift Dress",
+    "description": "Chic vintage washed denim shift dress with front patch pockets and zip back.",
+    "icon": "static/women.png"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 31,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 13,
+    "brandid": 19,
+    "productname": "SevenShades Anarkali Cotton Kurta Set",
+    "description": "Pure cotton printed Anarkali style kurta with matching dupatta and comfortable trousers.",
+    "icon": "static/Kurti.png"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 32,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 13,
+    "brandid": 19,
+    "productname": "SevenShades Floral Embroidered Straight Kurti",
+    "description": "Breathable rayon straight kurta featuring intricate thread embroidery along the neckline.",
+    "icon": "static/Kurti.png"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 33,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 15,
+    "brandid": 14,
+    "productname": "Red Tape Chunky Platform Chelsea Boots",
+    "description": "Edgy chunky lug sole Chelsea boots crafted with water-resistant vegan leather.",
+    "icon": "static/Boots.png"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 34,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 16,
+    "brandid": 9,
+    "productname": "H&M Smocked Peplum Floral Top",
+    "description": "Feminine smocked bodice top with sweet puff sleeves and delicate floral ditsy pattern.",
+    "icon": "static/top.png"
+  }
+},
+{
+  "model": "sevenshadesapp.product",
+  "pk": 35,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 16,
+    "brandid": 19,
+    "productname": "SevenShades Satin Wrap Collar Top",
+    "description": "Luxurious liquid satin crossover wrap top featuring notched collar and draped waist tie.",
+    "icon": "static/top.png"
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 7,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 7,
+    "brandid": 5,
+    "productid": 5,
+    "productsubname": "Rare Rabbit Silk Touch Formal Shirt - Burgundy",
+    "description": "Rare Rabbit Silk Touch Formal Shirt in Burgundy, size XL. Available for doorstep Try & Buy.",
+    "qty": 14,
+    "price": 1999,
+    "color": "Burgundy",
+    "size": "XL",
+    "offerprice": 1299,
+    "offertype": "Best Value",
+    "icon": "static/42.png,static/43.png,static/44.png,static/45.png,static/46.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 8,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 7,
+    "brandid": 5,
+    "productid": 6,
+    "productsubname": "Rare Rabbit Abstract Printed Casual Shirt - Navy Blue",
+    "description": "Rare Rabbit Abstract Printed Casual Shirt in Navy Blue, size M. Available for doorstep Try & Buy.",
+    "qty": 20,
+    "price": 1699,
+    "color": "Navy Blue",
+    "size": "M",
+    "offerprice": 999,
+    "offertype": "Best Value",
+    "icon": "static/204689940-2.webp,static/205524038-2.webp,static/205533307-2.webp,static/205533316-2.webp,static/205574329-2.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 9,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 12,
+    "brandid": 19,
+    "productid": 23,
+    "productsubname": "SevenShades Floral Tiered Maxi Dress - Sky Blue",
+    "description": "SevenShades Floral Tiered Maxi Dress in Sky Blue, size M. Available for doorstep Try & Buy.",
+    "qty": 12,
+    "price": 2499,
+    "color": "Sky Blue",
+    "size": "M",
+    "offerprice": 1499,
+    "offertype": "Best Value",
+    "icon": "static/download (1).jpg,static/download.jpg",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 10,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 12,
+    "brandid": 19,
+    "productid": 23,
+    "productsubname": "SevenShades Floral Tiered Maxi Dress - Ruby Red",
+    "description": "SevenShades Floral Tiered Maxi Dress in Ruby Red, size L. Available for doorstep Try & Buy.",
+    "qty": 14,
+    "price": 2499,
+    "color": "Ruby Red",
+    "size": "L",
+    "offerprice": 1499,
+    "offertype": "Best Value",
+    "icon": "static/ChatGPT Image Sep 1_ 2026_ 03_59_38 PM.png,static/d66cf6a4-83af-4822-9808-5a13356df2c2_wpRtsfG.png,static/download (1)_SQz54a2.jpg",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 11,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 7,
+    "brandid": 5,
+    "productid": 5,
+    "productsubname": "Rare Rabbit Silk Touch Formal Shirt - White",
+    "description": "Rare Rabbit Silk Touch Formal Shirt in White, size M. Available for doorstep Try & Buy.",
+    "qty": 14,
+    "price": 1799,
+    "color": "White",
+    "size": "M",
+    "offerprice": 1199,
+    "offertype": "Everyday Deal",
+    "icon": "static/103.webp,static/rr1.webp,static/rr2.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 12,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 7,
+    "brandid": 5,
+    "productid": 5,
+    "productsubname": "Rare Rabbit Silk Touch Formal Shirt - White",
+    "description": "Rare Rabbit Silk Touch Formal Shirt in White, size L. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1799,
+    "color": "White",
+    "size": "L",
+    "offerprice": 1199,
+    "offertype": "Everyday Deal",
+    "icon": "static/103.webp,static/rr1.webp,static/rr2.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 13,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 7,
+    "brandid": 5,
+    "productid": 5,
+    "productsubname": "Rare Rabbit Silk Touch Formal Shirt - Navy Blue",
+    "description": "Rare Rabbit Silk Touch Formal Shirt in Navy Blue, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1799,
+    "color": "Navy Blue",
+    "size": "M",
+    "offerprice": 1199,
+    "offertype": "Everyday Deal",
+    "icon": "static/103.webp,static/rr1.webp,static/rr2.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 14,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 7,
+    "brandid": 5,
+    "productid": 5,
+    "productsubname": "Rare Rabbit Silk Touch Formal Shirt - Navy Blue",
+    "description": "Rare Rabbit Silk Touch Formal Shirt in Navy Blue, size L. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1799,
+    "color": "Navy Blue",
+    "size": "L",
+    "offerprice": 1199,
+    "offertype": "Everyday Deal",
+    "icon": "static/103.webp,static/rr1.webp,static/rr2.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 15,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 7,
+    "brandid": 5,
+    "productid": 6,
+    "productsubname": "Rare Rabbit Abstract Printed Casual Shirt - White",
+    "description": "Rare Rabbit Abstract Printed Casual Shirt in White, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1799,
+    "color": "White",
+    "size": "M",
+    "offerprice": 1199,
+    "offertype": "Everyday Deal",
+    "icon": "static/103.webp,static/rr1.webp,static/rr2.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 16,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 7,
+    "brandid": 5,
+    "productid": 6,
+    "productsubname": "Rare Rabbit Abstract Printed Casual Shirt - White",
+    "description": "Rare Rabbit Abstract Printed Casual Shirt in White, size L. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1799,
+    "color": "White",
+    "size": "L",
+    "offerprice": 1199,
+    "offertype": "Everyday Deal",
+    "icon": "static/103.webp,static/rr1.webp,static/rr2.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 17,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 7,
+    "brandid": 5,
+    "productid": 6,
+    "productsubname": "Rare Rabbit Abstract Printed Casual Shirt - Navy Blue",
+    "description": "Rare Rabbit Abstract Printed Casual Shirt in Navy Blue, size L. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1799,
+    "color": "Navy Blue",
+    "size": "L",
+    "offerprice": 1199,
+    "offertype": "Everyday Deal",
+    "icon": "static/103.webp,static/rr1.webp,static/rr2.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 18,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 9,
+    "brandid": 9,
+    "productid": 9,
+    "productsubname": "H&M Relaxed Fit Baggy Jeans - Light Wash",
+    "description": "H&M Relaxed Fit Baggy Jeans in Light Wash, size 30. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2499,
+    "color": "Light Wash",
+    "size": "30",
+    "offerprice": 1499,
+    "offertype": "Best Value",
+    "icon": "static/baggy_q1QqnWE.png,static/baggy.png,static/hm3.jpeg",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 19,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 9,
+    "brandid": 9,
+    "productid": 9,
+    "productsubname": "H&M Relaxed Fit Baggy Jeans - Light Wash",
+    "description": "H&M Relaxed Fit Baggy Jeans in Light Wash, size 32. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2499,
+    "color": "Light Wash",
+    "size": "32",
+    "offerprice": 1499,
+    "offertype": "Best Value",
+    "icon": "static/baggy_q1QqnWE.png,static/baggy.png,static/hm3.jpeg",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 20,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 9,
+    "brandid": 9,
+    "productid": 9,
+    "productsubname": "H&M Relaxed Fit Baggy Jeans - Vintage Blue",
+    "description": "H&M Relaxed Fit Baggy Jeans in Vintage Blue, size 30. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2499,
+    "color": "Vintage Blue",
+    "size": "30",
+    "offerprice": 1499,
+    "offertype": "Best Value",
+    "icon": "static/baggy_q1QqnWE.png,static/baggy.png,static/hm3.jpeg",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 21,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 9,
+    "brandid": 9,
+    "productid": 9,
+    "productsubname": "H&M Relaxed Fit Baggy Jeans - Vintage Blue",
+    "description": "H&M Relaxed Fit Baggy Jeans in Vintage Blue, size 32. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2499,
+    "color": "Vintage Blue",
+    "size": "32",
+    "offerprice": 1499,
+    "offertype": "Best Value",
+    "icon": "static/baggy_q1QqnWE.png,static/baggy.png,static/hm3.jpeg",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 22,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 9,
+    "productid": 10,
+    "productsubname": "H&M Heavyweight Oversized Cotton Tee - Jet Black",
+    "description": "H&M Heavyweight Oversized Cotton Tee in Jet Black, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1299,
+    "color": "Jet Black",
+    "size": "S",
+    "offerprice": 699,
+    "offertype": "Best Value",
+    "icon": "static/oversized.png,static/hm2.webp,static/nike3.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 23,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 9,
+    "productid": 10,
+    "productsubname": "H&M Heavyweight Oversized Cotton Tee - Jet Black",
+    "description": "H&M Heavyweight Oversized Cotton Tee in Jet Black, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1299,
+    "color": "Jet Black",
+    "size": "M",
+    "offerprice": 699,
+    "offertype": "Best Value",
+    "icon": "static/oversized.png,static/hm2.webp,static/nike3.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 24,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 9,
+    "productid": 10,
+    "productsubname": "H&M Heavyweight Oversized Cotton Tee - Off White",
+    "description": "H&M Heavyweight Oversized Cotton Tee in Off White, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1299,
+    "color": "Off White",
+    "size": "S",
+    "offerprice": 699,
+    "offertype": "Best Value",
+    "icon": "static/oversized.png,static/hm2.webp,static/nike3.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 25,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 9,
+    "productid": 10,
+    "productsubname": "H&M Heavyweight Oversized Cotton Tee - Off White",
+    "description": "H&M Heavyweight Oversized Cotton Tee in Off White, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1299,
+    "color": "Off White",
+    "size": "M",
+    "offerprice": 699,
+    "offertype": "Best Value",
+    "icon": "static/oversized.png,static/hm2.webp,static/nike3.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 26,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 6,
+    "productid": 12,
+    "productsubname": "Nike Court Vision Low Sneakers - Triple White",
+    "description": "Nike Court Vision Low Sneakers in Triple White, size 7. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3999,
+    "color": "Triple White",
+    "size": "7",
+    "offerprice": 2499,
+    "offertype": "Best Value",
+    "icon": "static/nike2.png,static/nike1.png,static/puma1.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 27,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 6,
+    "productid": 12,
+    "productsubname": "Nike Court Vision Low Sneakers - Triple White",
+    "description": "Nike Court Vision Low Sneakers in Triple White, size 8. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3999,
+    "color": "Triple White",
+    "size": "8",
+    "offerprice": 2499,
+    "offertype": "Best Value",
+    "icon": "static/nike2.png,static/nike1.png,static/puma1.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 28,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 6,
+    "productid": 12,
+    "productsubname": "Nike Court Vision Low Sneakers - Black & White",
+    "description": "Nike Court Vision Low Sneakers in Black & White, size 7. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3999,
+    "color": "Black & White",
+    "size": "7",
+    "offerprice": 2499,
+    "offertype": "Best Value",
+    "icon": "static/nike2.png,static/nike1.png,static/puma1.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 29,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 6,
+    "productid": 12,
+    "productsubname": "Nike Court Vision Low Sneakers - Black & White",
+    "description": "Nike Court Vision Low Sneakers in Black & White, size 8. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3999,
+    "color": "Black & White",
+    "size": "8",
+    "offerprice": 2499,
+    "offertype": "Best Value",
+    "icon": "static/nike2.png,static/nike1.png,static/puma1.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 30,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 6,
+    "productid": 13,
+    "productsubname": "Nike City Rep TR Training Shoes - Triple White",
+    "description": "Nike City Rep TR Training Shoes in Triple White, size 7. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3999,
+    "color": "Triple White",
+    "size": "7",
+    "offerprice": 2499,
+    "offertype": "Best Value",
+    "icon": "static/nike2.png,static/nike1.png,static/puma1.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 31,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 6,
+    "productid": 13,
+    "productsubname": "Nike City Rep TR Training Shoes - Triple White",
+    "description": "Nike City Rep TR Training Shoes in Triple White, size 8. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3999,
+    "color": "Triple White",
+    "size": "8",
+    "offerprice": 2499,
+    "offertype": "Best Value",
+    "icon": "static/nike2.png,static/nike1.png,static/puma1.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 32,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 6,
+    "productid": 13,
+    "productsubname": "Nike City Rep TR Training Shoes - Black & White",
+    "description": "Nike City Rep TR Training Shoes in Black & White, size 7. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3999,
+    "color": "Black & White",
+    "size": "7",
+    "offerprice": 2499,
+    "offertype": "Best Value",
+    "icon": "static/nike2.png,static/nike1.png,static/puma1.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 33,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 6,
+    "productid": 13,
+    "productsubname": "Nike City Rep TR Training Shoes - Black & White",
+    "description": "Nike City Rep TR Training Shoes in Black & White, size 8. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3999,
+    "color": "Black & White",
+    "size": "8",
+    "offerprice": 2499,
+    "offertype": "Best Value",
+    "icon": "static/nike2.png,static/nike1.png,static/puma1.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 34,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 8,
+    "productid": 14,
+    "productsubname": "Puma Softride Rift Tech Runners - Triple White",
+    "description": "Puma Softride Rift Tech Runners in Triple White, size 7. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3999,
+    "color": "Triple White",
+    "size": "7",
+    "offerprice": 2499,
+    "offertype": "Best Value",
+    "icon": "static/nike2.png,static/nike1.png,static/puma1.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 35,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 8,
+    "productid": 14,
+    "productsubname": "Puma Softride Rift Tech Runners - Triple White",
+    "description": "Puma Softride Rift Tech Runners in Triple White, size 8. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3999,
+    "color": "Triple White",
+    "size": "8",
+    "offerprice": 2499,
+    "offertype": "Best Value",
+    "icon": "static/nike2.png,static/nike1.png,static/puma1.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 36,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 8,
+    "productid": 14,
+    "productsubname": "Puma Softride Rift Tech Runners - Black & White",
+    "description": "Puma Softride Rift Tech Runners in Black & White, size 7. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3999,
+    "color": "Black & White",
+    "size": "7",
+    "offerprice": 2499,
+    "offertype": "Best Value",
+    "icon": "static/nike2.png,static/nike1.png,static/puma1.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 37,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 8,
+    "productid": 14,
+    "productsubname": "Puma Softride Rift Tech Runners - Black & White",
+    "description": "Puma Softride Rift Tech Runners in Black & White, size 8. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3999,
+    "color": "Black & White",
+    "size": "8",
+    "offerprice": 2499,
+    "offertype": "Best Value",
+    "icon": "static/nike2.png,static/nike1.png,static/puma1.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 38,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 8,
+    "productid": 15,
+    "productsubname": "Puma Flyer Flex Mesh Sneakers - Triple White",
+    "description": "Puma Flyer Flex Mesh Sneakers in Triple White, size 7. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3999,
+    "color": "Triple White",
+    "size": "7",
+    "offerprice": 2499,
+    "offertype": "Best Value",
+    "icon": "static/nike2.png,static/nike1.png,static/puma1.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 39,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 8,
+    "productid": 15,
+    "productsubname": "Puma Flyer Flex Mesh Sneakers - Triple White",
+    "description": "Puma Flyer Flex Mesh Sneakers in Triple White, size 8. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3999,
+    "color": "Triple White",
+    "size": "8",
+    "offerprice": 2499,
+    "offertype": "Best Value",
+    "icon": "static/nike2.png,static/nike1.png,static/puma1.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 40,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 8,
+    "productid": 15,
+    "productsubname": "Puma Flyer Flex Mesh Sneakers - Black & White",
+    "description": "Puma Flyer Flex Mesh Sneakers in Black & White, size 7. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3999,
+    "color": "Black & White",
+    "size": "7",
+    "offerprice": 2499,
+    "offertype": "Best Value",
+    "icon": "static/nike2.png,static/nike1.png,static/puma1.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 41,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 8,
+    "brandid": 8,
+    "productid": 15,
+    "productsubname": "Puma Flyer Flex Mesh Sneakers - Black & White",
+    "description": "Puma Flyer Flex Mesh Sneakers in Black & White, size 8. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3999,
+    "color": "Black & White",
+    "size": "8",
+    "offerprice": 2499,
+    "offertype": "Best Value",
+    "icon": "static/nike2.png,static/nike1.png,static/puma1.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 42,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 6,
+    "productid": 18,
+    "productsubname": "Nike Sportswear Club Graphic Tee - Jet Black",
+    "description": "Nike Sportswear Club Graphic Tee in Jet Black, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1299,
+    "color": "Jet Black",
+    "size": "S",
+    "offerprice": 699,
+    "offertype": "Best Value",
+    "icon": "static/oversized.png,static/hm2.webp,static/nike3.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 43,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 6,
+    "productid": 18,
+    "productsubname": "Nike Sportswear Club Graphic Tee - Jet Black",
+    "description": "Nike Sportswear Club Graphic Tee in Jet Black, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1299,
+    "color": "Jet Black",
+    "size": "M",
+    "offerprice": 699,
+    "offertype": "Best Value",
+    "icon": "static/oversized.png,static/hm2.webp,static/nike3.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 44,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 6,
+    "productid": 18,
+    "productsubname": "Nike Sportswear Club Graphic Tee - Off White",
+    "description": "Nike Sportswear Club Graphic Tee in Off White, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1299,
+    "color": "Off White",
+    "size": "S",
+    "offerprice": 699,
+    "offertype": "Best Value",
+    "icon": "static/oversized.png,static/hm2.webp,static/nike3.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 45,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 6,
+    "productid": 18,
+    "productsubname": "Nike Sportswear Club Graphic Tee - Off White",
+    "description": "Nike Sportswear Club Graphic Tee in Off White, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1299,
+    "color": "Off White",
+    "size": "M",
+    "offerprice": 699,
+    "offertype": "Best Value",
+    "icon": "static/oversized.png,static/hm2.webp,static/nike3.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 46,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 8,
+    "productid": 20,
+    "productsubname": "Puma Active DryCELL Training Tee - Jet Black",
+    "description": "Puma Active DryCELL Training Tee in Jet Black, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1299,
+    "color": "Jet Black",
+    "size": "S",
+    "offerprice": 699,
+    "offertype": "Best Value",
+    "icon": "static/oversized.png,static/hm2.webp,static/nike3.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 47,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 8,
+    "productid": 20,
+    "productsubname": "Puma Active DryCELL Training Tee - Jet Black",
+    "description": "Puma Active DryCELL Training Tee in Jet Black, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1299,
+    "color": "Jet Black",
+    "size": "M",
+    "offerprice": 699,
+    "offertype": "Best Value",
+    "icon": "static/oversized.png,static/hm2.webp,static/nike3.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 48,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 8,
+    "productid": 20,
+    "productsubname": "Puma Active DryCELL Training Tee - Off White",
+    "description": "Puma Active DryCELL Training Tee in Off White, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1299,
+    "color": "Off White",
+    "size": "S",
+    "offerprice": 699,
+    "offertype": "Best Value",
+    "icon": "static/oversized.png,static/hm2.webp,static/nike3.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 49,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 8,
+    "productid": 20,
+    "productsubname": "Puma Active DryCELL Training Tee - Off White",
+    "description": "Puma Active DryCELL Training Tee in Off White, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1299,
+    "color": "Off White",
+    "size": "M",
+    "offerprice": 699,
+    "offertype": "Best Value",
+    "icon": "static/oversized.png,static/hm2.webp,static/nike3.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 50,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 8,
+    "productid": 21,
+    "productsubname": "Puma Poly Tracksuit Set - Jet Black",
+    "description": "Puma Poly Tracksuit Set in Jet Black, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1299,
+    "color": "Jet Black",
+    "size": "S",
+    "offerprice": 699,
+    "offertype": "Best Value",
+    "icon": "static/oversized.png,static/hm2.webp,static/nike3.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 51,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 8,
+    "productid": 21,
+    "productsubname": "Puma Poly Tracksuit Set - Jet Black",
+    "description": "Puma Poly Tracksuit Set in Jet Black, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1299,
+    "color": "Jet Black",
+    "size": "M",
+    "offerprice": 699,
+    "offertype": "Best Value",
+    "icon": "static/oversized.png,static/hm2.webp,static/nike3.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 52,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 8,
+    "productid": 21,
+    "productsubname": "Puma Poly Tracksuit Set - Off White",
+    "description": "Puma Poly Tracksuit Set in Off White, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1299,
+    "color": "Off White",
+    "size": "S",
+    "offerprice": 699,
+    "offertype": "Best Value",
+    "icon": "static/oversized.png,static/hm2.webp,static/nike3.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 53,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 10,
+    "brandid": 8,
+    "productid": 21,
+    "productsubname": "Puma Poly Tracksuit Set - Off White",
+    "description": "Puma Poly Tracksuit Set in Off White, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1299,
+    "color": "Off White",
+    "size": "M",
+    "offerprice": 699,
+    "offertype": "Best Value",
+    "icon": "static/oversized.png,static/hm2.webp,static/nike3.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 54,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 15,
+    "brandid": 7,
+    "productid": 22,
+    "productsubname": "Lee Urban Leather Ankle Chelsea Boots - Classic Tan",
+    "description": "Lee Urban Leather Ankle Chelsea Boots in Classic Tan, size 5. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3499,
+    "color": "Classic Tan",
+    "size": "5",
+    "offerprice": 1999,
+    "offertype": "Best Value",
+    "icon": "static/Boots.png,static/Boots_CidJb16.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 55,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 15,
+    "brandid": 7,
+    "productid": 22,
+    "productsubname": "Lee Urban Leather Ankle Chelsea Boots - Classic Tan",
+    "description": "Lee Urban Leather Ankle Chelsea Boots in Classic Tan, size 6. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3499,
+    "color": "Classic Tan",
+    "size": "6",
+    "offerprice": 1999,
+    "offertype": "Best Value",
+    "icon": "static/Boots.png,static/Boots_CidJb16.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 56,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 15,
+    "brandid": 7,
+    "productid": 22,
+    "productsubname": "Lee Urban Leather Ankle Chelsea Boots - Onyx Black",
+    "description": "Lee Urban Leather Ankle Chelsea Boots in Onyx Black, size 5. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3499,
+    "color": "Onyx Black",
+    "size": "5",
+    "offerprice": 1999,
+    "offertype": "Best Value",
+    "icon": "static/Boots.png,static/Boots_CidJb16.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 57,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 15,
+    "brandid": 7,
+    "productid": 22,
+    "productsubname": "Lee Urban Leather Ankle Chelsea Boots - Onyx Black",
+    "description": "Lee Urban Leather Ankle Chelsea Boots in Onyx Black, size 6. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3499,
+    "color": "Onyx Black",
+    "size": "6",
+    "offerprice": 1999,
+    "offertype": "Best Value",
+    "icon": "static/Boots.png,static/Boots_CidJb16.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 58,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 9,
+    "brandid": 17,
+    "productid": 24,
+    "productsubname": "Levi's 568 Loose Straight Jeans - Light Wash",
+    "description": "Levi's 568 Loose Straight Jeans in Light Wash, size 30. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2499,
+    "color": "Light Wash",
+    "size": "30",
+    "offerprice": 1499,
+    "offertype": "Best Value",
+    "icon": "static/baggy_q1QqnWE.png,static/baggy.png,static/hm3.jpeg",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 59,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 9,
+    "brandid": 17,
+    "productid": 24,
+    "productsubname": "Levi's 568 Loose Straight Jeans - Light Wash",
+    "description": "Levi's 568 Loose Straight Jeans in Light Wash, size 32. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2499,
+    "color": "Light Wash",
+    "size": "32",
+    "offerprice": 1499,
+    "offertype": "Best Value",
+    "icon": "static/baggy_q1QqnWE.png,static/baggy.png,static/hm3.jpeg",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 60,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 9,
+    "brandid": 17,
+    "productid": 24,
+    "productsubname": "Levi's 568 Loose Straight Jeans - Vintage Blue",
+    "description": "Levi's 568 Loose Straight Jeans in Vintage Blue, size 30. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2499,
+    "color": "Vintage Blue",
+    "size": "30",
+    "offerprice": 1499,
+    "offertype": "Best Value",
+    "icon": "static/baggy_q1QqnWE.png,static/baggy.png,static/hm3.jpeg",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 61,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 9,
+    "brandid": 17,
+    "productid": 24,
+    "productsubname": "Levi's 568 Loose Straight Jeans - Vintage Blue",
+    "description": "Levi's 568 Loose Straight Jeans in Vintage Blue, size 32. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2499,
+    "color": "Vintage Blue",
+    "size": "32",
+    "offerprice": 1499,
+    "offertype": "Best Value",
+    "icon": "static/baggy_q1QqnWE.png,static/baggy.png,static/hm3.jpeg",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 62,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 9,
+    "brandid": 11,
+    "productid": 25,
+    "productsubname": "Pepe Jeans London Streetwear Denims - Light Wash",
+    "description": "Pepe Jeans London Streetwear Denims in Light Wash, size 30. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2499,
+    "color": "Light Wash",
+    "size": "30",
+    "offerprice": 1499,
+    "offertype": "Best Value",
+    "icon": "static/baggy_q1QqnWE.png,static/baggy.png,static/hm3.jpeg",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 63,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 9,
+    "brandid": 11,
+    "productid": 25,
+    "productsubname": "Pepe Jeans London Streetwear Denims - Light Wash",
+    "description": "Pepe Jeans London Streetwear Denims in Light Wash, size 32. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2499,
+    "color": "Light Wash",
+    "size": "32",
+    "offerprice": 1499,
+    "offertype": "Best Value",
+    "icon": "static/baggy_q1QqnWE.png,static/baggy.png,static/hm3.jpeg",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 64,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 9,
+    "brandid": 11,
+    "productid": 25,
+    "productsubname": "Pepe Jeans London Streetwear Denims - Vintage Blue",
+    "description": "Pepe Jeans London Streetwear Denims in Vintage Blue, size 30. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2499,
+    "color": "Vintage Blue",
+    "size": "30",
+    "offerprice": 1499,
+    "offertype": "Best Value",
+    "icon": "static/baggy_q1QqnWE.png,static/baggy.png,static/hm3.jpeg",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 65,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 9,
+    "brandid": 11,
+    "productid": 25,
+    "productsubname": "Pepe Jeans London Streetwear Denims - Vintage Blue",
+    "description": "Pepe Jeans London Streetwear Denims in Vintage Blue, size 32. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2499,
+    "color": "Vintage Blue",
+    "size": "32",
+    "offerprice": 1499,
+    "offertype": "Best Value",
+    "icon": "static/baggy_q1QqnWE.png,static/baggy.png,static/hm3.jpeg",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 66,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 11,
+    "brandid": 6,
+    "productid": 26,
+    "productsubname": "Nike Club French Terry Shorts - Charcoal Black",
+    "description": "Nike Club French Terry Shorts in Charcoal Black, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1199,
+    "color": "Charcoal Black",
+    "size": "M",
+    "offerprice": 599,
+    "offertype": "Best Value",
+    "icon": "static/shorts.png,static/11.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 67,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 11,
+    "brandid": 6,
+    "productid": 26,
+    "productsubname": "Nike Club French Terry Shorts - Charcoal Black",
+    "description": "Nike Club French Terry Shorts in Charcoal Black, size L. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1199,
+    "color": "Charcoal Black",
+    "size": "L",
+    "offerprice": 599,
+    "offertype": "Best Value",
+    "icon": "static/shorts.png,static/11.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 68,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 11,
+    "brandid": 6,
+    "productid": 26,
+    "productsubname": "Nike Club French Terry Shorts - Heather Grey",
+    "description": "Nike Club French Terry Shorts in Heather Grey, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1199,
+    "color": "Heather Grey",
+    "size": "M",
+    "offerprice": 599,
+    "offertype": "Best Value",
+    "icon": "static/shorts.png,static/11.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 69,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 11,
+    "brandid": 6,
+    "productid": 26,
+    "productsubname": "Nike Club French Terry Shorts - Heather Grey",
+    "description": "Nike Club French Terry Shorts in Heather Grey, size L. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1199,
+    "color": "Heather Grey",
+    "size": "L",
+    "offerprice": 599,
+    "offertype": "Best Value",
+    "icon": "static/shorts.png,static/11.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 70,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 11,
+    "brandid": 8,
+    "productid": 27,
+    "productsubname": "Puma Core Essentials Fleece Shorts - Charcoal Black",
+    "description": "Puma Core Essentials Fleece Shorts in Charcoal Black, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1199,
+    "color": "Charcoal Black",
+    "size": "M",
+    "offerprice": 599,
+    "offertype": "Best Value",
+    "icon": "static/shorts.png,static/11.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 71,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 11,
+    "brandid": 8,
+    "productid": 27,
+    "productsubname": "Puma Core Essentials Fleece Shorts - Charcoal Black",
+    "description": "Puma Core Essentials Fleece Shorts in Charcoal Black, size L. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1199,
+    "color": "Charcoal Black",
+    "size": "L",
+    "offerprice": 599,
+    "offertype": "Best Value",
+    "icon": "static/shorts.png,static/11.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 72,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 11,
+    "brandid": 8,
+    "productid": 27,
+    "productsubname": "Puma Core Essentials Fleece Shorts - Heather Grey",
+    "description": "Puma Core Essentials Fleece Shorts in Heather Grey, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1199,
+    "color": "Heather Grey",
+    "size": "M",
+    "offerprice": 599,
+    "offertype": "Best Value",
+    "icon": "static/shorts.png,static/11.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 73,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 11,
+    "brandid": 8,
+    "productid": 27,
+    "productsubname": "Puma Core Essentials Fleece Shorts - Heather Grey",
+    "description": "Puma Core Essentials Fleece Shorts in Heather Grey, size L. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1199,
+    "color": "Heather Grey",
+    "size": "L",
+    "offerprice": 599,
+    "offertype": "Best Value",
+    "icon": "static/shorts.png,static/11.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 74,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 7,
+    "brandid": 7,
+    "productid": 28,
+    "productsubname": "Lee Western Regular Fit Denim Shirt - White",
+    "description": "Lee Western Regular Fit Denim Shirt in White, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1799,
+    "color": "White",
+    "size": "M",
+    "offerprice": 1199,
+    "offertype": "Everyday Deal",
+    "icon": "static/103.webp,static/rr1.webp,static/rr2.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 75,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 7,
+    "brandid": 7,
+    "productid": 28,
+    "productsubname": "Lee Western Regular Fit Denim Shirt - White",
+    "description": "Lee Western Regular Fit Denim Shirt in White, size L. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1799,
+    "color": "White",
+    "size": "L",
+    "offerprice": 1199,
+    "offertype": "Everyday Deal",
+    "icon": "static/103.webp,static/rr1.webp,static/rr2.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 76,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 7,
+    "brandid": 7,
+    "productid": 28,
+    "productsubname": "Lee Western Regular Fit Denim Shirt - Navy Blue",
+    "description": "Lee Western Regular Fit Denim Shirt in Navy Blue, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1799,
+    "color": "Navy Blue",
+    "size": "M",
+    "offerprice": 1199,
+    "offertype": "Everyday Deal",
+    "icon": "static/103.webp,static/rr1.webp,static/rr2.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 77,
+  "fields": {
+    "maincategoryid": 5,
+    "subcategoryid": 7,
+    "brandid": 7,
+    "productid": 28,
+    "productsubname": "Lee Western Regular Fit Denim Shirt - Navy Blue",
+    "description": "Lee Western Regular Fit Denim Shirt in Navy Blue, size L. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1799,
+    "color": "Navy Blue",
+    "size": "L",
+    "offerprice": 1199,
+    "offertype": "Everyday Deal",
+    "icon": "static/103.webp,static/rr1.webp,static/rr2.webp",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 78,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 12,
+    "brandid": 9,
+    "productid": 29,
+    "productsubname": "H&M Ribbed Bodycon Midi Dress - Emerald Green",
+    "description": "H&M Ribbed Bodycon Midi Dress in Emerald Green, size XS. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2699,
+    "color": "Emerald Green",
+    "size": "XS",
+    "offerprice": 1699,
+    "offertype": "Best Value",
+    "icon": "static/western_dress.png,static/women.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 79,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 12,
+    "brandid": 9,
+    "productid": 29,
+    "productsubname": "H&M Ribbed Bodycon Midi Dress - Emerald Green",
+    "description": "H&M Ribbed Bodycon Midi Dress in Emerald Green, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2699,
+    "color": "Emerald Green",
+    "size": "S",
+    "offerprice": 1699,
+    "offertype": "Best Value",
+    "icon": "static/western_dress.png,static/women.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 80,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 12,
+    "brandid": 9,
+    "productid": 29,
+    "productsubname": "H&M Ribbed Bodycon Midi Dress - Classic Black",
+    "description": "H&M Ribbed Bodycon Midi Dress in Classic Black, size XS. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2699,
+    "color": "Classic Black",
+    "size": "XS",
+    "offerprice": 1699,
+    "offertype": "Best Value",
+    "icon": "static/western_dress.png,static/women.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 81,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 12,
+    "brandid": 9,
+    "productid": 29,
+    "productsubname": "H&M Ribbed Bodycon Midi Dress - Classic Black",
+    "description": "H&M Ribbed Bodycon Midi Dress in Classic Black, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2699,
+    "color": "Classic Black",
+    "size": "S",
+    "offerprice": 1699,
+    "offertype": "Best Value",
+    "icon": "static/western_dress.png,static/women.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 82,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 12,
+    "brandid": 11,
+    "productid": 30,
+    "productsubname": "Pepe Jeans Denim Shift Dress - Emerald Green",
+    "description": "Pepe Jeans Denim Shift Dress in Emerald Green, size XS. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2699,
+    "color": "Emerald Green",
+    "size": "XS",
+    "offerprice": 1699,
+    "offertype": "Best Value",
+    "icon": "static/western_dress.png,static/women.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 83,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 12,
+    "brandid": 11,
+    "productid": 30,
+    "productsubname": "Pepe Jeans Denim Shift Dress - Emerald Green",
+    "description": "Pepe Jeans Denim Shift Dress in Emerald Green, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2699,
+    "color": "Emerald Green",
+    "size": "S",
+    "offerprice": 1699,
+    "offertype": "Best Value",
+    "icon": "static/western_dress.png,static/women.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 84,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 12,
+    "brandid": 11,
+    "productid": 30,
+    "productsubname": "Pepe Jeans Denim Shift Dress - Classic Black",
+    "description": "Pepe Jeans Denim Shift Dress in Classic Black, size XS. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2699,
+    "color": "Classic Black",
+    "size": "XS",
+    "offerprice": 1699,
+    "offertype": "Best Value",
+    "icon": "static/western_dress.png,static/women.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 85,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 12,
+    "brandid": 11,
+    "productid": 30,
+    "productsubname": "Pepe Jeans Denim Shift Dress - Classic Black",
+    "description": "Pepe Jeans Denim Shift Dress in Classic Black, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 2699,
+    "color": "Classic Black",
+    "size": "S",
+    "offerprice": 1699,
+    "offertype": "Best Value",
+    "icon": "static/western_dress.png,static/women.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 86,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 13,
+    "brandid": 19,
+    "productid": 31,
+    "productsubname": "SevenShades Anarkali Cotton Kurta Set - Mustard Yellow",
+    "description": "SevenShades Anarkali Cotton Kurta Set in Mustard Yellow, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1899,
+    "color": "Mustard Yellow",
+    "size": "S",
+    "offerprice": 999,
+    "offertype": "Best Value",
+    "icon": "static/Kurti.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 87,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 13,
+    "brandid": 19,
+    "productid": 31,
+    "productsubname": "SevenShades Anarkali Cotton Kurta Set - Mustard Yellow",
+    "description": "SevenShades Anarkali Cotton Kurta Set in Mustard Yellow, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1899,
+    "color": "Mustard Yellow",
+    "size": "M",
+    "offerprice": 999,
+    "offertype": "Best Value",
+    "icon": "static/Kurti.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 88,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 13,
+    "brandid": 19,
+    "productid": 31,
+    "productsubname": "SevenShades Anarkali Cotton Kurta Set - Teal Blue",
+    "description": "SevenShades Anarkali Cotton Kurta Set in Teal Blue, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1899,
+    "color": "Teal Blue",
+    "size": "S",
+    "offerprice": 999,
+    "offertype": "Best Value",
+    "icon": "static/Kurti.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 89,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 13,
+    "brandid": 19,
+    "productid": 31,
+    "productsubname": "SevenShades Anarkali Cotton Kurta Set - Teal Blue",
+    "description": "SevenShades Anarkali Cotton Kurta Set in Teal Blue, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1899,
+    "color": "Teal Blue",
+    "size": "M",
+    "offerprice": 999,
+    "offertype": "Best Value",
+    "icon": "static/Kurti.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 90,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 13,
+    "brandid": 19,
+    "productid": 32,
+    "productsubname": "SevenShades Floral Embroidered Straight Kurti - Mustard Yellow",
+    "description": "SevenShades Floral Embroidered Straight Kurti in Mustard Yellow, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1899,
+    "color": "Mustard Yellow",
+    "size": "S",
+    "offerprice": 999,
+    "offertype": "Best Value",
+    "icon": "static/Kurti.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 91,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 13,
+    "brandid": 19,
+    "productid": 32,
+    "productsubname": "SevenShades Floral Embroidered Straight Kurti - Mustard Yellow",
+    "description": "SevenShades Floral Embroidered Straight Kurti in Mustard Yellow, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1899,
+    "color": "Mustard Yellow",
+    "size": "M",
+    "offerprice": 999,
+    "offertype": "Best Value",
+    "icon": "static/Kurti.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 92,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 13,
+    "brandid": 19,
+    "productid": 32,
+    "productsubname": "SevenShades Floral Embroidered Straight Kurti - Teal Blue",
+    "description": "SevenShades Floral Embroidered Straight Kurti in Teal Blue, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1899,
+    "color": "Teal Blue",
+    "size": "S",
+    "offerprice": 999,
+    "offertype": "Best Value",
+    "icon": "static/Kurti.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 93,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 13,
+    "brandid": 19,
+    "productid": 32,
+    "productsubname": "SevenShades Floral Embroidered Straight Kurti - Teal Blue",
+    "description": "SevenShades Floral Embroidered Straight Kurti in Teal Blue, size M. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1899,
+    "color": "Teal Blue",
+    "size": "M",
+    "offerprice": 999,
+    "offertype": "Best Value",
+    "icon": "static/Kurti.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 94,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 15,
+    "brandid": 14,
+    "productid": 33,
+    "productsubname": "Red Tape Chunky Platform Chelsea Boots - Classic Tan",
+    "description": "Red Tape Chunky Platform Chelsea Boots in Classic Tan, size 5. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3499,
+    "color": "Classic Tan",
+    "size": "5",
+    "offerprice": 1999,
+    "offertype": "Best Value",
+    "icon": "static/Boots.png,static/Boots_CidJb16.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 95,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 15,
+    "brandid": 14,
+    "productid": 33,
+    "productsubname": "Red Tape Chunky Platform Chelsea Boots - Classic Tan",
+    "description": "Red Tape Chunky Platform Chelsea Boots in Classic Tan, size 6. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3499,
+    "color": "Classic Tan",
+    "size": "6",
+    "offerprice": 1999,
+    "offertype": "Best Value",
+    "icon": "static/Boots.png,static/Boots_CidJb16.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 96,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 15,
+    "brandid": 14,
+    "productid": 33,
+    "productsubname": "Red Tape Chunky Platform Chelsea Boots - Onyx Black",
+    "description": "Red Tape Chunky Platform Chelsea Boots in Onyx Black, size 5. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3499,
+    "color": "Onyx Black",
+    "size": "5",
+    "offerprice": 1999,
+    "offertype": "Best Value",
+    "icon": "static/Boots.png,static/Boots_CidJb16.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 97,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 15,
+    "brandid": 14,
+    "productid": 33,
+    "productsubname": "Red Tape Chunky Platform Chelsea Boots - Onyx Black",
+    "description": "Red Tape Chunky Platform Chelsea Boots in Onyx Black, size 6. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 3499,
+    "color": "Onyx Black",
+    "size": "6",
+    "offerprice": 1999,
+    "offertype": "Best Value",
+    "icon": "static/Boots.png,static/Boots_CidJb16.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 98,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 16,
+    "brandid": 9,
+    "productid": 34,
+    "productsubname": "H&M Smocked Peplum Floral Top - Lavender",
+    "description": "H&M Smocked Peplum Floral Top in Lavender, size XS. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1399,
+    "color": "Lavender",
+    "size": "XS",
+    "offerprice": 799,
+    "offertype": "Best Value",
+    "icon": "static/top.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 99,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 16,
+    "brandid": 9,
+    "productid": 34,
+    "productsubname": "H&M Smocked Peplum Floral Top - Lavender",
+    "description": "H&M Smocked Peplum Floral Top in Lavender, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1399,
+    "color": "Lavender",
+    "size": "S",
+    "offerprice": 799,
+    "offertype": "Best Value",
+    "icon": "static/top.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 100,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 16,
+    "brandid": 9,
+    "productid": 34,
+    "productsubname": "H&M Smocked Peplum Floral Top - Champagne",
+    "description": "H&M Smocked Peplum Floral Top in Champagne, size XS. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1399,
+    "color": "Champagne",
+    "size": "XS",
+    "offerprice": 799,
+    "offertype": "Best Value",
+    "icon": "static/top.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 101,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 16,
+    "brandid": 9,
+    "productid": 34,
+    "productsubname": "H&M Smocked Peplum Floral Top - Champagne",
+    "description": "H&M Smocked Peplum Floral Top in Champagne, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1399,
+    "color": "Champagne",
+    "size": "S",
+    "offerprice": 799,
+    "offertype": "Best Value",
+    "icon": "static/top.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 102,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 16,
+    "brandid": 19,
+    "productid": 35,
+    "productsubname": "SevenShades Satin Wrap Collar Top - Lavender",
+    "description": "SevenShades Satin Wrap Collar Top in Lavender, size XS. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1399,
+    "color": "Lavender",
+    "size": "XS",
+    "offerprice": 799,
+    "offertype": "Best Value",
+    "icon": "static/top.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 103,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 16,
+    "brandid": 19,
+    "productid": 35,
+    "productsubname": "SevenShades Satin Wrap Collar Top - Lavender",
+    "description": "SevenShades Satin Wrap Collar Top in Lavender, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1399,
+    "color": "Lavender",
+    "size": "S",
+    "offerprice": 799,
+    "offertype": "Best Value",
+    "icon": "static/top.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 104,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 16,
+    "brandid": 19,
+    "productid": 35,
+    "productsubname": "SevenShades Satin Wrap Collar Top - Champagne",
+    "description": "SevenShades Satin Wrap Collar Top in Champagne, size XS. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1399,
+    "color": "Champagne",
+    "size": "XS",
+    "offerprice": 799,
+    "offertype": "Best Value",
+    "icon": "static/top.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 105,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 16,
+    "brandid": 19,
+    "productid": 35,
+    "productsubname": "SevenShades Satin Wrap Collar Top - Champagne",
+    "description": "SevenShades Satin Wrap Collar Top in Champagne, size S. Available for doorstep Try & Buy.",
+    "qty": 15,
+    "price": 1399,
+    "color": "Champagne",
+    "size": "S",
+    "offerprice": 799,
+    "offertype": "Best Value",
+    "icon": "static/top.png",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.productdetails",
+  "pk": 106,
+  "fields": {
+    "maincategoryid": 4,
+    "subcategoryid": 16,
+    "brandid": 19,
+    "productid": 35,
+    "productsubname": "red",
+    "description": "Best product",
+    "qty": 100,
+    "price": 1200,
+    "color": "Red, BLUE",
+    "size": "M,L,S",
+    "offerprice": 800,
+    "offertype": "None",
+    "icon": "static/river-rafting.jpg",
+    "avg_rating": 0.0,
+    "total_reviews": 0
+  }
+},
+{
+  "model": "sevenshadesapp.adminlogin",
+  "pk": 1,
+  "fields": {
+    "emailid": "ss@gmail.com",
+    "mobileno": "9826208618",
+    "adminname": "harry singh",
+    "password": "pbkdf2_sha256$720000$EgMaySlyua9jPpJ1EhulI8$lcdVv7WJ9pa1xeaSYuWbl5Cw0iUDumRnI24mRtRG4NU=",
+    "picture": "1.2jpg"
+  }
+},
+{
+  "model": "sevenshadesapp.adminlogin",
+  "pk": 2,
+  "fields": {
+    "emailid": "kk@gmail.com",
+    "mobileno": "9826208518",
+    "adminname": "karan singh",
+    "password": "pbkdf2_sha256$720000$bKe5y4zMwlr5FqklQ9GIZz$62BrokDjYo9wRcSa4qSnDZq3U08y4bviohVTIw6+THU=",
+    "picture": "1.3.jpg"
+  }
+},
+{
+  "model": "sevenshadesapp.banner",
+  "pk": 2,
+  "fields": {
+    "bannerdescription": "Men|The Everyday Edit|Try up to 4 styles at home",
+    "icon": "static/sevenshades-men-hero.png"
+  }
+},
+{
+  "model": "sevenshadesapp.banner",
+  "pk": 3,
+  "fields": {
+    "bannerdescription": "Women|Made for every version of you|Pay only for what you keep",
+    "icon": "static/sevenshades-women-hero.png"
+  }
+},
+{
+  "model": "sevenshadesapp.signup",
+  "pk": "454575735",
+  "fields": {
+    "fname": "sumit",
+    "lname": "singh",
+    "emailid": "examples@gmail.com",
+    "password": "pbkdf2_sha256$720000$hFj1b92wmWaBISr4d55XyY$b7nM1RFmVEKka1I4RhlpRdvQ6IEx/o05ir39OOvSNr0="
+  }
+},
+{
+  "model": "sevenshadesapp.signup",
+  "pk": "8319651630",
+  "fields": {
+    "fname": "sumit",
+    "lname": "singh",
+    "emailid": "sumit@gmail.com",
+    "password": "pbkdf2_sha256$720000$h5D4dgmMeiKcrraNFTvcyY$sNJtxJtp+uVIIeAI5T/nHU3Nm4OH4ZX7ZsCNO9gZQqs="
+  }
+},
+{
+  "model": "sevenshadesapp.signup",
+  "pk": "8319651640",
+  "fields": {
+    "fname": "ansh",
+    "lname": "singh",
+    "emailid": "example@gmail.com",
+    "password": "pbkdf2_sha256$720000$Zoy6FJp6NKIvgWEywuT7Y1$uCegxSHZ2hwjynuxFBmDeK7ZPkTyTWBYyjAXEfOS/H4="
+  }
+},
+{
+  "model": "sevenshadesapp.signup",
+  "pk": "8840476647",
+  "fields": {
+    "fname": "Sumit",
+    "lname": "Samadhiya",
+    "emailid": "sumitsamadhiya877@gmail.com",
+    "password": "pbkdf2_sha256$720000$PJUr9Kj0B0baOZy6A01WrO$aNOExAYUekHWlI7PeIoIR9iwtCSBQ+jl89K9dRTcGNY="
+  }
+},
+{
+  "model": "sevenshadesapp.signup",
+  "pk": "8840476648",
+  "fields": {
+    "fname": "Sumit",
+    "lname": "Samadhiya",
+    "emailid": "sumitsamadhiya87@gmail.com",
+    "password": "pbkdf2_sha256$720000$Pml2EFTN2YGbuH00k2reVR$UJAgz6WwrkLBmA6bI0o95Afdcx/j37TFi9J7H3jP+kg="
+  }
+},
+{
+  "model": "sevenshadesapp.useraddress",
+  "pk": 20,
+  "fields": {
+    "latitude": null,
+    "longitude": null,
+    "mobileno": "8319651640",
+    "country": "India",
+    "address": "dfbsd",
+    "city": "gwalior",
+    "postcode": "474001",
+    "address_type": "Residential"
+  }
+},
+{
+  "model": "sevenshadesapp.useraddress",
+  "pk": 22,
+  "fields": {
+    "latitude": null,
+    "longitude": null,
+    "mobileno": "8319651630",
+    "country": "india",
+    "address": "govindpuri",
+    "city": "jhansi",
+    "postcode": "456457",
+    "address_type": "Residential"
+  }
+},
+{
+  "model": "sevenshadesapp.useraddress",
+  "pk": 24,
+  "fields": {
+    "latitude": null,
+    "longitude": null,
+    "mobileno": "8319651630",
+    "country": "fgbgbssf",
+    "address": "fsf",
+    "city": "ffds",
+    "postcode": "34534",
+    "address_type": "Residential"
+  }
+},
+{
+  "model": "sevenshadesapp.useraddress",
+  "pk": 25,
+  "fields": {
+    "latitude": null,
+    "longitude": null,
+    "mobileno": "8319651640",
+    "country": "",
+    "address": "",
+    "city": "",
+    "postcode": "",
+    "address_type": "Residential"
+  }
+},
+{
+  "model": "sevenshadesapp.useraddress",
+  "pk": 26,
+  "fields": {
+    "latitude": null,
+    "longitude": null,
+    "mobileno": "8319651640",
+    "country": "India",
+    "address": "ramnagar, hajira",
+    "city": "gwalior",
+    "postcode": "333",
+    "address_type": "Residential"
+  }
+},
+{
+  "model": "sevenshadesapp.useraddress",
+  "pk": 27,
+  "fields": {
+    "latitude": null,
+    "longitude": null,
+    "mobileno": "8840476647",
+    "country": "India",
+    "address": "Madora, Baragaon",
+    "city": "Jhansi",
+    "postcode": "284121",
+    "address_type": "Residential"
+  }
+},
+{
+  "model": "sevenshadesapp.useraddress",
+  "pk": 28,
+  "fields": {
+    "latitude": null,
+    "longitude": null,
+    "mobileno": "8840476647",
+    "country": "India",
+    "address": "Madora, Baragaon",
+    "city": "Jhansi",
+    "postcode": "400005",
+    "address_type": "Gated Society"
+  }
+},
+{
+  "model": "sevenshadesapp.useraddress",
+  "pk": 29,
+  "fields": {
+    "latitude": null,
+    "longitude": null,
+    "mobileno": "8840476648",
+    "country": "India",
+    "address": "hsgaA",
+    "city": "Jhansi",
+    "postcode": "400005",
+    "address_type": "Residential"
+  }
+},
+{
+  "model": "sevenshadesapp.useraddress",
+  "pk": 30,
+  "fields": {
+    "latitude": null,
+    "longitude": null,
+    "mobileno": "8840476647",
+    "country": "India",
+    "address": "Madora, Baragaon",
+    "city": "Jhansi",
+    "postcode": "284001",
+    "address_type": "Residential"
+  }
+},
+{
+  "model": "sevenshadesapp.walletaccount",
+  "pk": 1,
+  "fields": {
+    "mobileno": "8319651630",
+    "balance": 0,
+    "updated_at": "2026-09-20T08:18:39.648Z"
+  }
+},
+{
+  "model": "sevenshadesapp.walletaccount",
+  "pk": 2,
+  "fields": {
+    "mobileno": "8840476647",
+    "balance": 0,
+    "updated_at": "2026-09-23T20:52:30.616Z"
+  }
+},
+{
+  "model": "sevenshadesapp.walletaccount",
+  "pk": 3,
+  "fields": {
+    "mobileno": "8840476648",
+    "balance": 0,
+    "updated_at": "2026-09-24T04:50:35.406Z"
+  }
+},
+{
+  "model": "sevenshadesapp.tryorder",
+  "pk": 1,
+  "fields": {
+    "dispatched_at": "2026-09-20T08:18:39.309Z",
+    "reservation_expires_at": null,
+    "cancelled_at": null,
+    "cancellation_reason": "",
+    "latitude": null,
+    "longitude": null,
+    "order_id": "TRL-000001",
+    "mobileno": "8319651630",
+    "address_text": "govindpuri",
+    "city": "jhansi",
+    "country": "india",
+    "postcode": "456457",
+    "address_type": "Residential",
+    "delivery_mode": "standard",
+    "delivery_slot": "10:00 AM - 02:00 PM (North Zone)",
+    "scheduled_date": null,
+    "total_try_items": 2,
+    "reference_value": 684,
+    "try_fee": 0,
+    "is_first_order": true,
+    "try_payment_mode": "free",
+    "try_payment_status": "paid",
+    "trial_fee_paid": false,
+    "trial_type": "STANDARD",
+    "payment_status": "PENDING",
+    "final_bill": null,
+    "assigned_rider": 1,
+    "status": "TRY_REQUESTED",
+    "created_at": "2026-09-20T08:18:39.136Z",
+    "updated_at": "2026-09-20T08:18:39.309Z"
+  }
+},
+{
+  "model": "sevenshadesapp.tryorder",
+  "pk": 2,
+  "fields": {
+    "dispatched_at": "2026-09-20T12:41:02.437Z",
+    "reservation_expires_at": null,
+    "cancelled_at": null,
+    "cancellation_reason": "",
+    "latitude": null,
+    "longitude": null,
+    "order_id": "TRL-000002",
+    "mobileno": "8319651630",
+    "address_text": "govindpuri",
+    "city": "jhansi",
+    "country": "india",
+    "postcode": "456457",
+    "address_type": "Residential",
+    "delivery_mode": "standard",
+    "delivery_slot": "10:00 AM - 02:00 PM (North Zone)",
+    "scheduled_date": null,
+    "total_try_items": 2,
+    "reference_value": 684,
+    "try_fee": 49,
+    "is_first_order": false,
+    "try_payment_mode": "upi",
+    "try_payment_status": "paid",
+    "trial_fee_paid": false,
+    "trial_type": "STANDARD",
+    "payment_status": "PENDING",
+    "final_bill": null,
+    "assigned_rider": 1,
+    "status": "TRY_REQUESTED",
+    "created_at": "2026-09-20T12:41:02.436Z",
+    "updated_at": "2026-09-20T12:41:02.437Z"
+  }
+},
+{
+  "model": "sevenshadesapp.tryorder",
+  "pk": 3,
+  "fields": {
+    "dispatched_at": "2026-09-21T09:48:32.977Z",
+    "reservation_expires_at": null,
+    "cancelled_at": null,
+    "cancellation_reason": "",
+    "latitude": null,
+    "longitude": null,
+    "order_id": "TRL-000003",
+    "mobileno": "8319651630",
+    "address_text": "govindpuri",
+    "city": "jhansi",
+    "country": "india",
+    "postcode": "456457",
+    "address_type": "Residential",
+    "delivery_mode": "emergency_sos",
+    "delivery_slot": "10:00 AM - 02:00 PM (North Zone)",
+    "scheduled_date": null,
+    "total_try_items": 1,
+    "reference_value": 234,
+    "try_fee": 99,
+    "is_first_order": false,
+    "try_payment_mode": "upi",
+    "try_payment_status": "paid",
+    "trial_fee_paid": false,
+    "trial_type": "STANDARD",
+    "payment_status": "PENDING",
+    "final_bill": null,
+    "assigned_rider": 1,
+    "status": "TRY_REQUESTED",
+    "created_at": "2026-09-21T09:48:32.977Z",
+    "updated_at": "2026-09-21T09:48:32.977Z"
+  }
+},
+{
+  "model": "sevenshadesapp.tryorder",
+  "pk": 4,
+  "fields": {
+    "dispatched_at": "2026-09-23T21:20:26.517Z",
+    "reservation_expires_at": null,
+    "cancelled_at": null,
+    "cancellation_reason": "",
+    "latitude": null,
+    "longitude": null,
+    "order_id": "TRL-8E61B00D41724011AA92",
+    "mobileno": "8840476647",
+    "address_text": "Madora, Baragaon",
+    "city": "Jhansi",
+    "country": "India",
+    "postcode": "400005",
+    "address_type": "Gated Society",
+    "delivery_mode": "standard",
+    "delivery_slot": "10:00 AM - 02:00 PM (North Zone)",
+    "scheduled_date": null,
+    "total_try_items": 2,
+    "reference_value": 484,
+    "try_fee": 0,
+    "is_first_order": true,
+    "try_payment_mode": "free",
+    "try_payment_status": "not_required",
+    "trial_fee_paid": false,
+    "trial_type": "STANDARD",
+    "payment_status": "COMPLETED",
+    "final_bill": null,
+    "assigned_rider": 1,
+    "status": "DELIVERED",
+    "created_at": "2026-09-23T20:56:59.749Z",
+    "updated_at": "2026-09-23T21:20:26.517Z"
+  }
+},
+{
+  "model": "sevenshadesapp.tryorder",
+  "pk": 5,
+  "fields": {
+    "dispatched_at": "2026-09-24T04:57:44.147Z",
+    "reservation_expires_at": null,
+    "cancelled_at": null,
+    "cancellation_reason": "",
+    "latitude": null,
+    "longitude": null,
+    "order_id": "TRL-151EEA1404B743F98247",
+    "mobileno": "8840476648",
+    "address_text": "hsgaA",
+    "city": "Jhansi",
+    "country": "India",
+    "postcode": "400005",
+    "address_type": "Residential",
+    "delivery_mode": "standard",
+    "delivery_slot": "10:00 AM - 02:00 PM (North Zone)",
+    "scheduled_date": null,
+    "total_try_items": 2,
+    "reference_value": 484,
+    "try_fee": 0,
+    "is_first_order": true,
+    "try_payment_mode": "free",
+    "try_payment_status": "not_required",
+    "trial_fee_paid": false,
+    "trial_type": "STANDARD",
+    "payment_status": "COMPLETED",
+    "final_bill": null,
+    "assigned_rider": 1,
+    "status": "DELIVERED",
+    "created_at": "2026-09-24T04:56:40.660Z",
+    "updated_at": "2026-09-24T05:00:22.560Z"
+  }
+},
+{
+  "model": "sevenshadesapp.tryorder",
+  "pk": 6,
+  "fields": {
+    "dispatched_at": null,
+    "reservation_expires_at": null,
+    "cancelled_at": null,
+    "cancellation_reason": "",
+    "latitude": null,
+    "longitude": null,
+    "order_id": "TRL-B8A58EAE81CE4A5CB74B",
+    "mobileno": "8840476647",
+    "address_text": "Madora, Baragaon",
+    "city": "Jhansi",
+    "country": "India",
+    "postcode": "284001",
+    "address_type": "Residential",
+    "delivery_mode": "standard",
+    "delivery_slot": "10:00 AM - 02:00 PM",
+    "scheduled_date": "2026-09-26",
+    "total_try_items": 2,
+    "reference_value": 2498,
+    "try_fee": 49,
+    "is_first_order": false,
+    "try_payment_mode": "cash",
+    "try_payment_status": "cod",
+    "trial_fee_paid": false,
+    "trial_type": "STANDARD",
+    "payment_status": "PENDING",
+    "final_bill": null,
+    "assigned_rider": null,
+    "status": "TRY_REQUESTED",
+    "created_at": "2026-09-26T08:07:05.319Z",
+    "updated_at": "2026-09-26T08:07:05.319Z"
+  }
+},
+{
+  "model": "sevenshadesapp.tryorderitem",
+  "pk": 1,
+  "fields": {
+    "stock_reserved": false,
+    "try_order": 1,
+    "product_details": 7,
+    "product_name": "Silk Touch Shirts",
+    "brand_name": "Rare Rabbit",
+    "size": "",
+    "color": "",
+    "qty": 1,
+    "unit_price": 234,
+    "line_total": 234,
+    "status": "TRY_REQUESTED",
+    "security_tag": ""
+  }
+},
+{
+  "model": "sevenshadesapp.tryorderitem",
+  "pk": 2,
+  "fields": {
+    "stock_reserved": false,
+    "try_order": 1,
+    "product_details": 8,
+    "product_name": "Printed Shirts",
+    "brand_name": "Rare Rabbit",
+    "size": "",
+    "color": "",
+    "qty": 1,
+    "unit_price": 450,
+    "line_total": 450,
+    "status": "TRY_REQUESTED",
+    "security_tag": ""
+  }
+},
+{
+  "model": "sevenshadesapp.tryorderitem",
+  "pk": 3,
+  "fields": {
+    "stock_reserved": false,
+    "try_order": 2,
+    "product_details": 7,
+    "product_name": "Silk Touch Shirts",
+    "brand_name": "Rare Rabbit",
+    "size": "",
+    "color": "",
+    "qty": 1,
+    "unit_price": 234,
+    "line_total": 234,
+    "status": "TRY_REQUESTED",
+    "security_tag": ""
+  }
+},
+{
+  "model": "sevenshadesapp.tryorderitem",
+  "pk": 4,
+  "fields": {
+    "stock_reserved": false,
+    "try_order": 2,
+    "product_details": 8,
+    "product_name": "Printed Shirts",
+    "brand_name": "Rare Rabbit",
+    "size": "",
+    "color": "",
+    "qty": 1,
+    "unit_price": 450,
+    "line_total": 450,
+    "status": "TRY_REQUESTED",
+    "security_tag": ""
+  }
+},
+{
+  "model": "sevenshadesapp.tryorderitem",
+  "pk": 5,
+  "fields": {
+    "stock_reserved": false,
+    "try_order": 3,
+    "product_details": 7,
+    "product_name": "Silk Touch Shirts",
+    "brand_name": "Rare Rabbit",
+    "size": "",
+    "color": "",
+    "qty": 1,
+    "unit_price": 234,
+    "line_total": 234,
+    "status": "TRY_REQUESTED",
+    "security_tag": ""
+  }
+},
+{
+  "model": "sevenshadesapp.tryorderitem",
+  "pk": 6,
+  "fields": {
+    "stock_reserved": false,
+    "try_order": 4,
+    "product_details": 7,
+    "product_name": "Silk Touch Shirts",
+    "brand_name": "Rare Rabbit",
+    "size": "xl",
+    "color": "red",
+    "qty": 1,
+    "unit_price": 34,
+    "line_total": 34,
+    "status": "PURCHASED",
+    "security_tag": ""
+  }
+},
+{
+  "model": "sevenshadesapp.tryorderitem",
+  "pk": 7,
+  "fields": {
+    "stock_reserved": true,
+    "try_order": 4,
+    "product_details": 8,
+    "product_name": "Printed Shirts",
+    "brand_name": "Rare Rabbit",
+    "size": "medium",
+    "color": "red",
+    "qty": 1,
+    "unit_price": 450,
+    "line_total": 450,
+    "status": "RETURNED",
+    "security_tag": ""
+  }
+},
+{
+  "model": "sevenshadesapp.tryorderitem",
+  "pk": 8,
+  "fields": {
+    "stock_reserved": true,
+    "try_order": 5,
+    "product_details": 7,
+    "product_name": "Silk Touch Shirts",
+    "brand_name": "Rare Rabbit",
+    "size": "xl",
+    "color": "red",
+    "qty": 1,
+    "unit_price": 34,
+    "line_total": 34,
+    "status": "RETURNED",
+    "security_tag": ""
+  }
+},
+{
+  "model": "sevenshadesapp.tryorderitem",
+  "pk": 9,
+  "fields": {
+    "stock_reserved": false,
+    "try_order": 5,
+    "product_details": 8,
+    "product_name": "Printed Shirts",
+    "brand_name": "Rare Rabbit",
+    "size": "medium",
+    "color": "red",
+    "qty": 1,
+    "unit_price": 450,
+    "line_total": 450,
+    "status": "PURCHASED",
+    "security_tag": ""
+  }
+},
+{
+  "model": "sevenshadesapp.tryorderitem",
+  "pk": 10,
+  "fields": {
+    "stock_reserved": true,
+    "try_order": 6,
+    "product_details": 7,
+    "product_name": "Rare Rabbit Silk Touch Formal Shirt",
+    "brand_name": "Rare Rabbit",
+    "size": "XL",
+    "color": "Burgundy",
+    "qty": 1,
+    "unit_price": 1299,
+    "line_total": 1299,
+    "status": "TRY_REQUESTED",
+    "security_tag": "TAG-TRY-0B90C7649B"
+  }
+},
+{
+  "model": "sevenshadesapp.tryorderitem",
+  "pk": 11,
+  "fields": {
+    "stock_reserved": true,
+    "try_order": 6,
+    "product_details": 11,
+    "product_name": "Rare Rabbit Silk Touch Formal Shirt",
+    "brand_name": "Rare Rabbit",
+    "size": "M",
+    "color": "White",
+    "qty": 1,
+    "unit_price": 1199,
+    "line_total": 1199,
+    "status": "TRY_REQUESTED",
+    "security_tag": "TAG-TRY-C89BDE2C53"
+  }
+},
+{
+  "model": "sevenshadesapp.finalorder",
+  "pk": 1,
+  "fields": {
+    "paid_at": "2026-09-23T21:20:24.482Z",
+    "cash_collected_by": "admin:1",
+    "bill_revision": 1,
+    "approved_revision": 1,
+    "approved_by": "8840476647",
+    "approved_at": "2026-09-23T21:20:07.179Z",
+    "try_order": 4,
+    "order_id": "FIN-TRL-8E61B00D41724011AA92",
+    "selected_items_count": 1,
+    "items_total": 34,
+    "wallet_credit": 0,
+    "final_payable": 34,
+    "payment_mode": "cash",
+    "payment_status": "paid",
+    "status": "completed",
+    "created_at": "2026-09-23T21:19:12.417Z",
+    "updated_at": "2026-09-23T21:20:24.483Z"
+  }
+},
+{
+  "model": "sevenshadesapp.finalorder",
+  "pk": 2,
+  "fields": {
+    "paid_at": "2026-09-24T05:00:00.530Z",
+    "cash_collected_by": "admin:1",
+    "bill_revision": 1,
+    "approved_revision": 1,
+    "approved_by": "8840476648",
+    "approved_at": "2026-09-24T04:59:46.644Z",
+    "try_order": 5,
+    "order_id": "FIN-TRL-151EEA1404B743F98247",
+    "selected_items_count": 1,
+    "items_total": 450,
+    "wallet_credit": 0,
+    "final_payable": 450,
+    "payment_mode": "cash",
+    "payment_status": "paid",
+    "status": "completed",
+    "created_at": "2026-09-24T04:59:17.288Z",
+    "updated_at": "2026-09-24T05:00:00.531Z"
+  }
+},
+{
+  "model": "sevenshadesapp.finalorderitem",
+  "pk": 1,
+  "fields": {
+    "final_order": 1,
+    "try_order_item": 6,
+    "product_name": "Silk Touch Shirts",
+    "brand_name": "Rare Rabbit",
+    "size": "xl",
+    "color": "red",
+    "qty": 1,
+    "unit_price": 34,
+    "line_total": 34
+  }
+},
+{
+  "model": "sevenshadesapp.finalorderitem",
+  "pk": 2,
+  "fields": {
+    "final_order": 2,
+    "try_order_item": 9,
+    "product_name": "Printed Shirts",
+    "brand_name": "Rare Rabbit",
+    "size": "medium",
+    "color": "red",
+    "qty": 1,
+    "unit_price": 450,
+    "line_total": 450
+  }
+},
+{
+  "model": "sevenshadesapp.deliveryrider",
+  "pk": 1,
+  "fields": {
+    "latitude": null,
+    "longitude": null,
+    "location_updated_at": null,
+    "rider_id": "RDR-0001",
+    "name": "CBNZBCXN",
+    "phone": "8840476647",
+    "password": "pbkdf2_sha256$720000$RvZVsNfwqn0Wa5pIdlIgTn$SlxoQ/mLMQ3borzbJxApT8khizTp/kZlTmsaDTWW7Hg=",
+    "bike_number": "shfdjasd87348578",
+    "zone": "DJSG",
+    "status": "Active",
+    "created_at": "2026-09-20T08:19:18.066Z",
+    "updated_at": "2026-09-20T08:19:18.066Z"
+  }
+},
+{
+  "model": "sevenshadesapp.deliveryassignment",
+  "pk": 1,
+  "fields": {
+    "assignment_id": "ASG-000001",
+    "try_order": 1,
+    "rider": 1,
+    "batch": null,
+    "status": "Delivered",
+    "trial_start_time": null,
+    "trial_end_time": null,
+    "assigned_at": "2026-09-20T08:19:25.644Z",
+    "updated_at": "2026-09-21T11:49:20.635Z"
+  }
+},
+{
+  "model": "sevenshadesapp.deliveryassignment",
+  "pk": 2,
+  "fields": {
+    "assignment_id": "ASG-000002",
+    "try_order": 2,
+    "rider": 1,
+    "batch": null,
+    "status": "Delivered",
+    "trial_start_time": null,
+    "trial_end_time": null,
+    "assigned_at": "2026-09-20T12:50:34.053Z",
+    "updated_at": "2026-09-21T12:37:41.907Z"
+  }
+},
+{
+  "model": "sevenshadesapp.deliveryassignment",
+  "pk": 3,
+  "fields": {
+    "assignment_id": "ASG-000003",
+    "try_order": 3,
+    "rider": 1,
+    "batch": null,
+    "status": "Delivered",
+    "trial_start_time": null,
+    "trial_end_time": null,
+    "assigned_at": "2026-09-21T09:49:27.816Z",
+    "updated_at": "2026-09-23T19:37:02.034Z"
+  }
+},
+{
+  "model": "sevenshadesapp.deliveryassignment",
+  "pk": 4,
+  "fields": {
+    "assignment_id": "ASG-15E2E50CEFBE4524A12A",
+    "try_order": 4,
+    "rider": 1,
+    "batch": null,
+    "status": "Delivered",
+    "trial_start_time": "2026-09-23T20:59:29.605Z",
+    "trial_end_time": "2026-09-23T21:19:04.816Z",
+    "assigned_at": "2026-09-23T20:57:57.178Z",
+    "updated_at": "2026-09-23T21:20:26.514Z"
+  }
+},
+{
+  "model": "sevenshadesapp.deliveryassignment",
+  "pk": 5,
+  "fields": {
+    "assignment_id": "ASG-E65948B9254D497BBD87",
+    "try_order": 5,
+    "rider": 1,
+    "batch": null,
+    "status": "Delivered",
+    "trial_start_time": "2026-09-24T04:57:51.072Z",
+    "trial_end_time": "2026-09-24T04:58:49.209Z",
+    "assigned_at": "2026-09-24T04:57:28.478Z",
+    "updated_at": "2026-09-24T05:00:22.556Z"
+  }
+},
+{
+  "model": "sevenshadesapp.deliveryzone",
+  "pk": 5,
+  "fields": {
+    "zone_name": "Jhansi - Sadar & City Central",
+    "postcodes": "284001"
+  }
+},
+{
+  "model": "sevenshadesapp.deliveryzone",
+  "pk": 6,
+  "fields": {
+    "zone_name": "Jhansi - Sipri Bazar & Civil Lines",
+    "postcodes": "284002"
+  }
+},
+{
+  "model": "sevenshadesapp.deliveryzone",
+  "pk": 7,
+  "fields": {
+    "zone_name": "Jhansi - BKD & Medical College Hub",
+    "postcodes": "284003"
+  }
+},
+{
+  "model": "sevenshadesapp.deliveryzone",
+  "pk": 8,
+  "fields": {
+    "zone_name": "Jhansi - Babina Cantt & Greater Hub",
+    "postcodes": "284128"
+  }
+},
+{
+  "model": "sevenshadesapp.deliveryzone",
+  "pk": 9,
+  "fields": {
+    "zone_name": "General Delivery Zone",
+    "postcodes": "284001,284002,284003,284128"
+  }
+},
+{
+  "model": "sevenshadesapp.trialreturn",
+  "pk": 1,
+  "fields": {
+    "tag_intact": false,
+    "tag_verified": false,
+    "scanned_tag": "",
+    "steam_pressed_at": null,
+    "steam_pressed_by": "",
+    "item": 7,
+    "condition": "Good",
+    "status": "Rejected",
+    "recorded_by": "admin:1",
+    "received_by": "1",
+    "reviewed_by": "1",
+    "created_at": "2026-09-23T21:19:30.357Z",
+    "received_at": "2026-09-23T22:07:02.472Z",
+    "reviewed_at": "2026-09-24T05:01:36.231Z"
+  }
+},
+{
+  "model": "sevenshadesapp.trialreturn",
+  "pk": 2,
+  "fields": {
+    "tag_intact": true,
+    "tag_verified": false,
+    "scanned_tag": "",
+    "steam_pressed_at": null,
+    "steam_pressed_by": "",
+    "item": 8,
+    "condition": "Good",
+    "status": "Collected",
+    "recorded_by": "admin:1",
+    "received_by": "",
+    "reviewed_by": "",
+    "created_at": "2026-09-24T05:00:17.801Z",
+    "received_at": null,
+    "reviewed_at": null
+  }
+},
+{
+  "model": "sevenshadesapp.orderreceipt",
+  "pk": 1,
+  "fields": {
+    "final_order": 1,
+    "number": "SS-20260923-2B2D3FA5B615",
+    "snapshot": {
+      "order_id": "TRL-8E61B00D41724011AA92",
+      "bill_revision": 1,
+      "customer_mobile": "8840476647",
+      "address": "Madora, Baragaon",
+      "city": "Jhansi",
+      "postcode": "400005",
+      "seller_name": "SevenShades",
+      "seller_address": "",
+      "currency": "INR",
+      "items_total": 34,
+      "trial_fee_adjusted": 0,
+      "amount_collected": 34,
+      "payment_mode": "cash",
+      "paid_at": "2026-09-23T21:20:24.482540+00:00",
+      "items": [
+        {
+          "product_name": "Silk Touch Shirts",
+          "brand_name": "Rare Rabbit",
+          "size": "xl",
+          "color": "red",
+          "qty": 1,
+          "unit_price": 34,
+          "line_total": 34
+        }
+      ]
+    },
+    "created_at": "2026-09-23T21:20:26.521Z"
+  }
+},
+{
+  "model": "sevenshadesapp.orderreceipt",
+  "pk": 2,
+  "fields": {
+    "final_order": 2,
+    "number": "SS-20260924-94D7E70861FC",
+    "snapshot": {
+      "order_id": "TRL-151EEA1404B743F98247",
+      "bill_revision": 1,
+      "customer_mobile": "8840476648",
+      "address": "hsgaA",
+      "city": "Jhansi",
+      "postcode": "400005",
+      "seller_name": "SevenShades",
+      "seller_address": "",
+      "currency": "INR",
+      "items_total": 450,
+      "trial_fee_adjusted": 0,
+      "amount_collected": 450,
+      "payment_mode": "cash",
+      "paid_at": "2026-09-24T05:00:00.530261+00:00",
+      "items": [
+        {
+          "product_name": "Printed Shirts",
+          "brand_name": "Rare Rabbit",
+          "size": "medium",
+          "color": "red",
+          "qty": 1,
+          "unit_price": 450,
+          "line_total": 450
+        }
+      ]
+    },
+    "created_at": "2026-09-24T05:00:22.566Z"
+  }
+},
+{
+  "model": "sevenshadesapp.otpchallenge",
+  "pk": 1,
+  "fields": {
+    "challenge_id": "fe0e62d6-9edd-49f2-b4a2-f0e7130883a4",
+    "mobile": "8840476647",
+    "purpose": "reset",
+    "session_hash": "78f9adf988e36e54d0d57363a52368da442baac042e2eedee13447e463b8b07a",
+    "ip_hash": "78ee56f9603f13c0934dbac3b24f97ad71a28cfe746976c19474d26e6554f1ed",
+    "code_hash": "0fe663146c3958b75c493792f5a2131a13f687e4c066ea87f87a85546505d97f",
+    "attempts": 1,
+    "consumed": true,
+    "created_at": "2026-09-23T21:48:44.680Z",
+    "expires_at": "2026-09-23T21:53:44.673Z"
+  }
+},
+{
+  "model": "sevenshadesapp.otpchallenge",
+  "pk": 2,
+  "fields": {
+    "challenge_id": "37def3c6-65e0-447c-93bf-8c1a84c5d8bc",
+    "mobile": "8840476647",
+    "purpose": "login",
+    "session_hash": "6b9d2a8544d6ba25769f9c3e94b0e866a87cefb0c9793b9b3632ba723167f1cd",
+    "ip_hash": "78ee56f9603f13c0934dbac3b24f97ad71a28cfe746976c19474d26e6554f1ed",
+    "code_hash": "bce296eb693b6449691f62662f00a471ec4e384a8582b69cf74d8bb9d01d198b",
+    "attempts": 1,
+    "consumed": true,
+    "created_at": "2026-09-23T23:17:05.046Z",
+    "expires_at": "2026-09-23T23:22:05.041Z"
+  }
+},
+{
+  "model": "sevenshadesapp.otpchallenge",
+  "pk": 3,
+  "fields": {
+    "challenge_id": "9d214870-a6fe-4fab-9e46-c2c387074232",
+    "mobile": "8840476647",
+    "purpose": "signup",
+    "session_hash": "b3b1ac4f51f03b8413c8cc734bdb65b0a5faacf208b914d3e0f069e5f0bf3fff",
+    "ip_hash": "78ee56f9603f13c0934dbac3b24f97ad71a28cfe746976c19474d26e6554f1ed",
+    "code_hash": "3c59c5490e3d3daf86f6fdb3b95f974c851ce5a38243dc4b1e0d61545611f8de",
+    "attempts": 0,
+    "consumed": false,
+    "created_at": "2026-09-24T03:42:38.380Z",
+    "expires_at": "2026-09-24T03:47:38.364Z"
+  }
+},
+{
+  "model": "sevenshadesapp.otpchallenge",
+  "pk": 4,
+  "fields": {
+    "challenge_id": "4d21219a-cb1b-43a1-b207-43ad9cca9cd7",
+    "mobile": "8840476647",
+    "purpose": "login",
+    "session_hash": "3c6580a3983ed2568992bd06185f20789cb996115dab1a9155bc36a1d02428a7",
+    "ip_hash": "78ee56f9603f13c0934dbac3b24f97ad71a28cfe746976c19474d26e6554f1ed",
+    "code_hash": "d7f17b9ab47c3d5a35dbe52bb48cd768a6986f21b70023c53b5d2a3b373eb58a",
+    "attempts": 1,
+    "consumed": true,
+    "created_at": "2026-09-24T03:59:36.367Z",
+    "expires_at": "2026-09-24T04:04:36.359Z"
+  }
+},
+{
+  "model": "sevenshadesapp.otpchallenge",
+  "pk": 5,
+  "fields": {
+    "challenge_id": "ac988703-3822-46dc-8e4b-162897f2b93f",
+    "mobile": "8840476647",
+    "purpose": "login",
+    "session_hash": "13bb1920be2a4178361fcd5fe21c80655a1351a76c68c50cfc9561e456740e18",
+    "ip_hash": "78ee56f9603f13c0934dbac3b24f97ad71a28cfe746976c19474d26e6554f1ed",
+    "code_hash": "8aa8a5c032df290f41230b535b69759650e46ba4992a80b6a0cc4b4dbb34b38d",
+    "attempts": 1,
+    "consumed": true,
+    "created_at": "2026-09-24T04:00:47.328Z",
+    "expires_at": "2026-09-24T04:05:47.324Z"
+  }
+},
+{
+  "model": "sevenshadesapp.otpchallenge",
+  "pk": 6,
+  "fields": {
+    "challenge_id": "5610723a-6201-474a-a871-7790aeb690fa",
+    "mobile": "8840476648",
+    "purpose": "signup",
+    "session_hash": "d6097112ceaa19a870df38e4bf5ad66401da142f83ee2606174681b2bdc6f967",
+    "ip_hash": "78ee56f9603f13c0934dbac3b24f97ad71a28cfe746976c19474d26e6554f1ed",
+    "code_hash": "bcf455bf1e8b6c9b1c58d1748e758a7b719b0373d6609aecfa7b0723f4eebabc",
+    "attempts": 1,
+    "consumed": true,
+    "created_at": "2026-09-24T04:50:09.736Z",
+    "expires_at": "2026-09-24T04:55:09.727Z"
+  }
+},
+{
+  "model": "sevenshadesapp.otpchallenge",
+  "pk": 7,
+  "fields": {
+    "challenge_id": "0d906f03-382e-4b52-a698-ef84c36ac47e",
+    "mobile": "8840476647",
+    "purpose": "signup",
+    "session_hash": "f0e3ec58e6fb1b720cb04a217f725b2a1a38f1d3f10372aa6f5f3fbaa4e8e03a",
+    "ip_hash": "78ee56f9603f13c0934dbac3b24f97ad71a28cfe746976c19474d26e6554f1ed",
+    "code_hash": "ef8329fe3b52901f9e0b38040af514de6eb906c3e4df2de477212486f0c0226e",
+    "attempts": 0,
+    "consumed": true,
+    "created_at": "2026-09-25T09:06:38.121Z",
+    "expires_at": "2026-09-25T09:11:38.099Z"
+  }
+},
+{
+  "model": "sevenshadesapp.otpchallenge",
+  "pk": 8,
+  "fields": {
+    "challenge_id": "764d108c-3c29-4f76-ac31-988e3b137ef1",
+    "mobile": "8840476647",
+    "purpose": "signup",
+    "session_hash": "f0e3ec58e6fb1b720cb04a217f725b2a1a38f1d3f10372aa6f5f3fbaa4e8e03a",
+    "ip_hash": "78ee56f9603f13c0934dbac3b24f97ad71a28cfe746976c19474d26e6554f1ed",
+    "code_hash": "e028e4db2a406b8cd5611e8641e42fb99e2726a8139de0cc12fb78f58734a947",
+    "attempts": 0,
+    "consumed": true,
+    "created_at": "2026-09-25T09:07:41.715Z",
+    "expires_at": "2026-09-25T09:12:41.708Z"
+  }
+},
+{
+  "model": "sevenshadesapp.otpchallenge",
+  "pk": 9,
+  "fields": {
+    "challenge_id": "0a00464b-3b6f-4392-9424-477af4a9ce3c",
+    "mobile": "8840476647",
+    "purpose": "signup",
+    "session_hash": "f0e3ec58e6fb1b720cb04a217f725b2a1a38f1d3f10372aa6f5f3fbaa4e8e03a",
+    "ip_hash": "78ee56f9603f13c0934dbac3b24f97ad71a28cfe746976c19474d26e6554f1ed",
+    "code_hash": "8d65a94e112c8b3d7bb4694f52afbd555cd8016f4201976749a9af55c446a791",
+    "attempts": 0,
+    "consumed": true,
+    "created_at": "2026-09-25T09:11:55.331Z",
+    "expires_at": "2026-09-25T09:16:55.316Z"
+  }
+},
+{
+  "model": "sevenshadesapp.otpchallenge",
+  "pk": 10,
+  "fields": {
+    "challenge_id": "5eb1b487-5686-40d7-8eee-2e3b5d6db432",
+    "mobile": "8840476647",
+    "purpose": "login",
+    "session_hash": "2865216e4c9d8d92317c6abbafbfebede62e18031f6e6023d31d401ad7be0534",
+    "ip_hash": "78ee56f9603f13c0934dbac3b24f97ad71a28cfe746976c19474d26e6554f1ed",
+    "code_hash": "0740d7909270772d75cff9a23d478110d8741f29bc311760a201ec37afc39efb",
+    "attempts": 0,
+    "consumed": true,
+    "created_at": "2026-09-25T09:13:00.828Z",
+    "expires_at": "2026-09-25T09:18:00.824Z"
+  }
+}
+]
