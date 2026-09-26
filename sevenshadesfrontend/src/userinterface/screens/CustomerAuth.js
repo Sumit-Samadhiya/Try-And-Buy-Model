@@ -49,7 +49,7 @@ export default function CustomerAuth({ kind = 'login' }) {
   const getFriendlyFirebaseError = (error) => {
     const code = error?.code || '';
     if (code === 'auth/operation-not-allowed') {
-      return 'Firebase Console me Phone Authentication disabled hai. Kripya Firebase Console > Authentication > Sign-in method me jakar "Phone" enable karein.';
+      return 'Firebase error: Spark free plan par real SMS block hota hai. Ya toh Firebase Console > Settings > SMS region policy me India allow karein, ya Sign-in method me "Phone numbers for testing" me apna mobile aur fixed OTP add karein.';
     }
     if (code === 'auth/unauthorized-domain') {
       return 'Yeh domain Firebase me authorized nahi hai. Kripya Firebase Console > Authentication > Settings > Authorized domains me yeh domain add karein.';
