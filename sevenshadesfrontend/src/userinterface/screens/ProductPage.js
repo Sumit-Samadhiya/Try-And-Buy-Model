@@ -1,4 +1,5 @@
-import { postData, getData } from "../../services/FetchDjangoApiServices";
+import { collectionUrl, collectionFromSearch } from '../../services/collectionUrl';
+import { catalogData } from "../../services/FetchDjangoApiServices";
 import Header from "../components/Header";
 import ProductByCategory from "../components/ProductByCategory";
 import Footer from "../components/Footer";
@@ -10,11 +11,16 @@ export default function ProductPage(props) {
     const navigate = useNavigate();
     const [productList, setProductList] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    useEffect(() => {
+        if (!location.search && location.state?.pageView) navigate(collectionUrl(location.state), { replace: true });
+    }, [location.search, location.state, navigate]);
 
-    const products = location.state?.products;
-    const pageView = location.state?.pageView;
-    const maxPrice = location.state?.maxPrice;
-    const dealTitle = location.state?.dealTitle;
+    const selection = React.useMemo(() => collectionFromSearch(location.search) || location.state || {}, [location.search, location.state]);
+    const products = selection.products;
+    const pageView = selection.pageView;
+    const maxPrice = selection.maxPrice;
+    const dealTitle = selection.dealTitle;
 
     const getTitle = () => {
         if (dealTitle) return dealTitle;
@@ -28,15 +34,20 @@ export default function ProductPage(props) {
     };
 
     const setPageView = useCallback(async () => {
-        if (!pageView || !products) {
-            setProductList([]);
-            setLoading(false);
-            return;
-        }
+
 
         setLoading(true);
+        setError('');
+        try {
+        const checked = result => { if (!result?.status) throw new Error(result?.message || 'Unable to load products.'); return result; };
+        const postData = async (...args) => checked(await catalogData(...args));
+        const getData = async (...args) => checked(await catalogData(...args));
 
-        if (pageView === "MainCategoryComponent") {
+        if (!pageView || !products) {
+            const categories = await getData('user_maincategory_list');
+            const results = await Promise.all((categories.data || []).map(category => postData('user_products_maincategory', { maincategoryid: category.id })));
+            setProductList(results.flatMap(result => result.data || []));
+        } else if (pageView === "MainCategoryComponent") {
             const result = await postData('user_products_maincategory', { maincategoryid: products.id });
             setProductList(result?.data || []);
         } else if (pageView === "SubCategoryComponent") {
@@ -75,7 +86,8 @@ export default function ProductPage(props) {
             setProductList(items);
         }
 
-        setLoading(false);
+        } catch (failure) { setError(failure.message); setProductList([]); }
+        finally { setLoading(false); }
     }, [pageView, products, maxPrice]);
 
     useEffect(() => {
@@ -117,7 +129,7 @@ export default function ProductPage(props) {
 
             {/* Product Grid Content */}
             <main style={{ flexGrow: 1, paddingBottom: 48 }}>
-                {loading ? (
+                {error ? (<div role="alert" style={{ padding: 32 }}>{error} <button onClick={setPageView}>Retry</button></div>) : loading ? (
                     <div style={{ textAlign: 'center', padding: '64px 16px', color: '#64748b' }}>
                         <p style={{ fontSize: 16, fontWeight: 600 }}>Loading curated products...</p>
                     </div>

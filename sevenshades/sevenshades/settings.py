@@ -29,7 +29,7 @@ if not FAST2SMS_API_KEY and _sms_key_file.exists():
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
+DEBUG = os.environ.get('DJANGO_DEBUG', '0') == '1'
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 if not SECRET_KEY:
     if not DEBUG:
@@ -90,7 +90,6 @@ CORS_URLS_REGEX = r'^/(api|media|static|payments)/.*$'
 CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(
     CORS_ALLOWED_ORIGINS + [
         'https://try-and-buy-model.vercel.app',
-        'https://*.vercel.app',
         'https://try-and-buy-model.onrender.com',
     ]
 ))
@@ -216,7 +215,7 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 # resolves to BASE_DIR/static/, which is where all product/category/banner images are stored.
 # secure_media_serve restricts access to image extensions only and blocks path traversal.
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR
+MEDIA_ROOT = Path(os.environ.get('DJANGO_MEDIA_ROOT', str(BASE_DIR)))
 
 # Upload safety: non-executable file permissions and upload limits
 FILE_UPLOAD_PERMISSIONS = 0o644

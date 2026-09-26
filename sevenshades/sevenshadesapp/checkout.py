@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.db import transaction
 from django.db.models import F
 from sevenshadesapp.models import SignUp, UserAddress, ProductDetails, TryOrder, TryOrderItem, DeliveryZone, ExcludedArea
+from .delivery_schedule import slot_end, reservation_deadline
 
 
 class CheckoutError(ValueError):
@@ -52,6 +53,10 @@ def create_trial(account, data):
         raise CheckoutError('Please select a valid delivery mode.')
 
     today = timezone.localdate()
+    if mode == 'standard' and not any(data.get(key) for key in ('delivery_slot', 'delivery_date', 'scheduled_date')):
+        available = [value for value in sorted(STANDARD_DELIVERY_SLOTS, key=lambda value: slot_end(today, value)) if slot_end(today, value) > timezone.now()]
+        slot = available[0] if available else '10:00 AM - 02:00 PM'
+        data = dict(data, delivery_date=(today if available else today + timedelta(days=1)).isoformat())
     if mode == 'emergency_sos':
         scheduled_date = today
         slot = 'Immediate SOS Delivery (90-120 mins)'
@@ -76,6 +81,8 @@ def create_trial(account, data):
         if not isinstance(slot, str) or slot.strip() not in STANDARD_DELIVERY_SLOTS:
             raise CheckoutError('Please select a valid delivery time slot.')
         slot = slot.strip()
+        if slot_end(scheduled_date, slot) <= timezone.now():
+            raise CheckoutError('This delivery slot has ended. Choose a later slot or date.')
     items = data.get('items')
     if not isinstance(items, list) or not 1 <= len(items) <= 4:
         raise CheckoutError('Choose 1 to 4 different variants for your home trial.')
@@ -113,6 +120,8 @@ def create_trial(account, data):
         reservation_expires_at=None,
         try_fee=fee, is_first_order=first, try_payment_mode='cash',
         try_payment_status='cod', status='TRY_REQUESTED')
+    order.reservation_expires_at = reservation_deadline(order)
+    order.save(update_fields=['reservation_expires_at'])
     for variant, price in variants:
         tag_code = f"TAG-TRY-{uuid.uuid4().hex[:10].upper()}"
         TryOrderItem.objects.create(try_order=order, product_details=variant,

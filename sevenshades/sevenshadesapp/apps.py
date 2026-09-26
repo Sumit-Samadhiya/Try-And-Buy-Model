@@ -24,4 +24,5 @@ class SevenshadesappConfig(AppConfig):
     name = 'sevenshadesapp'
 
     def ready(self):
+        from . import deployment_checks
         connection_created.connect(_register_sqlite_functions)

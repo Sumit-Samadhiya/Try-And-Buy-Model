@@ -15,7 +15,7 @@ import SearchBarComponent from './SearchBarComponent';
 import { useTheme } from '@mui/material/styles';
 import UseMediaQuery from '@mui/material/useMediaQuery';
 import DrawerComponent from './DrawerComponent';
-import { postData } from '../../services/FetchDjangoApiServices';
+import { postData, getData } from '../../services/FetchDjangoApiServices';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
@@ -34,11 +34,15 @@ export default function Header() {
     const sm_matches = UseMediaQuery(theme.breakpoints.down('sm'));
     const [open, setOpen] = useState(false);
     const [subCategoryList, setSubCategoryList] = useState([]);
-    const [backgroundColor, setBgStatus] = useState(5);
+    const [backgroundColor, setBgStatus] = useState(null);
+    const [categories, setCategories] = useState([]);
+    const menId = categories.find(c => c.maincategoryname?.toLowerCase() === 'men')?.id;
+    const womenId = categories.find(c => c.maincategoryname?.toLowerCase() === 'women')?.id;
     const [brandList, setBrandList] = useState([]);
     const [statusSubMenu, setStatusSubMenu] = useState(false);
 
     const fetchAllSubCategory = async (id) => {
+        if (!id) return;
         const result = await postData('user_mysubcategory_list_by_maincategoryid', { maincategoryid: id });
         setSubCategoryList(result?.data || []);
         setBgStatus(id);
@@ -66,7 +70,10 @@ export default function Header() {
     };
 
     useEffect(() => {
-        fetchAllSubCategory(5);
+        getData('user_maincategory_list').then(result => {
+            const rows = result?.data || []; setCategories(rows);
+            fetchAllSubCategory(rows.find(c => c.maincategoryname?.toLowerCase() === 'men')?.id || rows[0]?.id);
+        });
     }, []);
 
     const showAllSubCategory = () => {
@@ -248,10 +255,10 @@ export default function Header() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 28 }}>
                             <Button
                                 onClick={() => {
-                                    fetchAllSubCategory(5);
+                                    fetchAllSubCategory(menId);
                                     navigate('/home');
                                 }}
-                                onMouseOver={() => fetchAllSubCategory(5)}
+                                onMouseOver={() => fetchAllSubCategory(menId)}
                                 sx={{
                                     fontFamily: "'Plus Jakarta Sans', sans-serif",
                                     fontSize: 14,
@@ -261,7 +268,7 @@ export default function Header() {
                                     py: 0.6,
                                     textTransform: 'none',
                                     color: '#ffffff',
-                                    backgroundColor: backgroundColor === 5 ? 'rgba(255, 255, 255, 0.16)' : 'transparent',
+                                    backgroundColor: backgroundColor === menId ? 'rgba(255, 255, 255, 0.16)' : 'transparent',
                                     '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.22)' }
                                 }}
                             >
@@ -269,10 +276,10 @@ export default function Header() {
                             </Button>
                             <Button
                                 onClick={() => {
-                                    fetchAllSubCategory(4);
+                                    fetchAllSubCategory(womenId);
                                     navigate('/home');
                                 }}
-                                onMouseOver={() => fetchAllSubCategory(4)}
+                                onMouseOver={() => fetchAllSubCategory(womenId)}
                                 sx={{
                                     fontFamily: "'Plus Jakarta Sans', sans-serif",
                                     fontSize: 14,
@@ -282,7 +289,7 @@ export default function Header() {
                                     py: 0.6,
                                     textTransform: 'none',
                                     color: '#ffffff',
-                                    backgroundColor: backgroundColor === 4 ? 'rgba(255, 255, 255, 0.16)' : 'transparent',
+                                    backgroundColor: backgroundColor === womenId ? 'rgba(255, 255, 255, 0.16)' : 'transparent',
                                     '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.22)' }
                                 }}
                             >

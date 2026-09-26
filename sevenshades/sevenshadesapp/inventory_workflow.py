@@ -1,6 +1,7 @@
 """Inventory transitions. All writers lock the order before reading its items."""
 from django.db import transaction
 from django.db.models import F
+from django.db.models import Q
 from django.utils import timezone
 from .models import TryOrder, TryOrderItem, TrialReturn, ProductDetails, DeliveryAssignment, FinalOrderItem, FinalOrder
 from .security import owns_order
@@ -78,15 +79,24 @@ def cancel_trial(role, account, order_id):
 @transaction.atomic
 def expire_trial(order_id):
     order = lock_order(order_id)
-    if order.status != 'AWAITING_TRIAL_PAYMENT' or not order.reservation_expires_at or order.reservation_expires_at > timezone.now() or cancellation_blocker(order):
+    from .delivery_schedule import reservation_deadline
+    if order.status not in ('AWAITING_TRIAL_PAYMENT', 'TRY_REQUESTED', 'ASSIGNED'):
         return False
-    finish_cancellation(order, 'payment_timeout')
+    deadline = order.reservation_expires_at
+    if not deadline and order.status != 'AWAITING_TRIAL_PAYMENT':
+        deadline = reservation_deadline(order)
+    if not deadline or deadline > timezone.now() or cancellation_blocker(order):
+        return False
+    finish_cancellation(order, 'payment_timeout' if order.status == 'AWAITING_TRIAL_PAYMENT' else 'delivery_window_expired')
     return True
 
 
 def expire_pending_trials(mobile=None, limit=100):
     from django.db import OperationalError
-    rows = TryOrder.objects.filter(status='AWAITING_TRIAL_PAYMENT', reservation_expires_at__lte=timezone.now(), gatewaypayment__isnull=True, trial_fee_paid=False)
+    rows = TryOrder.objects.filter(status__in=['AWAITING_TRIAL_PAYMENT', 'TRY_REQUESTED', 'ASSIGNED'], gatewaypayment__isnull=True, trial_fee_paid=False, dispatched_at__isnull=True).filter(
+        Q(reservation_expires_at__lte=timezone.now()) |
+        Q(reservation_expires_at__isnull=True, scheduled_date__lte=timezone.localdate())
+    )
     if mobile is not None:
         rows = rows.filter(mobileno=mobile)
     expired = 0

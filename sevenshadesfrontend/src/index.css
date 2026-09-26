@@ -231,3 +231,5 @@ code {
     padding-right: var(--space-4);
   }
 }
+
+button:focus-visible, a:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }

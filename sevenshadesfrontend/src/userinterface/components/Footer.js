@@ -1,11 +1,11 @@
 import { Grid, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box } from "@mui/material";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { serverURL } from "../../services/FetchDjangoApiServices";
 import Icons from "./Icons";
 
 export default function Footer() {
-    const navigate = useNavigate();
+    
     const [policyDialog, setPolicyDialog] = useState(null);
 
     const linkStyle = {
@@ -15,7 +15,8 @@ export default function Footer() {
         color: "#94a3b8",
         transition: "color 0.15s ease",
         margin: "8px 0",
-        display: "block",
+        display: "block", textDecoration: "none",
+        background: "none", border: 0, padding: 0, textAlign: "left", fontFamily: "inherit",
     };
 
     const foo = () => {
@@ -33,54 +34,54 @@ export default function Footer() {
                             <p style={{ fontSize: '13px', letterSpacing: "1px", fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: 16 }}>
                                 HELP & INFORMATION
                             </p>
-                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => navigate('/profile')}>
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/profile">
                                 Help Center & Support Tickets
-                            </span>
-                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => navigate('/profile')}>
+                            </Link>
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/profile">
                                 Track Live Trial Orders
-                            </span>
-                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('delivery')}>
+                            </Link>
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('delivery')}>
                                 Doorstep Trial & Returns Policy
-                            </span>
-                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => navigate('/home')}>
+                            </button>
+                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/home">
                                 Curated Catalog Sitemap
-                            </span>
+                            </Link>
                         </Grid>
 
                         <Grid item xs={12} sm={6} md={3}>
                             <p style={{ fontSize: '13px', letterSpacing: "1px", fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: 16 }}>
                                 ABOUT SEVENSHADES
                             </p>
-                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('about')}>
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('about')}>
                                 Our Try & Buy Mission
-                            </span>
-                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('careers')}>
+                            </button>
+                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('careers')}>
                                 Careers & Culture
-                            </span>
-                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('delivery')}>
+                            </button>
+                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('delivery')}>
                                 Zero-Emission EV Fleet
-                            </span>
-                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('about')}>
+                            </button>
+                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('about')}>
                                 Investor Relations
-                            </span>
+                            </button>
                         </Grid>
 
                         <Grid item xs={12} sm={6} md={3}>
                             <p style={{ fontSize: '13px', letterSpacing: "1px", fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: 16 }}>
                                 HYPERLOCAL SERVICES
                             </p>
-                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => navigate('/home')}>
+                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/home">
                                 Standard Try & Buy (Same Day)
-                            </span>
-                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => navigate('/home')}>
+                            </Link>
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/home">
                                 SOS Fast Fashion (90-120 Min)
-                            </span>
-                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => navigate('/profile')}>
+                            </Link>
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/profile">
                                 Wallet Balance & Trial Credits
-                            </span>
-                            <span style={{ ...linkStyle, color: '#34d399', fontWeight: 700 }} onMouseEnter={(e) => e.target.style.color = '#6ee7b7'} onMouseLeave={(e) => e.target.style.color = '#34d399'} onClick={() => navigate('/delivery/login')}>
+                            </Link>
+                            <Link style={{ ...linkStyle, color: '#34d399', fontWeight: 700 }} onMouseEnter={(e) => e.target.style.color = '#6ee7b7'} onMouseLeave={(e) => e.target.style.color = '#34d399'} to="/delivery/login">
                                 🛵 Rider Partner Portal
-                            </span>
+                            </Link>
                         </Grid>
 
                         <Grid item xs={12} sm={6} md={3}>
@@ -117,14 +118,16 @@ export default function Footer() {
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3 }}>
                         <Typography
                             variant="caption"
-                            sx={{ cursor: 'pointer', fontWeight: 600, color: '#cbd5e1', '&:hover': { color: '#ffffff' } }}
+                            component="button" type="button"
+                            sx={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', fontWeight: 600, color: '#cbd5e1', '&:hover': { color: '#ffffff' } }}
                             onClick={() => setPolicyDialog('privacy')}
                         >
                             Privacy Policy & Cookies
                         </Typography>
                         <Typography
                             variant="caption"
-                            sx={{ cursor: 'pointer', fontWeight: 600, color: '#cbd5e1', '&:hover': { color: '#ffffff' } }}
+                            component="button" type="button"
+                            sx={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', fontWeight: 600, color: '#cbd5e1', '&:hover': { color: '#ffffff' } }}
                             onClick={() => setPolicyDialog('delivery')}
                         >
                             Try & Buy Terms of Service

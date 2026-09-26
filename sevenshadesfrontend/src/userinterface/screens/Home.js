@@ -4,7 +4,7 @@ import SliderComponent from "../components/SliderComponent";
 import CategoryShowcaseCard from "../components/CategoryShowcaseCard";
 import BudgetBazaarComponent from "../components/BudgetBazaarComponent";
 import Footer from "../components/Footer";
-import { getData, postData } from "../../services/FetchDjangoApiServices";
+import { catalogData } from "../../services/FetchDjangoApiServices";
 import MainCategoryComponent from "../components/MainCategoryComponent";
 import AdvertiseComponent from "../components/AdvertiseComponent";
 import { useNavigate } from "react-router-dom";
@@ -25,6 +25,9 @@ export default function Home(props) {
     const theme = useTheme();
     const sm_matches = useMediaQuery(theme.breakpoints.down('sm'));
     const [listBanner, setListBanner] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
+    const [reload, setReload] = useState(0);
     const [listSubCategory, setSubCategoryList] = useState([]);
     const [listMainCategory, setMainCategoryList] = useState([]);
     const [menProducts, setMenProducts] = useState([]);
@@ -33,7 +36,7 @@ export default function Home(props) {
     const [womenCategory, setWomenCategory] = useState(null);
 
     const fetchAllBanners = useCallback(async () => {
-        const result = await getData('user_banner_list');
+        const result = await catalogData('user_banner_list');
         if (result && result.status && Array.isArray(result.data)) {
             let allImages = [];
             result.data.forEach(banner => {
@@ -50,53 +53,43 @@ export default function Home(props) {
             });
             setListBanner(allImages);
         } else {
-            setListBanner([]);
+            setListBanner([]); setLoadError(true);
         }
     }, []);
 
     const fetchAllSubCategoryList = useCallback(async () => {
-        const result = await getData('user_subcategory_list');
+        const result = await catalogData('user_subcategory_list');
         if (result && result.status) {
             setSubCategoryList(result.data || []);
         } else {
-            setSubCategoryList([]);
+            setSubCategoryList([]); setLoadError(true);
         }
     }, []);
 
     const fetchCategoryProducts = useCallback(async (categories) => {
-        const menCat = categories.find(c => (c.maincategoryname || '').toLowerCase() === 'men') || { id: 5, maincategoryname: 'Men' };
-        const womenCat = categories.find(c => (c.maincategoryname || '').toLowerCase() === 'women') || { id: 4, maincategoryname: 'Women' };
+        const menCat = categories.find(c => (c.maincategoryname || '').toLowerCase() === 'men') ;
+        const womenCat = categories.find(c => (c.maincategoryname || '').toLowerCase() === 'women') ;
 
         setMenCategory(menCat);
         setWomenCategory(womenCat);
 
-        // Keep the merchandising order stable so the storefront does not jump
-        // to a different set of products on every refresh.
-        if (menCat?.id) {
-            const menRes = await postData('user_products_maincategory', { maincategoryid: menCat.id });
-            if (menRes && menRes.status && Array.isArray(menRes.data)) {
-                setMenProducts(uniqueProducts(menRes.data));
-            }
-        }
-
-        // Fetch Women's products and shuffle randomly
-        if (womenCat?.id) {
-            const womenRes = await postData('user_products_maincategory', { maincategoryid: womenCat.id });
-            if (womenRes && womenRes.status && Array.isArray(womenRes.data)) {
-                setWomenProducts(uniqueProducts(womenRes.data));
-            }
-        }
+        await Promise.all([[menCat, setMenProducts], [womenCat, setWomenProducts]].map(async ([category, update]) => {
+            if (!category?.id) { update([]); return; }
+            const result = await catalogData('user_products_maincategory', { maincategoryid: category.id });
+            if (!result?.status) setLoadError(true);
+            update(uniqueProducts(result?.data || []));
+        }));
     }, []);
 
     const fetchAllMainCategoryList = useCallback(async () => {
-        const result = await getData('user_maincategory_list');
+        const result = await catalogData('user_maincategory_list');
         if (result && result.status) {
             const categories = result.data || [];
             setMainCategoryList(categories);
             await fetchCategoryProducts(categories);
         } else {
             setMainCategoryList([]);
-            await fetchCategoryProducts([{ id: 5, maincategoryname: 'Men' }, { id: 4, maincategoryname: 'Women' }]);
+            setLoadError(true);
         }
     }, [fetchCategoryProducts]);
 
@@ -156,14 +149,16 @@ export default function Home(props) {
     };
 
     useEffect(() => {
-        fetchAllBanners();
-        fetchAllSubCategoryList();
-        fetchAllMainCategoryList();
-    }, [fetchAllBanners, fetchAllSubCategoryList, fetchAllMainCategoryList]);
+        setLoading(true); setLoadError(false);
+        Promise.all([fetchAllBanners(), fetchAllSubCategoryList(), fetchAllMainCategoryList()]).finally(() => setLoading(false));
+    }, [fetchAllBanners, fetchAllSubCategoryList, fetchAllMainCategoryList, reload]);
 
     return (
         <div style={{ position: 'relative', width: '100%', backgroundColor: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
+            {loading && <div role="status" style={{ padding: 24 }}>Loading collections…</div>}
+            {!loading && loadError && <div role="alert" style={{ padding: 24 }}>Some collections could not load. <button onClick={() => setReload(value => value + 1)}>Retry collections</button></div>}
+            {!loading && !loadError && !listMainCategory.length && <p style={{ padding: 24 }}>New collections are coming soon.</p>}
 
             <main style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1 }}>
                 {/* Hero Banner Carousel */}

@@ -47,6 +47,16 @@ const getData = async url => {
   catch (error) { return apiError(error); }
 };
 
+// Only public catalog reads may be retried, never checkout or payment mutations.
+export const catalogData = async (url, body) => {
+  if (!url.startsWith('user_')) throw new Error('Catalog endpoint required');
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const result = body === undefined ? await getData(url) : await postData(url, body);
+    if (result.status || (result.httpStatus && result.httpStatus < 500) || attempt === 1) return result;
+    await new Promise(resolve => setTimeout(resolve, 750));
+  }
+};
+
 let csrfRequest;
 const csrf = () => {
   if (!csrfRequest) csrfRequest = api.get('auth_csrf').then(response => response.data.csrfToken).finally(() => { csrfRequest = null; });
@@ -75,4 +85,3 @@ export const logout = async () => {
 };
 
 export { serverURL, postData, getData };
-

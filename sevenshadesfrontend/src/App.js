@@ -1,31 +1,31 @@
-import ForgotPassword from './userinterface/screens/ForgotPassword';
 import CustomerOrderNotifications from './services/CustomerOrderNotifications';
 import RequireSession from './services/RequireSession';
 import { getData, clearCachedAccounts } from './services/FetchDjangoApiServices';
-
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { useDispatch } from 'react-redux';
-import AdminLogin from "./administrator/screens/AdminLogin";
-
-
-import AdminDashboard from "./administrator/screens/AdminDashboard";
 import {BrowserRouter,Routes,Route, Navigate} from 'react-router-dom'
-import Home from "./userinterface/screens/Home";
-import ProductPage from "./userinterface/screens/ProductPage";
-import ProductDetailsPage from "./userinterface/screens/ProductDetailsPage";
-import MyBagDisplay from "./userinterface/screens/MyBagDisplay"
-import SignInDisplay from "./userinterface/screens/SignInDisplay";
-import SignUpDisplay from "./userinterface/screens/SignUpDisplay";
-import DisplayCheckOut from "./userinterface/screens/DisplayCheckOut";
-import OrderSuccess from "./userinterface/screens/OrderSuccess";
-import ProfilePage from "./userinterface/screens/ProfilePage";
+const ForgotPassword = lazy(() => import('./userinterface/screens/ForgotPassword'));
 
-import MainCartDisplay from "./userinterface/screens/MainCartDisplay";
-import DeliveryLogin from "./diliveryinterface/screens/DeliveryLogin";
-import DeliveryHome from "./diliveryinterface/screens/DeliveryHome";
-import DeliveryOrderDetails from "./diliveryinterface/screens/DeliveryOrderDetails";
-import DeliveryHelpCenter from "./diliveryinterface/screens/DeliveryHelpCenter";
-import NotFound from "./userinterface/screens/NotFound";
+const AdminLogin = lazy(() => import('./administrator/screens/AdminLogin'));
+
+
+const AdminDashboard = lazy(() => import('./administrator/screens/AdminDashboard'));
+const Home = lazy(() => import('./userinterface/screens/Home'));
+const ProductPage = lazy(() => import('./userinterface/screens/ProductPage'));
+const ProductDetailsPage = lazy(() => import('./userinterface/screens/ProductDetailsPage'));
+const MyBagDisplay = lazy(() => import('./userinterface/screens/MyBagDisplay'));
+const SignInDisplay = lazy(() => import('./userinterface/screens/SignInDisplay'));
+const SignUpDisplay = lazy(() => import('./userinterface/screens/SignUpDisplay'));
+const DisplayCheckOut = lazy(() => import('./userinterface/screens/DisplayCheckOut'));
+const OrderSuccess = lazy(() => import('./userinterface/screens/OrderSuccess'));
+const ProfilePage = lazy(() => import('./userinterface/screens/ProfilePage'));
+
+const MainCartDisplay = lazy(() => import('./userinterface/screens/MainCartDisplay'));
+const DeliveryLogin = lazy(() => import('./diliveryinterface/screens/DeliveryLogin'));
+const DeliveryHome = lazy(() => import('./diliveryinterface/screens/DeliveryHome'));
+const DeliveryOrderDetails = lazy(() => import('./diliveryinterface/screens/DeliveryOrderDetails'));
+const DeliveryHelpCenter = lazy(() => import('./diliveryinterface/screens/DeliveryHelpCenter'));
+const NotFound = lazy(() => import('./userinterface/screens/NotFound'));
 
 function App() {
   const dispatch = useDispatch();
@@ -47,7 +47,7 @@ function App() {
     <div>
       <BrowserRouter>
       <CustomerOrderNotifications />
-      <Routes>
+      <Suspense fallback={<div role="status" style={{ padding: 32 }}>Loading page…</div>}><Routes>
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route element={<AdminLogin/>} path="/adminlogin"/>
         <Route element={<RequireSession role="admin"><AdminDashboard/></RequireSession>} path="/admindashboard/*"/>
@@ -70,7 +70,7 @@ function App() {
         <Route element={<RequireSession role="rider"><DeliveryHelpCenter/></RequireSession>} path={"/delivery/help-center"}/>
         <Route element={<Navigate to="/delivery/login" replace />} path={"/deliverydashboard"}/>
         <Route path="*" element={<NotFound />} />
-      </Routes>
+      </Routes></Suspense>
       </BrowserRouter>
      
       {/* <Category/> */}
