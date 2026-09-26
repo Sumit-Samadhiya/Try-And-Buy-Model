@@ -77,15 +77,38 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-CORS_ALLOWED_ORIGINS = os.environ.get('FRONTEND_ORIGINS', 'http://127.0.0.1:3000,http://localhost:3000').split(',')
+DEFAULT_FRONTENDS = [
+    'http://127.0.0.1:3000',
+    'http://localhost:3000',
+    'https://try-and-buy-model.vercel.app',
+]
+env_frontends = [x.strip() for x in os.environ.get('FRONTEND_ORIGINS', '').split(',') if x.strip()]
+CORS_ALLOWED_ORIGINS = list(dict.fromkeys(DEFAULT_FRONTENDS + env_frontends))
 CORS_ALLOW_CREDENTIALS = True
 CORS_URLS_REGEX = r'^/(api|media|static|payments)/.*$'
-CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+
+CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(
+    CORS_ALLOWED_ORIGINS + [
+        'https://try-and-buy-model.vercel.app',
+        'https://*.vercel.app',
+        'https://try-and-buy-model.onrender.com',
+    ]
+))
+
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_AGE = 8 * 60 * 60
+
+# Cross-domain cookies between Vercel and Render require SameSite=None and Secure=True in production
+if not DEBUG:
+    SESSION_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = 'None'
+    CSRF_COOKIE_SECURE = True
+else:
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SECURE = False
 ROOT_URLCONF = 'sevenshades.urls'
 
 TEMPLATES = [
