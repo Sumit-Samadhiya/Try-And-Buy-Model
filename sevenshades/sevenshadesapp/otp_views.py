@@ -27,7 +27,7 @@ def digest(value):
 
 @api_view(['GET'])
 def OtpConfig(request):
-    return JsonResponse({'status': True, 'data': {'available': enabled(), 'test_mode': test_mode(), 'expires_in': 300, 'resend_after': 60}})
+    return JsonResponse({'status': True, 'data': {'available': True, 'test_mode': test_mode(), 'expires_in': 300, 'resend_after': 60}})
 
 
 @api_view(['POST'])

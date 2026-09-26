@@ -37,8 +37,15 @@ def firebase_login(request):
 
     name = decoded_token.get('name') or ''
     name_parts = name.strip().split(' ') if name else []
-    fname = name_parts[0] if name_parts else 'Customer'
-    lname = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ''
+    
+    req_fname = request.data.get('fname')
+    req_lname = request.data.get('lname')
+    req_email = request.data.get('emailid')
+    req_password = request.data.get('password')
+
+    fname = req_fname or (name_parts[0] if name_parts else 'Customer')
+    lname = req_lname or (' '.join(name_parts[1:]) if len(name_parts) > 1 else '')
+    email = req_email or decoded_token.get('email') or None
 
     with transaction.atomic():
         account, created = SignUp.objects.get_or_create(
@@ -46,10 +53,20 @@ def firebase_login(request):
             defaults={
                 'fname': fname,
                 'lname': lname,
-                'emailid': decoded_token.get('email') or None,
-                'password': make_password(None)
+                'emailid': email,
+                'password': make_password(req_password) if req_password else make_password(None)
             }
         )
+        if not created and (req_fname or req_email or req_password):
+            if req_fname:
+                account.fname = req_fname
+            if req_lname:
+                account.lname = req_lname
+            if req_email:
+                account.emailid = req_email
+            if req_password:
+                account.password = make_password(req_password)
+            account.save()
 
         # Synchronize with Django's User model
         User.objects.get_or_create(

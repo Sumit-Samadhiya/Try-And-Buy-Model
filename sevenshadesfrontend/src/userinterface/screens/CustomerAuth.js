@@ -46,6 +46,29 @@ export default function CustomerAuth({ kind = 'login' }) {
     return recaptchaVerifierRef.current;
   };
 
+  const getFriendlyFirebaseError = (error) => {
+    const code = error?.code || '';
+    if (code === 'auth/operation-not-allowed') {
+      return 'Firebase Console me Phone Authentication disabled hai. Kripya Firebase Console > Authentication > Sign-in method me jakar "Phone" enable karein.';
+    }
+    if (code === 'auth/unauthorized-domain') {
+      return 'Yeh domain Firebase me authorized nahi hai. Kripya Firebase Console > Authentication > Settings > Authorized domains me yeh domain add karein.';
+    }
+    if (code === 'auth/invalid-phone-number') {
+      return 'Kripya sahi 10-digit mobile number enter karein.';
+    }
+    if (code === 'auth/too-many-requests') {
+      return 'Too many attempts. Please try again after a few minutes.';
+    }
+    if (code === 'auth/quota-exceeded') {
+      return 'Firebase SMS quota limit reach ho chuki hai.';
+    }
+    if (code === 'auth/captcha-check-failed') {
+      return 'reCAPTCHA verification fail ho gaya. Kripya page refresh karein.';
+    }
+    return error?.message || 'OTP send karne me error aaya.';
+  };
+
   const requestOtp = () => run(async () => {
     const check = signup ? validateFields('signup_submit', { ...form, otp:'123456', challenge_id:'pending' }) : reset ? validateFields('reset_password', { mobileno:form.mobileno, password:form.password, confirm_password:form.confirm_password, otp:'123456', challenge_id:'pending' }) : validateFields('otp_request', { mobileno:form.mobileno, purpose });
     if (Object.keys(check).length) { setErrors(check); return; }
@@ -53,31 +76,37 @@ export default function CustomerAuth({ kind = 'login' }) {
     // 1. Try Firebase Phone Authentication
     try {
       const appVerifier = getRecaptchaVerifier();
-      if (appVerifier) {
-        const formattedPhone = form.mobileno.startsWith('+') ? form.mobileno : `+91${form.mobileno.trim()}`;
-        const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
-        confirmationResultRef.current = confirmationResult;
-        const timestamp = Date.now();
-        setChallenge({ id: 'firebase-phone-auth', resendAt: timestamp + 60000, expiresAt: timestamp + 300000 });
-        setForm(old => ({ ...old, otp: '' }));
-        setErrors({});
-        setMessage('OTP sent to your mobile number via Firebase.');
+      if (!appVerifier) {
+        setMessage('reCAPTCHA container initialize nahi ho paya. Kripya page refresh karein.');
         return;
       }
+      const formattedPhone = form.mobileno.startsWith('+') ? form.mobileno : `+91${form.mobileno.trim()}`;
+      const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+      confirmationResultRef.current = confirmationResult;
+      const timestamp = Date.now();
+      setChallenge({ id: 'firebase-phone-auth', resendAt: timestamp + 60000, expiresAt: timestamp + 300000 });
+      setForm(old => ({ ...old, otp: '' }));
+      setErrors({});
+      setMessage(`OTP sent to ${formattedPhone} via SMS.`);
+      return;
     } catch (fbError) {
-      console.warn('Firebase signInWithPhoneNumber:', fbError);
+      console.error('Firebase signInWithPhoneNumber error:', fbError);
       if (recaptchaVerifierRef.current) {
         try { recaptchaVerifierRef.current.clear(); } catch (_) {}
         recaptchaVerifierRef.current = null;
       }
-    }
+      const friendlyMsg = getFriendlyFirebaseError(fbError);
+      setMessage(friendlyMsg);
 
-    // 2. Fallback / Test-mode backend request
-    const result = await postData(purpose === 'login' ? 'auth/send-otp/' : 'otp_request', purpose === 'login' ? { phone:form.mobileno } : { mobileno:form.mobileno, purpose });
-    if (!result.status) { setResult(result); return; }
-    const timestamp = Date.now();
-    setChallenge({ id:result.data.challenge_id || 'mobile-login', resendAt:timestamp+result.data.resend_after*1000, expiresAt:timestamp+result.data.expires_in*1000 });
-    setForm(old => ({ ...old, otp:'' })); setErrors({}); setMessage(result.message);
+      // Only fall back to backend mock OTP if test mode is explicitly enabled
+      if (config?.test_mode) {
+        const result = await postData(purpose === 'login' ? 'auth/send-otp/' : 'otp_request', purpose === 'login' ? { phone:form.mobileno } : { mobileno:form.mobileno, purpose });
+        if (!result.status) { setResult(result); return; }
+        const timestamp = Date.now();
+        setChallenge({ id:result.data.challenge_id || 'mobile-login', resendAt:timestamp+result.data.resend_after*1000, expiresAt:timestamp+result.data.expires_in*1000 });
+        setForm(old => ({ ...old, otp:'' })); setErrors({}); setMessage(result.message);
+      }
+    }
   });
 
   const submit = event => {
@@ -89,7 +118,11 @@ export default function CustomerAuth({ kind = 'login' }) {
         try {
           const userCredential = await confirmationResultRef.current.confirm(form.otp.trim());
           const idToken = await userCredential.user.getIdToken();
-          const backendRes = await postData('auth/firebase-login/', { id_token: idToken });
+          const payload = {
+            id_token: idToken,
+            ...(signup ? { fname: form.fname, lname: form.lname, emailid: form.emailid, password: form.password } : {})
+          };
+          const backendRes = await postData('auth/firebase-login/', payload);
           if (!backendRes.status) {
             setResult(backendRes);
             return;
@@ -105,7 +138,7 @@ export default function CustomerAuth({ kind = 'login' }) {
           return;
         } catch (fbConfirmError) {
           console.warn('Firebase confirm error:', fbConfirmError);
-          setMessage(fbConfirmError.message || 'Invalid or expired OTP code.');
+          setMessage(fbConfirmError?.code === 'auth/invalid-verification-code' ? 'Invalid 6-digit OTP code. Please check and re-enter.' : (fbConfirmError.message || 'Verification failed.'));
           return;
         }
       }
@@ -138,7 +171,6 @@ export default function CustomerAuth({ kind = 'login' }) {
         {location.state?.authMessage && kind === 'login' && <Alert severity="success">{location.state.authMessage}</Alert>}
         {message && <Alert severity="info" role="status">{message}</Alert>}
         {usesOtp && config?.test_mode && <Alert severity="info">Development mode: use OTP <strong>123456</strong>. No SMS is sent.</Alert>}
-        {usesOtp && config && !config.available && <Alert severity="warning">OTP delivery is not configured yet.</Alert>}
         {signup && <div className="auth-name-row">{field('fname','First name',{ autoComplete:'given-name', inputProps:{maxLength:70} })}{field('lname','Last name',{autoComplete:'family-name', inputProps:{maxLength:70}})}</div>}
         {field('mobileno','Mobile number',{ type:'tel', autoComplete:'tel-national', inputProps:{ inputMode:'numeric', maxLength:10 }, InputProps:{startAdornment:<InputAdornment position="start">+91</InputAdornment>} })}
         {signup && field('emailid','Email address',{type:'email',autoComplete:'email',inputProps:{maxLength:70}})}
