@@ -7,7 +7,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { auth } from '../../firebase';
-import { getData, postData, clearCachedAccounts } from '../../services/FetchDjangoApiServices';
+import { postData, clearCachedAccounts } from '../../services/FetchDjangoApiServices';
 import { validateFields } from '../../services/validation';
 import './CustomerAuth.css';
 
@@ -16,17 +16,17 @@ export default function CustomerAuth({ kind = 'login' }) {
   const [method, setMethod] = useState('password');
   const [form, setForm] = useState({ mobileno:'', fname:'', lname:'', emailid:'', password:'', confirm_password:'', otp:'' });
   const [errors, setErrors] = useState({}), [message, setMessage] = useState('');
-  const [config, setConfig] = useState(null), [challenge, setChallenge] = useState(null);
+  const [challenge, setChallenge] = useState(null);
+  const [confirmationResult, setConfirmationResult] = useState(null);
   const [busy, setBusy] = useState(false), [showPassword, setShowPassword] = useState(false), [now, setNow] = useState(Date.now());
   const pending = useRef(false);
   const confirmationResultRef = useRef(null);
   const recaptchaVerifierRef = useRef(null);
   const signup = kind === 'signup', reset = kind === 'reset';
   const usesOtp = signup || reset || method === 'otp';
-  const purpose = signup ? 'signup' : reset ? 'reset' : 'login';
   const cooldown = Math.max(0, Math.ceil(((challenge?.resendAt || 0) - now) / 1000));
   const expired = challenge && now >= challenge.expiresAt;
-  useEffect(() => { getData('otp_config').then(result => setConfig(result.status ? result.data : { available:true })); const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
+  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
   const change = field => event => { setForm(old => ({ ...old, [field]: event.target.value })); setErrors(old => ({ ...old, [field]: '' })); setMessage(''); };
   const setResult = result => { setMessage(result.message || 'Please check your details.'); setErrors(Object.fromEntries(Object.entries(result.errors || {}).map(([key,value]) => [key, Array.isArray(value) ? value.join(' ') : value]))); };
   const field = (name, label, options = {}) => <TextField fullWidth required name={name} label={label} value={form[name]} onChange={change(name)} error={!!errors[name]} helperText={errors[name] || options.helperText} disabled={busy || (name === 'mobileno' && !!challenge)} {...options} />;
@@ -69,25 +69,35 @@ export default function CustomerAuth({ kind = 'login' }) {
     return error?.message || 'OTP send karne me error aaya.';
   };
 
+  // 1. Send OTP using Firebase Web SDK (NO backend fetch call to /send-otp/)
   const requestOtp = () => run(async () => {
-    const check = signup ? validateFields('signup_submit', { ...form, otp:'123456', challenge_id:'pending' }) : reset ? validateFields('reset_password', { mobileno:form.mobileno, password:form.password, confirm_password:form.confirm_password, otp:'123456', challenge_id:'pending' }) : validateFields('otp_request', { mobileno:form.mobileno, purpose });
+    const rawNumber = form.mobileno.replace(/\D/g, '').slice(-10);
+    if (!/^[6-9]\d{9}$/.test(rawNumber)) {
+      setErrors({ mobileno: 'Enter a valid 10-digit mobile number' });
+      return;
+    }
+    const check = signup ? validateFields('signup_submit', { ...form, otp:'123456', challenge_id:'pending' }) : reset ? validateFields('reset_password', { mobileno:form.mobileno, password:form.password, confirm_password:form.confirm_password, otp:'123456', challenge_id:'pending' }) : {};
     if (Object.keys(check).length) { setErrors(check); return; }
 
-    // 1. Try Firebase Phone Authentication
     try {
       const appVerifier = getRecaptchaVerifier();
       if (!appVerifier) {
         setMessage('reCAPTCHA container initialize nahi ho paya. Kripya page refresh karein.');
         return;
       }
-      const formattedPhone = form.mobileno.startsWith('+') ? form.mobileno : `+91${form.mobileno.trim()}`;
-      const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
-      confirmationResultRef.current = confirmationResult;
+      const phoneNumber = '+91' + rawNumber;
+      // Firebase Web SDK signInWithPhoneNumber with invisible recaptcha-container
+      const result = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+
+      // Store confirmationResult in state
+      setConfirmationResult(result);
+      confirmationResultRef.current = result;
+
       const timestamp = Date.now();
       setChallenge({ id: 'firebase-phone-auth', resendAt: timestamp + 60000, expiresAt: timestamp + 300000 });
       setForm(old => ({ ...old, otp: '' }));
       setErrors({});
-      setMessage(`OTP sent to ${formattedPhone} via SMS.`);
+      setMessage(`OTP sent to ${phoneNumber} via SMS.`);
       return;
     } catch (fbError) {
       console.error('Firebase signInWithPhoneNumber error:', fbError);
@@ -97,15 +107,6 @@ export default function CustomerAuth({ kind = 'login' }) {
       }
       const friendlyMsg = getFriendlyFirebaseError(fbError);
       setMessage(friendlyMsg);
-
-      // Only fall back to backend mock OTP if test mode is explicitly enabled
-      if (config?.test_mode) {
-        const result = await postData(purpose === 'login' ? 'auth/send-otp/' : 'otp_request', purpose === 'login' ? { phone:form.mobileno } : { mobileno:form.mobileno, purpose });
-        if (!result.status) { setResult(result); return; }
-        const timestamp = Date.now();
-        setChallenge({ id:result.data.challenge_id || 'mobile-login', resendAt:timestamp+result.data.resend_after*1000, expiresAt:timestamp+result.data.expires_in*1000 });
-        setForm(old => ({ ...old, otp:'' })); setErrors({}); setMessage(result.message);
-      }
     }
   });
 
@@ -113,26 +114,44 @@ export default function CustomerAuth({ kind = 'login' }) {
     event.preventDefault();
     if (usesOtp && !challenge) { requestOtp(); return; }
     run(async () => {
-      // Firebase Verification Flow
-      if (usesOtp && confirmationResultRef.current && challenge?.id === 'firebase-phone-auth') {
+      // 2. Firebase Phone Auth Verification Flow (OTP login / signup / reset)
+      if (usesOtp) {
+        const activeConfirmation = confirmationResult || confirmationResultRef.current;
+        if (!activeConfirmation) {
+          setMessage('No active OTP session. Please click "Get OTP" first.');
+          return;
+        }
+        if (!form.otp || form.otp.trim().length !== 6) {
+          setErrors({ otp: 'Please enter 6-digit OTP' });
+          return;
+        }
+
         try {
-          const userCredential = await confirmationResultRef.current.confirm(form.otp.trim());
+          // Verify using confirmationResult.confirm(otp)
+          const userCredential = await activeConfirmation.confirm(form.otp.trim());
+          // Get the Firebase ID token
           const idToken = await userCredential.user.getIdToken();
+
+          // Send THAT token to our Django backend /api/auth/firebase-login/
           const payload = {
             id_token: idToken,
             ...(signup ? { fname: form.fname, lname: form.lname, emailid: form.emailid, password: form.password } : {})
           };
+
           const backendRes = await postData('auth/firebase-login/', payload);
           if (!backendRes.status) {
             setResult(backendRes);
             return;
           }
+
           if (backendRes.token) {
             localStorage.setItem('sevenshades_token', backendRes.token);
           }
-          const user = backendRes.user || backendRes.data[0];
+
+          const user = backendRes.user || (backendRes.data && backendRes.data[0]);
           clearCachedAccounts();
           dispatch({ type: 'ADD_USER', payLoad: [user.mobileno, user] });
+
           const destination = location.state?.redirectTo;
           navigate(typeof destination === 'string' && destination.startsWith('/') && !destination.startsWith('//') ? destination : '/home', { replace: true, state: location.state?.checkoutState });
           return;
@@ -143,20 +162,20 @@ export default function CustomerAuth({ kind = 'login' }) {
         }
       }
 
-      // Standard / fallback authentication flow
-      const endpoint = signup ? 'signup_submit' : reset ? 'reset_password' : usesOtp ? 'otp_login' : 'check_costumer_login';
-      const body = signup ? { ...form, challenge_id:challenge?.id } : reset ? { mobileno:form.mobileno, password:form.password, confirm_password:form.confirm_password, otp:form.otp, challenge_id:challenge?.id } : usesOtp ? { mobileno:form.mobileno, otp:form.otp, challenge_id:challenge.id } : { mobileno:form.mobileno, password:form.password };
-      const check = validateFields(endpoint, body);
+      // 3. Password Login Flow (when method === 'password')
+      const body = { mobileno: form.mobileno, password: form.password };
+      const check = validateFields('check_costumer_login', body);
       if (Object.keys(check).length) { setErrors(check); return; }
-      const result = await postData(endpoint === 'otp_login' ? 'auth/verify-otp/' : endpoint, endpoint === 'otp_login' ? { phone:form.mobileno, otp:form.otp } : body);
+
+      const result = await postData('check_costumer_login', body);
       if (!result.status) { setResult(result); return; }
-      if (signup || reset) {
-        if (reset) { clearCachedAccounts(); dispatch({ type:'CLEAR_USER' }); }
-        navigate('/signindisplay', { replace:true, state:{ ...location.state, authMessage:result.message } }); return;
-      }
-      const user = result.data[0]; clearCachedAccounts(); dispatch({ type:'ADD_USER', payLoad:[user.mobileno,user] });
+
+      const user = result.data[0];
+      clearCachedAccounts();
+      dispatch({ type: 'ADD_USER', payLoad: [user.mobileno, user] });
+
       const destination = location.state?.redirectTo;
-      navigate(typeof destination === 'string' && destination.startsWith('/') && !destination.startsWith('//') ? destination : '/home', { replace:true, state:location.state?.checkoutState });
+      navigate(typeof destination === 'string' && destination.startsWith('/') && !destination.startsWith('//') ? destination : '/home', { replace: true, state: location.state?.checkoutState });
     });
   };
   return <main className="customer-auth">
@@ -170,7 +189,6 @@ export default function CustomerAuth({ kind = 'login' }) {
       <Stack component="form" noValidate onSubmit={submit} spacing={2}>
         {location.state?.authMessage && kind === 'login' && <Alert severity="success">{location.state.authMessage}</Alert>}
         {message && <Alert severity="info" role="status">{message}</Alert>}
-        {usesOtp && config?.test_mode && <Alert severity="info">Development mode: use OTP <strong>123456</strong>. No SMS is sent.</Alert>}
         {signup && <div className="auth-name-row">{field('fname','First name',{ autoComplete:'given-name', inputProps:{maxLength:70} })}{field('lname','Last name',{autoComplete:'family-name', inputProps:{maxLength:70}})}</div>}
         {field('mobileno','Mobile number',{ type:'tel', autoComplete:'tel-national', inputProps:{ inputMode:'numeric', maxLength:10 }, InputProps:{startAdornment:<InputAdornment position="start">+91</InputAdornment>} })}
         {signup && field('emailid','Email address',{type:'email',autoComplete:'email',inputProps:{maxLength:70}})}
