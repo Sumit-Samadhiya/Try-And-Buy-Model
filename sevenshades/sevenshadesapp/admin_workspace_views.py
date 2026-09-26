@@ -52,6 +52,12 @@ def page(request, rows):
     if number < 1 or size not in (10,20,50): raise ValueError('page')
     return list(rows[(number-1)*size:number*size]), number, size
 
+def bounded_limit(request, default=50, maximum=200):
+    value = int(request.GET.get('limit', default))
+    if value < 1:
+        raise ValueError('limit')
+    return min(value, maximum)
+
 def customer_data(customer, mobile=''):
     return {'name': (customer.fname+' '+customer.lname).strip() if customer else 'Customer',
         'mobile': str(customer.pk) if customer else mobile, 'email':customer.emailid if customer else ''}
@@ -142,8 +148,9 @@ def CreateTicket(request):
     return JsonResponse({'status':True,'data':ticket_data(ticket)},status=201)
 
 @api_view(['GET'])
+@query_errors
 def CustomerTickets(request):
-    limit = min(int(request.GET.get('limit', 50)), 200)
+    limit = bounded_limit(request)
     tickets = SupportTicket.objects.filter(customer=request.account).select_related('customer').order_by('-created_at')[:limit]
     return JsonResponse({'status':True,'data':[ticket_data(row) for row in tickets]})
 
@@ -158,8 +165,9 @@ def RiderCreateTicket(request):
     return JsonResponse({'status': True, 'data': ticket_data(ticket)}, status=201)
 
 @api_view(['GET'])
+@query_errors
 def RiderTickets(request):
-    limit = min(int(request.GET.get('limit', 50)), 200)
+    limit = bounded_limit(request)
     tickets = SupportTicket.objects.filter(rider=request.account).select_related('rider').order_by('-created_at')[:limit]
     return JsonResponse({'status': True, 'data': [ticket_data(row) for row in tickets]})
 
@@ -323,4 +331,108 @@ def DeleteExcludedArea(request):
         return failure('Excluded area not found.', 404)
     area.delete()
     return JsonResponse({'status': True, 'message': 'Excluded area deleted successfully'})
+
+
+@api_view(['GET'])
+def ServiceablePincodesSummary(request):
+    zones = DeliveryZone.objects.all().order_by('zone_name')
+    pincode_map = {}
+    for z in zones:
+        codes = [c.strip() for c in z.postcodes.split(',') if c.strip()]
+        for code in codes:
+            if code not in pincode_map:
+                pincode_map[code] = []
+            pincode_map[code].append({'id': z.pk, 'zone_name': z.zone_name})
+
+    pincodes_list = [
+        {'pincode': pin, 'zones': z_list, 'zone_count': len(z_list)}
+        for pin, z_list in sorted(pincode_map.items())
+    ]
+
+    excluded = [
+        {'id': e.pk, 'area_name': e.area_name, 'postcode': e.postcode}
+        for e in ExcludedArea.objects.all().order_by('area_name')
+    ]
+
+    zones_data = [
+        {
+            'id': z.pk,
+            'zone_name': z.zone_name,
+            'postcodes': z.postcodes,
+            'postcodes_count': len([c for c in z.postcodes.split(',') if c.strip()])
+        }
+        for z in zones
+    ]
+
+    return JsonResponse({
+        'status': True,
+        'data': {
+            'pincodes': pincodes_list,
+            'zones': zones_data,
+            'excluded_areas': excluded,
+            'total_serviceable_pincodes': len(pincodes_list)
+        }
+    })
+
+
+@api_view(['POST'])
+@transaction.atomic
+def AddPincode(request):
+    pincode = str(request.data.get('pincode') or '').strip()
+    zone_name = str(request.data.get('zone_name') or '').strip() or 'Jhansi Metropolitan Area'
+
+    if not PINCODE.match(pincode):
+        return failure(f'"{pincode}" is not a valid 6-digit Indian pincode.', 400)
+
+    # 1. Update or create the target zone
+    zone = DeliveryZone.objects.filter(zone_name__iexact=zone_name).first()
+    if zone:
+        current_codes = [c.strip() for c in zone.postcodes.split(',') if c.strip()]
+        if pincode not in current_codes:
+            current_codes.append(pincode)
+            zone.postcodes = ','.join(current_codes)
+            zone.save(update_fields=['postcodes'])
+    else:
+        zone = DeliveryZone.objects.create(zone_name=zone_name, postcodes=pincode)
+
+    # 2. Also ensure General Delivery Zone contains it if general zone exists
+    gen_zone = DeliveryZone.objects.filter(zone_name__iexact='General Delivery Zone').first()
+    if gen_zone and gen_zone.pk != zone.pk:
+        gen_codes = [c.strip() for c in gen_zone.postcodes.split(',') if c.strip()]
+        if pincode not in gen_codes:
+            gen_codes.append(pincode)
+            gen_zone.postcodes = ','.join(gen_codes)
+            gen_zone.save(update_fields=['postcodes'])
+
+    return JsonResponse({
+        'status': True,
+        'message': f'Pincode {pincode} added to {zone.zone_name}.',
+        'data': {'pincode': pincode, 'zone_name': zone.zone_name}
+    })
+
+
+@api_view(['POST'])
+@transaction.atomic
+def RemovePincode(request):
+    pincode = str(request.data.get('pincode') or '').strip()
+    if not pincode:
+        return failure('Pincode is required.', 400)
+
+    zones = DeliveryZone.objects.all()
+    updated_count = 0
+    for zone in zones:
+        codes = [c.strip() for c in zone.postcodes.split(',') if c.strip()]
+        if pincode in codes:
+            new_codes = [c for c in codes if c != pincode]
+            if new_codes:
+                zone.postcodes = ','.join(new_codes)
+                zone.save(update_fields=['postcodes'])
+            else:
+                zone.delete()
+            updated_count += 1
+
+    return JsonResponse({
+        'status': True,
+        'message': f'Pincode {pincode} removed successfully.'
+    })
 

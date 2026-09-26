@@ -7,6 +7,7 @@ import { postData } from '../../services/FetchDjangoApiServices';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
+import './ProductDetailsComponent.css';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
@@ -204,26 +205,18 @@ export default function ProductDetailsComponent(props) {
             <div
                 key={item + '-' + itemIndex}
                 onClick={() => handleThumbnailClick(itemIndex)}
-                style={{
-                    ...styles.thumbnail,
-                    border: activeImgIndex === itemIndex ? '2px solid #111827' : '2px solid #e5e7eb',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    boxShadow: activeImgIndex === itemIndex ? '0 2px 6px rgba(0,0,0,0.15)' : 'none',
-                }}
+                className={`pdp-thumbnail-item ${activeImgIndex === itemIndex ? 'active' : ''}`}
+                title={`View image ${itemIndex + 1}`}
             >
-                <img src={imageUrl(item)} alt="" style={styles.thumbnailImage} />
+                <img src={imageUrl(item)} alt="" className="pdp-thumbnail-img" />
             </div>
         ));
     };
 
     const productde = () => {
         return items.map((item, itemIndex) => (
-            <div key={item + '-' + itemIndex}>
-                <div>
-                    <img src={imageUrl(item)} alt="" style={styles.productImage} />
-                </div>
+            <div key={item + '-' + itemIndex} style={{ width: '100%', height: '100%', outline: 'none' }}>
+                <img src={imageUrl(item)} alt={product.productid?.productname || 'Product'} className="pdp-main-image" />
             </div>
         ));
     };
@@ -479,9 +472,19 @@ export default function ProductDetailsComponent(props) {
                             helperText={product.qty < 1 ? 'This variant is out of stock.' : !product.size ? 'Size unavailable.' : 'Choose up to 4 variants, one piece of each.'}
                         />
                     </div>
-                    <div style={styles.delivery}>
-                        <p><LocalShippingOutlinedIcon /> Home trial available with call-based timing confirmation.</p>
-                        <p>100% Cash on Delivery at doorstep. Pay only for what you keep.</p>
+                    <div className="pdp-guarantee-card">
+                        <div className="pdp-guarantee-item">
+                            <LocalShippingOutlinedIcon style={{ fontSize: 20, color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
+                            <div>
+                                <strong>Doorstep Try & Buy:</strong> Choose up to 4 items to try at home. Verified delivery partners confirm timing by call.
+                            </div>
+                        </div>
+                        <div className="pdp-guarantee-item">
+                            <span style={{ fontSize: 18, flexShrink: 0, lineHeight: 1 }}>💵</span>
+                            <div>
+                                <strong>Cash on Delivery:</strong> Retained items ka price pay karein. Zero-purchase orders par applicable trial fee lag sakti hai; unselected items rider ko turant return karein.
+                            </div>
+                        </div>
                     </div>
 
                     {/* CUSTOMER REVIEWS SECTION */}
@@ -662,33 +665,46 @@ export default function ProductDetailsComponent(props) {
     
 
     return (
-        <div>
+        <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
-            <div style={styles.mainContainer}>
-                <div style={styles.thumbnailContainer}>
-                    {show()}
-                </div>
-                <div style={styles.sliderContainer}>
-                    {!sm_matches && (
-                        <div style={styles.arrowLeft} onClick={handlePrevious}>
-                            <ArrowBackIosNewIcon style={styles.arrowIcon} />
+            <div className="pdp-page-container">
+                <div className="pdp-main-layout">
+                    <div className="pdp-gallery-section">
+                        <div className="pdp-thumbnails-list">
+                            {show()}
                         </div>
-                    )}
-                    <Slider ref={sldr} {...settings}>
-                        {productde()}
-                    </Slider>
-                    {!sm_matches && (
-                        <div style={styles.arrowRight} onClick={handleNext}>
-                            <ArrowForwardIosIcon style={styles.arrowIcon} />
+                        <div className="pdp-slider-viewport">
+                            {!sm_matches && items.length > 1 && (
+                                <button
+                                    type="button"
+                                    className="pdp-arrow-btn pdp-arrow-prev"
+                                    onClick={handlePrevious}
+                                    aria-label="Previous product image"
+                                >
+                                    <ArrowBackIosNewIcon fontSize="small" />
+                                </button>
+                            )}
+                            <Slider ref={sldr} {...settings}>
+                                {productde()}
+                            </Slider>
+                            {!sm_matches && items.length > 1 && (
+                                <button
+                                    type="button"
+                                    className="pdp-arrow-btn pdp-arrow-next"
+                                    onClick={handleNext}
+                                    aria-label="Next product image"
+                                >
+                                    <ArrowForwardIosIcon fontSize="small" />
+                                </button>
+                            )}
                         </div>
-                    )}
-                </div>
-                <div style={styles.detailsContainer}>
-                    {productdetails()}
+                    </div>
+                    <div className="pdp-details-panel">
+                        {productdetails()}
+                    </div>
                 </div>
             </div>
             <Footer />
         </div>
     );
 }
-

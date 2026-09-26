@@ -18,7 +18,14 @@ class PaymentRecoveryTests(TestCase):
         cls.admin=AdminLogin.objects.create(emailid='recover@example.test',mobileno='9000000061',password='Checkout-test-472!')
         cls.rider=DeliveryRider.objects.create(rider_id='RECOVER',phone='9000000062',password='Checkout-test-472!')
     def place(self,paid=False):
-        return create_trial(self.user,{'address_id':self.address.pk,'delivery_mode':'emergency_sos' if paid else 'standard','items':[{'product_details_id':self.variant.pk,'size':'M','qty':1}]})
+        order = create_trial(self.user,{'address_id':self.address.pk,'delivery_mode':'emergency_sos' if paid else 'standard','items':[{'product_details_id':self.variant.pk,'size':'M','qty':1}]})
+        if paid:
+            order.status = 'AWAITING_TRIAL_PAYMENT'
+            order.try_payment_mode = 'razorpay'
+            order.try_payment_status = 'pending'
+            order.reservation_expires_at = timezone.now() + timedelta(minutes=30)
+            order.save(update_fields=['status', 'try_payment_mode', 'try_payment_status', 'reservation_expires_at', 'updated_at'])
+        return order
     def stock(self):
         self.variant.refresh_from_db();return self.variant.qty
     def age(self,order):

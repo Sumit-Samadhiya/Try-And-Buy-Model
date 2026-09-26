@@ -1,40 +1,62 @@
+/* ==========================================================================
+   MY TRY BAG & CHECKOUT MODERN STYLES
+   Clean 8px Spacing • Fixed Aspect-Ratio Cards • Modern Summary Panel
+   ========================================================================== */
+
 .container {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    margin: 20px;
-    padding: 24px;
-    background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
-    border-radius: 16px;
-    border: 1px solid #e5e7eb;
+    max-width: 1280px;
+    margin: 24px auto;
+    padding: 0 16px;
+    background-color: transparent;
+    border: none;
     flex-direction: column;
+    box-sizing: border-box;
 }
 
-.products-container, .payment-container {
-    flex: 1;
-    margin-bottom: 20px;
+.products-container {
+    flex: 1 1 65%;
     width: 100%;
 }
 
+.payment-container {
+    flex: 1 1 35%;
+    width: 100%;
+}
+
+/* Modern Item Card */
 .product-card {
     margin-bottom: 16px;
     padding: 16px;
-    background-color: white;
+    background-color: #ffffff;
     border-radius: 14px;
     border: 1px solid #e5e7eb;
     display: flex;
     align-items: flex-start;
     flex-direction: row;
     text-align: left;
-    gap: 16px;
+    gap: 20px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    transition: all 0.2s ease;
+}
+
+.product-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
 }
 
 .product-image {
-    width: 108px;
-    height: 108px;
+    width: 110px;
+    aspect-ratio: 3 / 4;
+    height: auto;
     object-fit: cover;
-    border-radius: 10px;
+    object-position: top center;
+    border-radius: 8px;
     border: 1px solid #e5e7eb;
+    background-color: #f1f5f9;
+    flex-shrink: 0;
 }
 
 .product-details {
@@ -45,84 +67,125 @@
     width: 100%;
 }
 
-.product-name {
-    font-weight: 800;
-    font-size: 18px;
-    margin-bottom: 6px;
-    color: #111827;
+.product-brand {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #64748b;
+    margin-bottom: 2px;
 }
 
-.product-brand, .product-color, .product-price, .total-price {
+.product-name {
+    font-weight: 800;
+    font-size: 16px;
+    margin-bottom: 6px;
+    color: #0f172a;
+    line-height: 1.35;
+}
+
+.product-color {
+    font-size: 13px;
+    color: #475569;
+    margin-bottom: 6px;
+}
+
+.product-price {
     margin-bottom: 4px;
-    color: #4b5563;
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
 }
 
 .original-price {
     text-decoration: line-through;
     margin-right: 8px;
-    color: #9ca3af;
+    color: #94a3b8;
+    font-weight: 500;
+    font-size: 13px;
 }
 
 .offer-price {
-    color: #dc2626;
-    font-weight: 700;
+    color: #0f172a;
+    font-weight: 800;
+}
+
+.total-price {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 8px;
 }
 
 .quantity-control {
-    margin-top: 10px;
+    margin-top: 4px;
 }
 
+/* Modern Sticky Payment / Trial Summary */
 .payment-summary {
-    background-color: white;
-    padding: 18px;
-    border-radius: 14px;
+    background-color: #ffffff;
+    padding: 24px;
+    border-radius: 16px;
     border: 1px solid #e5e7eb;
     position: sticky;
-    top: 20px;
+    top: 24px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+}
+
+.payment-summary h2 {
+    font-size: 20px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 4px 0;
 }
 
 .summary-subtitle {
-    margin: 6px 0 0;
+    margin: 0 0 16px 0;
     color: #64748b;
     font-size: 13px;
+    line-height: 1.4;
 }
 
 .summary-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 8px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.summary-row div h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569;
+    margin: 0;
+}
+
+.summary-row div:last-child h3 {
+    font-weight: 700;
+    color: #0f172a;
 }
 
 .divider {
-    border: 1px solid #d1d5db;
-    margin: 10px 0;
-}
-
-.net-amount {
-    margin-top: 10px;
-}
-
-.checkout-button {
-    display: flex;
-    justify-content: center;
-    margin-top: 14px;
-}
-
-.payment-summary h2,
-.payment-summary h3,
-.payment-summary p {
-    margin-top: 0;
+    border: 0;
+    border-top: 1px solid #e2e8f0;
+    margin: 16px 0;
 }
 
 .trial-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
-    margin-bottom: 8px;
-    color: #222;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin: 16px 0 8px 0;
+    color: #64748b;
 }
 
 .billing-items-wrap {
-    margin-top: 10px;
+    margin-top: 12px;
+    background-color: #f8fafc;
+    border-radius: 10px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
 }
 
 .billing-item-row {
@@ -130,53 +193,56 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 12px;
-    padding: 10px 0;
-    border-top: 1px solid #ececec;
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.billing-item-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
 }
 
 .billing-item-name {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
-    color: #202124;
+    color: #0f172a;
 }
 
 .billing-item-meta {
     margin-top: 2px;
-    font-size: 12px;
-    color: #6b7280;
+    font-size: 11px;
+    color: #64748b;
 }
 
 .billing-item-price {
-    font-size: 14px;
-    font-weight: 700;
-    color: #111827;
+    font-size: 13px;
+    font-weight: 800;
+    color: #0f172a;
 }
 
-@media (min-width: 768px) {
+.checkout-button {
+    margin-top: 20px;
+}
+
+@media (min-width: 860px) {
     .container {
         flex-direction: row;
-        gap: 22px;
-    }
-
-    .products-container {
-        margin-right: 0;
-        margin-bottom: 0;
-        width: 100%;
+        gap: 32px;
     }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 859px) {
     .container {
-        margin: 10px;
-        padding: 12px;
+        margin: 12px auto;
+        padding: 0 12px;
     }
 
     .product-card {
-        flex-direction: column;
+        padding: 12px;
+        gap: 12px;
     }
 
     .product-image {
-        width: 100%;
-        height: 200px;
+        width: 90px;
     }
 }

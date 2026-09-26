@@ -108,12 +108,12 @@ export default function DisplayAllCategory()
       }).then(async(result)=>{
         if(result.isConfirmed){
           var body={id:rowData.id}
-      var result=await postData('deletemaincategorydata',body)
-      if(result.status)
+      var deleteResult=await postData('deletemaincategorydata',body)
+      if(deleteResult.status)
       {
         Swal.fire("Deleted..", "","success" ) 
         
-      } else { Swal.fire("Cannot delete", result.message || "This record is still in use.", "error"); }
+      } else { Swal.fire("Cannot delete", deleteResult.message || "This record is still in use.", "error"); }
       fetchAllMainCategory()
           
         }
@@ -133,46 +133,7 @@ export default function DisplayAllCategory()
       setFormError((prev)=>({...prev,[label]:errormessage })
   
     )}
-    
-    const handleClick=async()=>{
-         var err=false
-         if(mainCategoryName.length==0)
-         {
-           handleError("This field is required","maincategoryname")
-           err=true
-         }
-         if(icon.bytes.length==0)
-         {
-           handleError("pls select some icon","icon")
-           err=true
-         }
-         if(err==false){
-         var formData=new FormData()
-         formData.append('maincategoryname',mainCategoryName)
-         formData.append('icon',icon.bytes)
-         var result=await postData('maincategory_submit',formData)
-         if(result.status)
-         {
-          Swal.fire({
-            title:"The Seven Shades",
-            text:result.message,
-            icon:"success",
-            toast:true,
-          })
-         }
-         else{
-          Swal.fire({
-            title:"The Seven Shades",
-            text:result.message,
-            icon:"error",
-            toast:true,
-          })
-         }
-        }
-    }
 
-
-/*sgsgs*/
 
         useEffect(function(){
           fetchAllMainCategory() 

@@ -60,6 +60,29 @@ class InputValidationTests(TestCase):
             errors = validate_request('try_order_create', payload, {})
             self.assertTrue(any('items' in k for k in errors.keys()), payload)
 
+    def test_checkout_schedule_fields_match_api_contract(self):
+        payload = {
+            'mobileno': '9000000001',
+            'address_id': 1,
+            'delivery_mode': 'standard',
+            'delivery_slot': '10:00 AM - 02:00 PM',
+            'delivery_date': '2026-09-26',
+            'items': [{'product_details_id': 1, 'qty': 1, 'size': 'M'}],
+        }
+
+        self.assertEqual(validate_request('try_order_create', payload, {}), {})
+
+        payload['try_payment_mode'] = 'cash'
+        errors = validate_request('try_order_create', payload, {})
+        self.assertIn('try_payment_mode', errors)
+
+    def test_checkout_rejects_invalid_delivery_date(self):
+        payload = {
+            'delivery_date': '26/09/2026',
+            'items': [{'product_details_id': 1, 'qty': 1, 'size': 'M'}],
+        }
+        self.assertIn('delivery_date', validate_request('try_order_create', payload, {}))
+
     def test_slug_ids_format_rejected_when_containing_malicious_characters(self):
         """Verifies that IDs cannot contain XSS vectors, SQL fragments, or invalid characters."""
         for bad_id in ('<script>alert(1)</script>', 'ORD 123', 'ORD;DROP TABLE', 'ORD/../', ''):

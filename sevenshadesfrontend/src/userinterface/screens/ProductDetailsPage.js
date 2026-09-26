@@ -1,10 +1,10 @@
 import { useLocation, useNavigate } from "react-router-dom"
 import { postData } from "../../services/FetchDjangoApiServices"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import ProductDetailsComponent from "../components/ProductDetailsComponent"
 import Header from "../components/Header"
 import Footer from "../components/Footer"
-import { Container, Paper, Typography, Button, Box } from "@mui/material"
+import { Container, Paper, Typography, Button } from "@mui/material"
 
 export default function ProductDetailsPage(props){
     const location = useLocation()
@@ -21,7 +21,7 @@ export default function ProductDetailsPage(props){
     const [loading, setLoading] = useState(true)
     const [pageRefresh, setPageRefresh] = useState(false)
 
-    const fetchAllProducts = async () => {
+    const fetchAllProducts = useCallback(async () => {
         if (!productid) {
             setLoading(false)
             setProductList([])
@@ -35,11 +35,11 @@ export default function ProductDetailsPage(props){
             setProductList([])
         }
         setLoading(false)
-    }
+    }, [productid])
 
     useEffect(() => {
         fetchAllProducts()
-    }, [productid, pageRefresh])
+    }, [fetchAllProducts, pageRefresh])
 
     if (!productid || (!loading && productList.length === 0)) {
         return (

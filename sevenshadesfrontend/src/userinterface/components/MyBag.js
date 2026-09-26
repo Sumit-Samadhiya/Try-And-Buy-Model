@@ -174,11 +174,30 @@ export default function MyBag(props) {
                     Delivery timing confirmation ke liye order place karne ke baad aapko call aayega.
                 </Alert>
                 <Alert severity="success" style={{ marginTop: 10 }}>
-                    100% Cash on Delivery: Koi prepaid charge nahi lagega. Pasand aane par hi rider ko cash dein!
+                    No prepaid charge. Retained items ka bill doorstep par pay karein. Agar koi item retain nahi hota, applicable trial fee (first standard order ₹0, later standard ₹49, SOS ₹99) collect hogi.
                 </Alert>
                 <div className="checkout-button">
-                    <Button onClick={handleScheduleTry} variant="contained" fullWidth style={{ backgroundColor: '#111', marginTop: 16 }} disabled={items.length === 0}>
-                        Proceed To Address
+                    <Button
+                        onClick={handleScheduleTry}
+                        variant="contained"
+                        fullWidth
+                        sx={{
+                            backgroundColor: '#0f172a',
+                            color: '#ffffff',
+                            height: '48px',
+                            borderRadius: '10px',
+                            fontSize: '15px',
+                            fontWeight: 700,
+                            textTransform: 'none',
+                            boxShadow: '0 4px 12px rgba(15, 23, 42, 0.18)',
+                            '&:hover': {
+                                backgroundColor: '#1e293b',
+                                boxShadow: '0 6px 16px rgba(15, 23, 42, 0.25)',
+                            }
+                        }}
+                        disabled={items.length === 0}
+                    >
+                        Proceed To Address &rarr;
                     </Button>
                 </div>
             </div>
@@ -188,11 +207,23 @@ export default function MyBag(props) {
     if (items.length === 0) {
         return (
             <div className="container">
-                <div className="payment-summary" style={{ width: '100%' }}>
-                    <h2>Your Try Bag is empty</h2>
-                    <p>Select up to 4 items and schedule a home trial.</p>
-                    <Button variant="contained" style={{ backgroundColor: '#111' }} onClick={() => navigate('/home')}>
-                        Explore Products
+                <div className="payment-summary" style={{ width: '100%', textAlign: 'center', padding: '48px 24px' }}>
+                    <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>Your Try Bag is empty</h2>
+                    <p style={{ color: '#64748b', marginBottom: '24px' }}>Select up to 4 items and schedule a risk-free doorstep trial.</p>
+                    <Button
+                        variant="contained"
+                        sx={{
+                            backgroundColor: '#0f172a',
+                            height: '46px',
+                            px: 4,
+                            borderRadius: '10px',
+                            fontWeight: 700,
+                            textTransform: 'none',
+                            '&:hover': { backgroundColor: '#1e293b' }
+                        }}
+                        onClick={() => navigate('/home')}
+                    >
+                        Explore Curated Catalog &rarr;
                     </Button>
                 </div>
             </div>

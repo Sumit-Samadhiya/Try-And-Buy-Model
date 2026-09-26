@@ -4,6 +4,7 @@ Validates input types, lengths, and formats against explicit schemas and rejects
 any mismatched, malformed, or unexpected fields (no silent sanitization or escaping).
 """
 import re
+from datetime import date
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from PIL import Image, UnidentifiedImageError
@@ -77,7 +78,10 @@ ENDPOINT_SCHEMAS = {
     },
     'try_order_create': {
         'required': ['items'],
-        'allowed': {'address_id', 'address', 'delivery_mode', 'items', 'notes', 'mobileno'}
+        'allowed': {
+            'address_id', 'address', 'delivery_mode', 'delivery_slot',
+            'delivery_date', 'scheduled_date', 'items', 'notes', 'mobileno'
+        }
     },
     'delivery_selection_update': {
         'required': ['order_id'],
@@ -137,7 +141,7 @@ ENDPOINT_SCHEMAS = {
     },
     'optimize_route': {
         'required': ['batch_id'],
-        'allowed': {'batch_id'}
+        'allowed': {'batch_id', 'start_lat', 'start_lng'}
     },
     'rider_location': {
         'required': ['latitude', 'longitude'],
@@ -304,8 +308,8 @@ ENDPOINT_SCHEMAS = {
         'allowed': {'maincategoryid'}
     },
     'user_productsdetails_by_id': {
-        'required': ['id'],
-        'allowed': {'id'}
+        'required': ['productid'],
+        'allowed': {'productid'}
     },
     'product_mysubcategory_list_by_maincategoryid': {
         'required': ['maincategoryid'],
@@ -352,6 +356,7 @@ TEXT_LIMITS = {
     'subject': 150, 'message': 2000, 'review_text': 2000, 'notes': 500,
     'resolution': 2000, 'response': 2000, 'reason': 255, 'filter': 40,
     'area_name': 70, 'postcodes': 500, 'priority': 40, 'customer': 70, 'source': 40,
+    'delivery_slot': 70,
 }
 
 ENUM_CHOICES = {
@@ -404,6 +409,8 @@ FLOAT_LIMITS = {
     'lat': (-90.0, 90.0),
     'longitude': (-180.0, 180.0),
     'lng': (-180.0, 180.0),
+    'start_lat': (-90.0, 90.0),
+    'start_lng': (-180.0, 180.0),
 }
 
 
@@ -456,6 +463,9 @@ def validate_request(endpoint, data, files):
         if key in errors:
             continue
 
+        if endpoint in ('auth/send-otp', 'auth/verify-otp') and key == 'phone' and isinstance(value, str):
+            value = value.strip()
+
         # Checkout's nested address dictionary is handled separately
         if key == 'address' and endpoint == 'try_order_create' and isinstance(value, dict):
             continue
@@ -491,6 +501,16 @@ def validate_request(endpoint, data, files):
         if key in ('postcode', 'pincode'):
             if not isinstance(value, str) or not RE_PIN.fullmatch(value):
                 errors[key] = ['Enter a valid 6-digit PIN code.']
+
+        # Delivery dates must use the browser/API ISO date format.
+        if key in ('delivery_date', 'scheduled_date'):
+            if not isinstance(value, str):
+                errors[key] = ['Enter a valid delivery date in YYYY-MM-DD format.']
+            else:
+                try:
+                    date.fromisoformat(value)
+                except ValueError:
+                    errors[key] = ['Enter a valid delivery date in YYYY-MM-DD format.']
 
         # Passwords
         if key in ('password', 'confirm_password'):

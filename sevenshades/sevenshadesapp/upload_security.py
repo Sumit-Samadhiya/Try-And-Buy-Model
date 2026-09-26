@@ -11,6 +11,7 @@ Enforces:
 8. Storage isolation outside the application web root.
 9. Execution prevention (non-executable file permissions, secure response headers: nosniff, sandbox CSP).
 """
+from __future__ import annotations
 import os
 import re
 import logging
@@ -27,7 +28,7 @@ MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
 MAX_FILES_PER_REQUEST = 10
 MAX_IMAGE_PIXELS = 25_000_000  # 25 megapixels (decompression bomb protection)
 
-ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp'}
+ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.avif'}
 ALLOWED_MIME_TYPES = {
     'image/jpeg',
     'image/pjpeg',
@@ -220,6 +221,7 @@ def secure_media_serve(request, path: str):
         '.jpeg': 'image/jpeg',
         '.png': 'image/png',
         '.webp': 'image/webp',
+        '.avif': 'image/avif',
     }
     content_type = content_types.get(ext, 'application/octet-stream')
 

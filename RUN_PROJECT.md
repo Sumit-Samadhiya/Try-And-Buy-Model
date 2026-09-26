@@ -1,5 +1,24 @@
 # Run SevenShades on Windows
 
+Launcher update: the existing MUI styles/React combination requires legacy peer
+resolution. `.npmrc` and the launcher now use that setting consistently with `npm ci`.
+Install requests have bounded retries/timeouts. `-CheckOnly` now checks without
+installing dependencies, writing dependency stamps, applying migrations or starting servers.
+The lockfile hash uses .NET directly for compatibility with Windows PowerShell systems
+where `Get-FileHash` is unavailable. Initial compilation can take up to five minutes;
+the launcher prints progress while waiting. The batch wrapper preserves failure exit codes.
+
+To run without keeping the launcher window open:
+
+```bat
+START_PROJECT.bat -Detach
+```
+
+Double-click **STOP_PROJECT.bat** to stop launcher-managed servers. It verifies saved
+process IDs, executable paths and start times before stopping anything. It does not
+stop unrelated/manual servers. If a port is occupied by a manually started server,
+close that original server first. Logs stay in `.runtime/logs`.
+
 Double-click **START_PROJECT.bat** in the project folder. Keep its window open.
 The launcher checks Python and Node, prepares missing dependencies, applies pending
 database migrations, starts the backend and frontend, then opens

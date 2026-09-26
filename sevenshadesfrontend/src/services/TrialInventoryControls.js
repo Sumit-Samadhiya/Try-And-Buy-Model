@@ -43,7 +43,7 @@ export function TrialReturnCollection({ orderId, onCollected }) {
     if (result.status) onCollected?.();
   };
   return <Paper sx={{ p: 2, my: 2 }}><Typography variant="h6">Trial returns</Typography>
-    <Typography>Save the customer selection, inspect security tags, then record physical collection. A missing/broken tag keeps the item unavailable for restocking.</Typography>
+    <Typography>After customer approval, scan each security barcode before physical collection. Missing or mismatched tags require admin reconciliation.</Typography>
     <Button onClick={load} disabled={busy}>Refresh returned items</Button>
     {message && <Alert severity="info">{message}</Alert>}
     {items.map(item => <Stack key={item.id} spacing={1} sx={{ my: 2 }}>
@@ -60,10 +60,9 @@ export function TrialReturnCollection({ orderId, onCollected }) {
           onChange={event => setScannedTags(prev => ({ ...prev, [item.id]: event.target.value }))}
           sx={{ width: 190 }}
         />
-        <Button disabled={busy} variant="outlined" onClick={() => collect(item.id, 'Good')}>Collected — good condition</Button>
-        <Button disabled={busy} variant="outlined" color="error" onClick={() => collect(item.id, 'Damaged')}>Collected — damaged</Button>
+        <Button disabled={busy || !scannedTags[item.id]?.trim()} variant="outlined" onClick={() => collect(item.id, 'Good')}>Collected — good condition</Button>
+        <Button disabled={busy || !scannedTags[item.id]?.trim()} variant="outlined" color="error" onClick={() => collect(item.id, 'Damaged')}>Collected — damaged</Button>
       </Stack> : <Typography>No active reservation</Typography>}
     </Stack>)}
   </Paper>;
 }
-

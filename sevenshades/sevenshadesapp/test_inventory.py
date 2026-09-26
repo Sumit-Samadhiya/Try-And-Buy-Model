@@ -1,5 +1,6 @@
 from django.test import TestCase, TransactionTestCase
 from django.db import close_old_connections, OperationalError
+from django.utils import timezone
 from rest_framework.test import APIClient
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
@@ -25,8 +26,12 @@ class InventoryTests(TestCase):
 
     def prepare_return(self, condition='Good'):
         DeliveryAssignment.objects.get_or_create(try_order=self.order, defaults={'assignment_id': 'INV-ASG', 'rider': self.rider})
-        FinalOrder.objects.get_or_create(try_order=self.order, defaults={'order_id': 'INV-FINAL'})
-        return collect_return('rider', self.rider, self.item.pk, condition, True)
+        final, _ = FinalOrder.objects.get_or_create(try_order=self.order, defaults={'order_id': 'INV-FINAL'})
+        final.approved_revision = final.bill_revision
+        final.approved_by = self.order.mobileno
+        final.approved_at = timezone.now()
+        final.save(update_fields=['approved_revision', 'approved_by', 'approved_at'])
+        return collect_return('rider', self.rider, self.item.pk, condition, scanned_tag=self.item.security_tag)
 
     def stock(self):
         self.variant.refresh_from_db()
@@ -81,7 +86,7 @@ class InventoryTests(TestCase):
 
     def test_collection_receipt_and_approval_release_exactly_once(self):
         result = self.prepare_return()
-        repeated = collect_return('rider', self.rider, self.item.pk, 'Good', True)
+        repeated = collect_return('rider', self.rider, self.item.pk, 'Good', scanned_tag=self.item.security_tag)
         self.assertEqual(result.pk, repeated.pk)
         with self.assertRaises(InventoryError):
             review_return(self.admin, result.pk, 'approve')
@@ -164,7 +169,11 @@ class InventoryTests(TestCase):
 
     def test_trial_barcode_tag_verification_on_return(self):
         DeliveryAssignment.objects.get_or_create(try_order=self.order, defaults={'assignment_id': 'TAG-ASG', 'rider': self.rider})
-        FinalOrder.objects.get_or_create(try_order=self.order, defaults={'order_id': 'TAG-FINAL'})
+        final, _ = FinalOrder.objects.get_or_create(try_order=self.order, defaults={'order_id': 'TAG-FINAL'})
+        final.approved_revision = final.bill_revision
+        final.approved_by = self.order.mobileno
+        final.approved_at = timezone.now()
+        final.save(update_fields=['approved_revision', 'approved_by', 'approved_at'])
         
         # Verify item has security tag barcode assigned
         self.assertTrue(self.item.security_tag.startswith('TAG-TRY-'))
@@ -179,6 +188,18 @@ class InventoryTests(TestCase):
         self.assertTrue(ret.tag_verified)
         self.assertTrue(ret.tag_intact)
         self.assertEqual(ret.scanned_tag, self.item.security_tag.upper())
+
+    def test_return_requires_customer_approval_and_barcode_scan(self):
+        DeliveryAssignment.objects.create(assignment_id='APPROVAL-ASG', try_order=self.order, rider=self.rider)
+        final = FinalOrder.objects.create(try_order=self.order, order_id='APPROVAL-FINAL')
+        with self.assertRaisesRegex(InventoryError, 'Customer approval'):
+            collect_return('rider', self.rider, self.item.pk, 'Good', scanned_tag=self.item.security_tag)
+        final.approved_revision = final.bill_revision
+        final.approved_by = self.order.mobileno
+        final.approved_at = timezone.now()
+        final.save(update_fields=['approved_revision', 'approved_by', 'approved_at'])
+        with self.assertRaisesRegex(InventoryError, 'Scan the item security barcode'):
+            collect_return('rider', self.rider, self.item.pk, 'Good', tag_intact=True)
 
     def test_admin_zone_and_excluded_area_apis(self):
         client = self.client_for('admin')
@@ -209,8 +230,10 @@ class InventoryConcurrencyTests(TransactionTestCase):
     def setUp(self):
         InventoryTests.setUpTestData.__func__(type(self))
         order = create_trial(self.user, {'address_id': self.address.pk, 'items': [{'product_details_id': self.variant.pk, 'size': 'M', 'qty': 1}]})
-        FinalOrder.objects.create(try_order=order, order_id='FIN')
-        result = collect_return('admin', self.admin, order.tryorderitem_set.get().pk, 'Good', True)
+        final = FinalOrder.objects.create(try_order=order, order_id='FIN', approved_revision=1,
+            approved_by=order.mobileno, approved_at=timezone.now())
+        item = order.tryorderitem_set.get()
+        result = collect_return('admin', self.admin, item.pk, 'Good', scanned_tag=item.security_tag)
         review_return(self.admin, result.pk, 'receive')
         review_return(self.admin, result.pk, 'steam_press')
         self.return_id = result.pk

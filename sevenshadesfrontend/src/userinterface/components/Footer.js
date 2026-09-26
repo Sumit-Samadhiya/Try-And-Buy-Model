@@ -8,83 +8,145 @@ export default function Footer() {
     const navigate = useNavigate();
     const [policyDialog, setPolicyDialog] = useState(null);
 
-
     const linkStyle = {
-        fontSize: "14px",
-        letterSpacing: "0.5px",
-        paddingLeft: "10px",
+        fontSize: "13px",
+        letterSpacing: "0.2px",
         cursor: "pointer",
-        color: "#374151",
+        color: "#94a3b8",
         transition: "color 0.15s ease",
-        margin: "8px 0"
+        margin: "8px 0",
+        display: "block",
     };
 
     const foo = () => {
         return (
-            <div style={{width:"100%", minHeight: "240px", backgroundColor: "#E5E7EB", margin: '0 auto', padding: '30px 0'}}>
-                <Grid container spacing={3} style={{display:'flex',justifyContent:'center',alignItems:'flex-start',paddingLeft:'50px',paddingRight:'50px'}}>
-                    <Grid item xs={12} sm={3}>
-                        <p style={{fontSize:'15px',letterSpacing:"1.5px",paddingLeft:"10px",fontWeight:'800',color:'#111827',marginBottom:12}}>HELP & INFORMATION</p>
-                        <p style={linkStyle} onClick={() => navigate('/profile')}>Help Center & Tickets</p>
-                        <p style={linkStyle} onClick={() => navigate('/profile')}>Track Orders</p>
-                        <p style={linkStyle} onClick={() => setPolicyDialog('delivery')}>Delivery & Trial Policy</p>
-                        <p style={linkStyle} onClick={() => navigate('/home')}>Storefront Sitemap</p>
-                    </Grid>
+            <div style={{
+                width: "100%",
+                backgroundColor: "#0f172a",
+                color: "#ffffff",
+                padding: '48px 24px 32px',
+                boxSizing: 'border-box'
+            }}>
+                <div style={{ maxWidth: 1360, margin: '0 auto' }}>
+                    <Grid container spacing={4} justifyContent="space-between">
+                        <Grid item xs={12} sm={6} md={3}>
+                            <p style={{ fontSize: '13px', letterSpacing: "1px", fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: 16 }}>
+                                HELP & INFORMATION
+                            </p>
+                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => navigate('/profile')}>
+                                Help Center & Support Tickets
+                            </span>
+                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => navigate('/profile')}>
+                                Track Live Trial Orders
+                            </span>
+                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('delivery')}>
+                                Doorstep Trial & Returns Policy
+                            </span>
+                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => navigate('/home')}>
+                                Curated Catalog Sitemap
+                            </span>
+                        </Grid>
 
-                    <Grid item xs={12} sm={3}>
-                        <p style={{fontSize:'15px',letterSpacing:"1.5px",paddingLeft:"10px",fontWeight:'800',color:'#111827',marginBottom:12}}>ABOUT SEVENSHADES</p>
-                        <p style={linkStyle} onClick={() => setPolicyDialog('about')}>About Us</p>
-                        <p style={linkStyle} onClick={() => setPolicyDialog('careers')}>Careers at SevenShades</p>
-                        <p style={linkStyle} onClick={() => setPolicyDialog('delivery')}>Hyperlocal EV Fleet</p>
-                        <p style={linkStyle} onClick={() => setPolicyDialog('about')}>Investor Relations</p>
-                    </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <p style={{ fontSize: '13px', letterSpacing: "1px", fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: 16 }}>
+                                ABOUT SEVENSHADES
+                            </p>
+                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('about')}>
+                                Our Try & Buy Mission
+                            </span>
+                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('careers')}>
+                                Careers & Culture
+                            </span>
+                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('delivery')}>
+                                Zero-Emission EV Fleet
+                            </span>
+                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('about')}>
+                                Investor Relations
+                            </span>
+                        </Grid>
 
-                    <Grid item xs={12} sm={3}>
-                        <p style={{fontSize:'15px',letterSpacing:"1.5px",paddingLeft:"10px",fontWeight:'800',color:'#111827',marginBottom:12}}>HYPERLOCAL SERVICES</p>
-                        <p style={linkStyle} onClick={() => navigate('/home')}>Standard Try & Buy (Same Day)</p>
-                        <p style={linkStyle} onClick={() => navigate('/home')}>Emergency SOS Fashion (90-120 Min)</p>
-                        <p style={linkStyle} onClick={() => navigate('/profile')}>My Wallet & Credits</p>
-                        <p style={{...linkStyle, color: '#059669', fontWeight: 600}} onClick={() => navigate('/delivery/login')}>🛵 Rider Partner Login</p>
-                    </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <p style={{ fontSize: '13px', letterSpacing: "1px", fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: 16 }}>
+                                HYPERLOCAL SERVICES
+                            </p>
+                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => navigate('/home')}>
+                                Standard Try & Buy (Same Day)
+                            </span>
+                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => navigate('/home')}>
+                                SOS Fast Fashion (90-120 Min)
+                            </span>
+                            <span style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => navigate('/profile')}>
+                                Wallet Balance & Trial Credits
+                            </span>
+                            <span style={{ ...linkStyle, color: '#34d399', fontWeight: 700 }} onMouseEnter={(e) => e.target.style.color = '#6ee7b7'} onMouseLeave={(e) => e.target.style.color = '#34d399'} onClick={() => navigate('/delivery/login')}>
+                                🛵 Rider Partner Portal
+                            </span>
+                        </Grid>
 
-                    <Grid item xs={12} sm={3}>
-                        <p style={{fontSize:'15px',letterSpacing:"1.5px",paddingLeft:"10px",fontWeight:'800',color:'#111827',marginBottom:12}}>SERVICE REGION</p>
-                        <p style={{fontSize:"14px",letterSpacing:"0.5px",paddingLeft:"10px",color:'#374151',display:'flex',alignItems:'center',gap:8}}>
-                            Serving in India <img src={`${serverURL}/static/india.png`} style={{width:'20px',height:'20px'}} alt="India flag"/>
-                        </p>
-                        <p style={{fontSize:"12px",color:"#6b7280",paddingLeft:"10px",marginTop:8}}>
-                            Residential & gated societies doorstep trial access.
-                        </p>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <p style={{ fontSize: '13px', letterSpacing: "1px", fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: 16 }}>
+                                DOORSTEP COVERAGE
+                            </p>
+                            <div style={{ fontSize: "14px", color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                                <span>Serving Prime India Hubs</span>
+                                <img src={`${serverURL}/static/india.png`} style={{ width: 18, height: 18 }} alt="India flag" />
+                            </div>
+                            <p style={{ fontSize: "12px", color: "#94a3b8", lineHeight: 1.5, margin: 0 }}>
+                                Delivering verified trials directly to residential apartments, villas, and gated societies.
+                            </p>
+                        </Grid>
                     </Grid>
-                </Grid>
+                </div>
             </div>
-        )
-    }
+        );
+    };
 
     const foo1 = () => {
         return (
-            <div style={{width:'100%',backgroundColor:"#E5E7EB",padding:"20px",textAlign:'center'}}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <Typography variant="caption" sx={{ color: '#4b5563' }}>
-                        © 2026 SevenShades, Inc. All rights reserved.
+            <div style={{
+                width: '100%',
+                backgroundColor: "#020617",
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                padding: "24px 20px",
+                textAlign: 'center'
+            }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, alignItems: 'center' }}>
+                    <Typography variant="caption" sx={{ color: '#94a3b8' }}>
+                        © 2026 SevenShades Inc. All rights reserved. Built for modern doorstep fashion.
                     </Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
-                        <Typography variant="caption" sx={{ cursor: 'pointer', fontWeight: 600, color: '#111827' }} onClick={() => setPolicyDialog('privacy')}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3 }}>
+                        <Typography
+                            variant="caption"
+                            sx={{ cursor: 'pointer', fontWeight: 600, color: '#cbd5e1', '&:hover': { color: '#ffffff' } }}
+                            onClick={() => setPolicyDialog('privacy')}
+                        >
                             Privacy Policy & Cookies
                         </Typography>
-                        <Typography variant="caption" sx={{ cursor: 'pointer', fontWeight: 600, color: '#111827' }} onClick={() => setPolicyDialog('delivery')}>
-                            Try & Buy Terms
+                        <Typography
+                            variant="caption"
+                            sx={{ cursor: 'pointer', fontWeight: 600, color: '#cbd5e1', '&:hover': { color: '#ffffff' } }}
+                            onClick={() => setPolicyDialog('delivery')}
+                        >
+                            Try & Buy Terms of Service
                         </Typography>
                     </Box>
                 </Box>
             </div>
-        )
-    }
+        );
+    };
 
     return (
-        <div style={{width:"100%"}}>
-            <div style={{width:"100%",display:'flex',justifyContent:'center',alignItems:'center',marginBottom:'30px'}}>
-                <Icons/>
+        <footer style={{ width: "100%", marginTop: 'auto' }}>
+            <div style={{
+                width: "100%",
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: '#ffffff',
+                borderTop: '1px solid #e2e8f0',
+                padding: '24px 16px'
+            }}>
+                <Icons />
             </div>
             {foo()}
             {foo1()}
@@ -111,7 +173,7 @@ export default function Footer() {
                                 • <b>Post-Purchase Policy:</b> Once items are purchased and confirmed at doorstep, no returns or replacements are available.
                             </Typography>
                             <Typography variant="body2">
-                                • <b>Fees:</b> First trial order is FREE. Subsequent standard trials carry a ₹49 fee which is adjusted from your purchase bill if any item is purchased. SOS 90-120 minute priority delivery is ₹99.
+                                • <b>Fees:</b> No prepaid charge. If any item is purchased, the delivery fee is waived. If no item is kept, the first standard trial is free, later standard trials cost ₹49, and SOS costs ₹99.
                             </Typography>
                         </Box>
                     )}
@@ -121,7 +183,7 @@ export default function Footer() {
                                 SevenShades respects your privacy. We store only necessary profile, address and order information needed to complete trials and deliveries safely.
                             </Typography>
                             <Typography variant="body2">
-                                We do not sell your personal data to third parties. Session cookies and authentication tokens are securely encrypted.
+                                We do not sell your personal data to third parties. Authentication cookies are protected with HttpOnly and SameSite controls, and tokens are cryptographically signed.
                             </Typography>
                         </Box>
                     )}
@@ -137,9 +199,9 @@ export default function Footer() {
                     )}
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setPolicyDialog(null)} sx={{ fontWeight: 700 }}>Close</Button>
+                    <Button onClick={() => setPolicyDialog(null)} sx={{ fontWeight: 700, color: '#0f172a' }}>Close</Button>
                 </DialogActions>
             </Dialog>
-        </div>
+        </footer>
     );
 }

@@ -1,0 +1,154 @@
+/* ==========================================================================
+   CATEGORY SHOWCASE CARD (DEMO PATTERN)
+   Flipkart/Myntra Style Showcase • 4 Columns Desktop • 2x2 Grid Mobile
+   ========================================================================== */
+
+.csc-container {
+    width: 100%;
+    max-width: 1360px;
+    margin: 0 auto;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 22px 24px 26px;
+    box-sizing: border-box;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.csc-container:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+}
+
+/* Header with Title and Circle Arrow CTA */
+.csc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.csc-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.csc-arrow-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background-color: #0f172a;
+    color: #ffffff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+}
+
+.csc-arrow-btn:hover {
+    background-color: #1e293b;
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3);
+}
+
+.csc-arrow-btn:active {
+    transform: scale(0.96);
+}
+
+/* Grid: 4 in a row desktop, 2x2 mobile */
+.csc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .csc-container {
+        padding: 16px 14px 18px;
+        border-radius: 14px;
+    }
+
+    .csc-title {
+        font-size: 18px;
+    }
+
+    .csc-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+}
+
+/* Individual Showcase Item */
+.csc-item {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    text-align: left;
+    transition: transform 0.2s ease;
+}
+
+.csc-item:hover {
+    transform: translateY(-2px);
+}
+
+/* Image with fixed aspect-ratio and rounded corners */
+.csc-img-wrapper {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: #f1f5f9;
+    border: 1px solid #f1f5f9;
+    position: relative;
+}
+
+.csc-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.csc-item:hover .csc-img {
+    transform: scale(1.04);
+}
+
+/* Item Labels */
+.csc-item-info {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.csc-subtext {
+    font-size: 13px;
+    color: #475569;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.csc-maintext {
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

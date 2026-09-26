@@ -59,6 +59,7 @@ class  ProductGetSerializer(serializers.ModelSerializer):
     is_available = serializers.SerializerMethodField()
     variants_count = serializers.SerializerMethodField()
     avg_rating = serializers.SerializerMethodField()
+    total_reviews = serializers.SerializerMethodField()
     min_price = serializers.SerializerMethodField()
     min_offerprice = serializers.SerializerMethodField()
     
@@ -74,23 +75,25 @@ class  ProductGetSerializer(serializers.ModelSerializer):
 
     def get_avg_rating(self, obj):
         from django.db.models import Avg
-        val = obj.productdetails_set.filter(total_reviews__gt=0).aggregate(Avg('avg_rating'))['avg_rating__avg']
+        val = ProductReview.objects.filter(product_details__productid=obj).aggregate(Avg('rating'))['rating__avg']
         return round(val, 1) if val is not None else 0.0
 
     def get_total_reviews(self, obj):
-        from django.db.models import Sum
-        val = obj.productdetails_set.aggregate(Sum('total_reviews'))['total_reviews__sum']
-        return val or 0
+        return ProductReview.objects.filter(product_details__productid=obj).count()
+
+    def _best_available_variant(self, obj):
+        variants = list(obj.productdetails_set.filter(qty__gt=0).only('price', 'offerprice'))
+        if not variants:
+            return None
+        return min(variants, key=lambda row: row.offerprice if 0 < row.offerprice <= row.price else row.price)
 
     def get_min_price(self, obj):
-        from django.db.models import Min
-        val = obj.productdetails_set.aggregate(Min('price'))['price__min']
-        return val or 0
+        variant = self._best_available_variant(obj)
+        return variant.price if variant else 0
 
     def get_min_offerprice(self, obj):
-        from django.db.models import Min
-        val = obj.productdetails_set.filter(offerprice__gt=0).aggregate(Min('offerprice'))['offerprice__min']
-        return val or 0
+        variant = self._best_available_variant(obj)
+        return variant.offerprice if variant and 0 < variant.offerprice <= variant.price else 0
 
 
 
@@ -280,7 +283,6 @@ class TamperProofTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = TamperProofTag
         fields = '__all__'
-
 
 
 

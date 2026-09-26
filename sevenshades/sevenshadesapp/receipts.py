@@ -6,13 +6,14 @@ from .models import OrderReceipt
 
 
 def issue_receipt(order, final):
-    if not final.selected_items_count or final.payment_status != 'paid':
+    if final.payment_status != 'paid' or (not final.selected_items_count and final.final_payable <= 0):
         return None
     snapshot = {'order_id': order.order_id, 'bill_revision': final.bill_revision,
         'customer_mobile': order.mobileno, 'address': order.address_text, 'city': order.city, 'postcode': order.postcode,
         'seller_name': settings.RECEIPT_SELLER_NAME, 'seller_address': settings.RECEIPT_SELLER_ADDRESS,
         'currency': 'INR', 'items_total': final.items_total, 'trial_fee_adjusted': final.wallet_credit,
         'amount_collected': final.final_payable, 'payment_mode': final.payment_mode,
+        'delivery_or_trial_fee': final.final_payable if not final.selected_items_count else 0,
         'paid_at': final.paid_at.isoformat() if final.paid_at else None,
         'items': list(final.finalorderitem_set.values('product_name', 'brand_name', 'size', 'color', 'qty', 'unit_price', 'line_total'))}
     receipt, _ = OrderReceipt.objects.get_or_create(final_order=final, defaults={
@@ -30,6 +31,6 @@ def receipt_html(receipt):
 <p>Receipt: {escape(receipt.number)}<br>Order: {escape(data['order_id'])}<br>Issued: {escape(receipt.created_at.isoformat())}</p>
 <p>Customer: {escape(data['customer_mobile'])}<br>{escape(data['address'])}, {escape(data['city'])} — {escape(data['postcode'])}</p>
 <table><thead><tr><th>Item</th><th>Size</th><th>Color</th><th>Qty</th><th>Unit INR</th><th>Total INR</th></tr></thead><tbody>{rows}</tbody></table>
-<p>Items total: INR {data['items_total']}<br>Verified trial fee adjusted: INR {data['trial_fee_adjusted']}<br><strong>Final amount collected: INR {data['amount_collected']}</strong><br>Payment: {escape(data['payment_mode'])}</p>
+<p>Items total: INR {data['items_total']}<br>Delivery / trial fee: INR {data.get('delivery_or_trial_fee', 0)}<br>Verified trial fee adjusted: INR {data['trial_fee_adjusted']}<br><strong>Final amount collected: INR {data['amount_collected']}</strong><br>Payment: {escape(data['payment_mode'])}</p>
 <p>Finalized purchases are non-refundable. Selection is offered during the home trial.</p>
 <p class="note">This is a payment receipt, not a tax invoice. No GST amount is represented. Use your browser's Print / Save as PDF to keep a PDF copy.</p></body></html>'''

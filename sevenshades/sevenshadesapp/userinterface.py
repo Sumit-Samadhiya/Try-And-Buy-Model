@@ -163,6 +163,8 @@ def serialize_flipkart_color_listings(products_qs):
                     'variants_count': 0,
                     'avg_rating': 0.0,
                     'total_reviews': 0,
+                    'brandname': prod.brandid.brandname if prod.brandid else '',
+                    'categoryname': prod.maincategoryid.maincategoryname if prod.maincategoryid else '',
                     'maincategoryid': cat_data,
                     'subcategoryid': sub_data,
                     'brandid': brand_data,
@@ -217,6 +219,8 @@ def serialize_flipkart_color_listings(products_qs):
                     'variants_count': len(color_variants),
                     'avg_rating': avg_r,
                     'total_reviews': tot_rev,
+                    'brandname': prod.brandid.brandname if prod.brandid else '',
+                    'categoryname': prod.maincategoryid.maincategoryname if prod.maincategoryid else '',
                     'maincategoryid': cat_data,
                     'subcategoryid': sub_data,
                     'brandid': brand_data,
@@ -263,4 +267,4 @@ def User_Product_List(request):
           return JsonResponse({"data": data, "status": True})
      except Exception as e:
           logger.exception('Error in User_Product_List: %s', e)
-          return JsonResponse({"data": [], "status": False}, safe=False)
+          return JsonResponse({"data": [], "status": False}, safe=False)

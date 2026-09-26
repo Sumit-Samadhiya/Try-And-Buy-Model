@@ -1,44 +1,367 @@
-/* ProductDetailsComponent.css */
+/* ==========================================================================
+   PRODUCT DETAILS PAGE (PDP) MODERN DESIGN SYSTEM
+   Fixed Aspect-Ratio Gallery • Clean Visual Hierarchy • Prominent CTAs
+   ========================================================================== */
 
-/* Default styles */
-.product-container {
+.pdp-page-container {
+    width: 100%;
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .pdp-page-container {
+        padding: 16px 12px 48px;
+    }
+}
+
+/* Two-Column Responsive Layout */
+.pdp-main-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 48px;
+    align-items: flex-start;
+}
+
+@media (max-width: 960px) {
+    .pdp-main-layout {
+        flex-direction: column;
+        gap: 24px;
+        align-items: stretch;
+    }
+}
+
+/* Left Column: Gallery & Thumbnails */
+.pdp-gallery-section {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    flex: 1 1 55%;
+    max-width: 680px;
+    position: sticky;
+    top: 24px;
+}
+
+@media (max-width: 960px) {
+    .pdp-gallery-section {
+        position: static;
+        flex-direction: column-reverse;
+        max-width: 100%;
+    }
+}
+
+/* Vertical Thumbnails List */
+.pdp-thumbnails-list {
     display: flex;
     flex-direction: column;
+    gap: 10px;
+    max-height: 580px;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+}
+
+@media (max-width: 960px) {
+    .pdp-thumbnails-list {
+        flex-direction: row;
+        max-height: none;
+        overflow-x: auto;
+        padding-bottom: 6px;
+    }
+}
+
+.pdp-thumbnail-item {
+    width: 68px;
+    height: 85px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid #e5e7eb;
+    background-color: #f1f5f9;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+}
+
+.pdp-thumbnail-item:hover {
+    border-color: #94a3b8;
+}
+
+.pdp-thumbnail-item.active {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 1px #0f172a;
+}
+
+.pdp-thumbnail-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Main Image Viewport with Fixed 3:4 Aspect Ratio */
+.pdp-slider-viewport {
+    position: relative;
+    flex: 1;
+    aspect-ratio: 3 / 4;
+    background-color: #f8fafc;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.pdp-main-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+}
+
+/* Navigation Arrow Overlays */
+.pdp-arrow-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid #e2e8f0;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    transition: all 0.15s ease;
+}
+
+.pdp-arrow-btn:hover {
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform: translateY(-50%) scale(1.05);
+}
+
+.pdp-arrow-prev {
+    left: 12px;
+}
+
+.pdp-arrow-next {
+    right: 12px;
+}
+
+/* Right Column: Product Details Panel */
+.pdp-details-panel {
+    flex: 1 1 45%;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+/* Brand & Breadcrumb */
+.pdp-brand-heading {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #64748b;
+    margin-bottom: 6px;
+}
+
+/* Product Title */
+.pdp-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.3;
+    margin: 0 0 10px 0;
+}
+
+@media (max-width: 600px) {
+    .pdp-title {
+        font-size: 20px;
+    }
+}
+
+/* Ratings Badge */
+.pdp-rating-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    width: fit-content;
+}
+
+/* Price Section */
+.pdp-price-box {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.pdp-price-current {
+    font-size: 26px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.pdp-price-mrp {
+    font-size: 16px;
+    color: #94a3b8;
+    text-decoration: line-through;
+}
+
+.pdp-price-off {
+    font-size: 13px;
+    font-weight: 700;
+    color: #15803d;
+    background-color: #dcfce7;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.pdp-tax-notice {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 24px;
+}
+
+/* Section Dividers */
+.pdp-divider {
+    border-top: 1px solid #e2e8f0;
+    margin: 20px 0;
+}
+
+/* Selector Labels */
+.pdp-section-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
 }
 
-.product-container .header-footer {
-    width: 100%;
+.pdp-section-label span.value {
+    font-weight: 700;
+    color: #0f172a;
 }
 
-.product-container .icons-column {
+/* Color Pills */
+.pdp-color-grid {
     display: flex;
-    flex-direction: column;
-    margin-right: 5%;
-    margin-bottom: 10%;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
 }
 
-.product-container .slider-container {
-    width: 40%;
-    position: relative;
+.pdp-color-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px 6px 8px;
+    border-radius: 24px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
 }
 
-.product-container .product-details-column {
+.pdp-color-btn:hover {
+    border-color: #0f172a;
+}
+
+.pdp-color-btn.selected {
+    background-color: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+}
+
+.pdp-color-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+/* Size Pills */
+.pdp-size-grid {
     display: flex;
-    flex-direction: column;
-    width: 100%; /* Take full width initially */
-    margin-top: 20px; /* Add space between slider and product details */
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
 }
 
-/* Responsive styles */
-@media (min-width: 960px) {
-    .product-container {
-        flex-direction: row;
-        justify-content: space-around;
-    }
+.pdp-size-btn {
+    min-width: 52px;
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #0f172a;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
 
-    .product-container .product-details-column {
-        width: auto; /* Reset width to auto to fit content */
-        margin-top: 0; /* Reset margin */
-    }
+.pdp-size-btn:hover:not(:disabled) {
+    border-color: #0f172a;
+    transform: translateY(-1px);
+}
+
+.pdp-size-btn.selected {
+    background-color: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+}
+
+.pdp-size-btn:disabled {
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    border-color: #e2e8f0;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+/* Trial Guarantee Banner */
+.pdp-guarantee-card {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 24px;
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.5;
+}
+
+.pdp-guarantee-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.pdp-guarantee-item:last-child {
+    margin-bottom: 0;
 }

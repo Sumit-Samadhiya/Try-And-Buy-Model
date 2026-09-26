@@ -18,12 +18,13 @@ test('rider collection sends a trial item and leaves warehouse review pending', 
   let collected = false;
   postData.mockImplementation(async endpoint => {
     if (endpoint === 'process_return') { collected = true; return { status: true }; }
-    return { status: true, data: [{ id: 4, product_name: 'Shirt', size: 'M', stock_reserved: true, selected: false, return_status: collected ? 'Collected' : null }] };
+    return { status: true, data: [{ id: 4, product_name: 'Shirt', size: 'M', security_tag: 'TAG-4', stock_reserved: true, selected: false, return_status: collected ? 'Collected' : null }] };
   });
   render(<TrialReturnCollection orderId="T1" />);
+  fireEvent.change(await screen.findByPlaceholderText('Scan / Enter Barcode'), { target: { value: 'TAG-4' } });
   fireEvent.click(await screen.findByRole('button', { name: 'Collected — good condition' }));
   await screen.findByText('Collected');
-  expect(postData).toHaveBeenCalledWith('process_return', { try_order_item_id: 4, condition: 'Good', tag_intact: false });
+  expect(postData).toHaveBeenCalledWith('process_return', { try_order_item_id: 4, condition: 'Good', tag_intact: false, scanned_tag: 'TAG-4' });
   expect(screen.queryByRole('button', { name: /Approve hygiene/ })).not.toBeInTheDocument();
 });
 

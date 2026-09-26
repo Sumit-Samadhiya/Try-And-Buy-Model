@@ -9,6 +9,7 @@ export default function SearchBarComponent(props) {
     const [allProducts, setAllProducts] = useState([]);
     const [filteredList, setFilteredList] = useState([]);
     const [showDropdown, setShowDropdown] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -82,58 +83,62 @@ export default function SearchBarComponent(props) {
             navigate('/productpage', { state: { pageView: 'MainCategoryComponent', products: { id: womenCategory.id } } });
         } else if (filteredList.length > 0) {
             handleSelectProduct(filteredList[0]);
-        } else {
-            // Handle no results found or a generic search page
-            console.log('No results found for:', productname);
         }
     };
 
     return (
         <div style={{
-            background: "#fff",
-            borderRadius: 10,
-            width: '40%',
-            height: 34,
+            backgroundColor: "#ffffff",
+            borderRadius: '10px',
+            width: '100%',
+            maxWidth: '460px',
+            height: '40px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            marginLeft: '7%',
-            position: 'relative'
+            padding: '0 12px',
+            margin: '0 20px',
+            position: 'relative',
+            boxShadow: isFocused ? '0 0 0 2px #3b82f6, 0 4px 12px rgba(0,0,0,0.1)' : '0 2px 6px rgba(0,0,0,0.08)',
+            transition: 'box-shadow 0.2s ease',
         }}>
+            <SearchOutlinedIcon
+                onClick={handleSearchClick}
+                style={{ color: '#64748b', cursor: 'pointer', marginRight: '8px', fontSize: '20px' }}
+            />
             <input
                 type="text"
                 value={productname}
-                placeholder='Search products, categories & brands...'
+                placeholder="Search styles, categories, brands..."
                 onChange={handleInputChange}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setTimeout(() => setIsFocused(false), 200)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleSearchClick(); }}
                 style={{
-                    background: "#fff",
-                    border: "0",
-                    borderRadius: 10,
+                    background: "transparent",
+                    border: "none",
                     outline: 'none',
-                    width: '90%',
-                    height: 28,
-                    color: "#000",
-                    fontSize: "0.95rem",
-                    paddingLeft: '10px'
+                    width: '100%',
+                    height: '100%',
+                    color: "#0f172a",
+                    fontSize: "14px",
+                    fontWeight: 500,
                 }}
             />
-            <SearchOutlinedIcon onClick={handleSearchClick} style={{ color: 'black', cursor: 'pointer', marginRight: '8px' }} />
 
             {/* LIVE AUTO-COMPLETE DROPDOWN */}
             {showDropdown && filteredList.length > 0 && (
                 <div style={{
                     position: 'absolute',
-                    top: '40px',
+                    top: '46px',
                     left: 0,
                     right: 0,
                     backgroundColor: '#ffffff',
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                    borderRadius: '8px',
+                    boxShadow: '0 12px 28px rgba(15, 23, 42, 0.15)',
+                    borderRadius: '10px',
                     zIndex: 9999,
-                    maxHeight: '280px',
+                    maxHeight: '320px',
                     overflowY: 'auto',
-                    border: '1px solid #e5e7eb'
+                    border: '1px solid #e2e8f0',
                 }}>
                     {filteredList.map((item) => (
                         <div
@@ -142,10 +147,10 @@ export default function SearchBarComponent(props) {
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                padding: '10px 12px',
+                                padding: '10px 14px',
                                 borderBottom: '1px solid #f1f5f9',
                                 cursor: 'pointer',
-                                transition: 'background-color 0.15s ease'
+                                transition: 'background-color 0.15s ease',
                             }}
                             onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
                             onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
@@ -153,13 +158,13 @@ export default function SearchBarComponent(props) {
                             <img
                                 src={imageUrl(item.icon)}
                                 alt=""
-                                style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 4, marginRight: 12 }}
+                                style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 6, marginRight: 12, backgroundColor: '#f1f5f9' }}
                             />
                             <div>
-                                <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#111827' }}>
+                                <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
                                     {item.productname || item.subcategoryname || item.maincategoryname || item.brandname}
                                 </div>
-                                <div style={{ fontSize: '11px', color: '#6b7280' }}>
+                                <div style={{ fontSize: '11px', color: '#64748b' }}>
                                     {item.type === 'product'
                                         ? (item.brandid?.brandname ? `Product • ${item.brandid.brandname}` : 'Product Match')
                                         : item.type === 'brand'

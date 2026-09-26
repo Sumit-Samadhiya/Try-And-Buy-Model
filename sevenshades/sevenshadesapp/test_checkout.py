@@ -95,6 +95,12 @@ class CheckoutTests(TestCase):
         self.variant.qty = 1
         self.variant.save()
 
+    def test_standard_delivery_slot_must_be_server_supported(self):
+        with self.assertRaisesRegex(CheckoutError, 'valid delivery time slot'):
+            create_trial(self.user, self.payload(delivery_slot='NOT A REAL SLOT'))
+        self.variant.refresh_from_db()
+        self.assertEqual(self.variant.qty, 1)
+
     def test_invalid_offer_falls_back_and_invalid_base_price_rejected(self):
         from django.db import IntegrityError, transaction
         with transaction.atomic():

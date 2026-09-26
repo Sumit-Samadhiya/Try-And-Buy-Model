@@ -11,7 +11,6 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
@@ -20,7 +19,7 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { postData } from '../../services/FetchDjangoApiServices';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -51,7 +50,6 @@ export default function UserAddressForm() {
   const [deliveryMode, setDeliveryMode] = useState('standard');
   const [deliverySlot, setDeliverySlot] = useState('10:00 AM - 02:00 PM');
   const [deliveryDate, setDeliveryDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [billingPaymentMode, setBillingPaymentMode] = useState('upi');
   const [editingAddress, setEditingAddress] = useState(null);
 
   const billingItems = trialDetails.billingItems || [];
@@ -60,13 +58,12 @@ export default function UserAddressForm() {
 
   // Calculate billing amount based on Delivery Mode & First Order status
   const currentTryFee = deliveryMode === 'emergency_sos' ? 99 : (isFirstOrder ? 0 : 49);
-  const billingAmount = currentTryFee;
 
   const handleError = (errormessage, label) => {
     setFormError((prev) => ({ ...prev, [label]: errormessage }));
   };
 
-  const fetchUserAddress = async () => {
+  const fetchUserAddress = useCallback(async () => {
     if (!userData?.mobileno) return;
     const result = await postData('fetch_user_address', { mobile: userData.mobileno });
     if (result && result.status) {
@@ -76,11 +73,11 @@ export default function UserAddressForm() {
       setAddressList([]);
       setSelectedAddressIndex(-1);
     }
-  };
+  }, [userData?.mobileno]);
 
   useEffect(() => {
     fetchUserAddress();
-  }, [userData?.mobileno]);
+  }, [fetchUserAddress]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -214,8 +211,6 @@ export default function UserAddressForm() {
         delivery_mode: deliveryMode,
         delivery_slot: deliveryMode === 'emergency_sos' ? 'Immediate SOS Delivery (90-120 mins)' : deliverySlot,
         delivery_date: deliveryDate,
-        scheduled_date: deliveryDate,
-        try_payment_mode: 'cash',
         items: billingItems.map((item) => ({
           product_details_id: item.id,
           size: item.size,

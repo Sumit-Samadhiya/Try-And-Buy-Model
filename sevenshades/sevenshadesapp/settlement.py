@@ -36,19 +36,18 @@ def generate_bill(role, account, order_id, selected):
         before = set(current.finalorderitem_set.values_list('try_order_item_id', flat=True))
         if before == seen:
             return current  # Repeated Generate Bill preserves revision and approval.
+        if GatewayPayment.objects.filter(try_order=order, purpose='final', revision=current.bill_revision).exclude(state='FAILED').exists():
+            raise InventoryError('An online payment attempt exists for this bill. Reconcile it before changing the selection.')
         current.bill_revision += 1
         current.approved_revision, current.approved_by, current.approved_at = 0, '', None
     else:
         current = FinalOrder(try_order=order, order_id='FIN-' + order.order_id)
     current.items_total = sum(item.line_total for item in items)
+    current.wallet_credit = order.try_fee if order.trial_fee_paid else 0
     if items:
-        # Items purchased: delivery charge is waived (effectively free)
-        current.wallet_credit = 0
-        current.final_payable = current.items_total
+        current.final_payable = max(current.items_total - current.wallet_credit, 0)
     else:
-        # Zero items purchased: delivery charge is collected in cash at doorstep
-        current.wallet_credit = 0
-        current.final_payable = order.try_fee
+        current.final_payable = max(order.try_fee - current.wallet_credit, 0)
     current.selected_items_count = len(items)
     current.payment_status, current.payment_mode, current.status = 'pending', '', 'awaiting_customer_approval'
     current.save()

@@ -193,7 +193,7 @@ def OptimizeRoute(request):
         if request.account_role == 'rider' and batch.rider != request.account:
             return failure('You do not have permission to view or optimize another rider’s batch route.', 403)
 
-        assignments = list(DeliveryAssignment.objects.select_related('try_order', 'rider').filter(batch=batch))
+        assignments = list(DeliveryAssignment.objects.select_related('try_order', 'rider').filter(batch=batch).exclude(status__in=['Delivered', 'Cancelled']))
 
         if not assignments:
             return JsonResponse({
@@ -206,24 +206,27 @@ def OptimizeRoute(request):
                 'waypoints': []
             }, safe=False)
 
-        # Determine starting coordinates (Rider location, request coords, or city center)
+        # Route estimates require measured coordinates. Never fabricate a hub or stop.
         rider = batch.rider
         req_lat = request.data.get('start_lat')
         req_lng = request.data.get('start_lng')
-        base_lat, base_lng = 22.7196, 75.8577  # Indore Center hub fallback
+        base_lat = base_lng = None
         if req_lat is not None and req_lng is not None:
             try:
                 base_lat, base_lng = float(req_lat), float(req_lng)
             except (ValueError, TypeError):
-                pass
+                return failure('Enter valid route starting coordinates.', 400)
         elif rider and rider.latitude is not None and rider.longitude is not None:
             try:
                 base_lat, base_lng = float(rider.latitude), float(rider.longitude)
             except (ValueError, TypeError):
                 pass
+        if base_lat is None or base_lng is None or not (-90 <= base_lat <= 90 and -180 <= base_lng <= 180):
+            return failure('Update the rider location before optimizing this route.', 409)
 
         # Prepare unvisited stops
         unvisited = []
+        skipped_orders = []
         for a in assignments:
             order = a.try_order
             order_lat = None
@@ -235,10 +238,11 @@ def OptimizeRoute(request):
                 except (ValueError, TypeError):
                     pass
             if order_lat is None or order_lng is None:
-                # Deterministic offset for demo/orders without GPS
-                offset_val = (abs(hash(order.order_id)) % 200) / 1000.0
-                order_lat = base_lat + offset_val
-                order_lng = base_lng + offset_val
+                skipped_orders.append({'order_id': order.order_id, 'reason': 'missing_verified_coordinates'})
+                continue
+            if not (-90 <= order_lat <= 90 and -180 <= order_lng <= 180):
+                skipped_orders.append({'order_id': order.order_id, 'reason': 'invalid_coordinates'})
+                continue
 
             unvisited.append({
                 'order_id': order.order_id,
@@ -271,7 +275,8 @@ def OptimizeRoute(request):
             total_distance += leg_distance
             # Travel time assuming avg 25 km/h + 15 min doorstep trial window
             leg_travel_mins = (leg_distance / 25.0) * 60.0
-            total_time_mins += leg_travel_mins + 15.0
+            arrival_mins = total_time_mins + leg_travel_mins
+            total_time_mins = arrival_mins + 15.0
 
             order_sequence.append(chosen['order_id'])
             waypoints.append({
@@ -283,22 +288,22 @@ def OptimizeRoute(request):
                 'latitude': chosen['lat'],
                 'longitude': chosen['lng'],
                 'leg_distance_km': leg_distance,
-                'estimated_arrival_minutes': int(round(total_time_mins))
+                'estimated_arrival_minutes': int(round(arrival_mins))
             })
             curr_lat, curr_lng = chosen['lat'], chosen['lng']
             stop_num += 1
 
         return JsonResponse({
             'status': True,
-            'message': 'Route optimized successfully with nearest-neighbor sequencing',
+            'message': 'Route estimated from verified rider and delivery coordinates.',
             'batch_id': batch.batch_id,
             'order_sequence': order_sequence,
             'waypoints': waypoints,
             'total_distance_km': round(total_distance, 2),
             'estimated_duration_minutes': int(round(total_time_mins)),
-            'stops_count': len(order_sequence)
+            'stops_count': len(order_sequence),
+            'skipped_orders': skipped_orders
         }, safe=False)
     except Exception:
         logger.exception('OptimizeRoute failed')
         return JsonResponse({'status': False, 'message': 'Unable to optimize route'}, status=500, safe=False)
-

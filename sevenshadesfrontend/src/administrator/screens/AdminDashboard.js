@@ -21,12 +21,13 @@ import Banner from './Banner';
 import DeliveryOps from './DeliveryOps';
 import DisplayAllOrders from './DisplayAllOrders';
 import Dashboard from './Dashboard';
+import PincodeManager from './PincodeManager';
 
 
 
 
 const theme=createTheme({palette:{primary:{main:'#315c4d'},background:{default:'#f4f6f5'}},typography:{fontFamily:'Arial, sans-serif'},shape:{borderRadius:12},components:{MuiTableCell:{styleOverrides:{head:{background:'#f3f5f4',fontWeight:700,whiteSpace:'nowrap'},body:{borderColor:'#eef0ee'}}},MuiButton:{styleOverrides:{root:{textTransform:'none',fontWeight:600}}}}});
-const sections=[['OVERVIEW',[['Quick Dashboard','dashboard'],['Sales Report','sales'],['Support Tickets','tickets']]],['OPERATIONS',[['Orders','orders'],['Payment recovery','payment-recovery'],['Delivery Ops','deliveryops'],['Returns & Stock','returns']]],['CATALOG',[['Categories','category'],['Subcategories','subcategory'],['Brands','brand'],['Products & Variants','displayallproduct'],['Banners','banner']]]];
+const sections=[['OVERVIEW',[['Quick Dashboard','dashboard'],['Sales Report','sales'],['Support Tickets','tickets']]],['OPERATIONS',[['Orders','orders'],['Payment recovery','payment-recovery'],['Delivery Ops','deliveryops'],['Pincodes & Zones','pincodes'],['Returns & Stock','returns']]],['CATALOG',[['Categories','category'],['Subcategories','subcategory'],['Brands','brand'],['Products & Variants','displayallproduct'],['Banners','banner']]]];
 export default function AdminDashboard(){
  const navigate=useNavigate(),location=useLocation();const [open,setOpen]=useState(false),[notice,setNotice]=useState('');
  useOrderEvents(event=>{if(['order_created','trial_payment_captured'].includes(event.reason))setNotice(event.order_id);});
@@ -45,6 +46,8 @@ export default function AdminDashboard(){
                         <Route element={<DisplayProductDetails />} path="/displayproductdetails" />
                         <Route element={<Banner />} path="/banner" />
                         <Route element={<DeliveryOps />} path="/deliveryops" />
+                        <Route element={<PincodeManager />} path="/pincodes" />
+                        <Route element={<PincodeManager />} path="/deliveryzones" />
                         <Route element={<DisplayAllOrders />} path="/orders" />
                         <Route element={<Dashboard />} path="/dashboard" />
                     <Route path="*" element={<Navigate to="/admindashboard/dashboard" replace/>}/></Routes></Box></Box></Box></ThemeProvider>;

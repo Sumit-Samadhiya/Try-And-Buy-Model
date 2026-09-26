@@ -1,16 +1,333 @@
-.home-banner { width: 100%; min-width: 0; }
-.home-banner-slide { display: block; width: 100%; padding: 0; margin: 0; border: 0; background: #f5f5f5; cursor: pointer; }
-.home-banner-slide img { display: block; width: 100%; aspect-ratio: 1440 / 470; object-fit: cover; }
-.home-banner .slick-slide > div { line-height: 0; }
-.home-banner .slick-prev { left: 12px; z-index: 1; }
-.home-banner .slick-next { right: 12px; z-index: 1; }
-.home-banner .slick-dots { position: static; margin: 8px 0 0; line-height: normal; }
-.home-banner .slick-dots li { margin: 0 3px; }
-.home-subcategories { width: 100%; min-width: 0; position: relative; }
-.home-subcategories .category-card { padding: 0 10px; box-sizing: border-box; cursor: pointer; }
-.home-subcategories .category-card img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; }
-.home-subcategories .category-title { font-size: clamp(16px, 1.5vw, 24px); font-weight: 700; margin-top: 8px; }
-.home-subcategories .slick-dots { position: static; margin-top: 8px; }
-.home-subcategories .category-arrow { position: absolute; top: 40%; z-index: 1; border: 0; border-radius: 50%; width: 36px; height: 36px; background: white; box-shadow: 0 1px 6px #0003; cursor: pointer; display: grid; place-items: center; }
-.home-subcategories .category-prev { left: -18px; }
-.home-subcategories .category-next { right: -18px; }
+/* ==========================================================================
+   STOREFRONT CAROUSELS & HERO BANNERS
+   Fixed Aspect Ratios • Clean 8px Spacing • Subtle Borders & Hover Lift
+   ========================================================================== */
+
+/* Hero Banner */
+.home-banner {
+    width: 100%;
+    max-width: 1360px;
+    margin: 0 auto;
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+}
+
+.home-banner-slide {
+    display: block;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background: #f1f5f9;
+    cursor: pointer;
+    outline: none;
+    position: relative;
+    text-align: left;
+}
+
+.home-banner-copy {
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    left: clamp(28px, 6vw, 88px);
+    width: min(38%, 470px);
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: #172033;
+    line-height: 1.25;
+}
+
+.home-banner-slide-women .home-banner-copy {
+    left: auto;
+    right: clamp(28px, 6vw, 88px);
+}
+
+.home-banner-copy strong {
+    font-size: clamp(28px, 3.2vw, 48px);
+    line-height: 1.04;
+    letter-spacing: -0.04em;
+}
+
+.home-banner-copy > span:not(.home-banner-eyebrow):not(.home-banner-cta) {
+    font-size: clamp(13px, 1.25vw, 18px);
+    color: #475569;
+}
+
+.home-banner-eyebrow {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #334155;
+}
+
+.home-banner-cta {
+    width: fit-content;
+    margin-top: 4px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: #111827;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.home-banner-slide img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1440 / 460;
+    object-fit: cover;
+    object-position: center;
+}
+
+@media (max-width: 768px) {
+    .home-banner {
+        border-radius: 12px;
+    }
+
+    .home-banner-slide img {
+        aspect-ratio: 16 / 10;
+        min-height: 220px;
+        object-fit: cover;
+        object-position: center;
+    }
+
+    .home-banner-copy,
+    .home-banner-slide-women .home-banner-copy {
+        inset: auto 16px 18px;
+        width: auto;
+        transform: none;
+        padding: 14px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(8px);
+        gap: 6px;
+    }
+
+    .home-banner-copy strong {
+        font-size: 22px;
+    }
+
+    .home-banner-copy > span:not(.home-banner-eyebrow):not(.home-banner-cta) {
+        font-size: 12px;
+    }
+
+    .home-banner-cta {
+        padding: 8px 12px;
+        font-size: 11px;
+    }
+
+    .home-banner .slick-prev,
+    .home-banner .slick-next {
+        width: 32px;
+        height: 32px;
+    }
+
+    .home-banner .slick-prev {
+        left: 8px;
+    }
+
+    .home-banner .slick-next {
+        right: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .home-banner {
+        border-radius: 10px;
+    }
+
+    .home-banner-slide img {
+        aspect-ratio: 4 / 3;
+        min-height: 240px;
+        object-fit: cover;
+    }
+
+    .home-banner .slick-dots {
+        bottom: 8px;
+    }
+
+    .home-banner .slick-dots li button:before {
+        font-size: 8px;
+    }
+}
+
+.home-banner .slick-slide > div {
+    line-height: 0;
+}
+
+.home-banner .slick-prev {
+    left: 16px;
+    z-index: 2;
+    width: 40px;
+    height: 40px;
+}
+
+.home-banner .slick-next {
+    right: 16px;
+    z-index: 2;
+    width: 40px;
+    height: 40px;
+}
+
+.home-banner .slick-dots {
+    position: absolute;
+    bottom: 12px;
+    margin: 0;
+    line-height: normal;
+}
+
+.home-banner .slick-dots li button:before {
+    font-size: 10px;
+    color: #ffffff;
+    opacity: 0.6;
+}
+
+.home-banner .slick-dots li.slick-active button:before {
+    color: #ffffff;
+    opacity: 1;
+}
+
+/* Subcategories Section */
+.home-subcategories {
+    width: 100%;
+    max-width: 1360px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.home-subcategories .category-card-wrapper {
+    padding: 0 8px;
+    box-sizing: border-box;
+}
+
+.home-subcategories .category-card {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.22s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.home-subcategories .category-card:hover {
+    transform: translateY(-4px);
+    border-color: #cbd5e1;
+    box-shadow: 0 12px 20px -4px rgba(15, 23, 42, 0.09);
+}
+
+.home-subcategories .category-card-img-wrap {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    background-color: #f1f5f9;
+}
+
+.home-subcategories .category-card img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    transition: transform 0.35s ease;
+}
+
+.home-subcategories .category-card:hover img {
+    transform: scale(1.035);
+}
+
+.home-subcategories .category-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    padding: 12px 8px;
+    text-align: center;
+    background-color: #ffffff;
+    letter-spacing: -0.01em;
+}
+
+.home-subcategories .category-arrow {
+    position: absolute;
+    top: 45%;
+    transform: translateY(-50%);
+    z-index: 5;
+    border: 1px solid #e2e8f0;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: all 0.15s ease;
+}
+
+.home-subcategories .category-arrow:hover {
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+    transform: translateY(-50%) scale(1.05);
+}
+
+.home-subcategories .category-prev {
+    left: -16px;
+}
+
+.home-subcategories .category-next {
+    right: -16px;
+}
+
+/* Brands Slider Section */
+.home-brands-wrapper {
+    width: 100%;
+    max-width: 1360px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.brand-card-item {
+    padding: 0 8px;
+    box-sizing: border-box;
+}
+
+.brand-card {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    transition: all 0.2s ease;
+    padding: 10px 16px;
+}
+
+.brand-card:hover {
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px -2px rgba(15, 23, 42, 0.08);
+}
+
+.brand-card img {
+    max-width: 80%;
+    max-height: 50px;
+    object-fit: contain;
+    filter: grayscale(30%);
+    transition: filter 0.2s ease;
+}
+
+.brand-card:hover img {
+    filter: grayscale(0%);
+}

@@ -7,10 +7,26 @@ Read `PROJECT_AUDIT_2026-09-25.md` for the latest consolidated findings: 33 iden
 workflow/validation gaps. Frontend 39 tests pass, but strict CI build fails on lint warnings.
 Backend full run had 110 tests with 5 failures/errors; the signup test-isolation failure
 was subsequently fixed and its focused rerun passed. Four payment-recovery failures remain.
-Current read-only DB snapshot: 13 products / 4 variants / 10 products without variants;
-0 invalid offer prices or negative stock; 38 checked local product/variant/banner image
-references all exist. Fast2SMS verification remains owner-deferred until deployment.
+The catalog was expanded and repaired on 26 September: 25 products / 99 variants /
+0 products without variants; no invalid prices, negative stock, relationship mismatch,
+or missing image reference. Fast2SMS verification remains owner-deferred until deployment.
 Older “All Fix” labels and historic counts below must not override this audit.
+
+## Latest update: realistic storefront data
+
+`python manage.py repair_storefront_data` is an idempotent catalog repair command;
+`--check` validates without writing. It normalizes catalog labels, media paths,
+product/variant relationships, private-label branding, banner metadata and review aggregates.
+It does not replace customer, order, payment or inventory history. The live local database
+now has 25 products, 99 variants and two SevenShades hero banners. Fabricated rating totals
+were reset to the actual `ProductReview` rows. Order totals, payment/status relationships,
+assignment relationships and inventory amount snapshots were audited separately with no
+contradictions found. A pre-repair database copy is kept under `.runtime/backups/`.
+
+The homepage now uses two project-owned, text-free hero images with HTML campaign copy,
+stable and unique product merchandising, real database-backed value prices, and explicit
+brand/category fields in color-listing API responses. Frontend verification: 15 suites /
+39 tests passed; production build compiled with the repository's existing lint warnings.
 
 ## Latest update: Fast2SMS mobile authentication
 

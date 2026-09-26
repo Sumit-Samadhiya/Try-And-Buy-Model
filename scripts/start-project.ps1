@@ -1,4 +1,4 @@
-param([switch]$CheckOnly, [switch]$NoBrowser)
+param([switch]$CheckOnly, [switch]$NoBrowser, [switch]$Detach, [switch]$Stop)
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $root = Split-Path $PSScriptRoot -Parent
@@ -7,7 +7,32 @@ $frontend = Join-Path $root 'sevenshadesfrontend'
 $runtime = Join-Path $root '.runtime'
 $logs = Join-Path $runtime 'logs'
 $owned = @()
+$keepRunning = $false
+$stateFile = Join-Path $runtime 'servers.json'
+
+# Some IDE/agent shells inject both PATH and path into the Windows process
+# environment. Start-Process treats those as duplicate dictionary keys and
+# fails before either server can start. Preserve the effective path once using
+# Windows' canonical spelling so the launcher behaves the same everywhere.
+$projectPath = $env:PATH
+[Environment]::SetEnvironmentVariable('PATH', $null, 'Process')
+[Environment]::SetEnvironmentVariable('path', $null, 'Process')
+[Environment]::SetEnvironmentVariable('Path', $projectPath, 'Process')
+
 New-Item -ItemType Directory -Force $logs | Out-Null
+
+function Stop-OwnedServers {
+    if (!(Test-Path $stateFile)) { Write-Host 'No launcher-managed servers are recorded.'; return }
+    foreach ($entry in @((Get-Content $stateFile -Raw | ConvertFrom-Json))) {
+        $process = Get-Process -Id $entry.id -ErrorAction SilentlyContinue
+        if ($process -and $process.StartTime.ToUniversalTime().Ticks.ToString() -eq $entry.started -and $process.Path -eq $entry.executable) {
+            $process.Kill()
+            $process.WaitForExit(10000) | Out-Null
+            Write-Host "Stopped $($entry.name)."
+        }
+    }
+    Remove-Item -LiteralPath $stateFile -ErrorAction SilentlyContinue
+}
 
 function Run-Checked($exe, $arguments) {
     & $exe @arguments
@@ -21,20 +46,35 @@ function Test-Python($exe) {
     } catch { return $false }
 }
 function Wait-Service($process, $url, $name) {
-    $deadline = (Get-Date).AddSeconds(180)
+    $deadline = (Get-Date).AddSeconds(300)
+    $nextUpdate = (Get-Date).AddSeconds(15)
     do {
         $process.Refresh()
         if ($process.HasExited) { throw "$name stopped. See $logs\$name.err.log and $name.out.log" }
         try {
-            $response = Invoke-WebRequest $url -UseBasicParsing -TimeoutSec 3
+            $response = Invoke-WebRequest $url -Headers @{Accept='text/html'} -UseBasicParsing -TimeoutSec 3
             if ($response.StatusCode -eq 200) { return }
         } catch { }
+        if ((Get-Date) -ge $nextUpdate) {
+            Write-Host "Waiting for $name... logs: $logs\$name.out.log"
+            $nextUpdate = (Get-Date).AddSeconds(15)
+        }
         Start-Sleep -Seconds 2
     } while ((Get-Date) -lt $deadline)
-    throw "$name did not become ready within 3 minutes. See $logs"
+    throw "$name did not become ready within 5 minutes. See $logs"
 }
 try {
+    if ($Stop) { Stop-OwnedServers; exit 0 }
     Write-Host 'SevenShades local startup - checking environment...'
+    if (!$CheckOnly) {
+        foreach ($port in @(8000,3000)) {
+            $socket = New-Object System.Net.Sockets.TcpClient
+            try {
+                try { $null = $socket.ConnectAsync('127.0.0.1', $port).Wait(1000) } catch { }
+                if ($socket.Connected) { throw "Port $port is already in use. If this project is running, use STOP_PROJECT.bat first. Existing programs were not stopped." }
+            } finally { $socket.Dispose() }
+        }
+    }
     $node = (Get-Command node.exe -ErrorAction Stop).Source
     $npm = (Get-Command npm.cmd -ErrorAction Stop).Source
     Run-Checked $node @('-e', 'if(parseInt(process.versions.node)<18)process.exit(1)')
@@ -58,16 +98,18 @@ try {
     $probe = Join-Path $PSScriptRoot 'check-dependencies.py'
     Push-Location $backend
     try {
-        & $python $probe 2>$null
+        & $python $probe *> (Join-Path $logs 'python-check.log')
         $ready = $LASTEXITCODE -eq 0
     } catch { $ready = $false } finally { Pop-Location }
     if (!$ready) {
+        if ($CheckOnly) { throw "Backend dependencies need setup. Run START_PROJECT.bat normally. Details: $logs\python-check.log" }
         $env:PYTHONPATH = ''
         $localPython = Join-Path $runtime 'venv\Scripts\python.exe'
         if (!(Test-Python $localPython)) { Run-Checked $python @('-m', 'venv', (Join-Path $runtime 'venv')) }
         $python = $localPython
         Write-Host 'Preparing backend dependencies (first setup needs internet)...'
         Run-Checked $python @('-m', 'pip', 'install', '-r', (Join-Path $backend 'requirements.txt'))
+        Run-Checked $python @($probe)
     }
     $env:DJANGO_DEBUG = '1'
     $env:DJANGO_ALLOWED_HOSTS = '127.0.0.1,localhost'
@@ -78,7 +120,10 @@ try {
     $env:PYTHONUNBUFFERED = '1'
     $lock = Join-Path $frontend 'package-lock.json'
     $stamp = Join-Path $runtime 'frontend-lock.sha256'
-    $hash = (Get-FileHash $lock -Algorithm SHA256).Hash
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    $stream = [System.IO.File]::OpenRead($lock)
+    try { $hash = ([System.BitConverter]::ToString($sha.ComputeHash($stream))).Replace('-', '') }
+    finally { $stream.Dispose(); $sha.Dispose() }
     Push-Location $frontend
     try {
         # Existing installations are checked without forcing a first-run reinstall.
@@ -88,10 +133,11 @@ try {
             $validModules = $LASTEXITCODE -eq 0
         }
         if (!$validModules -or ((Test-Path $stamp) -and (Get-Content $stamp) -ne $hash)) {
+            if ($CheckOnly) { throw 'Frontend dependencies need setup for the current lockfile. Run START_PROJECT.bat normally.' }
             Write-Host 'Preparing frontend dependencies (internet required)...'
-            Run-Checked $npm @('ci', '--no-audit', '--no-fund')
+            Run-Checked $npm @('ci', '--legacy-peer-deps', '--no-audit', '--no-fund', '--fetch-retries=1', '--fetch-timeout=30000')
         }
-        Set-Content $stamp $hash
+        if (!$CheckOnly) { Set-Content $stamp $hash }
     } finally { Pop-Location }
     Push-Location $backend
     try { Run-Checked $python @('manage.py', 'check') } finally { Pop-Location }
@@ -117,15 +163,32 @@ try {
     $client = Start-Process $node -ArgumentList 'node_modules/react-scripts/scripts/start.js' -WorkingDirectory $frontend -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $logs 'frontend.out.log') -RedirectStandardError (Join-Path $logs 'frontend.err.log')
     $owned += $client
     Wait-Service $client 'http://127.0.0.1:3000' 'frontend'
+    @(
+        @{id=$server.Id; name='backend'; executable=$server.Path; started=$server.StartTime.ToUniversalTime().Ticks.ToString()},
+        @{id=$client.Id; name='frontend'; executable=$client.Path; started=$client.StartTime.ToUniversalTime().Ticks.ToString()}
+    ) | ConvertTo-Json | Set-Content $stateFile
     Write-Host "Project ready: http://127.0.0.1:3000/home`nLogs: $logs"
     if (!$NoBrowser) { Start-Process 'http://127.0.0.1:3000/home' }
-    Read-Host 'Keep this window open. Press ENTER here to stop both servers' | Out-Null
+    if ($Detach) {
+        $keepRunning = $true
+        Write-Host 'Servers are running in the background. Use STOP_PROJECT.bat to stop them.'
+    } else {
+        Read-Host 'Keep this window open. Press ENTER here to stop both servers (or use STOP_PROJECT.bat)' | Out-Null
+    }
 } catch {
     Write-Host "ERROR: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
-    foreach ($process in $owned) {
-        $process.Refresh()
-        if (!$process.HasExited) { Stop-Process -Id $process.Id -ErrorAction SilentlyContinue }
+    if (!$keepRunning) {
+        foreach ($process in $owned) {
+            $process.Refresh()
+            if (!$process.HasExited) { $process.Kill() }
+        }
+        if ($owned.Count -gt 0 -and (Test-Path $stateFile)) {
+            $recordedIds = @((Get-Content $stateFile -Raw | ConvertFrom-Json) | ForEach-Object { $_.id })
+            if (@($owned | Where-Object { $_.Id -in $recordedIds }).Count -eq $owned.Count) {
+                Remove-Item -LiteralPath $stateFile -ErrorAction SilentlyContinue
+            }
+        }
     }
 }

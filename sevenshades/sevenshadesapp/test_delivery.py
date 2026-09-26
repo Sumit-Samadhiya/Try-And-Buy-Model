@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
 from rest_framework.test import APIClient
 from .models import SignUp, AdminLogin, DeliveryRider, DeliveryAssignment, DeliveryBatch, TryOrder, FinalOrder, TryOrderItem
-from .delivery_workflow import assign_order, advance_assignment, generate_batches
+from .delivery_workflow import assign_order, advance_assignment, generate_batches, reassign_order
 from .inventory_workflow import InventoryError
 
 
@@ -31,6 +31,19 @@ class DeliveryTests(TestCase):
             assign_order(order.order_id, self.other.rider_id)
         with self.assertRaises(IntegrityError), transaction.atomic():
             DeliveryAssignment.objects.create(assignment_id='DUP', try_order=order, rider=self.other)
+
+    def test_reassignment_closes_empty_old_batch(self):
+        order = self.order()
+        batch = DeliveryBatch.objects.create(batch_id='OLD-BATCH', rider=self.rider, status='Pending')
+        assignment = assign_order(order.order_id, self.rider.rider_id)
+        assignment.batch = batch
+        assignment.save(update_fields=['batch'])
+        reassign_order(order.order_id, self.other.rider_id)
+        batch.refresh_from_db()
+        assignment.refresh_from_db()
+        self.assertEqual(batch.status, 'Completed')
+        self.assertIsNone(assignment.batch_id)
+        self.assertEqual(assignment.rider_id, self.other.pk)
 
     def test_terminal_inactive_and_skipped_initial_status_rejected(self):
         for status in ('CANCELLED', 'DELIVERED', 'NO_PURCHASE', 'PAYMENT_PENDING'):
@@ -200,7 +213,7 @@ class DeliveryTests(TestCase):
         attach(order1, self.rider, batch)
         attach(order2, self.rider, batch)
 
-        response = client.post('/api/optimize_route', {'batch_id': batch.batch_id}, format='json', HTTP_X_CSRFTOKEN=token)
+        response = client.post('/api/optimize_route', {'batch_id': batch.batch_id, 'start_lat': 28.60, 'start_lng': 77.20}, format='json', HTTP_X_CSRFTOKEN=token)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertTrue(data['status'])

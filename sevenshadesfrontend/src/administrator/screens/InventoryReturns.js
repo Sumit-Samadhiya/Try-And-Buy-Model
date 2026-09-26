@@ -25,11 +25,11 @@ export default function InventoryReturns() {
     {message && <Alert severity="info">{message}</Alert>}
     {data.returns.map(row => <Paper key={row.id} sx={{ p: 2 }}>
       <Typography>{row.order_id} — {row.product_name} · {row.size} · {row.color}</Typography>
-      <Typography>{row.condition} · {row.status} · Tag {row.tag_intact ? 'intact' : 'missing/broken'}</Typography>
+      <Typography>{row.condition} · {row.status} · Tag {row.tag_verified ? 'barcode verified' : 'not verified'}</Typography>
       {row.status === 'Collected' && <Button disabled={busy} onClick={() => review(row.id, 'receive')}>Confirm warehouse receipt</Button>}
       {row.status === 'Received' && <Stack direction="row" spacing={1}>
-        {!row.steam_pressed_at && <Button disabled={busy || row.condition !== 'Good' || !row.tag_intact} onClick={() => review(row.id, 'steam_press')}>Confirm Steam-Press Complete</Button>}
-        <Button disabled={busy || row.condition !== 'Good' || !row.tag_intact || !row.steam_pressed_at} onClick={() => review(row.id, 'approve')}>Approve hygiene & release stock</Button>
+        {!row.steam_pressed_at && <Button disabled={busy || row.condition !== 'Good' || !row.tag_verified} onClick={() => review(row.id, 'steam_press')}>Confirm Steam-Press Complete</Button>}
+        <Button disabled={busy || row.condition !== 'Good' || !row.tag_verified || !row.steam_pressed_at} onClick={() => review(row.id, 'approve')}>Approve hygiene & release stock</Button>
         <Button disabled={busy} color="warning" onClick={() => review(row.id, 'reject')}>Reject — keep unavailable</Button>
       </Stack>}
     </Paper>)}

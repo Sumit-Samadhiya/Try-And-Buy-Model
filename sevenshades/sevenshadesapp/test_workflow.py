@@ -78,7 +78,7 @@ class DoorstepWorkflowTests(TestCase):
     def collect(self, start=2):
         returns = []
         for item in self.items[start:]:
-            response = self.post(self.rider_client, 'process_return', {'try_order_item_id': item.pk, 'condition': 'Good', 'tag_intact': True})
+            response = self.post(self.rider_client, 'process_return', {'try_order_item_id': item.pk, 'condition': 'Good', 'scanned_tag': item.security_tag})
             self.assertTrue(response.json()['status'], response.content)
             returns.append(response.json()['data']['id'])
         return returns
@@ -161,12 +161,11 @@ class DoorstepWorkflowTests(TestCase):
         self.assertFalse(OrderReceipt.objects.exists())
 
     def test_missing_tag_cannot_be_steam_pressed_or_restocked(self):
-        self.place(); self.doorstep(); self.bill(0)
+        self.place(); self.doorstep(); self.bill(0); self.approve()
         response = self.post(self.rider_client, 'process_return', {'try_order_item_id': self.items[0].pk, 'condition': 'Good', 'tag_intact': False})
-        return_id = response.json()['data']['id']
-        self.post(self.admin_client, 'update_hygiene_status', {'return_id': return_id, 'action': 'receive'})
-        for action in ('steam_press', 'approve'):
-            self.assertEqual(self.post(self.admin_client, 'update_hygiene_status', {'return_id': return_id, 'action': action}).status_code, 409)
+        self.assertEqual(response.status_code, 409)
+        self.assertIn('Scan the item security barcode', response.json()['message'])
+        self.assertFalse(TrialReturn.objects.exists())
 
     def test_nearest_rider_uses_fresh_locations_and_address_ownership(self):
         point = {'address_id': self.address.pk, 'latitude': 28.61, 'longitude': 77.20}
@@ -221,6 +220,27 @@ class DoorstepWorkflowTests(TestCase):
         receipt = self.customer.get('/api/receipt_download', {'order_id': self.order_id})
         self.assertEqual(receipt.status_code, 200)
         self.assertIn('450', receipt.content.decode())
+
+    def test_paid_sos_no_purchase_issues_fee_receipt(self):
+        self.place('emergency_sos'); self.doorstep(); bill = self.bill(count=0)
+        self.assertEqual(bill['final_payable'], 99)
+        self.approve(mode='cash')
+        cash = {'order_id': self.order_id, 'bill_revision': bill['bill_revision'], 'payment_mode': 'cash', 'payment_status': 'paid'}
+        self.assertTrue(self.post(self.rider_client, 'final_payment_update', cash).json()['status'])
+        self.collect(start=0)
+        self.assertTrue(self.post(self.rider_client, 'delivery_assignment_update_status', {'assignment_id': self.assignment_id, 'status': 'Delivered'}).json()['status'])
+        receipt = self.customer.get('/api/receipt_download', {'order_id': self.order_id})
+        self.assertEqual(receipt.status_code, 200)
+        self.assertIn('Delivery / trial fee: INR 99', receipt.content.decode())
+
+    def test_pending_gateway_attempt_freezes_bill_revision(self):
+        self.place(); self.doorstep(); bill = self.bill(count=1)
+        GatewayPayment.objects.create(try_order_id=TryOrder.objects.get(order_id=self.order_id).pk,
+            purpose='final', revision=bill['bill_revision'], amount_paise=bill['final_payable'] * 100,
+            state='READY', gateway_order_id='order_FrozenBill')
+        changed = self.post(self.rider_client, 'submit_final_selection', {'order_id': self.order_id, 'selected_items': []})
+        self.assertEqual(changed.status_code, 409)
+        self.assertIn('Reconcile', changed.json()['message'])
 
     @override_settings(RAZORPAY_KEY_ID='rzp_test_example', RAZORPAY_KEY_SECRET='test-secret')
     @patch('sevenshadesapp.payments.gateway_request')

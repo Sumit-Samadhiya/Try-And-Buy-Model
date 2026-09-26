@@ -62,11 +62,17 @@ def reassign_order(order_id, new_rider_id):
         return attach(order, new_rider)
     if assignment.status == 'Delivered':
         raise InventoryError('Delivered orders cannot be reassigned.')
+    old_batch_id = assignment.batch_id
     assignment.rider = new_rider
     assignment.batch = None
     assignment.save(update_fields=['rider', 'batch', 'updated_at'])
     order.assigned_rider = new_rider
     order.save(update_fields=['assigned_rider', 'updated_at'])
+    if old_batch_id:
+        old_batch = DeliveryBatch.objects.select_for_update().filter(pk=old_batch_id).first()
+        if old_batch and not old_batch.deliveryassignment_set.exclude(status__in=['Delivered', 'Cancelled']).exists():
+            old_batch.status = 'Completed'
+            old_batch.save(update_fields=['status', 'updated_at'])
     order_changed(order, 'reassigned')
     return assignment
 
@@ -172,4 +178,3 @@ def generate_batches(rider_id):
                 attach(order, rider, batch)
             result.append(batch)
     return result
-

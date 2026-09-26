@@ -45,7 +45,7 @@ if not SECRET_KEY:
 # SECURITY WARNING: don't run with debug turned on in production!
 
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver').split(',')
 
 
 # Application definition
@@ -79,6 +79,7 @@ MIDDLEWARE = [
 ]
 CORS_ALLOWED_ORIGINS = os.environ.get('FRONTEND_ORIGINS', 'http://127.0.0.1:3000,http://localhost:3000').split(',')
 CORS_ALLOW_CREDENTIALS = True
+CORS_URLS_REGEX = r'^/(api|media|static|payments)/.*$'
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
@@ -154,7 +155,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
@@ -167,9 +168,11 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 
-# Media files (User Uploads - isolated from static web assets)
+# Media files — MEDIA_ROOT is set to BASE_DIR so that ImageField(upload_to='static/')
+# resolves to BASE_DIR/static/, which is where all product/category/banner images are stored.
+# secure_media_serve restricts access to image extensions only and blocks path traversal.
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR
 
 # Upload safety: non-executable file permissions and upload limits
 FILE_UPLOAD_PERMISSIONS = 0o644
@@ -307,4 +310,3 @@ LOGGING = {
         },
     },
 }
-

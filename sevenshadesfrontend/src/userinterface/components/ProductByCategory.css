@@ -1,32 +1,303 @@
+/* ==========================================================================
+   PRODUCT BY CATEGORY / PRODUCT GRID STYLES
+   Uniform Card Heights • Fixed Aspect-Ratio • Subtle Borders & Hover Lift
+   ========================================================================== */
 
-
-.product-container {
+.pbc-product-grid {
     display: grid;
-    grid-template-columns:repeat(4, 1fr);
-    gap: 10px;
-    padding: 80px;
-}
-.product-container-2 {
-    display: grid;
-    grid-template-columns:repeat(2, 1fr);
-    gap: 20px;
-    padding: 20px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+    width: 100%;
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+    box-sizing: border-box;
 }
 
-.product-item {
+/* Responsive Grid Breakpoints */
+@media (max-width: 1080px) {
+    .pbc-product-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        padding: 16px;
+    }
+}
+
+@media (max-width: 700px) {
+    .pbc-product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        padding: 12px 8px 32px;
+    }
+}
+
+/* Uniform Card Structure */
+.pbc-product-card {
     display: flex;
     flex-direction: column;
+    height: 100%;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                border-color 0.22s ease;
+}
+
+.pbc-product-card:hover {
+    transform: translateY(-4px);
+    border-color: #cbd5e1;
+    box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.09), 0 4px 8px -2px rgba(15, 23, 42, 0.04);
+}
+
+.pbc-product-card:active {
+    transform: translateY(-1px);
+}
+
+/* Fixed Aspect-Ratio Image Container (3:4 Portrait) */
+.pbc-image-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    background-color: #f1f5f9;
+    overflow: hidden;
+}
+
+.pbc-product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+    transition: transform 0.35s ease;
+}
+
+.pbc-product-card:hover .pbc-product-image {
+    transform: scale(1.035);
+}
+
+/* Badges */
+.pbc-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 6px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.pbc-badge-try {
+    background-color: #0f172a;
+    color: #ffffff;
+}
+
+.pbc-badge-unavailable {
+    background-color: #475569;
+    color: #ffffff;
+}
+
+.pbc-badge-discount {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    background-color: #15803d;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 7px;
+    border-radius: 6px;
+}
+
+/* Card Body & Visual Hierarchy */
+.pbc-card-body {
+    padding: 14px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    text-align: left;
+    background-color: #ffffff;
+}
+
+.pbc-brand-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.pbc-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.35;
+    margin: 0 0 4px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 38px;
+}
+
+.pbc-card-desc {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.4;
+    margin: 0 0 8px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Meta Details: Color & Sizes */
+.pbc-meta-row {
+    display: flex;
     align-items: center;
-    cursor: pointer;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 12px;
 }
 
-.product-image {
-    width: 80%;
-    cursor: pointer;
-   
-    height: auto;
+.pbc-color-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #334155;
+    font-weight: 500;
+    font-size: 12px;
 }
 
-.product-details {
-    text-align: center;
+.pbc-color-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.pbc-sizes-list {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.pbc-size-chip {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background-color: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+}
+
+/* Price Section */
+.pbc-price-container {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: auto;
+    padding-top: 8px;
+}
+
+.pbc-price-current {
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.pbc-price-original {
+    font-size: 12px;
+    color: #94a3b8;
+    text-decoration: line-through;
+}
+
+.pbc-discount-pill {
+    font-size: 11px;
+    font-weight: 700;
+    color: #15803d;
+    background-color: #dcfce7;
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+/* Rating Badge */
+.pbc-rating-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+    font-size: 12px;
+}
+
+.pbc-rating-score {
+    font-weight: 700;
+    color: #b45309;
+}
+
+.pbc-rating-count {
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+/* Card CTA Button */
+.pbc-card-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 9px 12px;
+    background-color: #0f172a;
+    color: #ffffff;
+    border: 1px solid #0f172a;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.pbc-card-btn:hover {
+    background-color: #1e293b;
+    border-color: #1e293b;
+    transform: translateY(-1px);
+}
+
+.pbc-card-btn:active {
+    background-color: #020617;
+    transform: translateY(0);
+}
+
+/* Backwards compatibility aliases */
+.product-container {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+    width: 100%;
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 24px 16px;
+    box-sizing: border-box;
+}
+
+.product-container-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 12px 8px;
 }

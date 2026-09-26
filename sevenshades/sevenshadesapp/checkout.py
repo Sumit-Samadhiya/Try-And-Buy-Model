@@ -12,6 +12,13 @@ class CheckoutError(ValueError):
     pass
 
 
+STANDARD_DELIVERY_SLOTS = {
+    '10:00 AM - 02:00 PM',
+    '02:00 PM - 06:00 PM',
+    '06:00 PM - 09:00 PM',
+}
+
+
 def normalized_size(value):
     value = str(value or '').strip().casefold()
     return {'small': 's', 'medium': 'm', 'large': 'l', 'extra large': 'xl', 'extra-large': 'xl'}.get(value, value)
@@ -40,7 +47,7 @@ def create_trial(account, data):
     if not address.address.strip() or not address.city.strip() or not address.country.strip():
         raise CheckoutError('Please complete your saved delivery address.')
     mode = data.get('delivery_mode', 'standard')
-    slot = data.get('delivery_slot', '10 AM - 2 PM')
+    slot = data.get('delivery_slot', '10:00 AM - 02:00 PM')
     if mode not in ('standard', 'emergency_sos'):
         raise CheckoutError('Please select a valid delivery mode.')
 
@@ -66,7 +73,7 @@ def create_trial(account, data):
         else:
             scheduled_date = today
 
-        if not isinstance(slot, str) or not slot.strip() or len(slot) > 50:
+        if not isinstance(slot, str) or slot.strip() not in STANDARD_DELIVERY_SLOTS:
             raise CheckoutError('Please select a valid delivery time slot.')
         slot = slot.strip()
     items = data.get('items')

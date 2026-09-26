@@ -55,6 +55,9 @@ class AccountSecurityTests(TestCase):
     def test_public_catalog_still_works(self):
         self.assertEqual(self.client.get('/api/user_maincategory_list').status_code, 200)
         self.assertEqual(self.post('user_products_maincategory', {'maincategoryid': 1}).status_code, 200)
+        details = self.post('user_productsdetails_by_id', {'productid': 999999})
+        self.assertEqual(details.status_code, 200, details.content)
+        self.assertEqual(details.json()['data'], [])
 
     def test_passwords_hashed_and_never_returned_for_all_roles(self):
         for role, account in [('customer', self.alice), ('admin', self.admin), ('rider', self.rider)]:

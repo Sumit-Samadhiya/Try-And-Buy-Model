@@ -44,6 +44,10 @@ test('bag preserves size and saved address in checkout and prevents double submi
   const payload = postData.mock.calls.find(([endpoint]) => endpoint === 'try_order_create')[1];
   expect(payload.address_id).toBe(12);
   expect(payload.items[0]).toMatchObject({ product_details_id: 7, size: 'medium', qty: 1 });
+  expect(payload.delivery_slot).toBe('10:00 AM - 02:00 PM');
+  expect(payload.delivery_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  expect(payload.scheduled_date).toBeUndefined();
+  expect(payload.try_payment_mode).toBeUndefined();
   expect(payload.try_payment_status).toBeUndefined();
   expect(button).toBeDisabled();
 });

@@ -16,6 +16,13 @@ export default function OrderSuccess() {
   const paymentMode = (payload.paymentMode || 'N/A').toUpperCase();
   const totalItems = payload.totalTryItems || 0;
 
+  if (!payload.orderId) {
+    return <Container maxWidth="sm" sx={{ py: 8 }}><Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid #e5e7eb', textAlign: 'center' }}>
+      <Typography variant="h5" sx={{ fontWeight: 800 }}>No confirmed order to display</Typography>
+      <Typography sx={{ mt: 1, color: '#6b7280' }}>Open your order history to view an existing trial, or return to the catalog.</Typography>
+      <Button variant="contained" sx={{ mt: 3 }} onClick={() => navigate('/profile')}>View Order History</Button>
+    </Paper></Container>;
+  }
 
   return (
     <Container maxWidth="sm" sx={{ py: 8 }}>

@@ -9,7 +9,6 @@ export default function Icons(){
     const theme=useTheme()
    
   const sm_matches=UseMediaQuery(theme.breakpoints.down('sm'));
-  const md_matches=UseMediaQuery(theme.breakpoints.down('md')) 
     const icons = () => {
         return (
             <Grid container spacing={sm_matches?2:6}>

@@ -73,12 +73,12 @@ export default function DisplayAllSubCategory(){
             }).then(async(result)=>{
               if(result.isConfirmed){
                 var body={id:rowData.id}
-            var result=await postData('deletemysubcategorydata',body)
-            if(result.status)
+            var deleteResult=await postData('deletemysubcategorydata',body)
+            if(deleteResult.status)
             {
               Swal.fire("Deleted..", "","success" ) 
               
-            } else { Swal.fire("Cannot delete", result.message || "This record is still in use.", "error"); }
+            } else { Swal.fire("Cannot delete", deleteResult.message || "This record is still in use.", "error"); }
             fetchAllSubCategory()
                 
               }

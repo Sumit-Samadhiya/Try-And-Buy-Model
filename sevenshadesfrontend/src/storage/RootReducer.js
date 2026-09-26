@@ -1,7 +1,14 @@
 const loadPersistedBag = () => {
     try {
         const saved = typeof window !== 'undefined' ? localStorage.getItem('trial_bag') : null;
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) &&
+                Object.values(parsed).every(item => item && typeof item === 'object' && Number.isInteger(Number(item.id)))) {
+                return parsed;
+            }
+            localStorage.removeItem('trial_bag');
+        }
     } catch (e) {}
     return {};
 };
@@ -65,5 +72,4 @@ export default function RootReducer(state = initialState, action) {
             return state;
     }
 }
-
 

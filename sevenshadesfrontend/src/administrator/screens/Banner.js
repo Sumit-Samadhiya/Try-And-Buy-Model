@@ -1,4 +1,4 @@
-import { Grid,TextField,Button,Avatar } from "@mui/material";
+import { Grid,TextField,Button } from "@mui/material";
 import { useState } from "react";
 import { useStyles } from "./CategoryCss";
 import TitleComponent from "../components/admin/TitleComponent";
@@ -39,17 +39,17 @@ export default function Banner(){
   }
   const handleClick=async()=>{
        var err=false
-       if(description.trim().length==0)
+       if(description.trim().length===0)
        {
          handleError("This field is required","description")
          err=true
        }
-       if(icon.file.length==0)
+       if(icon.file.length===0)
        {
          handleError("Please select at least 1 image","icon")
          err=true
        }
-       if(err==false){
+       if(err===false){
        var formData=new FormData()
        formData.append('bannerdescription', description.trim())
        icon?.file?.forEach((item)=>{

@@ -114,8 +114,12 @@ def collect_return(role, account, item_id, condition, tag_intact=None, scanned_t
         return existing
     if order.status == 'CANCELLED' or not item.stock_reserved or item.status == 'PURCHASED':
         raise InventoryError('This item has no active trial reservation. Finalized purchases are non-refundable.')
-    if not FinalOrder.objects.filter(try_order=order).exists():
+    final = FinalOrder.objects.filter(try_order=order).first()
+    if not final:
         raise InventoryError('Save the customer selection before recording returned items.')
+    from .settlement import approved
+    if not approved(final):
+        raise InventoryError('Customer approval of the current selection is required before collecting returns.')
     if FinalOrderItem.objects.filter(try_order_item=item).exists():
         raise InventoryError('This item is selected for purchase. Update the selection first.')
 
@@ -124,13 +128,14 @@ def collect_return(role, account, item_id, condition, tag_intact=None, scanned_t
     clean_scanned = (str(scanned_tag).strip().upper() if scanned_tag else '')
     expected_tag = (item.security_tag or '').strip().upper()
 
-    if clean_scanned:
-        if expected_tag and clean_scanned != expected_tag:
-            raise InventoryError(f'Scanned barcode "{clean_scanned}" does not match dispatched item security tag "{expected_tag}".')
-        tag_verified = True
-        tag_intact = True
-    elif tag_intact is None:
-        tag_intact = False
+    if not expected_tag:
+        raise InventoryError('This item has no security barcode. Ask an admin to reconcile it before collection.')
+    if not clean_scanned:
+        raise InventoryError('Scan the item security barcode before recording collection.')
+    if clean_scanned != expected_tag:
+        raise InventoryError(f'Scanned barcode "{clean_scanned}" does not match dispatched item security tag "{expected_tag}".')
+    tag_verified = True
+    tag_intact = True
 
     result = TrialReturn.objects.create(
         item=item,
@@ -158,8 +163,8 @@ def review_return(account, return_id, action):
     lock_order(result.item.try_order.order_id)
     result.refresh_from_db()
     if action == 'steam_press':
-        if result.status != 'Received' or result.condition != 'Good' or not result.tag_intact:
-            raise InventoryError('Only received, undamaged items with intact tags can enter steam-press.')
+        if result.status != 'Received' or result.condition != 'Good' or not result.tag_intact or not result.tag_verified:
+            raise InventoryError('Only received, undamaged items with verified tags can enter steam-press.')
         if not result.steam_pressed_at:
             result.steam_pressed_at, result.steam_pressed_by = timezone.now(), str(account.pk)
             result.save(update_fields=['steam_pressed_at', 'steam_pressed_by'])
@@ -175,8 +180,8 @@ def review_return(account, return_id, action):
         if result.status != 'Received':
             raise InventoryError('Confirm warehouse receipt before hygiene review.')
         if action == 'approve':
-            if result.condition != 'Good' or not result.tag_intact or not result.steam_pressed_at:
-                raise InventoryError('Restocking requires an intact tag, good condition and recorded steam-press completion.')
+            if result.condition != 'Good' or not result.tag_intact or not result.tag_verified or not result.steam_pressed_at:
+                raise InventoryError('Restocking requires a verified tag, good condition and recorded steam-press completion.')
             item = TryOrderItem.objects.get(pk=result.item_id)
             if FinalOrderItem.objects.filter(try_order_item=item).exists():
                 raise InventoryError('A selected purchase cannot be restocked.')

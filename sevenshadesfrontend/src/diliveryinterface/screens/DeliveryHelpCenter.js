@@ -156,16 +156,16 @@ export default function DeliveryHelpCenter() {
           </Alert>
         )}
 
-        {/* SOS Emergency Hotline Banner */}
+        {/* Operational escalation guidance */}
         <Paper elevation={0} sx={{ p: 2, mb: 3, bgcolor: '#fef2f2', border: '1px solid #fee2e2', borderRadius: 2 }}>
           <Stack direction="row" spacing={1.5} alignItems="center">
             <SupportAgentIcon sx={{ color: '#dc2626' }} />
             <Box>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#991b1b' }}>
-                SOS Dispatch & Roadside Assistance Hotline: +91 90000 00081
+                Urgent dispatch or safety issue
               </Typography>
               <Typography variant="caption" sx={{ color: '#b91c1c' }}>
-                For accidents, physical safety threats, or customer disputes at doorstep, call Hub Ops directly.
+                Move to a safe location and raise an Urgent ticket here. Use local emergency services when immediate assistance is required.
               </Typography>
             </Box>
           </Stack>

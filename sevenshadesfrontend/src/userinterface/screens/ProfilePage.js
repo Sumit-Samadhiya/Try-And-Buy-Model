@@ -1,6 +1,6 @@
 import useOrderEvents from '../../services/useOrderEvents';
 import { CancelTrialButton } from '../../services/TrialInventoryControls';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -54,7 +54,7 @@ export default function ProfilePage() {
 
   const [walletBalance, setWalletBalance] = useState(0);
 
-  const fetchUserAddress = async () => {
+  const fetchUserAddress = useCallback(async () => {
     if (!userData?.mobileno) return;
     const result = await postData('fetch_user_address', { mobile: userData.mobileno });
     if (result && result.status) {
@@ -62,11 +62,11 @@ export default function ProfilePage() {
     } else {
       setAddressList([]);
     }
-  };
+  }, [userData?.mobileno]);
 
   useEffect(() => {
     fetchUserAddress();
-  }, [userData?.mobileno]);
+  }, [fetchUserAddress]);
 
   useEffect(() => {
     if (!userData?.mobileno) return;
@@ -87,7 +87,13 @@ export default function ProfilePage() {
     fetchOrderLifecycle();
     const interval = setInterval(fetchOrderLifecycle, 10000); // Poll every 10 seconds
 
-    setReviews(JSON.parse(localStorage.getItem(reviewKey) || '[]'));
+    try {
+      const storedReviews = JSON.parse(localStorage.getItem(reviewKey) || '[]');
+      setReviews(Array.isArray(storedReviews) ? storedReviews : []);
+    } catch {
+      setReviews([]);
+      localStorage.removeItem(reviewKey);
+    }
 
 
     return () => clearInterval(interval);
@@ -239,16 +245,15 @@ export default function ProfilePage() {
     if (result && result.status) {
       alert(result.message || 'Review submitted successfully');
       const selectedItem = purchasedVariants.find((p) => p.id === Number(targetVariantId));
-      const next = [
-        {
+      const savedReview = {
           id: `RVW-${Date.now()}`,
+          product_details_id: Number(targetVariantId),
           product: selectedItem?.name || reviewForm.product || `Product #${targetVariantId}`,
           rating: reviewForm.rating,
           review: reviewForm.review,
           createdAt: new Date().toISOString(),
-        },
-        ...reviews,
-      ];
+        };
+      const next = [savedReview, ...reviews.filter(review => Number(review.product_details_id) !== Number(targetVariantId))];
       setReviews(next);
       localStorage.setItem(reviewKey, JSON.stringify(next));
       setReviewForm({ product_details_id: '', product: '', rating: '', review: '' });

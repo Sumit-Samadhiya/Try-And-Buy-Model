@@ -120,13 +120,13 @@ export default function DisplayAllBrand()
       }).then(async(result)=>{
         if(result.isConfirmed){
           var body={id:rowData.id}
-      var result=await postData('deletebranddata',body)
+      var deleteResult=await postData('deletebranddata',body)
 
-      if(result.status)
+      if(deleteResult.status)
       {
         Swal.fire("Deleted..", "","success" ) 
         
-      } else { Swal.fire("Cannot delete", result.message || "This record is still in use.", "error"); }
+      } else { Swal.fire("Cannot delete", deleteResult.message || "This record is still in use.", "error"); }
       fetchAllBrand()
           
         }
@@ -146,46 +146,7 @@ export default function DisplayAllBrand()
       setFormError((prev)=>({...prev,[label]:errormessage })
   
     )}
-    
-    const handleClick=async()=>{
-         var err=false
-         if(brandName.length==0)
-         {
-           handleError("This field is required","brandname")
-           err=true
-         }
-         if(icon.bytes.length==0)
-         {
-           handleError("pls select some icon","icon")
-           err=true
-         }
-         if(err==false){
-         var formData=new FormData()
-         formData.append('brandname',brandName)
-         formData.append('icon',icon.bytes)
-         var result=await postData('brand_submit',formData)
-         if(result.status)
-         {
-          Swal.fire({
-            title:"The Seven Shades",
-            text:result.message,
-            icon:"success",
-            toast:true,
-          })
-         }
-         else{
-          Swal.fire({
-            title:"The Seven Shades",
-            text:result.message,
-            icon:"error",
-            toast:true,
-          })
-         }
-        }
-    }
 
-
-/*sgsgs*/
 
         useEffect(function(){
           fetchAllBrand() 

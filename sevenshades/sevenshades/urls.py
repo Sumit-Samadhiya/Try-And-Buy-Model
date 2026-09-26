@@ -41,6 +41,15 @@ urlpatterns = [
     path('api/admin_sales_report', admin_workspace_views.SalesReport),
     path('api/admin_tickets', admin_workspace_views.AdminTickets),
     path('api/admin_ticket_update', admin_workspace_views.UpdateTicket),
+    path('api/admin_delivery_zones', admin_workspace_views.ListDeliveryZones),
+    path('api/admin_delivery_zone_save', admin_workspace_views.SaveDeliveryZone),
+    path('api/admin_delivery_zone_delete', admin_workspace_views.DeleteDeliveryZone),
+    path('api/admin_pincodes_summary', admin_workspace_views.ServiceablePincodesSummary),
+    path('api/admin_pincode_add', admin_workspace_views.AddPincode),
+    path('api/admin_pincode_remove', admin_workspace_views.RemovePincode),
+    path('api/admin_excluded_areas', admin_workspace_views.ListExcludedAreas),
+    path('api/admin_excluded_area_save', admin_workspace_views.SaveExcludedArea),
+    path('api/admin_excluded_area_delete', admin_workspace_views.DeleteExcludedArea),
     path('api/customer_tickets', admin_workspace_views.CustomerTickets),
     path('api/create_ticket', admin_workspace_views.CreateTicket),
     path('api/rider_tickets', admin_workspace_views.RiderTickets),
@@ -148,6 +157,7 @@ urlpatterns = [
     path('api/save_excluded_area', admin_workspace_views.SaveExcludedArea),
     path('api/delete_excluded_area', admin_workspace_views.DeleteExcludedArea),
     re_path(r'^media/(?P<path>.*)$', secure_media_serve, name='media_serve'),
+    re_path(r'^(?P<path>static/.*)$', secure_media_serve, name='static_serve'),
 ]
 
 

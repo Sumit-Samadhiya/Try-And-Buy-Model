@@ -49,22 +49,22 @@ export default function MySubCategory(){
       
       const handleClick=async()=>{
            var err=false
-           if(mainCategoryid.length==0)
+           if(mainCategoryid.length===0)
            {
              handleError("This field is required","maincategoryid")
              err=true
            }
-           if(subCategoryName.length==0)
+           if(subCategoryName.length===0)
            {
              handleError("This field is required","subcategoryname")
              err=true
            }
-           if(icon.bytes.length==0)
+           if(icon.bytes.length===0)
            {
              handleError("pls select some icon","icon")
              err=true
            }
-           if(err==false){
+           if(err===false){
            var formData=new FormData()
            formData.append('maincategoryid',mainCategoryid)
            formData.append('subcategoryname',subCategoryName)

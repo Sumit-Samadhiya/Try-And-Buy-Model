@@ -80,6 +80,11 @@ class MobileAuthTests(TestCase):
         self.assertEqual(client.post('/api/auth/send-otp/', {'phone': self.phone}, format='json').status_code, 403)
         self.sms.assert_not_called()
 
+    def test_phone_outer_whitespace_is_normalized_before_shared_validation(self):
+        code = self.send(' 9876543210 ')
+        self.assertEqual(self.sms.call_args.kwargs['json']['numbers'], self.phone)
+        self.assertEqual(self.verify(code, ' 9876543210 ').status_code, 200)
+
     def test_provider_errors_never_cache_code_or_leak_response(self):
         for failure in ('timeout', 'json', 'rejected'):
             cache.clear()

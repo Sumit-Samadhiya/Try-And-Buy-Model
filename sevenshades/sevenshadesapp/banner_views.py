@@ -13,15 +13,6 @@ from .upload_security import sanitize_filename
 logger = logging.getLogger(__name__)
 
 
-def Upload_Files(files):
-     iconname=[]
-     for uploaded_file in files.getlist('icon'):
-          safe_name = sanitize_filename(uploaded_file.name, fallback_ext='.jpg')
-          file_path = default_storage.save('static/' + safe_name, uploaded_file)
-          iconname.append(file_path[7:] if file_path.startswith('static/') else file_path)
-     return ",".join(iconname)
-
-
 @api_view(['POST'])
 def Banner_Submit(request):
     saved_files = []
@@ -41,7 +32,7 @@ def Banner_Submit(request):
             safe_name = sanitize_filename(uploaded_file.name, fallback_ext='.jpg')
             file_path = default_storage.save('static/' + safe_name, uploaded_file)
             saved_files.append(file_path)
-            iconname.append(file_path[7:] if file_path.startswith('static/') else file_path)
+            iconname.append(file_path)
 
         payload = {
             'bannerdescription': bannerdescription,
