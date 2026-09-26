@@ -26,7 +26,30 @@ export default function CustomerAuth({ kind = 'login' }) {
   const usesOtp = signup || reset || method === 'otp';
   const cooldown = Math.max(0, Math.ceil(((challenge?.resendAt || 0) - now) / 1000));
   const expired = challenge && now >= challenge.expiresAt;
-  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
+
+  const clearRecaptcha = () => {
+    if (typeof window !== 'undefined' && window.recaptchaVerifier) {
+      try { window.recaptchaVerifier.clear(); } catch (_) {}
+      window.recaptchaVerifier = null;
+    }
+    if (recaptchaVerifierRef.current) {
+      try { recaptchaVerifierRef.current.clear(); } catch (_) {}
+      recaptchaVerifierRef.current = null;
+    }
+    const container = typeof document !== 'undefined' ? document.getElementById('recaptcha-container') : null;
+    if (container) {
+      container.innerHTML = '';
+    }
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => {
+      clearInterval(timer);
+      clearRecaptcha();
+    };
+  }, []);
+
   const change = field => event => { setForm(old => ({ ...old, [field]: event.target.value })); setErrors(old => ({ ...old, [field]: '' })); setMessage(''); };
   const setResult = result => { setMessage(result.message || 'Please check your details.'); setErrors(Object.fromEntries(Object.entries(result.errors || {}).map(([key,value]) => [key, Array.isArray(value) ? value.join(' ') : value]))); };
   const field = (name, label, options = {}) => <TextField fullWidth required name={name} label={label} value={form[name]} onChange={change(name)} error={!!errors[name]} helperText={errors[name] || options.helperText} disabled={busy || (name === 'mobileno' && !!challenge)} {...options} />;
@@ -34,16 +57,35 @@ export default function CustomerAuth({ kind = 'login' }) {
   const run = async callback => { if (pending.current) return; pending.current = true; setBusy(true); setMessage(''); try { await callback(); } finally { setBusy(false); pending.current = false; } };
 
   const getRecaptchaVerifier = () => {
-    if (!recaptchaVerifierRef.current && typeof window !== 'undefined' && document.getElementById('recaptcha-container')) {
-      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
-        callback: () => {},
-        'expired-callback': () => {
-          recaptchaVerifierRef.current = null;
-        }
-      });
+    if (typeof window === 'undefined') return null;
+
+    // 1. Before creating a new RecaptchaVerifier, check if window.recaptchaVerifier exists.
+    // If so, call window.recaptchaVerifier.clear() and set it to null.
+    if (window.recaptchaVerifier) {
+      try { window.recaptchaVerifier.clear(); } catch (_) {}
+      window.recaptchaVerifier = null;
     }
-    return recaptchaVerifierRef.current;
+    if (recaptchaVerifierRef.current) {
+      try { recaptchaVerifierRef.current.clear(); } catch (_) {}
+      recaptchaVerifierRef.current = null;
+    }
+
+    // 2. Clear the innerHTML of document.getElementById('recaptcha-container') before instantiating.
+    const container = document.getElementById('recaptcha-container');
+    if (!container) return null;
+    container.innerHTML = '';
+
+    const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      size: 'invisible',
+      callback: () => {},
+      'expired-callback': () => {
+        clearRecaptcha();
+      }
+    });
+
+    window.recaptchaVerifier = verifier;
+    recaptchaVerifierRef.current = verifier;
+    return verifier;
   };
 
   const getFriendlyFirebaseError = (error) => {
@@ -101,10 +143,8 @@ export default function CustomerAuth({ kind = 'login' }) {
       return;
     } catch (fbError) {
       console.error('Firebase signInWithPhoneNumber error:', fbError);
-      if (recaptchaVerifierRef.current) {
-        try { recaptchaVerifierRef.current.clear(); } catch (_) {}
-        recaptchaVerifierRef.current = null;
-      }
+      // 4. Catch errors in signInWithPhoneNumber and ensure the verifier is cleared if the send operation fails.
+      clearRecaptcha();
       const friendlyMsg = getFriendlyFirebaseError(fbError);
       setMessage(friendlyMsg);
     }
@@ -185,7 +225,7 @@ export default function CustomerAuth({ kind = 'login' }) {
       <Typography variant="overline" sx={{ display:'block', color:'#8b6a3c', letterSpacing:2 }}>YOUR SEVENSHADES ACCOUNT</Typography>
       <Typography component="h1" variant="h4" sx={{ fontWeight:800, mt:1 }}>{signup ? 'Make yourself at home.' : reset ? 'A fresh start.' : 'Welcome back.'}</Typography>
       <Typography sx={{ color:'#727272', mt:1, mb:3 }}>{signup ? 'Create your account and verify your mobile number.' : reset ? 'Verify your mobile to set a new password.' : 'Your next favourite outfit is waiting.'}</Typography>
-      {!signup && !reset && <div className="auth-methods"><Button onClick={() => {setMethod('password');setChallenge(null);setErrors({});}} aria-pressed={method === 'password'}>Password</Button><Button onClick={() => {setMethod('otp');setChallenge(null);setErrors({});}} aria-pressed={method === 'otp'}>Login with OTP</Button></div>}
+      {!signup && !reset && <div className="auth-methods"><Button onClick={() => {setMethod('password');setChallenge(null);setConfirmationResult(null);clearRecaptcha();setErrors({});}} aria-pressed={method === 'password'}>Password</Button><Button onClick={() => {setMethod('otp');setChallenge(null);setConfirmationResult(null);clearRecaptcha();setErrors({});}} aria-pressed={method === 'otp'}>Login with OTP</Button></div>}
       <Stack component="form" noValidate onSubmit={submit} spacing={2}>
         {location.state?.authMessage && kind === 'login' && <Alert severity="success">{location.state.authMessage}</Alert>}
         {message && <Alert severity="info" role="status">{message}</Alert>}
@@ -194,7 +234,7 @@ export default function CustomerAuth({ kind = 'login' }) {
         {signup && field('emailid','Email address',{type:'email',autoComplete:'email',inputProps:{maxLength:70}})}
         {(signup || reset || !usesOtp) && passwordField('password',reset ? 'New password' : 'Password')}
         {(signup || reset) && <><Typography variant="caption" color="text.secondary">Use 8–128 characters. Avoid common or numeric-only passwords.</Typography>{passwordField('confirm_password','Confirm password')}</>}
-        {challenge && <>{field('otp','6-digit OTP',{autoComplete:'one-time-code',inputProps:{inputMode:'numeric',maxLength:6}})}<Typography variant="caption" color={expired ? 'error' : 'text.secondary'}>{expired ? 'OTP expired. Request a new code.' : 'OTP expires in ' + Math.max(0,Math.ceil((challenge.expiresAt-now)/1000)) + ' seconds.'}</Typography><Stack direction="row" justifyContent="space-between"><Button disabled={busy || cooldown>0} onClick={requestOtp}>{cooldown ? 'Resend in '+cooldown+'s' : 'Resend OTP'}</Button><Button disabled={busy} onClick={() => {setChallenge(null);setForm(old=>({...old,otp:''}));}}>Change mobile</Button></Stack></>}
+        {challenge && <>{field('otp','6-digit OTP',{autoComplete:'one-time-code',inputProps:{inputMode:'numeric',maxLength:6}})}<Typography variant="caption" color={expired ? 'error' : 'text.secondary'}>{expired ? 'OTP expired. Request a new code.' : 'OTP expires in ' + Math.max(0,Math.ceil((challenge.expiresAt-now)/1000)) + ' seconds.'}</Typography><Stack direction="row" justifyContent="space-between"><Button disabled={busy || cooldown>0} onClick={requestOtp}>{cooldown ? 'Resend in '+cooldown+'s' : 'Resend OTP'}</Button><Button disabled={busy} onClick={() => {setChallenge(null);setConfirmationResult(null);clearRecaptcha();setForm(old=>({...old,otp:''}));}}>Change mobile</Button></Stack></>}
         <div id="recaptcha-container"></div>
         <Button type="submit" variant="contained" size="large" disabled={busy || (expired && challenge)} sx={{ bgcolor:'#242424', borderRadius:2, py:1.5, boxShadow:'none', '&:hover':{bgcolor:'#414141'} }}>{busy ? 'Please wait…' : usesOtp && !challenge ? 'Get OTP' : signup ? 'Verify & create account' : reset ? 'Verify & reset password' : usesOtp ? 'Verify & sign in' : 'Sign in'}</Button>
       </Stack>
