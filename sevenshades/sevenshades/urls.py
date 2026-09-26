@@ -27,10 +27,13 @@ from sevenshadesapp import maincategory_views,mysubcategory_views,brands_views,p
 from django.urls import include,re_path
 from sevenshadesapp import auth_views
 from sevenshadesapp.security import protect_api
+from sevenshadesapp import firebase_views
 from sevenshadesapp.upload_security import secure_media_serve
 
 
 urlpatterns = [
+    path('api/auth/firebase-login/', firebase_views.firebase_login),
+    path('api/auth/firebase-login', firebase_views.firebase_login),
     path('api/auth/send-otp/', mobile_auth_views.send_otp),
     path('api/auth/verify-otp/', mobile_auth_views.verify_otp),
     path('api/admin_payment_recovery', payment_recovery_views.RecoveryQueue),

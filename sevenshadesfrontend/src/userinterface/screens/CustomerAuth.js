@@ -5,6 +5,8 @@ import { Alert, Box, Button, IconButton, InputAdornment, Stack, TextField, Typog
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import ArrowBack from '@mui/icons-material/ArrowBack';
+import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { auth } from '../../firebase';
 import { getData, postData, clearCachedAccounts } from '../../services/FetchDjangoApiServices';
 import { validateFields } from '../../services/validation';
 import './CustomerAuth.css';
@@ -17,30 +19,98 @@ export default function CustomerAuth({ kind = 'login' }) {
   const [config, setConfig] = useState(null), [challenge, setChallenge] = useState(null);
   const [busy, setBusy] = useState(false), [showPassword, setShowPassword] = useState(false), [now, setNow] = useState(Date.now());
   const pending = useRef(false);
+  const confirmationResultRef = useRef(null);
+  const recaptchaVerifierRef = useRef(null);
   const signup = kind === 'signup', reset = kind === 'reset';
   const usesOtp = signup || reset || method === 'otp';
   const purpose = signup ? 'signup' : reset ? 'reset' : 'login';
   const cooldown = Math.max(0, Math.ceil(((challenge?.resendAt || 0) - now) / 1000));
   const expired = challenge && now >= challenge.expiresAt;
-  useEffect(() => { getData('otp_config').then(result => setConfig(result.status ? result.data : { available:false })); const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
+  useEffect(() => { getData('otp_config').then(result => setConfig(result.status ? result.data : { available:true })); const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
   const change = field => event => { setForm(old => ({ ...old, [field]: event.target.value })); setErrors(old => ({ ...old, [field]: '' })); setMessage(''); };
   const setResult = result => { setMessage(result.message || 'Please check your details.'); setErrors(Object.fromEntries(Object.entries(result.errors || {}).map(([key,value]) => [key, Array.isArray(value) ? value.join(' ') : value]))); };
   const field = (name, label, options = {}) => <TextField fullWidth required name={name} label={label} value={form[name]} onChange={change(name)} error={!!errors[name]} helperText={errors[name] || options.helperText} disabled={busy || (name === 'mobileno' && !!challenge)} {...options} />;
   const passwordField = (name, label) => field(name, label, { type:showPassword ? 'text' : 'password', autoComplete:kind === 'login' ? 'current-password' : 'new-password', inputProps:{ maxLength:128 }, InputProps:{ endAdornment:<InputAdornment position="end"><IconButton aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(value => !value)} edge="end">{showPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment> } });
   const run = async callback => { if (pending.current) return; pending.current = true; setBusy(true); setMessage(''); try { await callback(); } finally { setBusy(false); pending.current = false; } };
+
+  const getRecaptchaVerifier = () => {
+    if (!recaptchaVerifierRef.current && typeof window !== 'undefined' && document.getElementById('recaptcha-container')) {
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: () => {},
+        'expired-callback': () => {
+          recaptchaVerifierRef.current = null;
+        }
+      });
+    }
+    return recaptchaVerifierRef.current;
+  };
+
   const requestOtp = () => run(async () => {
     const check = signup ? validateFields('signup_submit', { ...form, otp:'123456', challenge_id:'pending' }) : reset ? validateFields('reset_password', { mobileno:form.mobileno, password:form.password, confirm_password:form.confirm_password, otp:'123456', challenge_id:'pending' }) : validateFields('otp_request', { mobileno:form.mobileno, purpose });
     if (Object.keys(check).length) { setErrors(check); return; }
+
+    // 1. Try Firebase Phone Authentication
+    try {
+      const appVerifier = getRecaptchaVerifier();
+      if (appVerifier) {
+        const formattedPhone = form.mobileno.startsWith('+') ? form.mobileno : `+91${form.mobileno.trim()}`;
+        const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+        confirmationResultRef.current = confirmationResult;
+        const timestamp = Date.now();
+        setChallenge({ id: 'firebase-phone-auth', resendAt: timestamp + 60000, expiresAt: timestamp + 300000 });
+        setForm(old => ({ ...old, otp: '' }));
+        setErrors({});
+        setMessage('OTP sent to your mobile number via Firebase.');
+        return;
+      }
+    } catch (fbError) {
+      console.warn('Firebase signInWithPhoneNumber:', fbError);
+      if (recaptchaVerifierRef.current) {
+        try { recaptchaVerifierRef.current.clear(); } catch (_) {}
+        recaptchaVerifierRef.current = null;
+      }
+    }
+
+    // 2. Fallback / Test-mode backend request
     const result = await postData(purpose === 'login' ? 'auth/send-otp/' : 'otp_request', purpose === 'login' ? { phone:form.mobileno } : { mobileno:form.mobileno, purpose });
     if (!result.status) { setResult(result); return; }
     const timestamp = Date.now();
     setChallenge({ id:result.data.challenge_id || 'mobile-login', resendAt:timestamp+result.data.resend_after*1000, expiresAt:timestamp+result.data.expires_in*1000 });
     setForm(old => ({ ...old, otp:'' })); setErrors({}); setMessage(result.message);
   });
+
   const submit = event => {
     event.preventDefault();
     if (usesOtp && !challenge) { requestOtp(); return; }
     run(async () => {
+      // Firebase Verification Flow
+      if (usesOtp && confirmationResultRef.current && challenge?.id === 'firebase-phone-auth') {
+        try {
+          const userCredential = await confirmationResultRef.current.confirm(form.otp.trim());
+          const idToken = await userCredential.user.getIdToken();
+          const backendRes = await postData('auth/firebase-login/', { id_token: idToken });
+          if (!backendRes.status) {
+            setResult(backendRes);
+            return;
+          }
+          if (backendRes.token) {
+            localStorage.setItem('sevenshades_token', backendRes.token);
+          }
+          const user = backendRes.user || backendRes.data[0];
+          clearCachedAccounts();
+          dispatch({ type: 'ADD_USER', payLoad: [user.mobileno, user] });
+          const destination = location.state?.redirectTo;
+          navigate(typeof destination === 'string' && destination.startsWith('/') && !destination.startsWith('//') ? destination : '/home', { replace: true, state: location.state?.checkoutState });
+          return;
+        } catch (fbConfirmError) {
+          console.warn('Firebase confirm error:', fbConfirmError);
+          setMessage(fbConfirmError.message || 'Invalid or expired OTP code.');
+          return;
+        }
+      }
+
+      // Standard / fallback authentication flow
       const endpoint = signup ? 'signup_submit' : reset ? 'reset_password' : usesOtp ? 'otp_login' : 'check_costumer_login';
       const body = signup ? { ...form, challenge_id:challenge?.id } : reset ? { mobileno:form.mobileno, password:form.password, confirm_password:form.confirm_password, otp:form.otp, challenge_id:challenge?.id } : usesOtp ? { mobileno:form.mobileno, otp:form.otp, challenge_id:challenge.id } : { mobileno:form.mobileno, password:form.password };
       const check = validateFields(endpoint, body);
@@ -75,8 +145,8 @@ export default function CustomerAuth({ kind = 'login' }) {
         {(signup || reset || !usesOtp) && passwordField('password',reset ? 'New password' : 'Password')}
         {(signup || reset) && <><Typography variant="caption" color="text.secondary">Use 8–128 characters. Avoid common or numeric-only passwords.</Typography>{passwordField('confirm_password','Confirm password')}</>}
         {challenge && <>{field('otp','6-digit OTP',{autoComplete:'one-time-code',inputProps:{inputMode:'numeric',maxLength:6}})}<Typography variant="caption" color={expired ? 'error' : 'text.secondary'}>{expired ? 'OTP expired. Request a new code.' : 'OTP expires in ' + Math.max(0,Math.ceil((challenge.expiresAt-now)/1000)) + ' seconds.'}</Typography><Stack direction="row" justifyContent="space-between"><Button disabled={busy || cooldown>0} onClick={requestOtp}>{cooldown ? 'Resend in '+cooldown+'s' : 'Resend OTP'}</Button><Button disabled={busy} onClick={() => {setChallenge(null);setForm(old=>({...old,otp:''}));}}>Change mobile</Button></Stack></>}
-        {!signup && !reset && !usesOtp && <Link className="auth-forgot" to="/forgotpassword" state={location.state}>Forgot password?</Link>}
-        <Button type="submit" variant="contained" size="large" disabled={busy || (usesOtp && (!config?.available || expired))} sx={{ bgcolor:'#242424', borderRadius:2, py:1.5, boxShadow:'none', '&:hover':{bgcolor:'#414141'} }}>{busy ? 'Please wait…' : usesOtp && !challenge ? 'Get OTP' : signup ? 'Verify & create account' : reset ? 'Verify & reset password' : usesOtp ? 'Verify & sign in' : 'Sign in'}</Button>
+        <div id="recaptcha-container"></div>
+        <Button type="submit" variant="contained" size="large" disabled={busy || (expired && challenge)} sx={{ bgcolor:'#242424', borderRadius:2, py:1.5, boxShadow:'none', '&:hover':{bgcolor:'#414141'} }}>{busy ? 'Please wait…' : usesOtp && !challenge ? 'Get OTP' : signup ? 'Verify & create account' : reset ? 'Verify & reset password' : usesOtp ? 'Verify & sign in' : 'Sign in'}</Button>
       </Stack>
       <Typography sx={{ mt:3, textAlign:'center', color:'#666' }}>{signup || reset ? 'Already have an account? ' : 'New to SevenShades? '}<Link className="auth-link" to={signup || reset ? '/signindisplay' : '/signupdisplay'} state={location.state}>{signup || reset ? 'Sign in' : 'Create an account'}</Link></Typography>
     </Box></section>

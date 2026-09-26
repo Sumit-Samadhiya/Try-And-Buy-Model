@@ -16,6 +16,8 @@ sevenshades/db.sqlite3
 *.pem
 *.key
 *.cert
+*firebase*.json
+*-adminsdk*.json
 
 **/__pycache__/
 *.py[cod]
