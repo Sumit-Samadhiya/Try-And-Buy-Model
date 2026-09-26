@@ -104,6 +104,25 @@ export default function Home(props) {
         navigate('/productpage', { state: { products: item, pageView: 'SubCategoryComponent' } });
     };
 
+    const handleBudgetDealClick = (deal) => {
+        if (deal && (deal.title || deal.price_tag)) {
+            navigate('/productpage', {
+                state: {
+                    pageView: 'BudgetBazaarComponent',
+                    products: {
+                        id: deal.subcategoryid,
+                        maincategoryid: deal.maincategoryid,
+                        subcategoryname: deal.title
+                    },
+                    dealTitle: `${deal.title} (${deal.price_tag})`,
+                    maxPrice: deal.max_price
+                }
+            });
+            return;
+        }
+        handleSubCategoryClick(deal);
+    };
+
     const handleProductClick = (item) => {
         const queryParams = new URLSearchParams();
         if (item.id) queryParams.set('productid', item.id);
@@ -179,7 +198,7 @@ export default function Home(props) {
                     <BudgetBazaarComponent
                         subcategories={listSubCategory}
                         products={[...menProducts, ...womenProducts]}
-                        onItemClick={handleSubCategoryClick}
+                        onItemClick={handleBudgetDealClick}
                     />
                 </section>
 

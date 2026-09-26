@@ -7,7 +7,7 @@ from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.utils import timezone
 from rest_framework.decorators import api_view
-from .models import TryOrder, FinalOrder, SignUp, DeliveryRider, ProductDetails, SupportTicket, DeliveryZone, ExcludedArea
+from .models import TryOrder, FinalOrder, SignUp, DeliveryRider, ProductDetails, SupportTicket, DeliveryZone, ExcludedArea, BudgetDeal, MainCategory, MySubCategory
 
 from .security import failure
 
@@ -436,3 +436,115 @@ def RemovePincode(request):
         'message': f'Pincode {pincode} removed successfully.'
     })
 
+
+
+@api_view(['GET'])
+def Admin_Budget_Bazaar_List(request):
+    try:
+        deals = BudgetDeal.objects.all().select_related('maincategoryid', 'subcategoryid').order_by('order_index', 'id')
+        data = []
+        for d in deals:
+            icon_url = str(d.icon) if d.icon else (str(d.subcategoryid.icon) if d.subcategoryid and d.subcategoryid.icon else '')
+            data.append({
+                'id': d.id,
+                'title': d.title,
+                'price_tag': d.price_tag,
+                'max_price': d.max_price,
+                'maincategoryid': d.maincategoryid_id,
+                'maincategoryname': d.maincategoryid.maincategoryname if d.maincategoryid else '',
+                'subcategoryid': d.subcategoryid_id,
+                'subcategoryname': d.subcategoryid.subcategoryname if d.subcategoryid else '',
+                'icon': icon_url,
+                'tier_color': d.tier_color,
+                'order_index': d.order_index,
+                'is_active': d.is_active,
+            })
+        return JsonResponse({'status': True, 'data': data})
+    except Exception as e:
+        logger.exception('Admin_Budget_Bazaar_List error: %s', e)
+        return failure('Unable to fetch budget deals.', 500)
+
+
+@api_view(['POST'])
+@transaction.atomic
+def Admin_Budget_Bazaar_Save(request):
+    try:
+        deal_id = request.data.get('id')
+        title = (request.data.get('title') or '').strip()
+        price_tag = (request.data.get('price_tag') or '').strip()
+        max_price = request.data.get('max_price')
+        maincategoryid = request.data.get('maincategoryid')
+        subcategoryid = request.data.get('subcategoryid')
+        tier_color = (request.data.get('tier_color') or 'blue').strip()
+        order_index = int(request.data.get('order_index') or 0)
+        is_active = str(request.data.get('is_active', 'true')).lower() in ('true', '1')
+
+        if not title:
+            return failure('Title is required.', 400)
+        if not price_tag:
+            return failure('Price tag is required (e.g. Under ₹499).', 400)
+
+        max_price_val = None
+        if max_price not in (None, '', 'null'):
+            try:
+                max_price_val = int(max_price)
+            except (ValueError, TypeError):
+                max_price_val = None
+
+        main_cat = MainCategory.objects.filter(id=maincategoryid).first() if maincategoryid else None
+        sub_cat = MySubCategory.objects.filter(id=subcategoryid).first() if subcategoryid else None
+
+        if sub_cat and not main_cat:
+            main_cat = sub_cat.maincategoryid
+
+        if deal_id:
+            deal = BudgetDeal.objects.filter(id=deal_id).first()
+            if not deal:
+                return failure('Deal not found.', 404)
+            deal.title = title
+            deal.price_tag = price_tag
+            deal.max_price = max_price_val
+            deal.maincategoryid = main_cat
+            deal.subcategoryid = sub_cat
+            deal.tier_color = tier_color
+            deal.order_index = order_index
+            deal.is_active = is_active
+            if 'icon' in request.FILES:
+                deal.icon = request.FILES['icon']
+            deal.save()
+            msg = 'Budget deal updated successfully.'
+        else:
+            deal = BudgetDeal.objects.create(
+                title=title,
+                price_tag=price_tag,
+                max_price=max_price_val,
+                maincategoryid=main_cat,
+                subcategoryid=sub_cat,
+                tier_color=tier_color,
+                order_index=order_index,
+                is_active=is_active,
+                icon=request.FILES.get('icon')
+            )
+            msg = 'Budget deal created successfully.'
+
+        return JsonResponse({'status': True, 'message': msg, 'data': {'id': deal.id}})
+    except Exception as e:
+        logger.exception('Admin_Budget_Bazaar_Save error: %s', e)
+        return failure('Failed to save budget deal.', 500)
+
+
+@api_view(['POST'])
+@transaction.atomic
+def Admin_Budget_Bazaar_Delete(request):
+    try:
+        deal_id = request.data.get('id')
+        if not deal_id:
+            return failure('Deal ID is required.', 400)
+        deal = BudgetDeal.objects.filter(id=deal_id).first()
+        if not deal:
+            return failure('Deal not found.', 404)
+        deal.delete()
+        return JsonResponse({'status': True, 'message': 'Budget deal deleted successfully.'})
+    except Exception as e:
+        logger.exception('Admin_Budget_Bazaar_Delete error: %s', e)
+        return failure('Failed to delete budget deal.', 500)

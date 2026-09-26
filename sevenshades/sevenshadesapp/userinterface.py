@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.http.response import JsonResponse
 from rest_framework.parsers import JSONParser
 from rest_framework import status
-from sevenshadesapp.models import MainCategory,MySubCategory,Brands,Product,Banner,ProductDetails
+from sevenshadesapp.models import MainCategory,MySubCategory,Brands,Product,Banner,ProductDetails,BudgetDeal
 from sevenshadesapp.serializer import MainCategorySerializer,MySubCategorySerializer,MySubCategoryGetSerializer,BrandsSerializer,ProductGetSerializer,BannerSerializer,ProductDetailsGetSerializer
 from rest_framework.decorators import api_view
 
@@ -268,3 +268,29 @@ def User_Product_List(request):
      except Exception as e:
           logger.exception('Error in User_Product_List: %s', e)
           return JsonResponse({"data": [], "status": False}, safe=False)
+
+
+@api_view(['GET'])
+def User_Budget_Bazaar_List(request):
+    try:
+        deals = BudgetDeal.objects.filter(is_active=True).select_related('maincategoryid', 'subcategoryid').order_by('order_index', 'id')
+        data = []
+        for d in deals:
+            icon_url = str(d.icon) if d.icon else (str(d.subcategoryid.icon) if d.subcategoryid and d.subcategoryid.icon else '')
+            data.append({
+                'id': d.id,
+                'title': d.title,
+                'price_tag': d.price_tag,
+                'max_price': d.max_price,
+                'maincategoryid': d.maincategoryid_id,
+                'maincategoryname': d.maincategoryid.maincategoryname if d.maincategoryid else '',
+                'subcategoryid': d.subcategoryid_id,
+                'subcategoryname': d.subcategoryid.subcategoryname if d.subcategoryid else '',
+                'icon': icon_url,
+                'tier_color': d.tier_color,
+                'order_index': d.order_index,
+            })
+        return JsonResponse({'data': data, 'status': True})
+    except Exception as e:
+        logger.exception('Error in User_Budget_Bazaar_List: %s', e)
+        return JsonResponse({'data': [], 'status': False}, safe=False)

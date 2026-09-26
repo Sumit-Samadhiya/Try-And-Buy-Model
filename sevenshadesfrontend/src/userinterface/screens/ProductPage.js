@@ -13,8 +13,11 @@ export default function ProductPage(props) {
 
     const products = location.state?.products;
     const pageView = location.state?.pageView;
+    const maxPrice = location.state?.maxPrice;
+    const dealTitle = location.state?.dealTitle;
 
     const getTitle = () => {
+        if (dealTitle) return dealTitle;
         if (!products) return "Collections";
         return (
             products.subcategoryname ||
@@ -48,10 +51,32 @@ export default function ProductPage(props) {
             const allProducts = allProductResults.flatMap((res) => res?.data || []);
             const brandFiltered = allProducts.filter((item) => item?.brandid?.id === products.id);
             setProductList(brandFiltered);
+        } else if (pageView === "BudgetBazaarComponent") {
+            let items = [];
+            if (products.maincategoryid) {
+                const res = await postData('user_products_maincategory', { maincategoryid: products.maincategoryid });
+                items = res?.data || [];
+            } else {
+                const categoryResult = await getData('user_maincategory_list');
+                const categoryIds = (categoryResult?.data || []).map((cat) => cat.id);
+                const productPromises = categoryIds.map((id) => postData('user_products_maincategory', { maincategoryid: id }));
+                const allProductResults = await Promise.all(productPromises);
+                items = allProductResults.flatMap((res) => res?.data || []);
+            }
+            if (products.id) {
+                items = items.filter((item) => Number(item?.subcategoryid?.id) === Number(products.id));
+            }
+            if (maxPrice && Number(maxPrice) > 0) {
+                items = items.filter((item) => {
+                    const price = Number(item.min_offerprice > 0 ? item.min_offerprice : item.min_price || item.offerprice || item.price);
+                    return !price || price <= Number(maxPrice);
+                });
+            }
+            setProductList(items);
         }
 
         setLoading(false);
-    }, [pageView, products]);
+    }, [pageView, products, maxPrice]);
 
     useEffect(() => {
         setPageView();

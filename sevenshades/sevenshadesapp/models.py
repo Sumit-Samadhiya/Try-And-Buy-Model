@@ -400,3 +400,20 @@ def cleanup_brand_image_on_delete(sender, instance, **kwargs):
             os.remove(instance.icon.path)
         except OSError:
             pass
+
+
+class BudgetDeal(models.Model):
+    title = models.CharField(max_length=100)
+    price_tag = models.CharField(max_length=50)
+    max_price = models.IntegerField(null=True, blank=True)
+    maincategoryid = models.ForeignKey(MainCategory, on_delete=models.SET_NULL, null=True, blank=True)
+    subcategoryid = models.ForeignKey(MySubCategory, on_delete=models.SET_NULL, null=True, blank=True)
+    icon = models.ImageField(upload_to='static/', null=True, blank=True)
+    tier_color = models.CharField(max_length=20, default='blue')
+    order_index = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.price_tag})"

@@ -159,6 +159,10 @@ urlpatterns = [
     path('api/list_excluded_areas', admin_workspace_views.ListExcludedAreas),
     path('api/save_excluded_area', admin_workspace_views.SaveExcludedArea),
     path('api/delete_excluded_area', admin_workspace_views.DeleteExcludedArea),
+    path('api/user_budget_bazaar_list', userinterface.User_Budget_Bazaar_List),
+    path('api/admin_budget_bazaar_list', admin_workspace_views.Admin_Budget_Bazaar_List),
+    path('api/admin_budget_bazaar_save', admin_workspace_views.Admin_Budget_Bazaar_Save),
+    path('api/admin_budget_bazaar_delete', admin_workspace_views.Admin_Budget_Bazaar_Delete),
     re_path(r'^media/(?P<path>.*)$', secure_media_serve, name='media_serve'),
     re_path(r'^(?P<path>static/.*)$', secure_media_serve, name='static_serve'),
 ]
