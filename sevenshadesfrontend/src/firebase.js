@@ -2,13 +2,13 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyAx4CnJeQT0YujFWFq76kP9jwLWe-V18RI",
-  authDomain: "ry-and-buy-auth.firebaseapp.com",
-  projectId: "ry-and-buy-auth",
-  storageBucket: "ry-and-buy-auth.firebasestorage.app",
-  messagingSenderId: "213603112745",
-  appId: "1:213603112745:web:b1e681cf299a0eff25c938",
-  measurementId: "G-GSDYWH6NFD"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
