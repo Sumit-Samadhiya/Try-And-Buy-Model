@@ -83,6 +83,10 @@ class InputValidationTests(TestCase):
         }
         self.assertIn('delivery_date', validate_request('try_order_create', payload, {}))
 
+    def test_admin_order_limit_matches_view_contract(self):
+        self.assertEqual(validate_request('admin_order_lifecycle_list', {'limit': '20'}, {}), {})
+        self.assertIn('limit', validate_request('admin_order_lifecycle_list', {'limit': '501'}, {}))
+
     def test_slug_ids_format_rejected_when_containing_malicious_characters(self):
         """Verifies that IDs cannot contain XSS vectors, SQL fragments, or invalid characters."""
         for bad_id in ('<script>alert(1)</script>', 'ORD 123', 'ORD;DROP TABLE', 'ORD/../', ''):

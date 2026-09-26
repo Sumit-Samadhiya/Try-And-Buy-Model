@@ -4,7 +4,8 @@ import axios from 'axios';
 const serverURL = process.env.REACT_APP_API_URL || `${window.location.protocol}//${window.location.hostname}:8000`;
 const api = axios.create({ baseURL: `${serverURL}/api/`, withCredentials: true, timeout: 20000 });
 
-export const clearCachedAccounts = () => {
+export const clearCachedAccounts = (keepToken = false) => {
+  if (!keepToken) localStorage.removeItem('sevenshades_token');
   ['sevenshades_user', 'ADMIN', 'delivery_boy_auth_v1', 'delivery_tasks_live_v1'].forEach(key => localStorage.removeItem(key));
 };
 
@@ -35,8 +36,14 @@ const apiError = error => {
   };
 };
 
+const loginEndpoints = new Set(['check_costumer_login', 'check_admin_login', 'delivery_rider_login', 'auth/firebase-login']);
+const tokenHeaders = url => {
+  const token = localStorage.getItem('sevenshades_token');
+  return token && !loginEndpoints.has(url.replace(/\/$/, '')) ? { Authorization: `Bearer ${token}` } : {};
+};
+
 const getData = async url => {
-  try { return (await api.get(url)).data; }
+  try { return (await api.get(url, { headers: tokenHeaders(url) })).data; }
   catch (error) { return apiError(error); }
 };
 
@@ -50,8 +57,11 @@ const postData = async (url, body) => {
   const errors = validateFields(url, body);
   if (Object.keys(errors).length) return { status: false, errors, message: Object.values(errors).join(' '), httpStatus: 400 };
   try {
-    const csrfToken = await csrf();
-    return (await api.post(url, body, { headers: { 'X-CSRFToken': csrfToken } })).data;
+    const headers = tokenHeaders(url);
+    if (!headers.Authorization) headers['X-CSRFToken'] = await csrf();
+    const result = (await api.post(url, body, { headers })).data;
+    if (result.status && loginEndpoints.has(url.replace(/\/$/, ''))) localStorage.removeItem('sevenshades_token');
+    return result;
   } catch (error) { return apiError(error); }
 };
 

@@ -13,7 +13,7 @@ export default function RequireSession({ role, children }) {
     getData('auth_session').then(result => {
       if (!active) return;
       if (result.status && result.role === role) {
-        clearCachedAccounts();
+        clearCachedAccounts(true);
         if (role === 'customer') dispatch({ type: 'ADD_USER', payLoad: [result.data.mobileno, result.data] });
         // Riders read this back to look up their own tasks, so keep only the
         // fields those screens need rather than mirroring the whole account.

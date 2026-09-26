@@ -5,7 +5,7 @@ import { Alert, Box, Button, IconButton, InputAdornment, Stack, TextField, Typog
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import ArrowBack from '@mui/icons-material/ArrowBack';
-import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { RecaptchaVerifier, signInWithPhoneNumber, signOut } from 'firebase/auth';
 import { auth } from '../../firebase';
 import { postData, clearCachedAccounts } from '../../services/FetchDjangoApiServices';
 import { validateFields } from '../../services/validation';
@@ -91,7 +91,7 @@ export default function CustomerAuth({ kind = 'login' }) {
   const getFriendlyFirebaseError = (error) => {
     const code = error?.code || '';
     if (code === 'auth/operation-not-allowed') {
-      return 'Firebase error: Spark free plan par real SMS block hota hai. Ya toh Firebase Console > Settings > SMS region policy me India allow karein, ya Sign-in method me "Phone numbers for testing" me apna mobile aur fixed OTP add karein.';
+      return 'Phone sign-in is currently unavailable. Please contact support.';
     }
     if (code === 'auth/unauthorized-domain') {
       return 'Yeh domain Firebase me authorized nahi hai. Kripya Firebase Console > Authentication > Settings > Authorized domains me yeh domain add karein.';
@@ -113,7 +113,7 @@ export default function CustomerAuth({ kind = 'login' }) {
 
   // 1. Send OTP using Firebase Web SDK (NO backend fetch call to /send-otp/)
   const requestOtp = () => run(async () => {
-    const rawNumber = form.mobileno.replace(/\D/g, '').slice(-10);
+    const rawNumber = form.mobileno.trim();
     if (!/^[6-9]\d{9}$/.test(rawNumber)) {
       setErrors({ mobileno: 'Enter a valid 10-digit mobile number' });
       return;
@@ -161,7 +161,7 @@ export default function CustomerAuth({ kind = 'login' }) {
           setMessage('No active OTP session. Please click "Get OTP" first.');
           return;
         }
-        if (!form.otp || form.otp.trim().length !== 6) {
+        if (!/^[0-9]{6}$/.test(form.otp.trim())) {
           setErrors({ otp: 'Please enter 6-digit OTP' });
           return;
         }
@@ -175,6 +175,7 @@ export default function CustomerAuth({ kind = 'login' }) {
           // Send THAT token to our Django backend /api/auth/firebase-login/
           const payload = {
             id_token: idToken,
+            ...(usesOtp && (signup || reset) ? { purpose: signup ? 'signup' : 'reset', password: form.password, confirm_password: form.confirm_password } : {}),
             ...(signup ? { fname: form.fname, lname: form.lname, emailid: form.emailid, password: form.password } : {})
           };
 
@@ -184,12 +185,13 @@ export default function CustomerAuth({ kind = 'login' }) {
             return;
           }
 
+          clearCachedAccounts();
+          await signOut(auth).catch(() => {});
           if (backendRes.token) {
             localStorage.setItem('sevenshades_token', backendRes.token);
           }
 
           const user = backendRes.user || (backendRes.data && backendRes.data[0]);
-          clearCachedAccounts();
           dispatch({ type: 'ADD_USER', payLoad: [user.mobileno, user] });
 
           const destination = location.state?.redirectTo;
@@ -225,7 +227,7 @@ export default function CustomerAuth({ kind = 'login' }) {
       <Typography variant="overline" sx={{ display:'block', color:'#8b6a3c', letterSpacing:2 }}>YOUR SEVENSHADES ACCOUNT</Typography>
       <Typography component="h1" variant="h4" sx={{ fontWeight:800, mt:1 }}>{signup ? 'Make yourself at home.' : reset ? 'A fresh start.' : 'Welcome back.'}</Typography>
       <Typography sx={{ color:'#727272', mt:1, mb:3 }}>{signup ? 'Create your account and verify your mobile number.' : reset ? 'Verify your mobile to set a new password.' : 'Your next favourite outfit is waiting.'}</Typography>
-      {!signup && !reset && <div className="auth-methods"><Button onClick={() => {setMethod('password');setChallenge(null);setConfirmationResult(null);clearRecaptcha();setErrors({});}} aria-pressed={method === 'password'}>Password</Button><Button onClick={() => {setMethod('otp');setChallenge(null);setConfirmationResult(null);clearRecaptcha();setErrors({});}} aria-pressed={method === 'otp'}>Login with OTP</Button></div>}
+      {!signup && !reset && <div className="auth-methods"><Button onClick={() => {setMethod('password');setChallenge(null);setConfirmationResult(null);confirmationResultRef.current=null;clearRecaptcha();setErrors({});}} aria-pressed={method === 'password'}>Password</Button><Button onClick={() => {setMethod('otp');setChallenge(null);setConfirmationResult(null);clearRecaptcha();setErrors({});}} aria-pressed={method === 'otp'}>Login with OTP</Button></div>}
       <Stack component="form" noValidate onSubmit={submit} spacing={2}>
         {location.state?.authMessage && kind === 'login' && <Alert severity="success">{location.state.authMessage}</Alert>}
         {message && <Alert severity="info" role="status">{message}</Alert>}
@@ -235,9 +237,11 @@ export default function CustomerAuth({ kind = 'login' }) {
         {(signup || reset || !usesOtp) && passwordField('password',reset ? 'New password' : 'Password')}
         {(signup || reset) && <><Typography variant="caption" color="text.secondary">Use 8–128 characters. Avoid common or numeric-only passwords.</Typography>{passwordField('confirm_password','Confirm password')}</>}
         {challenge && <>{field('otp','6-digit OTP',{autoComplete:'one-time-code',inputProps:{inputMode:'numeric',maxLength:6}})}<Typography variant="caption" color={expired ? 'error' : 'text.secondary'}>{expired ? 'OTP expired. Request a new code.' : 'OTP expires in ' + Math.max(0,Math.ceil((challenge.expiresAt-now)/1000)) + ' seconds.'}</Typography><Stack direction="row" justifyContent="space-between"><Button disabled={busy || cooldown>0} onClick={requestOtp}>{cooldown ? 'Resend in '+cooldown+'s' : 'Resend OTP'}</Button><Button disabled={busy} onClick={() => {setChallenge(null);setConfirmationResult(null);clearRecaptcha();setForm(old=>({...old,otp:''}));}}>Change mobile</Button></Stack></>}
+        {usesOtp && <Typography variant="caption">Your phone number is sent to Google for phone verification and abuse prevention.</Typography>}
         <div id="recaptcha-container"></div>
         <Button type="submit" variant="contained" size="large" disabled={busy || (expired && challenge)} sx={{ bgcolor:'#242424', borderRadius:2, py:1.5, boxShadow:'none', '&:hover':{bgcolor:'#414141'} }}>{busy ? 'Please wait…' : usesOtp && !challenge ? 'Get OTP' : signup ? 'Verify & create account' : reset ? 'Verify & reset password' : usesOtp ? 'Verify & sign in' : 'Sign in'}</Button>
       </Stack>
+      {!signup && !reset && <Link className="auth-link" to="/forgotpassword">Forgot password?</Link>}
       <Typography sx={{ mt:3, textAlign:'center', color:'#666' }}>{signup || reset ? 'Already have an account? ' : 'New to SevenShades? '}<Link className="auth-link" to={signup || reset ? '/signindisplay' : '/signupdisplay'} state={location.state}>{signup || reset ? 'Sign in' : 'Create an account'}</Link></Typography>
     </Box></section>
   </main>;

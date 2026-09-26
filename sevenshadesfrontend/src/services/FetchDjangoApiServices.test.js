@@ -32,3 +32,12 @@ test('logout revokes the server session and removes cached tasks', async () => {
   expect(api.post.mock.calls[0][0]).toBe('auth_logout');
   expect(localStorage.getItem('delivery_tasks_live_v1')).toBeNull();
 });
+
+test('stored application JWT is used and removed after logout', async () => {
+  localStorage.setItem('sevenshades_token', 'app-jwt');
+  api.post.mockResolvedValue({data:{status:true}});
+  await logout();
+  expect(api.post).toHaveBeenCalledWith('auth_logout', {}, {headers:{Authorization:'Bearer app-jwt'}});
+  expect(api.get).not.toHaveBeenCalled();
+  expect(localStorage.getItem('sevenshades_token')).toBeNull();
+});

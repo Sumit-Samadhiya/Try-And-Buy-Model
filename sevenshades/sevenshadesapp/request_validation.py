@@ -105,7 +105,7 @@ ENDPOINT_SCHEMAS = {
     },
     'admin_order_lifecycle_list': {
         'required': [],
-        'allowed': {'filter', 'status'}
+        'allowed': {'filter', 'status', 'limit'}
     },
     'cancel_trial': {
         'required': ['order_id'],
@@ -386,6 +386,7 @@ INTEGER_LIMITS = {
     'rating': (1, 5),
     'bill_revision': (0, 1000),
     'max_orders': (1, 100),
+    'limit': (1, 500),
     'id': (1, 2147483647),
     'maincategoryid': (1, 2147483647),
     'subcategoryid': (1, 2147483647),

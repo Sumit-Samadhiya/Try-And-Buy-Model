@@ -5,7 +5,7 @@ import { createStore } from 'redux';
 import CustomerAuth from './CustomerAuth';
 import RootReducer from '../../storage/RootReducer';
 import { postData } from '../../services/FetchDjangoApiServices';
-import { signInWithPhoneNumber, RecaptchaVerifier } from 'firebase/auth';
+import { signInWithPhoneNumber, signOut, RecaptchaVerifier } from 'firebase/auth';
 
 jest.mock('../../services/FetchDjangoApiServices', () => ({
   getData: jest.fn(),
@@ -16,6 +16,7 @@ jest.mock('../../services/FetchDjangoApiServices', () => ({
 jest.mock('firebase/auth', () => {
   return {
     getAuth: jest.fn(() => ({})),
+    signOut: jest.fn().mockResolvedValue(),
     RecaptchaVerifier: jest.fn().mockImplementation(() => ({
       clear: jest.fn()
     })),
@@ -44,6 +45,7 @@ function fill(label, value) {
 beforeEach(() => {
   jest.clearAllMocks();
   postData.mockReset();
+  signOut.mockResolvedValue();
 });
 
 test('invalid login fields show inline errors without a request', async () => {
@@ -125,4 +127,23 @@ test('signup rejects mismatched confirmation before requesting OTP', async () =>
   });
   expect(await screen.findByText('Passwords do not match.')).toBeInTheDocument();
   expect(signInWithPhoneNumber).not.toHaveBeenCalled();
+});
+
+test('reset sends the new password with the Firebase proof', async () => {
+  signInWithPhoneNumber.mockResolvedValue({ confirm: jest.fn().mockResolvedValue({
+    user: { getIdToken: jest.fn().mockResolvedValue('reset-proof') }
+  }) });
+  postData.mockResolvedValue({ status:true, token:'new-token', user:{mobileno:'9000000091'} });
+  show('reset');
+  fill(/Mobile number/, '9000000091');
+  fill(/New password/, 'Fresh-password!429');
+  fill(/Confirm password/, 'Fresh-password!429');
+  await act(async () => fireEvent.click(screen.getByRole('button', {name:'Get OTP'})));
+  fill(/6-digit OTP/, '123456');
+  await act(async () => fireEvent.click(screen.getByRole('button', {name:'Verify & reset password'})));
+  expect(postData).toHaveBeenCalledWith('auth/firebase-login/', {
+    id_token:'reset-proof', purpose:'reset', password:'Fresh-password!429', confirm_password:'Fresh-password!429'
+  });
+  expect(await screen.findByText('Signed in home')).toBeInTheDocument();
+  expect(localStorage.getItem('sevenshades_token')).toBe('new-token');
 });

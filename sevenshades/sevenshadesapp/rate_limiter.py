@@ -8,6 +8,7 @@ from django.utils.crypto import salted_hmac
 
 
 AUTH_ENDPOINTS = {
+    'auth/firebase-login',
     'check_costumer_login',
     'check_admin_login',
     'delivery_rider_login',
