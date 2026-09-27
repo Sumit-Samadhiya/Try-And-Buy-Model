@@ -1,4 +1,5 @@
 import { validateFields } from '../../services/validation';
+import { deliverySlots, indiaDate, slotAvailable } from '../../services/deliverySchedule';
 import LocationButton from '../../services/LocationButton';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -49,7 +50,12 @@ export default function UserAddressForm() {
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(-1);
   const [deliveryMode, setDeliveryMode] = useState('standard');
   const [deliverySlot, setDeliverySlot] = useState('10:00 AM - 02:00 PM');
-  const [deliveryDate, setDeliveryDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [deliveryDate, setDeliveryDate] = useState(() => indiaDate());
+  const [clock, setClock] = useState(Date.now());
+  useEffect(() => { const timer = setInterval(() => setClock(Date.now()), 30000); return () => clearInterval(timer); }, []);
+  useEffect(() => {
+    if (!slotAvailable(deliveryDate, deliverySlot, clock)) setDeliverySlot(deliverySlots.find(slot => slotAvailable(deliveryDate, slot, clock)) || '');
+  }, [deliveryDate, deliverySlot, clock]);
   const [editingAddress, setEditingAddress] = useState(null);
 
   const billingItems = trialDetails.billingItems || [];
@@ -490,7 +496,7 @@ export default function UserAddressForm() {
                         {[0, 1, 2].map((offset) => {
                           const d = new Date();
                           d.setDate(d.getDate() + offset);
-                          const iso = d.toISOString().slice(0, 10);
+                          const iso = indiaDate(d);
                           const label = offset === 0 ? 'Today' : offset === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
                           return (
                             <Button
@@ -510,9 +516,11 @@ export default function UserAddressForm() {
                         Route Slot:
                       </Typography>
                       <Stack spacing={0.5} sx={{ mt: 0.5 }}>
-                        {['10:00 AM - 02:00 PM', '02:00 PM - 06:00 PM', '06:00 PM - 09:00 PM'].map((slot) => (
+                        {!deliverySlot && <Typography role="status">No slots remain for this date. Please choose another day.</Typography>}
+                        {deliverySlots.map((slot) => (
                           <Button
                             key={slot}
+                            disabled={!slotAvailable(deliveryDate, slot, clock)}
                             size="small"
                             variant={deliverySlot === slot ? 'contained' : 'outlined'}
                             onClick={(e) => { e.stopPropagation(); setDeliverySlot(slot); }}
