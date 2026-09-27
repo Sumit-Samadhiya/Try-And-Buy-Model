@@ -305,7 +305,7 @@ ENDPOINT_SCHEMAS = {
     },
     'user_products_maincategory': {
         'required': ['maincategoryid'],
-        'allowed': {'maincategoryid'}
+        'allowed': {'maincategoryid', 'limit'}
     },
     'user_productsdetails_by_id': {
         'required': ['productid'],

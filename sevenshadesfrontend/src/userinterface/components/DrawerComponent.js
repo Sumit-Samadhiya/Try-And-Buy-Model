@@ -23,7 +23,7 @@ export default function DrawerComponent(props){
             return(<ListItemButton key={item.id}>
                  <ListItemText primary={<div style={{fontSize:20,fontWeight:'bold',letterSpacing:1,textAlign:'start'}}>{item.maincategoryname}</div>} ></ListItemText>
             <ListItemIcon>
-            <div><img src={imageUrl(item.icon)} style={{width:60,height:60,borderRadius:10}} alt='' /></div>
+            <div><img src={imageUrl(item.icon)} style={{width:60,height:60,borderRadius:10}} alt='' loading="lazy" decoding="async" /></div>
             </ListItemIcon>
            
             </ListItemButton>)
@@ -39,7 +39,7 @@ export default function DrawerComponent(props){
            <ListItemButton> 
                  <ListItemText primary={<div style={{fontSize:20,fontWeight:'bold',letterSpacing:1,textAlign:'start'}}>Your Opinion</div>} ></ListItemText>
             <ListItemIcon>
-            <div><img src={`${serverURL}/static/orders.png`} style={{width:60,height:60,borderRadius:10}} alt='' /></div>
+            <div><img src={`${serverURL}/static/orders.png`} style={{width:60,height:60,borderRadius:10}} alt='' loading="lazy" decoding="async" /></div>
             </ListItemIcon>
            
             </ListItemButton>
@@ -47,7 +47,7 @@ export default function DrawerComponent(props){
             <ListItemButton> 
                  <ListItemText primary={<div style={{fontSize:20,fontWeight:'bold',letterSpacing:1,textAlign:'start'}}>Your Profile</div>} ></ListItemText>
             <ListItemIcon>
-            <div><img src={`${serverURL}/static/profile.png`} style={{width:60,height:60,borderRadius:10}} alt='' /></div>
+            <div><img src={`${serverURL}/static/profile.png`} style={{width:60,height:60,borderRadius:10}} alt='' loading="lazy" decoding="async" /></div>
             </ListItemIcon>
            
             </ListItemButton>
@@ -56,7 +56,7 @@ export default function DrawerComponent(props){
             <ListItemButton> 
                  <ListItemText primary={<div style={{fontSize:20,fontWeight:'bold',letterSpacing:1,textAlign:'start'}}>LogOut</div>} ></ListItemText>
             <ListItemIcon>
-            <div><img src={`${serverURL}/static/logout.png`} style={{width:60,height:60,borderRadius:10}} alt='' /></div>
+            <div><img src={`${serverURL}/static/logout.png`} style={{width:60,height:60,borderRadius:10}} alt='' loading="lazy" decoding="async" /></div>
             </ListItemIcon>
            
             </ListItemButton>

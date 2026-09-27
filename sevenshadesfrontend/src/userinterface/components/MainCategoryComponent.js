@@ -52,6 +52,7 @@ export default function MainCategoryComponent(props) {
                             src={imageUrl(item.icon)}
                             alt={item.maincategoryname || ''}
                             loading="lazy"
+                            decoding="async"
                             style={{
                                 display: 'block',
                                 width: '100%',

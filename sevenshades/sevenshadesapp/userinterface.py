@@ -233,7 +233,15 @@ def User_Products_Maincategory(request):
      try:
           if request.method=='POST':
                maincategoryid=request.data['maincategoryid']
+               limit = request.data.get('limit')
                product_list=Product.objects.filter(maincategoryid=maincategoryid)
+               if limit:
+                    try:
+                         limit_num = int(limit)
+                         if limit_num > 0:
+                              product_list = product_list[:limit_num]
+                    except (ValueError, TypeError):
+                         pass
                data = serialize_flipkart_color_listings(product_list)
                return JsonResponse({"data": data, "status": True})
           else:

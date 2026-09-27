@@ -8,7 +8,8 @@ from rest_framework import status
 from sevenshadesapp.models import Banner
 from sevenshadesapp.serializer import BannerSerializer
 
-from .upload_security import sanitize_filename
+from django.core.files.base import ContentFile
+from .upload_security import sanitize_filename, optimize_uploaded_image
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +30,9 @@ def Banner_Submit(request):
 
         iconname = []
         for uploaded_file in uploaded_files:
-            safe_name = sanitize_filename(uploaded_file.name, fallback_ext='.jpg')
-            file_path = default_storage.save('static/' + safe_name, uploaded_file)
+            safe_name = sanitize_filename(uploaded_file.name, fallback_ext='.webp')
+            optimized_data = optimize_uploaded_image(uploaded_file, max_dimension=1920, quality=78)
+            file_path = default_storage.save('static/' + safe_name, ContentFile(optimized_data))
             saved_files.append(file_path)
             iconname.append(file_path)
 

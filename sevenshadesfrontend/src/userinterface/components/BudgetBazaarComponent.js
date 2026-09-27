@@ -119,6 +119,7 @@ export default function BudgetBazaarComponent({ subcategories = [], products = [
                                     alt={displayLabel}
                                     className="bbz-img"
                                     loading="lazy"
+                                    decoding="async"
                                 />
                             </div>
 

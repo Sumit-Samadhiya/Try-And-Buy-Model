@@ -75,7 +75,7 @@ export default function Home(props) {
 
         await Promise.all([[menCat, setMenProducts], [womenCat, setWomenProducts]].map(async ([category, update]) => {
             if (!category?.id) { update([]); return; }
-            const result = await catalogData('user_products_maincategory', { maincategoryid: category.id });
+            const result = await catalogData('user_products_maincategory', { maincategoryid: category.id, limit: 6 });
             if (!result?.status) setLoadError(true);
             update(uniqueProducts(result?.data || []));
         }));

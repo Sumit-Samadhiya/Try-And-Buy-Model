@@ -12,11 +12,14 @@ from .upload_security import sanitize_filename
 FIELDS=('maincategoryid','subcategoryid','brandid','productid','productsubname','description','qty','price','color','size','offerprice','offertype')
 
 def Upload_Files(files):
+    from .upload_security import sanitize_filename, optimize_uploaded_image
+    from django.core.files.base import ContentFile
     saved=[]
     try:
         for upload in files.getlist('icon'):
-            safe_name = sanitize_filename(upload.name, fallback_ext='.png')
-            saved.append(default_storage.save('static/' + safe_name, upload))
+            safe_name = sanitize_filename(upload.name, fallback_ext='.jpg')
+            opt_data = optimize_uploaded_image(upload, max_dimension=1200, quality=78)
+            saved.append(default_storage.save('static/' + safe_name, ContentFile(opt_data)))
     except Exception:
         for name in saved: default_storage.delete(name)
         raise

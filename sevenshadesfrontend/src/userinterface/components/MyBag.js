@@ -93,6 +93,8 @@ export default function MyBag(props) {
                     src={item?.productid?.icon ? imageUrl(item.productid.icon) : imageUrl(item.icon?.split(',')[0] || '')}
                     alt=""
                     className="product-image"
+                    loading="lazy"
+                    decoding="async"
                 />
                 <div className="product-details">
                     <div className="product-name">{item?.productid?.productname || item.productname}</div>

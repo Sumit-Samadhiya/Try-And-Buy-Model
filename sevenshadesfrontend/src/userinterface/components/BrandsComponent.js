@@ -52,6 +52,7 @@ export default function BrandsComponent(props) {
                             src={imageUrl(item.icon)}
                             alt={item.brandname || ''}
                             loading="lazy"
+                            decoding="async"
                         />
                     </div>
                 </div>

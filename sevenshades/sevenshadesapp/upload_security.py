@@ -191,6 +191,70 @@ def validate_uploaded_image(upload) -> list[str]:
     return []
 
 
+def optimize_uploaded_image(upload, max_dimension: int = 1920, quality: int = 78) -> bytes:
+    """Optimizes and compresses an uploaded image in-memory using Pillow.
+    
+    - Auto-orients EXIF.
+    - Resizes to max_dimension (maintaining aspect ratio) if larger.
+    - Compresses with quality=78 to keep sizes small (30-150 KB).
+    """
+    upload.seek(0)
+    data = upload.read()
+    upload.seek(0)
+    if not data:
+        return data
+
+    try:
+        from PIL import ImageOps
+        with Image.open(BytesIO(data)) as img:
+            img = ImageOps.exif_transpose(img)
+            w, h = img.size
+            if w > max_dimension or h > max_dimension:
+                img.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
+            
+            out = BytesIO()
+            fmt = (img.format or 'JPEG').upper()
+            if fmt == 'WEBP':
+                img.save(out, format='WEBP', quality=quality, method=6)
+            elif fmt == 'PNG':
+                if 'A' in img.getbands() or 'transparency' in img.info:
+                    img.save(out, format='PNG', optimize=True)
+                else:
+                    img = img.convert('RGB')
+                    img.save(out, format='JPEG', quality=quality, optimize=True)
+            else:
+                if img.mode in ('RGBA', 'P'):
+                    img = img.convert('RGB')
+                img.save(out, format='JPEG', quality=quality, optimize=True)
+            return out.getvalue()
+    except Exception as exc:
+        logger.warning('Could not optimize image in-memory, using original: %s', exc)
+        return data
+
+
+def generate_thumbnail(upload, size: tuple = (400, 500), quality: int = 75) -> bytes:
+    """Generates a small product card thumbnail (30-50 KB) in WebP format."""
+    upload.seek(0)
+    data = upload.read()
+    upload.seek(0)
+    if not data:
+        return data
+
+    try:
+        from PIL import ImageOps
+        with Image.open(BytesIO(data)) as img:
+            img = ImageOps.exif_transpose(img)
+            img.thumbnail(size, Image.Resampling.LANCZOS)
+            out = BytesIO()
+            if img.mode in ('RGBA', 'P') and 'A' not in img.getbands():
+                img = img.convert('RGB')
+            img.save(out, format='WEBP', quality=quality, method=6)
+            return out.getvalue()
+    except Exception as exc:
+        logger.warning('Could not generate thumbnail, fallback to original: %s', exc)
+        return data
+
+
 def secure_media_serve(request, path: str):
     """Securely serves media files from MEDIA_ROOT with strict headers preventing
     code execution or MIME-type confusion attacks.

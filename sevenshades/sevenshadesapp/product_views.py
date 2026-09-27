@@ -8,11 +8,16 @@ from .security import failure
 
 
 def save_product(request, instance=None, image_only=False):
-    from .upload_security import sanitize_filename
+    from .upload_security import sanitize_filename, optimize_uploaded_image
+    from django.core.files.base import ContentFile
     fields = ['icon'] if image_only else ['maincategoryid','subcategoryid','brandid','productname','description']
     if instance is None: fields.append('icon')
     raw_icon = request.FILES.get('icon') or request.data.get('icon')
-    if hasattr(raw_icon, 'name'):
+    if hasattr(raw_icon, 'name') and hasattr(raw_icon, 'read'):
+        safe_name = sanitize_filename(raw_icon.name, fallback_ext='.jpg')
+        opt_data = optimize_uploaded_image(raw_icon, max_dimension=1200, quality=78)
+        raw_icon = ContentFile(opt_data, name=safe_name)
+    elif hasattr(raw_icon, 'name'):
         raw_icon.name = sanitize_filename(raw_icon.name, fallback_ext='.png')
     serializer = ProductSerializer(instance, data={key: (raw_icon if key == 'icon' else request.data.get(key)) for key in fields}, partial=image_only or instance is not None)
     if not serializer.is_valid():

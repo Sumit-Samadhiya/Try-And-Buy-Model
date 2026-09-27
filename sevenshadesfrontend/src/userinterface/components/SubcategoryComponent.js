@@ -52,7 +52,7 @@ export default function SubcategoryComponent({ data = [], onItemClick }) {
               }}
             >
               <div className="category-card-img-wrap">
-                <img src={imageUrl(item.icon)} alt={item.subcategoryname} loading="lazy" />
+                <img src={imageUrl(item.icon)} alt={item.subcategoryname} loading="lazy" decoding="async" />
               </div>
               <div className="category-title">{item.subcategoryname}</div>
             </div>

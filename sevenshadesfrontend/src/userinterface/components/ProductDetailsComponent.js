@@ -208,7 +208,7 @@ export default function ProductDetailsComponent(props) {
                 className={`pdp-thumbnail-item ${activeImgIndex === itemIndex ? 'active' : ''}`}
                 title={`View image ${itemIndex + 1}`}
             >
-                <img src={imageUrl(item)} alt="" className="pdp-thumbnail-img" />
+                <img src={imageUrl(item)} alt="" className="pdp-thumbnail-img" loading="lazy" decoding="async" />
             </div>
         ));
     };
@@ -216,7 +216,7 @@ export default function ProductDetailsComponent(props) {
     const productde = () => {
         return items.map((item, itemIndex) => (
             <div key={item + '-' + itemIndex} style={{ width: '100%', height: '100%', outline: 'none' }}>
-                <img src={imageUrl(item)} alt={product.productid?.productname || 'Product'} className="pdp-main-image" />
+                <img src={imageUrl(item)} alt={product.productid?.productname || 'Product'} className="pdp-main-image" loading={itemIndex === 0 ? "eager" : "lazy"} decoding="async" />
             </div>
         ));
     };
@@ -346,6 +346,8 @@ export default function ProductDetailsComponent(props) {
                                                 <img
                                                     src={imageUrl(previewImg)}
                                                     alt={colorName}
+                                                    loading="lazy"
+                                                    decoding="async"
                                                     style={{
                                                         width: '24px',
                                                         height: '24px',
