@@ -1,4 +1,4 @@
-import imageUrl from '../../services/imageUrl';
+import { responsiveImage } from '../../services/imageUrl';
 import './ProductByCategory.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -63,7 +63,7 @@ export default function ProductByCategory(props) {
                         )}
 
                         <img
-                            src={imageUrl(item.icon)}
+                            {...responsiveImage(item.icon)} decoding="async"
                             alt={item.productname || 'SevenShades Product'}
                             className="pbc-product-image"
                             loading="lazy"

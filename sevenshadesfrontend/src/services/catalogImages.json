@@ -1,0 +1,1072 @@
+{
+  "static/1.3.jpg": {
+    "480": "/catalog/2304d15f4110bf26-480.webp",
+    "960": "/catalog/2304d15f4110bf26-960.webp",
+    "1600": "/catalog/2304d15f4110bf26-1600.webp"
+  },
+  "static/100.webp": {
+    "480": "/catalog/38d7d97020abf4d8-480.webp",
+    "960": "/catalog/38d7d97020abf4d8-960.webp",
+    "1600": "/catalog/38d7d97020abf4d8-1600.webp"
+  },
+  "static/102.jpeg": {
+    "480": "/catalog/d6a33e0bc292cbdf-480.webp",
+    "960": "/catalog/d6a33e0bc292cbdf-960.webp",
+    "1600": "/catalog/d6a33e0bc292cbdf-1600.webp"
+  },
+  "static/103.webp": {
+    "480": "/catalog/c344ac003e581bbd-480.webp",
+    "960": "/catalog/c344ac003e581bbd-960.webp",
+    "1600": "/catalog/c344ac003e581bbd-1600.webp"
+  },
+  "static/103_LnG8FnX.webp": {
+    "480": "/catalog/c344ac003e581bbd-480.webp",
+    "960": "/catalog/c344ac003e581bbd-960.webp",
+    "1600": "/catalog/c344ac003e581bbd-1600.webp"
+  },
+  "static/11.png": {
+    "480": "/catalog/0a6a03b1beb2bf9e-480.webp",
+    "960": "/catalog/0a6a03b1beb2bf9e-960.webp",
+    "1600": "/catalog/0a6a03b1beb2bf9e-1600.webp"
+  },
+  "static/11_FnUFELC.png": {
+    "480": "/catalog/0a6a03b1beb2bf9e-480.webp",
+    "960": "/catalog/0a6a03b1beb2bf9e-960.webp",
+    "1600": "/catalog/0a6a03b1beb2bf9e-1600.webp"
+  },
+  "static/11_v3RgU8L.png": {
+    "480": "/catalog/0a6a03b1beb2bf9e-480.webp",
+    "960": "/catalog/0a6a03b1beb2bf9e-960.webp",
+    "1600": "/catalog/0a6a03b1beb2bf9e-1600.webp"
+  },
+  "static/12.png": {
+    "480": "/catalog/25493e5975c47bc0-480.webp",
+    "960": "/catalog/25493e5975c47bc0-960.webp",
+    "1600": "/catalog/25493e5975c47bc0-1600.webp"
+  },
+  "static/12_HWVWukb.png": {
+    "480": "/catalog/25493e5975c47bc0-480.webp",
+    "960": "/catalog/25493e5975c47bc0-960.webp",
+    "1600": "/catalog/25493e5975c47bc0-1600.webp"
+  },
+  "static/12_PWn8ku0.png": {
+    "480": "/catalog/25493e5975c47bc0-480.webp",
+    "960": "/catalog/25493e5975c47bc0-960.webp",
+    "1600": "/catalog/25493e5975c47bc0-1600.webp"
+  },
+  "static/14.png": {
+    "480": "/catalog/87384fa90de97627-480.webp",
+    "960": "/catalog/87384fa90de97627-960.webp",
+    "1600": "/catalog/87384fa90de97627-1600.webp"
+  },
+  "static/14_M7vRnMn.png": {
+    "480": "/catalog/87384fa90de97627-480.webp",
+    "960": "/catalog/87384fa90de97627-960.webp",
+    "1600": "/catalog/87384fa90de97627-1600.webp"
+  },
+  "static/14_P6JQSIj.png": {
+    "480": "/catalog/87384fa90de97627-480.webp",
+    "960": "/catalog/87384fa90de97627-960.webp",
+    "1600": "/catalog/87384fa90de97627-1600.webp"
+  },
+  "static/15.png": {
+    "480": "/catalog/c94f204cebe59ffa-480.webp",
+    "960": "/catalog/c94f204cebe59ffa-960.webp",
+    "1600": "/catalog/c94f204cebe59ffa-1600.webp"
+  },
+  "static/15_WJV8Hbi.png": {
+    "480": "/catalog/c94f204cebe59ffa-480.webp",
+    "960": "/catalog/c94f204cebe59ffa-960.webp",
+    "1600": "/catalog/c94f204cebe59ffa-1600.webp"
+  },
+  "static/15_XmlsMxX.png": {
+    "480": "/catalog/c94f204cebe59ffa-480.webp",
+    "960": "/catalog/c94f204cebe59ffa-960.webp",
+    "1600": "/catalog/c94f204cebe59ffa-1600.webp"
+  },
+  "static/16.png": {
+    "480": "/catalog/4b3347ea6b908545-480.webp",
+    "960": "/catalog/4b3347ea6b908545-960.webp",
+    "1600": "/catalog/4b3347ea6b908545-1600.webp"
+  },
+  "static/17.png": {
+    "480": "/catalog/dc97f7118ca1451d-480.webp",
+    "960": "/catalog/dc97f7118ca1451d-960.webp",
+    "1600": "/catalog/dc97f7118ca1451d-1600.webp"
+  },
+  "static/18.png": {
+    "480": "/catalog/aee55296d5b81940-480.webp",
+    "960": "/catalog/aee55296d5b81940-960.webp",
+    "1600": "/catalog/aee55296d5b81940-1600.webp"
+  },
+  "static/18_2xKCokm.png": {
+    "480": "/catalog/aee55296d5b81940-480.webp",
+    "960": "/catalog/aee55296d5b81940-960.webp",
+    "1600": "/catalog/aee55296d5b81940-1600.webp"
+  },
+  "static/19.png": {
+    "480": "/catalog/123b380cce3fe5e8-480.webp",
+    "960": "/catalog/123b380cce3fe5e8-960.webp",
+    "1600": "/catalog/123b380cce3fe5e8-1600.webp"
+  },
+  "static/2.JPG": {
+    "480": "/catalog/f05eade879d53478-480.webp",
+    "960": "/catalog/f05eade879d53478-960.webp",
+    "1600": "/catalog/f05eade879d53478-1600.webp"
+  },
+  "static/20.png": {
+    "480": "/catalog/48fb568bb1f5d646-480.webp",
+    "960": "/catalog/48fb568bb1f5d646-960.webp",
+    "1600": "/catalog/48fb568bb1f5d646-1600.webp"
+  },
+  "static/204689940-2.webp": {
+    "480": "/catalog/421003a8b42bb7f4-480.webp",
+    "960": "/catalog/421003a8b42bb7f4-960.webp",
+    "1600": "/catalog/421003a8b42bb7f4-1600.webp"
+  },
+  "static/204689940-2_pNBBL0S.webp": {
+    "480": "/catalog/421003a8b42bb7f4-480.webp",
+    "960": "/catalog/421003a8b42bb7f4-960.webp",
+    "1600": "/catalog/421003a8b42bb7f4-1600.webp"
+  },
+  "static/205524038-2.webp": {
+    "480": "/catalog/9722ff742c8e30de-480.webp",
+    "960": "/catalog/9722ff742c8e30de-960.webp",
+    "1600": "/catalog/9722ff742c8e30de-1600.webp"
+  },
+  "static/205524038-2_WUcXZvA.webp": {
+    "480": "/catalog/9722ff742c8e30de-480.webp",
+    "960": "/catalog/9722ff742c8e30de-960.webp",
+    "1600": "/catalog/9722ff742c8e30de-1600.webp"
+  },
+  "static/205533307-2.webp": {
+    "480": "/catalog/c344ac003e581bbd-480.webp",
+    "960": "/catalog/c344ac003e581bbd-960.webp",
+    "1600": "/catalog/c344ac003e581bbd-1600.webp"
+  },
+  "static/205533316-2.webp": {
+    "480": "/catalog/a87c03039a7c8c2b-480.webp",
+    "960": "/catalog/a87c03039a7c8c2b-960.webp",
+    "1600": "/catalog/a87c03039a7c8c2b-1600.webp"
+  },
+  "static/205574329-2.webp": {
+    "480": "/catalog/e01508400d789e43-480.webp",
+    "960": "/catalog/e01508400d789e43-960.webp",
+    "1600": "/catalog/e01508400d789e43-1600.webp"
+  },
+  "static/21.png": {
+    "480": "/catalog/afa0e670d67f19a1-480.webp",
+    "960": "/catalog/afa0e670d67f19a1-960.webp",
+    "1600": "/catalog/afa0e670d67f19a1-1600.webp"
+  },
+  "static/23.png": {
+    "480": "/catalog/e9a782ce44935c38-480.webp",
+    "960": "/catalog/e9a782ce44935c38-960.webp",
+    "1600": "/catalog/e9a782ce44935c38-1600.webp"
+  },
+  "static/24.png": {
+    "480": "/catalog/0797457d93955d61-480.webp",
+    "960": "/catalog/0797457d93955d61-960.webp",
+    "1600": "/catalog/0797457d93955d61-1600.webp"
+  },
+  "static/25.png": {
+    "480": "/catalog/29e6faac127a2134-480.webp",
+    "960": "/catalog/29e6faac127a2134-960.webp",
+    "1600": "/catalog/29e6faac127a2134-1600.webp"
+  },
+  "static/26.png": {
+    "480": "/catalog/e64819d2f6abe324-480.webp",
+    "960": "/catalog/e64819d2f6abe324-960.webp",
+    "1600": "/catalog/e64819d2f6abe324-1600.webp"
+  },
+  "static/27.png": {
+    "480": "/catalog/7899dfb2fd48222b-480.webp",
+    "960": "/catalog/7899dfb2fd48222b-960.webp",
+    "1600": "/catalog/7899dfb2fd48222b-1600.webp"
+  },
+  "static/28.png": {
+    "480": "/catalog/e28391abf00a0b05-480.webp",
+    "960": "/catalog/e28391abf00a0b05-960.webp",
+    "1600": "/catalog/e28391abf00a0b05-1600.webp"
+  },
+  "static/29.png": {
+    "480": "/catalog/5a80a854d4667383-480.webp",
+    "960": "/catalog/5a80a854d4667383-960.webp",
+    "1600": "/catalog/5a80a854d4667383-1600.webp"
+  },
+  "static/30.png": {
+    "480": "/catalog/ccfa90d574586109-480.webp",
+    "960": "/catalog/ccfa90d574586109-960.webp",
+    "1600": "/catalog/ccfa90d574586109-1600.webp"
+  },
+  "static/31.png": {
+    "480": "/catalog/adb9587c84447ec2-480.webp",
+    "960": "/catalog/adb9587c84447ec2-960.webp",
+    "1600": "/catalog/adb9587c84447ec2-1600.webp"
+  },
+  "static/32.png": {
+    "480": "/catalog/3ba4f1b0ee9519e5-480.webp",
+    "960": "/catalog/3ba4f1b0ee9519e5-960.webp",
+    "1600": "/catalog/3ba4f1b0ee9519e5-1600.webp"
+  },
+  "static/33.png": {
+    "480": "/catalog/087f1297ba0683d4-480.webp",
+    "960": "/catalog/087f1297ba0683d4-960.webp",
+    "1600": "/catalog/087f1297ba0683d4-1600.webp"
+  },
+  "static/34.png": {
+    "480": "/catalog/54ee376dc2060e6f-480.webp",
+    "960": "/catalog/54ee376dc2060e6f-960.webp",
+    "1600": "/catalog/54ee376dc2060e6f-1600.webp"
+  },
+  "static/40.png": {
+    "480": "/catalog/1c5b4f3c8833482c-480.webp",
+    "960": "/catalog/1c5b4f3c8833482c-960.webp",
+    "1600": "/catalog/1c5b4f3c8833482c-1600.webp"
+  },
+  "static/41.png": {
+    "480": "/catalog/1cf6a498b01aa6c7-480.webp",
+    "960": "/catalog/1cf6a498b01aa6c7-960.webp",
+    "1600": "/catalog/1cf6a498b01aa6c7-1600.webp"
+  },
+  "static/42.png": {
+    "480": "/catalog/0e4dff40ea7e3c93-480.webp",
+    "960": "/catalog/0e4dff40ea7e3c93-960.webp",
+    "1600": "/catalog/0e4dff40ea7e3c93-1600.webp"
+  },
+  "static/42_2jAoTYE.png": {
+    "480": "/catalog/0e4dff40ea7e3c93-480.webp",
+    "960": "/catalog/0e4dff40ea7e3c93-960.webp",
+    "1600": "/catalog/0e4dff40ea7e3c93-1600.webp"
+  },
+  "static/43.png": {
+    "480": "/catalog/c498a6545455a036-480.webp",
+    "960": "/catalog/c498a6545455a036-960.webp",
+    "1600": "/catalog/c498a6545455a036-1600.webp"
+  },
+  "static/43_05A1k7Z.png": {
+    "480": "/catalog/c498a6545455a036-480.webp",
+    "960": "/catalog/c498a6545455a036-960.webp",
+    "1600": "/catalog/c498a6545455a036-1600.webp"
+  },
+  "static/44.png": {
+    "480": "/catalog/c384664cda250420-480.webp",
+    "960": "/catalog/c384664cda250420-960.webp",
+    "1600": "/catalog/c384664cda250420-1600.webp"
+  },
+  "static/44_uW2bEr7.png": {
+    "480": "/catalog/c384664cda250420-480.webp",
+    "960": "/catalog/c384664cda250420-960.webp",
+    "1600": "/catalog/c384664cda250420-1600.webp"
+  },
+  "static/45.png": {
+    "480": "/catalog/a136d757a88d4ccb-480.webp",
+    "960": "/catalog/a136d757a88d4ccb-960.webp",
+    "1600": "/catalog/a136d757a88d4ccb-1600.webp"
+  },
+  "static/45_OucSTGc.png": {
+    "480": "/catalog/a136d757a88d4ccb-480.webp",
+    "960": "/catalog/a136d757a88d4ccb-960.webp",
+    "1600": "/catalog/a136d757a88d4ccb-1600.webp"
+  },
+  "static/46.png": {
+    "480": "/catalog/3d9ff5db70fbe3c8-480.webp",
+    "960": "/catalog/3d9ff5db70fbe3c8-960.webp",
+    "1600": "/catalog/3d9ff5db70fbe3c8-1600.webp"
+  },
+  "static/46_Nv4hcHu.png": {
+    "480": "/catalog/3d9ff5db70fbe3c8-480.webp",
+    "960": "/catalog/3d9ff5db70fbe3c8-960.webp",
+    "1600": "/catalog/3d9ff5db70fbe3c8-1600.webp"
+  },
+  "static/47.png": {
+    "480": "/catalog/912c815793097a3f-480.webp",
+    "960": "/catalog/912c815793097a3f-960.webp",
+    "1600": "/catalog/912c815793097a3f-1600.webp"
+  },
+  "static/48.png": {
+    "480": "/catalog/7417f5ebfc8f4fab-480.webp",
+    "960": "/catalog/7417f5ebfc8f4fab-960.webp",
+    "1600": "/catalog/7417f5ebfc8f4fab-1600.webp"
+  },
+  "static/49.png": {
+    "480": "/catalog/bbe58554d98ad3ad-480.webp",
+    "960": "/catalog/bbe58554d98ad3ad-960.webp",
+    "1600": "/catalog/bbe58554d98ad3ad-1600.webp"
+  },
+  "static/50.png": {
+    "480": "/catalog/0c0e0f2519663b97-480.webp",
+    "960": "/catalog/0c0e0f2519663b97-960.webp",
+    "1600": "/catalog/0c0e0f2519663b97-1600.webp"
+  },
+  "static/accesories.jpeg": {
+    "480": "/catalog/15bde538e57cd661-480.webp",
+    "960": "/catalog/15bde538e57cd661-960.webp",
+    "1600": "/catalog/15bde538e57cd661-1600.webp"
+  },
+  "static/adidas.png": {
+    "480": "/catalog/2a1a423a888907c6-480.webp",
+    "960": "/catalog/2a1a423a888907c6-960.webp",
+    "1600": "/catalog/2a1a423a888907c6-1600.webp"
+  },
+  "static/baggy.png": {
+    "480": "/catalog/6c1c19ae70fcf514-480.webp",
+    "960": "/catalog/6c1c19ae70fcf514-960.webp",
+    "1600": "/catalog/6c1c19ae70fcf514-1600.webp"
+  },
+  "static/baggy_q1QqnWE.png": {
+    "480": "/catalog/6c1c19ae70fcf514-480.webp",
+    "960": "/catalog/6c1c19ae70fcf514-960.webp",
+    "1600": "/catalog/6c1c19ae70fcf514-1600.webp"
+  },
+  "static/Boots.png": {
+    "480": "/catalog/a5b3c86d4ad61b48-480.webp",
+    "960": "/catalog/a5b3c86d4ad61b48-960.webp",
+    "1600": "/catalog/a5b3c86d4ad61b48-1600.webp"
+  },
+  "static/Boots_CidJb16.png": {
+    "480": "/catalog/a5b3c86d4ad61b48-480.webp",
+    "960": "/catalog/a5b3c86d4ad61b48-960.webp",
+    "1600": "/catalog/a5b3c86d4ad61b48-1600.webp"
+  },
+  "static/ChatGPT Image Sep 1_ 2026_ 03_59_38 PM.png": {
+    "480": "/catalog/7d122a87bbb61c81-480.webp",
+    "960": "/catalog/7d122a87bbb61c81-960.webp",
+    "1600": "/catalog/7d122a87bbb61c81-1600.webp"
+  },
+  "static/d66cf6a4-83af-4822-9808-5a13356df2c2.png": {
+    "480": "/catalog/86938f0f899299d8-480.webp",
+    "960": "/catalog/86938f0f899299d8-960.webp",
+    "1600": "/catalog/86938f0f899299d8-1600.webp"
+  },
+  "static/d66cf6a4-83af-4822-9808-5a13356df2c2_wpRtsfG.png": {
+    "480": "/catalog/86938f0f899299d8-480.webp",
+    "960": "/catalog/86938f0f899299d8-960.webp",
+    "1600": "/catalog/86938f0f899299d8-1600.webp"
+  },
+  "static/download (1).jpg": {
+    "480": "/catalog/227640fb0b55a123-480.webp",
+    "960": "/catalog/227640fb0b55a123-960.webp",
+    "1600": "/catalog/227640fb0b55a123-1600.webp"
+  },
+  "static/download (1)_SQz54a2.jpg": {
+    "480": "/catalog/227640fb0b55a123-480.webp",
+    "960": "/catalog/227640fb0b55a123-960.webp",
+    "1600": "/catalog/227640fb0b55a123-1600.webp"
+  },
+  "static/download.jpg": {
+    "480": "/catalog/39971740d8eba55d-480.webp",
+    "960": "/catalog/39971740d8eba55d-960.webp",
+    "1600": "/catalog/39971740d8eba55d-1600.webp"
+  },
+  "static/DSC_2617.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_3rcPBUn.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_6Fn2kUx.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_7dkMueM.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_B0TUzLY.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_b2RPuG5.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_bCcAwil.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_Bltj3V4.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_CkRKlhc.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_Gm3nAss.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_gnfvAxD.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_jQXRxyk.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_KaOXDVr.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_la0Bq1D.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_OgnifwO.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_pAegYhr.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_pKRrFgU.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_U40aeWo.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_v1hw04q.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2617_w1zMhKr.JPG": {
+    "480": "/catalog/4c14cf08fd54cd9a-480.webp",
+    "960": "/catalog/4c14cf08fd54cd9a-960.webp",
+    "1600": "/catalog/4c14cf08fd54cd9a-1600.webp"
+  },
+  "static/DSC_2620-1.JPG": {
+    "480": "/catalog/12e0c43e1aa620f3-480.webp",
+    "960": "/catalog/12e0c43e1aa620f3-960.webp",
+    "1600": "/catalog/12e0c43e1aa620f3-1600.webp"
+  },
+  "static/DSC_2620-1_0lLGzmc.JPG": {
+    "480": "/catalog/12e0c43e1aa620f3-480.webp",
+    "960": "/catalog/12e0c43e1aa620f3-960.webp",
+    "1600": "/catalog/12e0c43e1aa620f3-1600.webp"
+  },
+  "static/DSC_2620-1_2dHTQcL.JPG": {
+    "480": "/catalog/12e0c43e1aa620f3-480.webp",
+    "960": "/catalog/12e0c43e1aa620f3-960.webp",
+    "1600": "/catalog/12e0c43e1aa620f3-1600.webp"
+  },
+  "static/DSC_2620-1_bU2o34v.JPG": {
+    "480": "/catalog/12e0c43e1aa620f3-480.webp",
+    "960": "/catalog/12e0c43e1aa620f3-960.webp",
+    "1600": "/catalog/12e0c43e1aa620f3-1600.webp"
+  },
+  "static/DSC_2620-1_CCteNBa.JPG": {
+    "480": "/catalog/12e0c43e1aa620f3-480.webp",
+    "960": "/catalog/12e0c43e1aa620f3-960.webp",
+    "1600": "/catalog/12e0c43e1aa620f3-1600.webp"
+  },
+  "static/DSC_2620-1_CevQ2ri.JPG": {
+    "480": "/catalog/12e0c43e1aa620f3-480.webp",
+    "960": "/catalog/12e0c43e1aa620f3-960.webp",
+    "1600": "/catalog/12e0c43e1aa620f3-1600.webp"
+  },
+  "static/DSC_2620-1_f7XQ9A3.JPG": {
+    "480": "/catalog/12e0c43e1aa620f3-480.webp",
+    "960": "/catalog/12e0c43e1aa620f3-960.webp",
+    "1600": "/catalog/12e0c43e1aa620f3-1600.webp"
+  },
+  "static/DSC_2620-1_G1cn4IX.JPG": {
+    "480": "/catalog/12e0c43e1aa620f3-480.webp",
+    "960": "/catalog/12e0c43e1aa620f3-960.webp",
+    "1600": "/catalog/12e0c43e1aa620f3-1600.webp"
+  },
+  "static/DSC_2620-1_iOhKZ5D.JPG": {
+    "480": "/catalog/12e0c43e1aa620f3-480.webp",
+    "960": "/catalog/12e0c43e1aa620f3-960.webp",
+    "1600": "/catalog/12e0c43e1aa620f3-1600.webp"
+  },
+  "static/DSC_2620-1_lNoeDgb.JPG": {
+    "480": "/catalog/12e0c43e1aa620f3-480.webp",
+    "960": "/catalog/12e0c43e1aa620f3-960.webp",
+    "1600": "/catalog/12e0c43e1aa620f3-1600.webp"
+  },
+  "static/DSC_2620-1_nMxTiqM.JPG": {
+    "480": "/catalog/12e0c43e1aa620f3-480.webp",
+    "960": "/catalog/12e0c43e1aa620f3-960.webp",
+    "1600": "/catalog/12e0c43e1aa620f3-1600.webp"
+  },
+  "static/DSC_2620-1_pFG4syu.JPG": {
+    "480": "/catalog/12e0c43e1aa620f3-480.webp",
+    "960": "/catalog/12e0c43e1aa620f3-960.webp",
+    "1600": "/catalog/12e0c43e1aa620f3-1600.webp"
+  },
+  "static/DSC_2620-1_ruTMVNY.JPG": {
+    "480": "/catalog/12e0c43e1aa620f3-480.webp",
+    "960": "/catalog/12e0c43e1aa620f3-960.webp",
+    "1600": "/catalog/12e0c43e1aa620f3-1600.webp"
+  },
+  "static/DSC_2620-1_Sg2SWSF.JPG": {
+    "480": "/catalog/12e0c43e1aa620f3-480.webp",
+    "960": "/catalog/12e0c43e1aa620f3-960.webp",
+    "1600": "/catalog/12e0c43e1aa620f3-1600.webp"
+  },
+  "static/DSC_2620-1_sldgYnV.JPG": {
+    "480": "/catalog/12e0c43e1aa620f3-480.webp",
+    "960": "/catalog/12e0c43e1aa620f3-960.webp",
+    "1600": "/catalog/12e0c43e1aa620f3-1600.webp"
+  },
+  "static/DSC_2620-1_VzM2f9r.JPG": {
+    "480": "/catalog/12e0c43e1aa620f3-480.webp",
+    "960": "/catalog/12e0c43e1aa620f3-960.webp",
+    "1600": "/catalog/12e0c43e1aa620f3-1600.webp"
+  },
+  "static/DSCN0455.JPG": {
+    "480": "/catalog/e4695da83c325e25-480.webp",
+    "960": "/catalog/e4695da83c325e25-960.webp",
+    "1600": "/catalog/e4695da83c325e25-1600.webp"
+  },
+  "static/DSCN0455_0NT3JPU.JPG": {
+    "480": "/catalog/e4695da83c325e25-480.webp",
+    "960": "/catalog/e4695da83c325e25-960.webp",
+    "1600": "/catalog/e4695da83c325e25-1600.webp"
+  },
+  "static/DSCN0455_9KtpHei.JPG": {
+    "480": "/catalog/e4695da83c325e25-480.webp",
+    "960": "/catalog/e4695da83c325e25-960.webp",
+    "1600": "/catalog/e4695da83c325e25-1600.webp"
+  },
+  "static/DSCN0455_ahTDXFl.JPG": {
+    "480": "/catalog/e4695da83c325e25-480.webp",
+    "960": "/catalog/e4695da83c325e25-960.webp",
+    "1600": "/catalog/e4695da83c325e25-1600.webp"
+  },
+  "static/DSCN0455_bdKpWzp.JPG": {
+    "480": "/catalog/e4695da83c325e25-480.webp",
+    "960": "/catalog/e4695da83c325e25-960.webp",
+    "1600": "/catalog/e4695da83c325e25-1600.webp"
+  },
+  "static/DSCN0455_Bv6JGBP.JPG": {
+    "480": "/catalog/e4695da83c325e25-480.webp",
+    "960": "/catalog/e4695da83c325e25-960.webp",
+    "1600": "/catalog/e4695da83c325e25-1600.webp"
+  },
+  "static/DSCN0455_K4lKvV9.JPG": {
+    "480": "/catalog/e4695da83c325e25-480.webp",
+    "960": "/catalog/e4695da83c325e25-960.webp",
+    "1600": "/catalog/e4695da83c325e25-1600.webp"
+  },
+  "static/DSCN0455_MPGWDbb.JPG": {
+    "480": "/catalog/e4695da83c325e25-480.webp",
+    "960": "/catalog/e4695da83c325e25-960.webp",
+    "1600": "/catalog/e4695da83c325e25-1600.webp"
+  },
+  "static/DSCN0455_ntm0EQv.JPG": {
+    "480": "/catalog/e4695da83c325e25-480.webp",
+    "960": "/catalog/e4695da83c325e25-960.webp",
+    "1600": "/catalog/e4695da83c325e25-1600.webp"
+  },
+  "static/DSCN0455_qXbqUMP.JPG": {
+    "480": "/catalog/e4695da83c325e25-480.webp",
+    "960": "/catalog/e4695da83c325e25-960.webp",
+    "1600": "/catalog/e4695da83c325e25-1600.webp"
+  },
+  "static/DSCN0455_rTENNAX.JPG": {
+    "480": "/catalog/e4695da83c325e25-480.webp",
+    "960": "/catalog/e4695da83c325e25-960.webp",
+    "1600": "/catalog/e4695da83c325e25-1600.webp"
+  },
+  "static/DSCN0456.JPG": {
+    "480": "/catalog/3a57f9d25cc29c8b-480.webp",
+    "960": "/catalog/3a57f9d25cc29c8b-960.webp",
+    "1600": "/catalog/3a57f9d25cc29c8b-1600.webp"
+  },
+  "static/DSCN0457.JPG": {
+    "480": "/catalog/948461a5268a0621-480.webp",
+    "960": "/catalog/948461a5268a0621-960.webp",
+    "1600": "/catalog/948461a5268a0621-1600.webp"
+  },
+  "static/DSCN0458.JPG": {
+    "480": "/catalog/949af14b9ddc7da5-480.webp",
+    "960": "/catalog/949af14b9ddc7da5-960.webp",
+    "1600": "/catalog/949af14b9ddc7da5-1600.webp"
+  },
+  "static/DSCN0461.JPG": {
+    "480": "/catalog/b585033da4c3e1df-480.webp",
+    "960": "/catalog/b585033da4c3e1df-960.webp",
+    "1600": "/catalog/b585033da4c3e1df-1600.webp"
+  },
+  "static/DSCN0463.JPG": {
+    "480": "/catalog/441619dd2ae91078-480.webp",
+    "960": "/catalog/441619dd2ae91078-960.webp",
+    "1600": "/catalog/441619dd2ae91078-1600.webp"
+  },
+  "static/DSCN0464.JPG": {
+    "480": "/catalog/715f0d351cfe6479-480.webp",
+    "960": "/catalog/715f0d351cfe6479-960.webp",
+    "1600": "/catalog/715f0d351cfe6479-1600.webp"
+  },
+  "static/DSCN0464_uQF71F3.JPG": {
+    "480": "/catalog/715f0d351cfe6479-480.webp",
+    "960": "/catalog/715f0d351cfe6479-960.webp",
+    "1600": "/catalog/715f0d351cfe6479-1600.webp"
+  },
+  "static/DSCN0464_Vd354NE.JPG": {
+    "480": "/catalog/715f0d351cfe6479-480.webp",
+    "960": "/catalog/715f0d351cfe6479-960.webp",
+    "1600": "/catalog/715f0d351cfe6479-1600.webp"
+  },
+  "static/DSCN0464_vYshwD5.JPG": {
+    "480": "/catalog/715f0d351cfe6479-480.webp",
+    "960": "/catalog/715f0d351cfe6479-960.webp",
+    "1600": "/catalog/715f0d351cfe6479-1600.webp"
+  },
+  "static/DSCN0465.JPG": {
+    "480": "/catalog/e8dfe19376f8121b-480.webp",
+    "960": "/catalog/e8dfe19376f8121b-960.webp",
+    "1600": "/catalog/e8dfe19376f8121b-1600.webp"
+  },
+  "static/DSCN0465_B8fh3cY.JPG": {
+    "480": "/catalog/e8dfe19376f8121b-480.webp",
+    "960": "/catalog/e8dfe19376f8121b-960.webp",
+    "1600": "/catalog/e8dfe19376f8121b-1600.webp"
+  },
+  "static/facebook.png": {
+    "480": "/catalog/4f7e3281a94d1db4-480.webp",
+    "960": "/catalog/4f7e3281a94d1db4-960.webp",
+    "1600": "/catalog/4f7e3281a94d1db4-1600.webp"
+  },
+  "static/google-pay.png": {
+    "480": "/catalog/f87a5c557b68eebc-480.webp",
+    "960": "/catalog/f87a5c557b68eebc-960.webp",
+    "1600": "/catalog/f87a5c557b68eebc-1600.webp"
+  },
+  "static/h&m.jpeg": {
+    "480": "/catalog/a22310cc62378a3e-480.webp",
+    "960": "/catalog/a22310cc62378a3e-960.webp",
+    "1600": "/catalog/a22310cc62378a3e-1600.webp"
+  },
+  "static/h&m_C7b6YUy.jpeg": {
+    "480": "/catalog/a22310cc62378a3e-480.webp",
+    "960": "/catalog/a22310cc62378a3e-960.webp",
+    "1600": "/catalog/a22310cc62378a3e-1600.webp"
+  },
+  "static/hm.jpeg": {
+    "480": "/catalog/a22310cc62378a3e-480.webp",
+    "960": "/catalog/a22310cc62378a3e-960.webp",
+    "1600": "/catalog/a22310cc62378a3e-1600.webp"
+  },
+  "static/hm.png": {
+    "480": "/catalog/158f19a5b35ff7b9-480.webp",
+    "960": "/catalog/158f19a5b35ff7b9-960.webp",
+    "1600": "/catalog/158f19a5b35ff7b9-1600.webp"
+  },
+  "static/hm2.webp": {
+    "480": "/catalog/10d4879cb5cdf638-480.webp",
+    "960": "/catalog/10d4879cb5cdf638-960.webp",
+    "1600": "/catalog/10d4879cb5cdf638-1600.webp"
+  },
+  "static/hm3.jpeg": {
+    "480": "/catalog/7d88bf70bbb527bc-480.webp",
+    "960": "/catalog/7d88bf70bbb527bc-960.webp",
+    "1600": "/catalog/7d88bf70bbb527bc-1600.webp"
+  },
+  "static/IMG20191218172651.jpg": {
+    "480": "/catalog/144a3e32afe1aa67-480.webp",
+    "960": "/catalog/144a3e32afe1aa67-960.webp",
+    "1600": "/catalog/144a3e32afe1aa67-1600.webp"
+  },
+  "static/IMG_20191209_214209.jpg": {
+    "480": "/catalog/9d9b818338ffb18d-480.webp",
+    "960": "/catalog/9d9b818338ffb18d-960.webp",
+    "1600": "/catalog/9d9b818338ffb18d-1600.webp"
+  },
+  "static/IMG_20201107_083318.jpg": {
+    "480": "/catalog/ad96ec64e353a8b0-480.webp",
+    "960": "/catalog/ad96ec64e353a8b0-960.webp",
+    "1600": "/catalog/ad96ec64e353a8b0-1600.webp"
+  },
+  "static/IMG_20201107_083318_ZAOwpp8.jpg": {
+    "480": "/catalog/ad96ec64e353a8b0-480.webp",
+    "960": "/catalog/ad96ec64e353a8b0-960.webp",
+    "1600": "/catalog/ad96ec64e353a8b0-1600.webp"
+  },
+  "static/IMG_20201111_114533.jpg": {
+    "480": "/catalog/ed8467099609e316-480.webp",
+    "960": "/catalog/ed8467099609e316-960.webp",
+    "1600": "/catalog/ed8467099609e316-1600.webp"
+  },
+  "static/IMG_20201113_084359.jpg": {
+    "480": "/catalog/b470a7d9ae82fd27-480.webp",
+    "960": "/catalog/b470a7d9ae82fd27-960.webp",
+    "1600": "/catalog/b470a7d9ae82fd27-1600.webp"
+  },
+  "static/IMG_20201123_211440.jpg": {
+    "480": "/catalog/d958c3d895580e5d-480.webp",
+    "960": "/catalog/d958c3d895580e5d-960.webp",
+    "1600": "/catalog/d958c3d895580e5d-1600.webp"
+  },
+  "static/IMG_20201123_211440_TucN14i.jpg": {
+    "480": "/catalog/d958c3d895580e5d-480.webp",
+    "960": "/catalog/d958c3d895580e5d-960.webp",
+    "1600": "/catalog/d958c3d895580e5d-1600.webp"
+  },
+  "static/IMG_20201204_101712.jpg": {
+    "480": "/catalog/5bf025f6e7ff8e2a-480.webp",
+    "960": "/catalog/5bf025f6e7ff8e2a-960.webp",
+    "1600": "/catalog/5bf025f6e7ff8e2a-1600.webp"
+  },
+  "static/IMG_20201204_101712_wFPuEfZ.jpg": {
+    "480": "/catalog/5bf025f6e7ff8e2a-480.webp",
+    "960": "/catalog/5bf025f6e7ff8e2a-960.webp",
+    "1600": "/catalog/5bf025f6e7ff8e2a-1600.webp"
+  },
+  "static/IMG_20201204_101927.jpg": {
+    "480": "/catalog/9cbaf715127aaa64-480.webp",
+    "960": "/catalog/9cbaf715127aaa64-960.webp",
+    "1600": "/catalog/9cbaf715127aaa64-1600.webp"
+  },
+  "static/IMG_20201218_141246.jpg": {
+    "480": "/catalog/0f59ab5e8549b5dd-480.webp",
+    "960": "/catalog/0f59ab5e8549b5dd-960.webp",
+    "1600": "/catalog/0f59ab5e8549b5dd-1600.webp"
+  },
+  "static/IMG_20201223_065115.jpg": {
+    "480": "/catalog/e8a1f2a2ca92fb10-480.webp",
+    "960": "/catalog/e8a1f2a2ca92fb10-960.webp",
+    "1600": "/catalog/e8a1f2a2ca92fb10-1600.webp"
+  },
+  "static/IMG_20201225_114844.jpg": {
+    "480": "/catalog/d3643eb94900e222-480.webp",
+    "960": "/catalog/d3643eb94900e222-960.webp",
+    "1600": "/catalog/d3643eb94900e222-1600.webp"
+  },
+  "static/IMG_20201225_114844_BOhsxu8.jpg": {
+    "480": "/catalog/d3643eb94900e222-480.webp",
+    "960": "/catalog/d3643eb94900e222-960.webp",
+    "1600": "/catalog/d3643eb94900e222-1600.webp"
+  },
+  "static/IMG_20201228_110313.jpg": {
+    "480": "/catalog/11e0d8ba348859f5-480.webp",
+    "960": "/catalog/11e0d8ba348859f5-960.webp",
+    "1600": "/catalog/11e0d8ba348859f5-1600.webp"
+  },
+  "static/IMG_20201228_110313_jJeQnzn.jpg": {
+    "480": "/catalog/11e0d8ba348859f5-480.webp",
+    "960": "/catalog/11e0d8ba348859f5-960.webp",
+    "1600": "/catalog/11e0d8ba348859f5-1600.webp"
+  },
+  "static/IMG_20210101_204703.jpg": {
+    "480": "/catalog/cee7d49f12f6dcd7-480.webp",
+    "960": "/catalog/cee7d49f12f6dcd7-960.webp",
+    "1600": "/catalog/cee7d49f12f6dcd7-1600.webp"
+  },
+  "static/india.png": {
+    "480": "/catalog/05d9ee8ef5c243e5-480.webp",
+    "960": "/catalog/05d9ee8ef5c243e5-960.webp",
+    "1600": "/catalog/05d9ee8ef5c243e5-1600.webp"
+  },
+  "static/instagram.png": {
+    "480": "/catalog/0a016134e4f5448d-480.webp",
+    "960": "/catalog/0a016134e4f5448d-960.webp",
+    "1600": "/catalog/0a016134e4f5448d-1600.webp"
+  },
+  "static/Kurti.png": {
+    "480": "/catalog/541ee73307593d47-480.webp",
+    "960": "/catalog/541ee73307593d47-960.webp",
+    "1600": "/catalog/541ee73307593d47-1600.webp"
+  },
+  "static/lee.png": {
+    "480": "/catalog/c258880c69f86453-480.webp",
+    "960": "/catalog/c258880c69f86453-960.webp",
+    "1600": "/catalog/c258880c69f86453-1600.webp"
+  },
+  "static/levis.png": {
+    "480": "/catalog/2f24ff472794ed32-480.webp",
+    "960": "/catalog/2f24ff472794ed32-960.webp",
+    "1600": "/catalog/2f24ff472794ed32-1600.webp"
+  },
+  "static/levis1.png": {
+    "480": "/catalog/60d46b35b9282da5-480.webp",
+    "960": "/catalog/60d46b35b9282da5-960.webp",
+    "1600": "/catalog/60d46b35b9282da5-1600.webp"
+  },
+  "static/levis2.webp": {
+    "480": "/catalog/cac68d749c3158c0-480.webp",
+    "960": "/catalog/cac68d749c3158c0-960.webp",
+    "1600": "/catalog/cac68d749c3158c0-1600.webp"
+  },
+  "static/logout.png": {
+    "480": "/catalog/e8960b1c2eb1c238-480.webp",
+    "960": "/catalog/e8960b1c2eb1c238-960.webp",
+    "1600": "/catalog/e8960b1c2eb1c238-1600.webp"
+  },
+  "static/men.png": {
+    "480": "/catalog/a688547717437002-480.webp",
+    "960": "/catalog/a688547717437002-960.webp",
+    "1600": "/catalog/a688547717437002-1600.webp"
+  },
+  "static/menppp.webp": {
+    "480": "/catalog/fcbd0d51d82bda0f-480.webp",
+    "960": "/catalog/fcbd0d51d82bda0f-960.webp",
+    "1600": "/catalog/fcbd0d51d82bda0f-1600.webp"
+  },
+  "static/menppp_25uXYiA.webp": {
+    "480": "/catalog/fcbd0d51d82bda0f-480.webp",
+    "960": "/catalog/fcbd0d51d82bda0f-960.webp",
+    "1600": "/catalog/fcbd0d51d82bda0f-1600.webp"
+  },
+  "static/nike.png": {
+    "480": "/catalog/fad9f854b8b340d3-480.webp",
+    "960": "/catalog/fad9f854b8b340d3-960.webp",
+    "1600": "/catalog/fad9f854b8b340d3-1600.webp"
+  },
+  "static/nike1.png": {
+    "480": "/catalog/7fbe1af3b343ca9d-480.webp",
+    "960": "/catalog/7fbe1af3b343ca9d-960.webp",
+    "1600": "/catalog/7fbe1af3b343ca9d-1600.webp"
+  },
+  "static/nike2.png": {
+    "480": "/catalog/cad19b672d10fe1e-480.webp",
+    "960": "/catalog/cad19b672d10fe1e-960.webp",
+    "1600": "/catalog/cad19b672d10fe1e-1600.webp"
+  },
+  "static/nike3.png": {
+    "480": "/catalog/d54e4953b7428d3c-480.webp",
+    "960": "/catalog/d54e4953b7428d3c-960.webp",
+    "1600": "/catalog/d54e4953b7428d3c-1600.webp"
+  },
+  "static/nike4.jpg": {
+    "480": "/catalog/ac6dc666d6def3b1-480.webp",
+    "960": "/catalog/ac6dc666d6def3b1-960.webp",
+    "1600": "/catalog/ac6dc666d6def3b1-1600.webp"
+  },
+  "static/orders.png": {
+    "480": "/catalog/489bc7865716a080-480.webp",
+    "960": "/catalog/489bc7865716a080-960.webp",
+    "1600": "/catalog/489bc7865716a080-1600.webp"
+  },
+  "static/overshized.png": {
+    "480": "/catalog/2bba746c2d5b3ed5-480.webp",
+    "960": "/catalog/2bba746c2d5b3ed5-960.webp",
+    "1600": "/catalog/2bba746c2d5b3ed5-1600.webp"
+  },
+  "static/oversized.png": {
+    "480": "/catalog/2bba746c2d5b3ed5-480.webp",
+    "960": "/catalog/2bba746c2d5b3ed5-960.webp",
+    "1600": "/catalog/2bba746c2d5b3ed5-1600.webp"
+  },
+  "static/paytm.png": {
+    "480": "/catalog/b2072fb6b223df9d-480.webp",
+    "960": "/catalog/b2072fb6b223df9d-960.webp",
+    "1600": "/catalog/b2072fb6b223df9d-1600.webp"
+  },
+  "static/pepe.png": {
+    "480": "/catalog/2e1743594572654e-480.webp",
+    "960": "/catalog/2e1743594572654e-960.webp",
+    "1600": "/catalog/2e1743594572654e-1600.webp"
+  },
+  "static/pngtree-portable-red-shopping-basket-illustration-png-image_4598424.jpg": {
+    "480": "/catalog/cba8e9e1547bf3f2-480.webp",
+    "960": "/catalog/cba8e9e1547bf3f2-960.webp",
+    "1600": "/catalog/cba8e9e1547bf3f2-1600.webp"
+  },
+  "static/profile.png": {
+    "480": "/catalog/046a7123147ea1f3-480.webp",
+    "960": "/catalog/046a7123147ea1f3-960.webp",
+    "1600": "/catalog/046a7123147ea1f3-1600.webp"
+  },
+  "static/puma1.png": {
+    "480": "/catalog/9db4a3e5d84cbb14-480.webp",
+    "960": "/catalog/9db4a3e5d84cbb14-960.webp",
+    "1600": "/catalog/9db4a3e5d84cbb14-1600.webp"
+  },
+  "static/puma1.webp": {
+    "480": "/catalog/e4861a1ca5173926-480.webp",
+    "960": "/catalog/e4861a1ca5173926-960.webp",
+    "1600": "/catalog/e4861a1ca5173926-1600.webp"
+  },
+  "static/puma2.webp": {
+    "480": "/catalog/1bc9759c7f75a76c-480.webp",
+    "960": "/catalog/1bc9759c7f75a76c-960.webp",
+    "1600": "/catalog/1bc9759c7f75a76c-1600.webp"
+  },
+  "static/puma3.jpg": {
+    "480": "/catalog/3209414829d4a764-480.webp",
+    "960": "/catalog/3209414829d4a764-960.webp",
+    "1600": "/catalog/3209414829d4a764-1600.webp"
+  },
+  "static/puma4.jpg": {
+    "480": "/catalog/0c92fcfdea8c6e2d-480.webp",
+    "960": "/catalog/0c92fcfdea8c6e2d-960.webp",
+    "1600": "/catalog/0c92fcfdea8c6e2d-1600.webp"
+  },
+  "static/red_cheif.png": {
+    "480": "/catalog/8f4b465dc55d9d81-480.webp",
+    "960": "/catalog/8f4b465dc55d9d81-960.webp",
+    "1600": "/catalog/8f4b465dc55d9d81-1600.webp"
+  },
+  "static/red_cheif2.jpg": {
+    "480": "/catalog/5c03cf4bb30e5342-480.webp",
+    "960": "/catalog/5c03cf4bb30e5342-960.webp",
+    "1600": "/catalog/5c03cf4bb30e5342-1600.webp"
+  },
+  "static/red_cheif3.webp": {
+    "480": "/catalog/f0138b86b31e37bb-480.webp",
+    "960": "/catalog/f0138b86b31e37bb-960.webp",
+    "1600": "/catalog/f0138b86b31e37bb-1600.webp"
+  },
+  "static/red_tape.png": {
+    "480": "/catalog/8bfa6be85418c542-480.webp",
+    "960": "/catalog/8bfa6be85418c542-960.webp",
+    "1600": "/catalog/8bfa6be85418c542-1600.webp"
+  },
+  "static/reebok.png": {
+    "480": "/catalog/5d607cfdfc0dda58-480.webp",
+    "960": "/catalog/5d607cfdfc0dda58-960.webp",
+    "1600": "/catalog/5d607cfdfc0dda58-1600.webp"
+  },
+  "static/river-rafting.jpg": {
+    "480": "/catalog/4b079e79dff0b4e4-480.webp",
+    "960": "/catalog/4b079e79dff0b4e4-960.webp",
+    "1600": "/catalog/4b079e79dff0b4e4-1600.webp"
+  },
+  "static/rr.png": {
+    "480": "/catalog/2dd757a505ac8a6a-480.webp",
+    "960": "/catalog/2dd757a505ac8a6a-960.webp",
+    "1600": "/catalog/2dd757a505ac8a6a-1600.webp"
+  },
+  "static/rr1.webp": {
+    "480": "/catalog/25e5efe5656430a9-480.webp",
+    "960": "/catalog/25e5efe5656430a9-960.webp",
+    "1600": "/catalog/25e5efe5656430a9-1600.webp"
+  },
+  "static/rr2.webp": {
+    "480": "/catalog/b71805ca8bb1c8c8-480.webp",
+    "960": "/catalog/b71805ca8bb1c8c8-960.webp",
+    "1600": "/catalog/b71805ca8bb1c8c8-1600.webp"
+  },
+  "static/sevenshades-logo.png": {
+    "480": "/catalog/9b1eefe60d106a25-480.webp",
+    "960": "/catalog/9b1eefe60d106a25-960.webp",
+    "1600": "/catalog/9b1eefe60d106a25-1600.webp"
+  },
+  "static/sevenshades-men-hero.png": {
+    "480": "/catalog/e08b1a12232589f4-480.webp",
+    "960": "/catalog/e08b1a12232589f4-960.webp",
+    "1600": "/catalog/e08b1a12232589f4-1600.webp"
+  },
+  "static/sevenshades-women-hero.png": {
+    "480": "/catalog/384a32a6ee567f85-480.webp",
+    "960": "/catalog/384a32a6ee567f85-960.webp",
+    "1600": "/catalog/384a32a6ee567f85-1600.webp"
+  },
+  "static/shoes.png": {
+    "480": "/catalog/486050fe2319edf2-480.webp",
+    "960": "/catalog/486050fe2319edf2-960.webp",
+    "1600": "/catalog/486050fe2319edf2-1600.webp"
+  },
+  "static/shoes.webp": {
+    "480": "/catalog/7087b404c7d3e77a-480.webp",
+    "960": "/catalog/7087b404c7d3e77a-960.webp",
+    "1600": "/catalog/7087b404c7d3e77a-1600.webp"
+  },
+  "static/shoes_2SnwWls.webp": {
+    "480": "/catalog/7087b404c7d3e77a-480.webp",
+    "960": "/catalog/7087b404c7d3e77a-960.webp",
+    "1600": "/catalog/7087b404c7d3e77a-1600.webp"
+  },
+  "static/shoes_hj0LFw8.webp": {
+    "480": "/catalog/7087b404c7d3e77a-480.webp",
+    "960": "/catalog/7087b404c7d3e77a-960.webp",
+    "1600": "/catalog/7087b404c7d3e77a-1600.webp"
+  },
+  "static/shoes_lT33sjL.webp": {
+    "480": "/catalog/7087b404c7d3e77a-480.webp",
+    "960": "/catalog/7087b404c7d3e77a-960.webp",
+    "1600": "/catalog/7087b404c7d3e77a-1600.webp"
+  },
+  "static/shoes_UDK5WWr.webp": {
+    "480": "/catalog/7087b404c7d3e77a-480.webp",
+    "960": "/catalog/7087b404c7d3e77a-960.webp",
+    "1600": "/catalog/7087b404c7d3e77a-1600.webp"
+  },
+  "static/shorts.png": {
+    "480": "/catalog/deca998ce6aedcdd-480.webp",
+    "960": "/catalog/deca998ce6aedcdd-960.webp",
+    "1600": "/catalog/deca998ce6aedcdd-1600.webp"
+  },
+  "static/top.png": {
+    "480": "/catalog/01d7b03662816948-480.webp",
+    "960": "/catalog/01d7b03662816948-960.webp",
+    "1600": "/catalog/01d7b03662816948-1600.webp"
+  },
+  "static/twitter.png": {
+    "480": "/catalog/d0678ec7850fa5ac-480.webp",
+    "960": "/catalog/d0678ec7850fa5ac-960.webp",
+    "1600": "/catalog/d0678ec7850fa5ac-1600.webp"
+  },
+  "static/visa.png": {
+    "480": "/catalog/367b053540b19a3d-480.webp",
+    "960": "/catalog/367b053540b19a3d-960.webp",
+    "1600": "/catalog/367b053540b19a3d-1600.webp"
+  },
+  "static/western_dress.png": {
+    "480": "/catalog/4d78c3470ac93c16-480.webp",
+    "960": "/catalog/4d78c3470ac93c16-960.webp",
+    "1600": "/catalog/4d78c3470ac93c16-1600.webp"
+  },
+  "static/WhatsApp_Image_2024-07-07_at_16.14.21_15be78f8.jpg": {
+    "480": "/catalog/ce20489e9c9f90ff-480.webp",
+    "960": "/catalog/ce20489e9c9f90ff-960.webp",
+    "1600": "/catalog/ce20489e9c9f90ff-1600.webp"
+  },
+  "static/WhatsApp_Image_2024-07-07_at_16.14.21_15be78f8_DtamM6o.jpg": {
+    "480": "/catalog/ce20489e9c9f90ff-480.webp",
+    "960": "/catalog/ce20489e9c9f90ff-960.webp",
+    "1600": "/catalog/ce20489e9c9f90ff-1600.webp"
+  },
+  "static/WhatsApp_Image_2024-07-09_at_20.47.47_d2db845f.jpg": {
+    "480": "/catalog/3a18f311fbfb93a1-480.webp",
+    "960": "/catalog/3a18f311fbfb93a1-960.webp",
+    "1600": "/catalog/3a18f311fbfb93a1-1600.webp"
+  },
+  "static/women.png": {
+    "480": "/catalog/c4dd9cc1d1c5f314-480.webp",
+    "960": "/catalog/c4dd9cc1d1c5f314-960.webp",
+    "1600": "/catalog/c4dd9cc1d1c5f314-1600.webp"
+  },
+  "static/women.webp": {
+    "480": "/catalog/7cb44c7b11eb4dee-480.webp",
+    "960": "/catalog/7cb44c7b11eb4dee-960.webp",
+    "1600": "/catalog/7cb44c7b11eb4dee-1600.webp"
+  },
+  "static/women_5Rsrjg0.webp": {
+    "480": "/catalog/7cb44c7b11eb4dee-480.webp",
+    "960": "/catalog/7cb44c7b11eb4dee-960.webp",
+    "1600": "/catalog/7cb44c7b11eb4dee-1600.webp"
+  },
+  "static/women_a3zv2YK.webp": {
+    "480": "/catalog/7cb44c7b11eb4dee-480.webp",
+    "960": "/catalog/7cb44c7b11eb4dee-960.webp",
+    "1600": "/catalog/7cb44c7b11eb4dee-1600.webp"
+  }
+}

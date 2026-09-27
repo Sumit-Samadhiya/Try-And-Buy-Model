@@ -1,4 +1,4 @@
-import imageUrl from '../../services/imageUrl';
+import { responsiveImage } from '../../services/imageUrl';
 import './CategoryShowcaseCard.css';
 
 export default function CategoryShowcaseCard({
@@ -73,7 +73,7 @@ export default function CategoryShowcaseCard({
                         >
                             <div className="csc-img-wrapper">
                                 <img
-                                    src={imageUrl(item.icon)}
+                                    {...responsiveImage(item.icon)} decoding="async"
                                     alt={item.productname || ''}
                                     className="csc-img"
                                     loading="lazy"

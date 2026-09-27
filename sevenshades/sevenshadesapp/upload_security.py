@@ -231,4 +231,5 @@ def secure_media_serve(request, path: str):
     response['Content-Security-Policy'] = "default-src 'none'; sandbox"
     response['Content-Disposition'] = 'inline'
     response['X-Frame-Options'] = 'DENY'
+    response['Cache-Control'] = 'public, max-age=3600'
     return response

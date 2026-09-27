@@ -1,7 +1,7 @@
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
-import imageUrl from '../../services/imageUrl';
+import { responsiveImage } from '../../services/imageUrl';
 import './StorefrontCarousels.css';
 
 export default function SliderComponent({ data = [], onBannerClick }) {
@@ -26,7 +26,7 @@ export default function SliderComponent({ data = [], onBannerClick }) {
         const women = audience.trim().toLowerCase() === 'women';
         return <div key={item.image + index}>
         <button type="button" className={`home-banner-slide ${women ? 'home-banner-slide-women' : 'home-banner-slide-men'}`} onClick={() => onBannerClick?.(item, index)} aria-label={`Shop ${audience.trim()} collection`}>
-          <img src={imageUrl(item.image)} alt={`${audience.trim()} fashion collection`} />
+          <img {...responsiveImage(item.image, '100vw', true)} loading={index === 0 ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : 'auto'} decoding="async" alt={`${audience.trim()} fashion collection`} />
           <span className="home-banner-copy">
             <span className="home-banner-eyebrow">SevenShades · Try & Buy</span>
             <strong>{headline.trim()}</strong>

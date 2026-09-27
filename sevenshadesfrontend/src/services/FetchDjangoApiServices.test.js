@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { postData, logout, catalogData } from './FetchDjangoApiServices';
+import { postData, logout, catalogData, clearCatalogCache } from './FetchDjangoApiServices';
 
 jest.mock('axios', () => ({ create: jest.fn(options => ({ defaults: options, get: jest.fn(), post: jest.fn() })) }));
 const api = axios.create.mock.results[0].value;
@@ -11,7 +11,26 @@ test('catalog retry recovers a transient error without permitting mutation retri
   await expect(catalogData('try_order_create', {})).rejects.toThrow('Catalog endpoint required');
 });
 
-beforeEach(() => { localStorage.clear(); api.get.mockReset(); api.post.mockReset(); });
+beforeEach(() => { clearCatalogCache(); localStorage.clear(); api.get.mockReset(); api.post.mockReset(); });
+
+test('catalog shares concurrent requests, caches success briefly, and refreshes expired data', async () => {
+  const now = jest.spyOn(Date, 'now').mockReturnValue(1000);
+  api.get.mockResolvedValue({ data: { status: true, data: [] } });
+  await Promise.all([catalogData('user_banner_list'), catalogData('user_banner_list')]);
+  await catalogData('user_banner_list');
+  expect(api.get).toHaveBeenCalledTimes(1);
+  now.mockReturnValue(62000);
+  await catalogData('user_banner_list');
+  expect(api.get).toHaveBeenCalledTimes(2);
+  now.mockRestore();
+});
+
+test('catalog failures are never cached', async () => {
+  api.get.mockResolvedValue({ data: { status: false, httpStatus: 400 } });
+  await catalogData('user_banner_list');
+  await catalogData('user_banner_list');
+  expect(api.get).toHaveBeenCalledTimes(2);
+});
 
 test('mutations send a server-issued CSRF token using credentialed transport', async () => {
   api.get.mockResolvedValue({ data: { csrfToken: 'server-token' } });
