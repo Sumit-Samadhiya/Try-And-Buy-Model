@@ -24,7 +24,13 @@
 - Django system check and process-health test passed.
 - All generated image manifest references resolve to files.
 - First performance release: live Vercel catalog image returned 200 and the expected immutable cache header; Cloudinary fetch returned 200; rendered homepage hero images were confirmed loaded from Cloudinary.
-- Final follow-up deployment verification is recorded below when completed.
+- Production build passed after all follow-up fixes.
+- Final release `72f36b1`: Vercel Ready and Render Live verified.
+- Production banner API returns both `.webp` source paths.
+- Live catalog check: limited request returned six unique products (12 color rows); full request returned 16 unique products (33 color rows).
+- Live thumbnail response: 200, image/webp, 3,932 bytes, one-hour cache header (sample men's hero, bounded thumbnail).
+- Cron health test: 200 OK in 232 ms; ten-minute enabled schedule and `/health/` URL persisted after reload. This is one warm request measurement, not a site speed benchmark.
+- Final homepage visible banners loaded from Cloudinary and visible category images loaded successfully.
 
 ## Claims not established by these checks
 

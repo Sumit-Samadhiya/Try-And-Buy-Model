@@ -4,6 +4,13 @@ import imageUrl from '../../services/imageUrl';
 import { getData } from '../../services/FetchDjangoApiServices';
 import './BudgetBazaarComponent.css';
 
+function DealImage({ sources, label }) {
+    const [index, setIndex] = useState(0);
+    return <img src={sources[index]} alt={label} className="bbz-img"
+        loading="lazy" decoding="async"
+        onError={() => setIndex(current => Math.min(current + 1, sources.length - 1))} />;
+}
+
 /**
  * BudgetBazaarComponent
  * Renders value-led deals curated by admin with doorstep trials and honest catalog pricing.
@@ -100,6 +107,21 @@ export default function BudgetBazaarComponent({ subcategories = [], products = [
                         tierColor = item.tierColor || 'blue';
                     }
 
+                    const category = subcategories.find(sub => Number(sub.id) === Number(item.subcategoryid));
+                    const categoryIcon = category?.icon || item.subcategory_icon || item.maincategory_icon;
+                    const matchedFallback = fallbackItems.find(f =>
+                        (item.title && f.label && (f.label.toLowerCase().includes(item.title.toLowerCase()) || item.title.toLowerCase().includes(f.label.toLowerCase()))) ||
+                        (item.title && f.key && item.title.toLowerCase().includes(f.key.toLowerCase()))
+                    );
+                    const titleFallbackIcon = matchedFallback?.defaultIcon;
+
+                    const sources = [...new Set([
+                        imageUrl(iconPath),
+                        imageUrl(categoryIcon),
+                        imageUrl(titleFallbackIcon),
+                        '/images/product-placeholder.svg',
+                    ].filter(Boolean))];
+
                     return (
                         <div
                             key={item.id || idx}
@@ -114,13 +136,7 @@ export default function BudgetBazaarComponent({ subcategories = [], products = [
                             }}
                         >
                             <div className="bbz-img-wrapper">
-                                <img
-                                    src={imageUrl(iconPath)}
-                                    alt={displayLabel}
-                                    className="bbz-img"
-                                    loading="lazy"
-                                    decoding="async"
-                                />
+                                <DealImage key={sources.join('|')} sources={sources} label={displayLabel} />
                             </div>
 
                             <div className={`bbz-pill bbz-pill-${tierColor}`}>

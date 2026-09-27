@@ -1,4 +1,5 @@
 import logging
+from django.core.files.storage import default_storage
 from django.shortcuts import render
 from django.http.response import JsonResponse
 from rest_framework.parsers import JSONParser
@@ -284,7 +285,19 @@ def User_Budget_Bazaar_List(request):
         deals = BudgetDeal.objects.filter(is_active=True).select_related('maincategoryid', 'subcategoryid').order_by('order_index', 'id')
         data = []
         for d in deals:
-            icon_url = str(d.icon) if d.icon else (str(d.subcategoryid.icon) if d.subcategoryid and d.subcategoryid.icon else '')
+            sub_icon = str(d.subcategoryid.icon).strip() if d.subcategoryid and d.subcategoryid.icon else ''
+            main_icon = str(d.maincategoryid.icon).strip() if d.maincategoryid and d.maincategoryid.icon else ''
+
+            icon_url = str(d.icon).strip() if d.icon else ''
+            if icon_url:
+                clean_path = icon_url if icon_url.startswith('static/') else f'static/{icon_url}'
+                try:
+                    if not (default_storage.exists(clean_path) or default_storage.exists(icon_url)):
+                        icon_url = sub_icon or main_icon or icon_url
+                except Exception:
+                    pass
+            if not icon_url:
+                icon_url = sub_icon or main_icon
             data.append({
                 'id': d.id,
                 'title': d.title,
@@ -294,6 +307,8 @@ def User_Budget_Bazaar_List(request):
                 'maincategoryname': d.maincategoryid.maincategoryname if d.maincategoryid else '',
                 'subcategoryid': d.subcategoryid_id,
                 'subcategoryname': d.subcategoryid.subcategoryname if d.subcategoryid else '',
+                'subcategory_icon': sub_icon,
+                'maincategory_icon': main_icon,
                 'icon': icon_url,
                 'tier_color': d.tier_color,
                 'order_index': d.order_index,

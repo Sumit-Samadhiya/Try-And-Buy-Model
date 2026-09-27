@@ -308,6 +308,15 @@ export default function BudgetBazaarManager() {
                               src={imageUrl(deal.icon)}
                               alt={deal.title}
                               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                              onError={(e) => {
+                                const sub = subcategories.find(s => Number(s.id) === Number(deal.subcategoryid));
+                                const subIcon = sub?.icon || deal.subcategory_icon || deal.maincategory_icon;
+                                if (subIcon && e.currentTarget.src !== imageUrl(subIcon)) {
+                                  e.currentTarget.src = imageUrl(subIcon);
+                                } else {
+                                  e.currentTarget.src = '/images/product-placeholder.svg';
+                                }
+                              }}
                             />
                           ) : (
                             <LocalOfferIcon sx={{ color: '#94a3b8' }} />
