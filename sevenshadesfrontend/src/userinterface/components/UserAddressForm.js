@@ -184,6 +184,10 @@ export default function UserAddressForm() {
 
   const handlePlaceOrder = () => {
     if (submittingRef.current) return;
+    if (deliveryMode === 'standard' && !slotAvailable(deliveryDate, deliverySlot)) {
+      alert('Choose an available delivery slot and date.');
+      return;
+    }
     if (!billingItems.length || billingItems.some(item => !item.size)) {
       alert("Please return to your bag and select a size for each product.");
       return;

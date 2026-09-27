@@ -8,7 +8,8 @@ export function collectionUrl(state = {}) {
   const title = state.dealTitle || p.subcategoryname || p.maincategoryname || p.brandname;
   if (title) query.set('title', title);
   if (Number(state.maxPrice) > 0) query.set('maxPrice', state.maxPrice);
-  return '/productpage' + (query.size ? '?' + query.toString() : '');
+  const search = query.toString();
+  return '/productpage' + (search ? '?' + search : '');
 }
 
 export function collectionFromSearch(search) {

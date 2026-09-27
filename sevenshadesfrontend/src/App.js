@@ -47,7 +47,7 @@ function App() {
     <div>
       <BrowserRouter>
       <CustomerOrderNotifications />
-      <Suspense fallback={<div role="status" style={{ padding: 32 }}>Loading page…</div>}><Routes>
+      <Suspense fallback={<div role="status" style={{ padding: 32 }}>Loading page...</div>}><Routes>
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route element={<AdminLogin/>} path="/adminlogin"/>
         <Route element={<RequireSession role="admin"><AdminDashboard/></RequireSession>} path="/admindashboard/*"/>

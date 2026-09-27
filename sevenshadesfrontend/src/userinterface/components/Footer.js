@@ -5,7 +5,6 @@ import { serverURL } from "../../services/FetchDjangoApiServices";
 import Icons from "./Icons";
 
 export default function Footer() {
-    
     const [policyDialog, setPolicyDialog] = useState(null);
 
     const linkStyle = {
@@ -15,8 +14,7 @@ export default function Footer() {
         color: "#94a3b8",
         transition: "color 0.15s ease",
         margin: "8px 0",
-        display: "block", textDecoration: "none",
-        background: "none", border: 0, padding: 0, textAlign: "left", fontFamily: "inherit",
+        display: "block", textDecoration: "none", background: "none", border: 0, padding: 0, textAlign: "left", fontFamily: "inherit",
     };
 
     const foo = () => {
@@ -40,10 +38,10 @@ export default function Footer() {
                             <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/profile">
                                 Track Live Trial Orders
                             </Link>
-                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('delivery')}>
+                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('delivery')}>
                                 Doorstep Trial & Returns Policy
                             </button>
-                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/home">
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/home">
                                 Curated Catalog Sitemap
                             </Link>
                         </Grid>
@@ -52,7 +50,7 @@ export default function Footer() {
                             <p style={{ fontSize: '13px', letterSpacing: "1px", fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: 16 }}>
                                 ABOUT SEVENSHADES
                             </p>
-                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('about')}>
+                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('about')}>
                                 Our Try & Buy Mission
                             </button>
                             <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('careers')}>
@@ -70,7 +68,7 @@ export default function Footer() {
                             <p style={{ fontSize: '13px', letterSpacing: "1px", fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: 16 }}>
                                 HYPERLOCAL SERVICES
                             </p>
-                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/home">
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/home">
                                 Standard Try & Buy (Same Day)
                             </Link>
                             <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/home">
@@ -117,17 +115,15 @@ export default function Footer() {
                     </Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3 }}>
                         <Typography
-                            variant="caption"
-                            component="button" type="button"
-                            sx={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', fontWeight: 600, color: '#cbd5e1', '&:hover': { color: '#ffffff' } }}
+                            variant="caption" component="button" type="button"
+                            sx={{ background: "none", border: 0, padding: 0, cursor: 'pointer', fontWeight: 600, color: '#cbd5e1', '&:hover': { color: '#ffffff' } }}
                             onClick={() => setPolicyDialog('privacy')}
                         >
                             Privacy Policy & Cookies
                         </Typography>
                         <Typography
-                            variant="caption"
-                            component="button" type="button"
-                            sx={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', fontWeight: 600, color: '#cbd5e1', '&:hover': { color: '#ffffff' } }}
+                            variant="caption" component="button" type="button"
+                            sx={{ background: "none", border: 0, padding: 0, cursor: 'pointer', fontWeight: 600, color: '#cbd5e1', '&:hover': { color: '#ffffff' } }}
                             onClick={() => setPolicyDialog('delivery')}
                         >
                             Try & Buy Terms of Service

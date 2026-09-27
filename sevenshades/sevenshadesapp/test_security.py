@@ -136,16 +136,17 @@ class AccountSecurityTests(TestCase):
         self.assertEqual(self.client.get('/api/auth_session').json()['data']['mobileno'], self.bob.pk)
         self.assertEqual(self.post('fetch_user_address', {'mobile': self.alice.pk}).status_code, 403)
 
-    @override_settings(DEBUG=True, OTP_TEST_MODE=True, FAST2SMS_API_KEY='')
-    def test_signup_validates_and_hashes_password_without_signing_in(self):
-        data = {'mobileno': '9000000009', 'emailid': 'new@example.test', 'fname': 'New', 'lname': 'User', 'password': '123'}
-        self.assertEqual(self.post('signup_submit', data).status_code, 400)
-        data['password'] = data['confirm_password'] = PASSWORD
-        challenge = self.post('otp_request', {'mobileno': data['mobileno'], 'purpose': 'signup'}).json()['data']['challenge_id']
-        data.update(challenge_id=challenge, otp='123456')
-        self.assertEqual(self.post('signup_submit', data).status_code, 201)
-        self.assertTrue(check_password(PASSWORD, SignUp.objects.get(pk=data['mobileno']).password))
-        self.assertEqual(self.client.get('/api/auth_session').status_code, 401)
+    def test_firebase_signup_validates_and_hashes_password(self):
+        import time
+        from unittest.mock import patch
+        claims = {'phone_number': '+919000000009', 'auth_time': time.time(), 'firebase': {'sign_in_provider': 'phone'}}
+        data = {'id_token': 'proof', 'purpose': 'signup', 'emailid': 'new@example.test', 'fname': 'New', 'lname': 'User', 'password': '123', 'confirm_password': '123'}
+        with patch('sevenshadesapp.firebase_views.verify_firebase_id_token', return_value=(claims, None)):
+            self.assertEqual(self.post('auth/firebase-login/', data).status_code, 400)
+            data['password'] = data['confirm_password'] = PASSWORD
+            self.assertEqual(self.post('auth/firebase-login/', data).status_code, 200)
+        self.assertTrue(check_password(PASSWORD, SignUp.objects.get(pk='9000000009').password))
+        self.assertEqual(self.client.get('/api/auth_session').json()['role'], 'customer')
 
     def test_wrong_password_is_401_and_attempts_are_limited(self):
         for _ in range(10):

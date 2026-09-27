@@ -84,6 +84,8 @@ export default function ProductPage(props) {
                 });
             }
             setProductList(items);
+        } else {
+            throw new Error('This collection link is invalid. Please choose a collection from the shop.');
         }
 
         } catch (failure) { setError(failure.message); setProductList([]); }

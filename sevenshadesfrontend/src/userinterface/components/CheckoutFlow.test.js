@@ -36,6 +36,8 @@ test('bag preserves size and saved address in checkout and prevents double submi
   </Routes></MemoryRouter></Provider>);
   fireEvent.click(screen.getByRole('button', { name: /Proceed To Address/i }));
   await screen.findAllByText('Saved Home');
+  fireEvent.click(screen.getByRole('button', { name: 'Tomorrow' }));
+  fireEvent.click(screen.getByRole('button', { name: '10:00 AM - 02:00 PM' }));
   expect(screen.getByText(/Once your purchase is finalized, returns and refunds are not available/)).toBeInTheDocument();
   const button = screen.getByRole('button', { name: /Book Home Trial|Place Free Trial Order/i });
   fireEvent.click(button);

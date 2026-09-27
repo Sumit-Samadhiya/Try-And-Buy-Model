@@ -93,9 +93,17 @@ def expire_trial(order_id):
 
 def expire_pending_trials(mobile=None, limit=100):
     from django.db import OperationalError
+    from datetime import timedelta
+    from .delivery_schedule import SLOT_ENDS, slot_end
+    now, today = timezone.now(), timezone.localdate()
+    legacy_due = Q(delivery_mode='emergency_sos', created_at__lte=now - timedelta(hours=3))
+    for slot in SLOT_ENDS:
+        legacy_due |= Q(delivery_mode='standard', delivery_slot=slot, scheduled_date__lt=today)
+        if slot_end(today, slot) + timedelta(hours=1) <= now:
+            legacy_due |= Q(delivery_mode='standard', delivery_slot=slot, scheduled_date=today)
     rows = TryOrder.objects.filter(status__in=['AWAITING_TRIAL_PAYMENT', 'TRY_REQUESTED', 'ASSIGNED'], gatewaypayment__isnull=True, trial_fee_paid=False, dispatched_at__isnull=True).filter(
-        Q(reservation_expires_at__lte=timezone.now()) |
-        Q(reservation_expires_at__isnull=True, scheduled_date__lte=timezone.localdate())
+        Q(reservation_expires_at__lte=now) |
+        (Q(reservation_expires_at__isnull=True, status__in=['TRY_REQUESTED', 'ASSIGNED']) & legacy_due)
     )
     if mobile is not None:
         rows = rows.filter(mobileno=mobile)

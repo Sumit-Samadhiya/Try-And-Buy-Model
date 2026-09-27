@@ -49,7 +49,7 @@ const getData = async url => {
 
 // Only public catalog reads may be retried, never checkout or payment mutations.
 export const catalogData = async (url, body) => {
-  if (!url.startsWith('user_')) throw new Error('Catalog endpoint required');
+  if (!new Set(['user_banner_list', 'user_subcategory_list', 'user_maincategory_list', 'user_products_maincategory', 'user_budget_bazaar_list']).has(url)) throw new Error('Catalog endpoint required');
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const result = body === undefined ? await getData(url) : await postData(url, body);
     if (result.status || (result.httpStatus && result.httpStatus < 500) || attempt === 1) return result;

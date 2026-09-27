@@ -1,8 +1,15 @@
 import axios from 'axios';
-import { postData, logout } from './FetchDjangoApiServices';
+import { postData, logout, catalogData } from './FetchDjangoApiServices';
 
 jest.mock('axios', () => ({ create: jest.fn(options => ({ defaults: options, get: jest.fn(), post: jest.fn() })) }));
 const api = axios.create.mock.results[0].value;
+
+test('catalog retry recovers a transient error without permitting mutation retries', async () => {
+  api.get.mockRejectedValueOnce({ response: { status: 503 } }).mockResolvedValueOnce({ data: { status: true, data: [{ id: 1 }] } });
+  expect((await catalogData('user_maincategory_list')).status).toBe(true);
+  expect(api.get).toHaveBeenCalledTimes(2);
+  await expect(catalogData('try_order_create', {})).rejects.toThrow('Catalog endpoint required');
+});
 
 beforeEach(() => { localStorage.clear(); api.get.mockReset(); api.post.mockReset(); });
 
