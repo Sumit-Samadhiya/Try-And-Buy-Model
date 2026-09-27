@@ -2611,7 +2611,7 @@
   "pk": 2,
   "fields": {
     "bannerdescription": "Men|The Everyday Edit|Try up to 4 styles at home",
-    "icon": "static/sevenshades-men-hero.png"
+    "icon": "static/sevenshades-men-hero.webp"
   }
 },
 {
@@ -2619,7 +2619,7 @@
   "pk": 3,
   "fields": {
     "bannerdescription": "Women|Made for every version of you|Pay only for what you keep",
-    "icon": "static/sevenshades-women-hero.png"
+    "icon": "static/sevenshades-women-hero.webp"
   }
 },
 {

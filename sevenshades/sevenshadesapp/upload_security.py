@@ -17,6 +17,7 @@ import re
 import logging
 from pathlib import Path
 from io import BytesIO
+from functools import lru_cache
 from PIL import Image, UnidentifiedImageError
 from django.conf import settings
 from django.http import HttpResponse, Http404, FileResponse
@@ -207,23 +208,20 @@ def optimize_uploaded_image(upload, max_dimension: int = 1920, quality: int = 78
     try:
         from PIL import ImageOps
         with Image.open(BytesIO(data)) as img:
+            fmt = (img.format or 'JPEG').upper()
             img = ImageOps.exif_transpose(img)
             w, h = img.size
             if w > max_dimension or h > max_dimension:
                 img.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
             
             out = BytesIO()
-            fmt = (img.format or 'JPEG').upper()
             if fmt == 'WEBP':
                 img.save(out, format='WEBP', quality=quality, method=6)
             elif fmt == 'PNG':
-                if 'A' in img.getbands() or 'transparency' in img.info:
-                    img.save(out, format='PNG', optimize=True)
-                else:
-                    img = img.convert('RGB')
-                    img.save(out, format='JPEG', quality=quality, optimize=True)
+                # Preserve the format: callers retain the original filename extension.
+                img.save(out, format='PNG', optimize=True)
             else:
-                if img.mode in ('RGBA', 'P'):
+                if img.mode not in ('RGB', 'L'):
                     img = img.convert('RGB')
                 img.save(out, format='JPEG', quality=quality, optimize=True)
             return out.getvalue()
@@ -246,13 +244,19 @@ def generate_thumbnail(upload, size: tuple = (400, 500), quality: int = 75) -> b
             img = ImageOps.exif_transpose(img)
             img.thumbnail(size, Image.Resampling.LANCZOS)
             out = BytesIO()
-            if img.mode in ('RGBA', 'P') and 'A' not in img.getbands():
-                img = img.convert('RGB')
+            img = img.convert('RGBA' if 'A' in img.getbands() or 'transparency' in img.info else 'RGB')
             img.save(out, format='WEBP', quality=quality, method=6)
             return out.getvalue()
     except Exception as exc:
         logger.warning('Could not generate thumbnail, fallback to original: %s', exc)
         return data
+
+
+@lru_cache(maxsize=128)
+def _cached_thumbnail(path, modified_ns, byte_size):
+    # File identity invalidates an edited upload; bound RAM usage by entry count.
+    with open(path, 'rb') as source:
+        return generate_thumbnail(source)
 
 
 def secure_media_serve(request, path: str):
@@ -289,7 +293,14 @@ def secure_media_serve(request, path: str):
     }
     content_type = content_types.get(ext, 'application/octet-stream')
 
-    response = FileResponse(target_path.open('rb'), content_type=content_type)
+    if request.GET.get('thumbnail') == '1':
+        stat = target_path.stat()
+        data = _cached_thumbnail(str(target_path), stat.st_mtime_ns, stat.st_size)
+        # The optimizer can fall back to the original on decode failure.
+        is_webp = data[:4] == b'RIFF' and data[8:12] == b'WEBP'
+        response = HttpResponse(data, content_type='image/webp' if is_webp else content_type)
+    else:
+        response = FileResponse(target_path.open('rb'), content_type=content_type)
     # Security headers to ensure browsers never execute uploaded files as code
     response['X-Content-Type-Options'] = 'nosniff'
     response['Content-Security-Policy'] = "default-src 'none'; sandbox"

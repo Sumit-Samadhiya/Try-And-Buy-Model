@@ -15,7 +15,11 @@ export const responsiveImage = (value, sizes = '(max-width: 600px) 50vw, 25vw', 
   const first = String(value || '').split(',')[0].trim();
   const widths = hero ? [480, 960, 1600] : [480, 960];
   const sources = widths.map(width => optimized(first, width, true));
-  if (sources.some(source => !source)) return { src: imageUrl(value) };
+  if (sources.some(source => !source)) {
+    const original = imageUrl(value);
+    const localUpload = original?.startsWith(`${serverURL.replace(/\/+$/, '')}/media/`);
+    return { src: !hero && localUpload ? `${original}?thumbnail=1` : original };
+  }
   return {
     src: sources[hero ? 1 : 0],
     srcSet: sources.map((source, i) => `${source} ${widths[i]}w`).join(', '),

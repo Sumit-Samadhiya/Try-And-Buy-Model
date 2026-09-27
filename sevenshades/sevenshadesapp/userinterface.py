@@ -234,7 +234,7 @@ def User_Products_Maincategory(request):
           if request.method=='POST':
                maincategoryid=request.data['maincategoryid']
                limit = request.data.get('limit')
-               product_list=Product.objects.filter(maincategoryid=maincategoryid)
+               product_list=Product.objects.filter(maincategoryid=maincategoryid).order_by('pk')
                if limit:
                     try:
                          limit_num = int(limit)
