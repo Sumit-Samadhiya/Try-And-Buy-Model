@@ -1,4 +1,5 @@
 import imageUrl from '../../services/imageUrl';
+import { trackAddToCart, trackRemoveFromCart, trackCheckoutStep } from '../../services/analytics';
 import { postData } from "../../services/FetchDjangoApiServices";
 import { Alert, Button } from "@mui/material";
 import PlusMinusComponent from "./PlusMinuComponent";
@@ -59,8 +60,10 @@ export default function MyBag(props) {
 
         if (normalizedValue >= 1) {
             dispatch({ type: "ADD_PRODUCT", payLoad: [product.id, product] });
+            trackAddToCart(product);
         } else {
             dispatch({ type: "DELETE_PRODUCT", payLoad: [product.id] });
+            trackRemoveFromCart(product);
         }
 
         props.setPageRefresh(!props.pageRefresh);
@@ -71,6 +74,7 @@ export default function MyBag(props) {
             alert("Please select a size for each product before checkout.");
             return;
         }
+        trackCheckoutStep('initiate_try_order', { total_items: totalTryItems, payable: payableAmount });
         const trialDetails = {
             payableAmount,
             totalTryItems,

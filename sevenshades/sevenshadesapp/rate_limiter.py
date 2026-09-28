@@ -37,6 +37,7 @@ PUBLIC_ENDPOINTS = {
     'user_product_list',
     'user_products_maincategory',
     'user_productsdetails_by_id',
+    'analytics_track',
 }
 
 

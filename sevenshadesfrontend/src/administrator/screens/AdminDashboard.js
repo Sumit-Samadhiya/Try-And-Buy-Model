@@ -6,6 +6,7 @@ import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-
 import { logout } from '../../services/FetchDjangoApiServices';
 import useOrderEvents from '../../services/useOrderEvents';
 import { SalesReport, SupportTickets } from './AdminReports';
+import AdminAnalyticsTracking from './AdminAnalyticsTracking';
 import Category from './Category';
 import DisplayAllCategory from "./DisplayAllCategory"
 import MySubCategory from './MySubCategory'
@@ -57,7 +58,7 @@ const theme = createTheme({
 });
 
 const sections = [
-  ['OVERVIEW', [['Quick Dashboard', 'dashboard'], ['Sales Report', 'sales'], ['Support Tickets', 'tickets']]],
+  ['OVERVIEW', [['Quick Dashboard', 'dashboard'], ['Sales Report', 'sales'], ['Support Tickets', 'tickets'], ['Analytics & Tracking', 'analytics']]],
   ['OPERATIONS', [['Orders', 'orders'], ['Payment Recovery', 'payment-recovery'], ['Delivery Ops', 'deliveryops'], ['Pincodes & Zones', 'pincodes']]],
   ['CATALOG', [['Categories', 'category'], ['Subcategories', 'subcategory'], ['Brands', 'brand'], ['Products & Variants', 'displayallproduct'], ['Budget Bazaar Deals', 'budgetbazaar'], ['Banners', 'banner']]],
 ];
@@ -293,6 +294,7 @@ export default function AdminDashboard() {
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="sales" element={<SalesReport />} />
               <Route path="tickets" element={<SupportTickets />} />
+              <Route path="analytics" element={<AdminAnalyticsTracking />} />
               <Route element={<Category />} path='/category'></Route>
               <Route element={<DisplayAllCategory />} path='/displayallcategory'></Route>
               <Route element={<MySubCategory />} path="/subcategory" />

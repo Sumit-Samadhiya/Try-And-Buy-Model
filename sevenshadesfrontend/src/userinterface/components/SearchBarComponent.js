@@ -1,4 +1,5 @@
 import imageUrl from '../../services/imageUrl';
+import { trackSearch } from '../../services/analytics';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -61,6 +62,7 @@ export default function SearchBarComponent(props) {
     const handleSelectProduct = (item) => {
         setShowDropdown(false);
         setProductName('');
+        trackSearch(item.productname || item.subcategoryname || item.brandname || 'product', 1);
         if (item.type === 'product') {
             navigate('/productdetailspage', { state: { productid: item.id, product: item, pageView: 'ProductDetailsComponent' } });
         } else if (item.type === 'subcategory') {
@@ -74,6 +76,9 @@ export default function SearchBarComponent(props) {
 
     const handleSearchClick = () => {
         const query = productname.trim().toLowerCase();
+        if (query) {
+            trackSearch(query, filteredList.length);
+        }
         const menCategory = allProducts.find(item => item.type === 'maincategory' && item.maincategoryname.toLowerCase() === 'men');
         const womenCategory = allProducts.find(item => item.type === 'maincategory' && item.maincategoryname.toLowerCase() === 'women');
 

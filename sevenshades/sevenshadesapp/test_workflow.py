@@ -258,3 +258,45 @@ class DoorstepWorkflowTests(TestCase):
         self.assertEqual(self.post(self.customer, 'payment_create', payload).status_code, 409)
         self.assertEqual(gateway.call_count, 1)
         self.assertEqual(GatewayPayment.objects.get().state, 'REVIEW')
+
+    def test_user_event_and_page_tracking_analytics(self):
+        # 1. Anonymous client can submit page view and user events
+        track_payload = {
+            'events': [
+                {
+                    'event_type': 'PAGE_VIEW',
+                    'event_name': 'page_view',
+                    'page_path': '/productdetailspage?pid=101',
+                    'page_title': 'Silk Kurti - Doordrape',
+                    'session_id': 'sess-test-123',
+                    'properties': {'source': 'home_banner'}
+                },
+                {
+                    'event_type': 'USER_EVENT',
+                    'event_name': 'add_to_cart',
+                    'page_path': '/productdetailspage?pid=101',
+                    'session_id': 'sess-test-123',
+                    'user_mobile': '9000000001',
+                    'properties': {'product_name': 'Silk Kurti', 'price': 899}
+                }
+            ]
+        }
+        res = self.post(self.client, 'analytics_track', track_payload)
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(res.json()['status'])
+        self.assertEqual(res.json()['count'], 2)
+
+        # 2. Anonymous client cannot access admin analytics dashboard
+        self.assertEqual(self.client.get('/api/admin_analytics_dashboard').status_code, 401)
+
+        # 3. Admin client can fetch dashboard metrics
+        dash_res = self.admin_client.get('/api/admin_analytics_dashboard')
+        self.assertEqual(dash_res.status_code, 200)
+        data = dash_res.json()['data']
+        self.assertGreaterEqual(data['page_views'], 1)
+        self.assertGreaterEqual(data['user_events'], 1)
+        self.assertGreaterEqual(data['unique_sessions'], 1)
+        self.assertTrue(any(p['page_path'] == '/productdetailspage?pid=101' for p in data['top_pages']))
+        self.assertTrue(any(e['event_name'] == 'add_to_cart' for e in data['top_events']))
+        self.assertGreaterEqual(len(data['recent_events']), 2)
+

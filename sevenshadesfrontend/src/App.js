@@ -1,4 +1,5 @@
 import CustomerOrderNotifications from './services/CustomerOrderNotifications';
+import PageTracker from './services/PageTracker';
 import DoordrapeLoader from './userinterface/components/DoordrapeLoader';
 import RequireSession from './services/RequireSession';
 import CookieConsent from './userinterface/components/CookieConsent';
@@ -48,6 +49,7 @@ function App() {
   return (
     <div>
       <BrowserRouter>
+      <PageTracker />
       <CustomerOrderNotifications />
       <Suspense fallback={<DoordrapeLoader fullPage text="Loading page..." role="status" />}><Routes>
         <Route path="/" element={<Navigate to="/home" replace />} />

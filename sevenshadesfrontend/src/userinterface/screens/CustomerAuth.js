@@ -9,6 +9,7 @@ import { RecaptchaVerifier, signInWithPhoneNumber, signOut } from 'firebase/auth
 import { auth } from '../../firebase';
 import { postData, clearCachedAccounts } from '../../services/FetchDjangoApiServices';
 import { validateFields } from '../../services/validation';
+import { trackAuthEvent } from '../../services/analytics';
 import DoordrapeLoader from '../../userinterface/components/DoordrapeLoader';
 import './CustomerAuth.css';
 
@@ -194,6 +195,7 @@ export default function CustomerAuth({ kind = 'login' }) {
 
           const user = backendRes.user || (backendRes.data && backendRes.data[0]);
           dispatch({ type: 'ADD_USER', payLoad: [user.mobileno, user] });
+          trackAuthEvent(signup ? 'signup_success' : 'login_success', user.mobileno);
 
           const destination = location.state?.redirectTo;
           navigate(typeof destination === 'string' && destination.startsWith('/') && !destination.startsWith('//') ? destination : '/home', { replace: true, state: location.state?.checkoutState });
@@ -216,6 +218,7 @@ export default function CustomerAuth({ kind = 'login' }) {
       const user = result.data[0];
       clearCachedAccounts();
       dispatch({ type: 'ADD_USER', payLoad: [user.mobileno, user] });
+      trackAuthEvent(signup ? 'signup_success' : 'login_success', user.mobileno);
 
       const destination = location.state?.redirectTo;
       navigate(typeof destination === 'string' && destination.startsWith('/') && !destination.startsWith('//') ? destination : '/home', { replace: true, state: location.state?.checkoutState });

@@ -1,4 +1,5 @@
 import { validateFields } from '../../services/validation';
+import { trackOrderPlaced, trackCheckoutStep } from '../../services/analytics';
 import { deliverySlots, indiaDate, slotAvailable } from '../../services/deliverySchedule';
 import LocationButton from '../../services/LocationButton';
 import Avatar from '@mui/material/Avatar';
@@ -233,6 +234,7 @@ export default function UserAddressForm() {
 
       const result = await postData('try_order_create', payload);
       if (result?.status && result?.data?.order_id) {
+        trackOrderPlaced(result.data.order_id, result.data.try_fee, result.data.total_try_items);
         billingItems.forEach((item) => {
           dispatch({ type: 'DELETE_PRODUCT', payLoad: [item.id] });
         });

@@ -417,3 +417,32 @@ class BudgetDeal(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.price_tag})"
+
+
+class AnalyticsEvent(models.Model):
+    EVENT_TYPES = (
+        ('PAGE_VIEW', 'Page View'),
+        ('USER_EVENT', 'User Event'),
+    )
+    event_type = models.CharField(max_length=20, choices=EVENT_TYPES, default='USER_EVENT')
+    event_name = models.CharField(max_length=100, db_index=True)
+    page_path = models.CharField(max_length=255, blank=True, default='')
+    page_title = models.CharField(max_length=255, blank=True, default='')
+    user_mobile = models.CharField(max_length=20, blank=True, default='', db_index=True)
+    user_role = models.CharField(max_length=20, blank=True, default='anonymous')
+    session_id = models.CharField(max_length=100, blank=True, default='', db_index=True)
+    properties = models.JSONField(default=dict, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['event_name', 'created_at']),
+            models.Index(fields=['event_type', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.event_type}:{self.event_name} @ {self.page_path}"
+

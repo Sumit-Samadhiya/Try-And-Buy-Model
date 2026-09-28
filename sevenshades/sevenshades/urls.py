@@ -155,6 +155,8 @@ urlpatterns = [
     path('api/inventory_returns', inventory_views.InventoryReturns),
     path('api/trial_return_items', inventory_views.TrialReturnItems),
     path('api/get_order_analytics', admin_analytics_views.GetOrderAnalytics),
+    path('api/analytics_track', admin_analytics_views.TrackAnalyticsEvent),
+    path('api/admin_analytics_dashboard', admin_analytics_views.GetAnalyticsDashboard),
     path('api/list_delivery_zones', admin_workspace_views.ListDeliveryZones),
     path('api/save_delivery_zone', admin_workspace_views.SaveDeliveryZone),
     path('api/delete_delivery_zone', admin_workspace_views.DeleteDeliveryZone),

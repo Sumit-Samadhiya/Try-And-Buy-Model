@@ -1,4 +1,5 @@
 import imageUrl from '../../services/imageUrl';
+import { trackAddToCart, trackRemoveFromCart } from '../../services/analytics';
 import React, { useState, createRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Header from './Header';
@@ -150,8 +151,10 @@ export default function ProductDetailsComponent(props) {
         const payload = { ...product, qty: v, selectedSize: product.size };
         if (v >= 1) {
             dispatch({ type: 'ADD_PRODUCT', payLoad: [product.id, payload] });
+            trackAddToCart(payload);
         } else {
             dispatch({ type: 'DELETE_PRODUCT', payLoad: [product.id] });
+            trackRemoveFromCart(product);
         }
         props.setPageRefresh(!props.pageRefresh);
     };
