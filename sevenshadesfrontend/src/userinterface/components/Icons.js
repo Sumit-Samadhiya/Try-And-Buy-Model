@@ -1,41 +1,40 @@
-
 import { serverURL } from "../../services/FetchDjangoApiServices";
 import { Grid } from "@mui/material";
-import {useTheme} from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import UseMediaQuery from '@mui/material/useMediaQuery';
 
-export default function Icons(){
+export default function Icons() {
+    const theme = useTheme();
+    const sm_matches = UseMediaQuery(theme.breakpoints.down('sm'));
 
-    const theme=useTheme()
-   
-  const sm_matches=UseMediaQuery(theme.breakpoints.down('sm'));
-    const icons = () => {
-        return (
-            <Grid container spacing={sm_matches?2:6}>
-                <Grid item xs={2}>
-                    <img src={`${serverURL}/static/facebook.png`} alt="" style={{ width: '35px', height: "35px" }}></img>
-                </Grid>
-                <Grid item xs={2}>
-                    <img src={`${serverURL}/static/instagram.png`} alt="" style={{ width: '35px', height: "35px" }}></img>
-                </Grid>
-                <Grid item xs={2}>
-                    <img src={`${serverURL}/static/twitter.png`} alt="" style={{ width: '35px', height: "35px" }}></img>
-                </Grid>
-                <Grid item xs={2}>
-                    <img src={`${serverURL}/static/paytm.png`} alt="" style={{ width: '35px', height: "35px" }}></img>
-                </Grid>
-                <Grid item xs={2}>
-                    <img src={`${serverURL}/static/google-pay.png`} alt="" style={{ width: '35px', height: "35px" }}></img>
-                </Grid>
-                <Grid item xs={2}>
-                    <img src={`${serverURL}/static/visa.png`} alt="" style={{ width: '35px', height: "35px" }}></img>
-                </Grid>
+    const iconSize = sm_matches ? '26px' : '34px';
+
+    return (
+        <Grid
+            container
+            spacing={sm_matches ? 1.5 : 4}
+            justifyContent="center"
+            alignItems="center"
+            style={{ maxWidth: sm_matches ? 280 : 640, margin: '0 auto' }}
+        >
+            <Grid item xs={2} style={{ textAlign: 'center' }}>
+                <img src={`${serverURL}/static/facebook.png`} alt="Facebook" style={{ width: iconSize, height: iconSize, objectFit: 'contain' }} />
             </Grid>
-        );
-    }
-    return(
-        <div>
-            {icons()}
-        </div>
-    )
+            <Grid item xs={2} style={{ textAlign: 'center' }}>
+                <img src={`${serverURL}/static/instagram.png`} alt="Instagram" style={{ width: iconSize, height: iconSize, objectFit: 'contain' }} />
+            </Grid>
+            <Grid item xs={2} style={{ textAlign: 'center' }}>
+                <img src={`${serverURL}/static/twitter.png`} alt="Twitter" style={{ width: iconSize, height: iconSize, objectFit: 'contain' }} />
+            </Grid>
+            <Grid item xs={2} style={{ textAlign: 'center' }}>
+                <img src={`${serverURL}/static/paytm.png`} alt="Paytm" style={{ width: iconSize, height: iconSize, objectFit: 'contain' }} />
+            </Grid>
+            <Grid item xs={2} style={{ textAlign: 'center' }}>
+                <img src={`${serverURL}/static/google-pay.png`} alt="Google Pay" style={{ width: iconSize, height: iconSize, objectFit: 'contain' }} />
+            </Grid>
+            <Grid item xs={2} style={{ textAlign: 'center' }}>
+                <img src={`${serverURL}/static/visa.png`} alt="Visa" style={{ width: iconSize, height: iconSize, objectFit: 'contain' }} />
+            </Grid>
+        </Grid>
+    );
 }

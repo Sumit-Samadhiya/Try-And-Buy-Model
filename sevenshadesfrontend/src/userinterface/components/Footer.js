@@ -1,20 +1,30 @@
 import { Grid, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { serverURL } from "../../services/FetchDjangoApiServices";
 import Icons from "./Icons";
 
 export default function Footer() {
+    const theme = useTheme();
+    const sm = useMediaQuery(theme.breakpoints.down('sm'));
     const [policyDialog, setPolicyDialog] = useState(null);
 
     const linkStyle = {
-        fontSize: "13px",
-        letterSpacing: "0.2px",
+        fontSize: sm ? "12px" : "13px",
+        letterSpacing: "0.1px",
         cursor: "pointer",
         color: "#94a3b8",
         transition: "color 0.15s ease",
-        margin: "8px 0",
-        display: "block", textDecoration: "none", background: "none", border: 0, padding: 0, textAlign: "left", fontFamily: "inherit",
+        margin: sm ? "5px 0" : "8px 0",
+        display: "block",
+        textDecoration: "none",
+        background: "none",
+        border: 0,
+        padding: 0,
+        textAlign: "left",
+        fontFamily: "inherit",
     };
 
     const foo = () => {
@@ -23,75 +33,104 @@ export default function Footer() {
                 width: "100%",
                 backgroundColor: "#0f172a",
                 color: "#ffffff",
-                padding: '48px 24px 32px',
+                padding: sm ? '24px 16px 20px' : '48px 24px 32px',
                 boxSizing: 'border-box'
             }}>
                 <div style={{ maxWidth: 1360, margin: '0 auto' }}>
-                    <Grid container spacing={4} justifyContent="space-between">
-                        <Grid item xs={12} sm={6} md={3}>
-                            <h3 style={{ fontSize: '14px', letterSpacing: "0.02em", fontWeight: '700', color: '#ffffff', margin: '0 0 16px' }}>
+                    {/* Responsive 2x2 Grid on Mobile (xs=6), 4 columns on Desktop (md=3) */}
+                    <Grid container spacing={sm ? 2.5 : 4} justifyContent="space-between">
+                        {/* Column 1: Help & Information */}
+                        <Grid item xs={6} sm={6} md={3}>
+                            <h3 style={{
+                                fontSize: sm ? '13px' : '14px',
+                                letterSpacing: "0.02em",
+                                fontWeight: '700',
+                                color: '#ffffff',
+                                margin: sm ? '0 0 10px' : '0 0 16px'
+                            }}>
                                 Help &amp; Information
                             </h3>
                             <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/profile">
-                                Help Center & Support Tickets
+                                Help Center &amp; Support
                             </Link>
                             <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/profile">
-                                Track Live Trial Orders
+                                Track Live Orders
                             </Link>
                             <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/terms-and-conditions">
-                                Doorstep Trial & Returns Policy
+                                Trial &amp; Returns Policy
                             </Link>
                             <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/privacy-policy">
-                                Privacy & Cookie Policy
+                                Privacy Policy
                             </Link>
                         </Grid>
 
-                        <Grid item xs={12} sm={6} md={3}>
-                            <h3 style={{ fontSize: '14px', letterSpacing: "0.02em", fontWeight: '700', color: '#ffffff', margin: '0 0 16px' }}>
+                        {/* Column 2: About Doordrape */}
+                        <Grid item xs={6} sm={6} md={3}>
+                            <h3 style={{
+                                fontSize: sm ? '13px' : '14px',
+                                letterSpacing: "0.02em",
+                                fontWeight: '700',
+                                color: '#ffffff',
+                                margin: sm ? '0 0 10px' : '0 0 16px'
+                            }}>
                                 About Doordrape
                             </h3>
                             <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('about')}>
-                                Our Try & Buy Mission
+                                Try &amp; Buy Mission
                             </button>
                             <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('careers')}>
-                                Careers & Culture
+                                Careers &amp; Culture
                             </button>
                             <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('delivery')}>
-                                Zero-Emission EV Fleet
+                                Zero-Emission Fleet
                             </button>
                             <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('about')}>
                                 Investor Relations
                             </button>
                         </Grid>
 
-                        <Grid item xs={12} sm={6} md={3}>
-                            <h3 style={{ fontSize: '14px', letterSpacing: "0.02em", fontWeight: '700', color: '#ffffff', margin: '0 0 16px' }}>
+                        {/* Column 3: Hyperlocal Services */}
+                        <Grid item xs={6} sm={6} md={3}>
+                            <h3 style={{
+                                fontSize: sm ? '13px' : '14px',
+                                letterSpacing: "0.02em",
+                                fontWeight: '700',
+                                color: '#ffffff',
+                                margin: sm ? '0 0 10px' : '0 0 16px'
+                            }}>
                                 Hyperlocal Services
                             </h3>
                             <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/home">
-                                Standard Try & Buy (Same Day)
+                                Standard Try &amp; Buy
                             </Link>
                             <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/home">
-                                SOS Fast Fashion (90-120 Min)
+                                SOS Fast Fashion
                             </Link>
                             <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/profile">
-                                Wallet Balance & Trial Credits
+                                Wallet &amp; Trial Credits
                             </Link>
                             <Link style={{ ...linkStyle, color: '#34d399', fontWeight: 700 }} onMouseEnter={(e) => e.target.style.color = '#6ee7b7'} onMouseLeave={(e) => e.target.style.color = '#34d399'} to="/delivery/login">
                                 🛵 Rider Partner Portal
                             </Link>
                         </Grid>
 
-                        <Grid item xs={12} sm={6} md={3}>
-                            <h3 style={{ fontSize: '14px', letterSpacing: "0.02em", fontWeight: '700', color: '#ffffff', margin: '0 0 16px' }}>
+                        {/* Column 4: Doorstep Coverage */}
+                        <Grid item xs={6} sm={6} md={3}>
+                            <h3 style={{
+                                fontSize: sm ? '13px' : '14px',
+                                letterSpacing: "0.02em",
+                                fontWeight: '700',
+                                color: '#ffffff',
+                                margin: sm ? '0 0 10px' : '0 0 16px'
+                            }}>
                                 Doorstep Coverage
                             </h3>
-                            <div style={{ fontSize: "14px", color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                                <span>Serving Prime India Hubs</span>
-                                <img src={`${serverURL}/static/india.png`} style={{ width: 18, height: 18 }} alt="India flag" />
+                            <div style={{ fontSize: sm ? "12px" : "14px", color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: 6, marginBottom: sm ? 4 : 8 }}>
+                                <span>Prime India Hubs</span>
+                                <img src={`${serverURL}/static/india.png`} style={{ width: 16, height: 16 }} alt="India flag" />
                             </div>
-                            <p style={{ fontSize: "12px", color: "#94a3b8", lineHeight: 1.5, margin: 0 }}>
-                                Delivering verified trials directly to residential apartments, villas, and gated societies.
+                            <p style={{ fontSize: sm ? "11px" : "12px", color: "#94a3b8", lineHeight: 1.45, margin: 0 }}>
+                                Delivering verified trials to residential apartments &amp; gated societies.
                             </p>
                         </Grid>
                     </Grid>
@@ -106,19 +145,19 @@ export default function Footer() {
                 width: '100%',
                 backgroundColor: "#020617",
                 borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                padding: "24px 20px",
+                padding: sm ? "14px 16px" : "24px 20px",
                 textAlign: 'center'
             }}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, alignItems: 'center' }}>
-                    <Typography variant="caption" sx={{ color: '#94a3b8' }}>
-                        © 2026 Doordrape Inc. All rights reserved. Built for modern doorstep fashion.
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: sm ? 1 : 1.5, alignItems: 'center' }}>
+                    <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: sm ? '0.7rem' : '0.75rem' }}>
+                        © 2026 Doordrape Inc. All rights reserved.
                     </Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: sm ? 2 : 3 }}>
                         <Link
                             to="/privacy-policy"
                             style={{
                                 textDecoration: 'none',
-                                fontSize: '0.75rem',
+                                fontSize: sm ? '0.7rem' : '0.75rem',
                                 fontWeight: 600,
                                 color: '#cbd5e1',
                                 transition: 'color 0.15s ease'
@@ -126,13 +165,13 @@ export default function Footer() {
                             onMouseEnter={(e) => e.target.style.color = '#ffffff'}
                             onMouseLeave={(e) => e.target.style.color = '#cbd5e1'}
                         >
-                            Privacy Policy & Cookies
+                            Privacy Policy
                         </Link>
                         <Link
                             to="/terms-and-conditions"
                             style={{
                                 textDecoration: 'none',
-                                fontSize: '0.75rem',
+                                fontSize: sm ? '0.7rem' : '0.75rem',
                                 fontWeight: 600,
                                 color: '#cbd5e1',
                                 transition: 'color 0.15s ease'
@@ -140,7 +179,7 @@ export default function Footer() {
                             onMouseEnter={(e) => e.target.style.color = '#ffffff'}
                             onMouseLeave={(e) => e.target.style.color = '#cbd5e1'}
                         >
-                            Try & Buy Terms of Service
+                            Terms of Service
                         </Link>
                     </Box>
                 </Box>
@@ -157,7 +196,7 @@ export default function Footer() {
                 alignItems: 'center',
                 backgroundColor: '#ffffff',
                 borderTop: '1px solid #e2e8f0',
-                padding: '24px 16px'
+                padding: sm ? '12px 14px' : '22px 16px'
             }}>
                 <Icons />
             </div>
