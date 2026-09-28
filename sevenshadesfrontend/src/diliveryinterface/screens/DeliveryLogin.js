@@ -153,7 +153,7 @@ export default function DeliveryLogin() {
                 <TwoWheelerRoundedIcon sx={{ fontSize: 36, color: '#ffffff' }} />
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 900, color: '#ffffff', letterSpacing: '-0.5px' }}>
-                SevenShades
+                Doordrape
               </Typography>
               <Typography variant="subtitle1" sx={{ color: '#10b981', fontWeight: 700 }}>
                 Rider Partner Cockpit

@@ -268,7 +268,7 @@ else:
 RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', '')
 RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', '')
 RAZORPAY_WEBHOOK_SECRET = os.environ.get('RAZORPAY_WEBHOOK_SECRET', '')
-RECEIPT_SELLER_NAME = os.environ.get('RECEIPT_SELLER_NAME', 'SevenShades')
+RECEIPT_SELLER_NAME = os.environ.get('RECEIPT_SELLER_NAME', 'Doordrape')
 RECEIPT_SELLER_ADDRESS = os.environ.get('RECEIPT_SELLER_ADDRESS', '')
 
 # Fixed OTP is explicitly limited to local debug mode. SMS integration is pending.

@@ -9,7 +9,7 @@ import Footer from '../components/Footer';
 export default function TermsAndConditions() {
     useEffect(() => {
         window.scrollTo(0, 0);
-        document.title = "Terms & Conditions | SevenShades Try & Buy";
+        document.title = "Terms & Conditions | Doordrape Try & Buy";
     }, []);
 
     return (
@@ -60,7 +60,7 @@ export default function TermsAndConditions() {
                                     1. Acceptance of Terms
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: '#475569', lineHeight: 1.7 }}>
-                                    Welcome to SevenShades. By creating an account, browsing our catalog, or scheduling a Doorstep Try & Buy delivery, you agree to be bound by these Terms and Conditions ("Terms"). If you disagree with any portion of these Terms, please refrain from using our services.
+                                    Welcome to Doordrape. By creating an account, browsing our catalog, or scheduling a Doorstep Try & Buy delivery, you agree to be bound by these Terms and Conditions ("Terms"). If you disagree with any portion of these Terms, please refrain from using our services.
                                 </Typography>
                             </section>
 
@@ -69,7 +69,7 @@ export default function TermsAndConditions() {
                                     2. The Doorstep "Try & Buy" Service Model
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: '#475569', lineHeight: 1.7, mb: 1 }}>
-                                    SevenShades operates an experiential hyperlocal fashion model designed to eliminate size uncertainty:
+                                    Doordrape operates an experiential hyperlocal fashion model designed to eliminate size uncertainty:
                                 </Typography>
                                 <ul style={{ paddingLeft: 20, margin: '8px 0', color: '#475569' }}>
                                     <li><b>Trial Item Limit:</b> Customers may reserve up to four (4) apparel items per trial order across different sizes, styles, or colors.</li>
@@ -110,7 +110,7 @@ export default function TermsAndConditions() {
                                     5. Customer Conduct & Rider Safety
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: '#475569', lineHeight: 1.7 }}>
-                                    SevenShades prioritizes the safety and dignity of our rider partners. Customers agree to provide accurate delivery addresses, be present at the scheduled time, respect the 15-minute trial period, and treat delivery personnel with courtesy. Any abuse, harassment, or garment damage during trial will result in immediate suspension of account privileges.
+                                    Doordrape prioritizes the safety and dignity of our rider partners. Customers agree to provide accurate delivery addresses, be present at the scheduled time, respect the 15-minute trial period, and treat delivery personnel with courtesy. Any abuse, harassment, or garment damage during trial will result in immediate suspension of account privileges.
                                 </Typography>
                             </section>
 

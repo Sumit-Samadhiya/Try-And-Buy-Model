@@ -30,10 +30,10 @@ HERO_BANNERS = (
 )
 
 PRIVATE_LABEL_PRODUCTS = {
-    "Rare Rabbit Floral Tiered Maxi Dress": "SevenShades Floral Tiered Maxi Dress",
-    "SevenShades Anarkali Cotton Kurta Set": "SevenShades Anarkali Cotton Kurta Set",
-    "Aurelia Floral Embroidered Straight Kurti": "SevenShades Floral Embroidered Straight Kurti",
-    "Rare Rabbit Satin Wrap Collar Top": "SevenShades Satin Wrap Collar Top",
+    "Rare Rabbit Floral Tiered Maxi Dress": "Doordrape Floral Tiered Maxi Dress",
+    "SevenShades Anarkali Cotton Kurta Set": "Doordrape Anarkali Cotton Kurta Set",
+    "Aurelia Floral Embroidered Straight Kurti": "Doordrape Floral Embroidered Straight Kurti",
+    "Rare Rabbit Satin Wrap Collar Top": "Doordrape Satin Wrap Collar Top",
 }
 
 
@@ -99,15 +99,12 @@ class Command(BaseCommand):
                 subcategoryname=replacement
             ).update(subcategoryname=replacement)
 
+        Brands.objects.filter(brandname="SevenShades").update(brandname="Doordrape")
         private_label, created = Brands.objects.get_or_create(
-            brandname="SevenShades",
+            brandname="Doordrape",
             defaults={"icon": "static/sevenshades-logo.png"},
         )
         if created:
-            changes += 1
-        elif str(private_label.icon) != "static/sevenshades-logo.png":
-            private_label.icon = "static/sevenshades-logo.png"
-            private_label.save(update_fields=["icon"])
             changes += 1
 
         # Correct products whose displayed label and assigned brand disagreed.
@@ -272,6 +269,8 @@ class Command(BaseCommand):
 
     @staticmethod
     def check_image(issues, static_root, kind, record_id, value):
-        normalized = canonical_media_path(value).removeprefix("static/")
+        normalized = canonical_media_path(value)
+        if normalized.startswith("static/"):
+            normalized = normalized[7:]
         if not normalized or not (static_root / normalized).is_file():
             issues.append(f"{kind.title()} {record_id} references a missing image: {value!r}.")

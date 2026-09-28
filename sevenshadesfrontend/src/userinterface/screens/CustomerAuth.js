@@ -221,10 +221,10 @@ export default function CustomerAuth({ kind = 'login' }) {
     });
   };
   return <main className="customer-auth">
-    <aside className="auth-story"><Link to="/home" className="auth-wordmark">SevenShades<span>TRY IT. LOVE IT. KEEP IT.</span></Link><div><p className="auth-eyebrow">YOUR STYLE. YOUR SPACE.</p><h1>Find your fit.<br /><em>At home.</em></h1><p>Try your favourites at your doorstep.<br />Keep only what feels right.</p><div className="auth-steps"><span>01 / Choose</span><span>02 / Try</span><span>03 / Keep</span></div></div><p className="auth-footnote">A little more choice. A lot more you.</p></aside>
+    <aside className="auth-story"><Link to="/home" className="auth-wordmark">Doordrape<span>TRY IT. LOVE IT. KEEP IT.</span></Link><div><p className="auth-eyebrow">YOUR STYLE. YOUR SPACE.</p><h1>Find your fit.<br /><em>At home.</em></h1><p>Try your favourites at your doorstep.<br />Keep only what feels right.</p><div className="auth-steps"><span>01 / Choose</span><span>02 / Try</span><span>03 / Keep</span></div></div><p className="auth-footnote">A little more choice. A lot more you.</p></aside>
     <section className="auth-form-side"><Box className="auth-card">
       <Button component={Link} to="/home" startIcon={<ArrowBack />} sx={{ color:'#666', alignSelf:'flex-start', mb:3 }}>Back to shopping</Button>
-      <Typography variant="overline" sx={{ display:'block', color:'#8b6a3c', letterSpacing:2 }}>YOUR SEVENSHADES ACCOUNT</Typography>
+      <Typography variant="overline" sx={{ display:'block', color:'#8b6a3c', letterSpacing:2 }}>YOUR DOORDRAPE ACCOUNT</Typography>
       <Typography component="h1" variant="h4" sx={{ fontWeight:800, mt:1 }}>{signup ? 'Make yourself at home.' : reset ? 'A fresh start.' : 'Welcome back.'}</Typography>
       <Typography sx={{ color:'#727272', mt:1, mb:3 }}>{signup ? 'Create your account and verify your mobile number.' : reset ? 'Verify your mobile to set a new password.' : 'Your next favourite outfit is waiting.'}</Typography>
       {!signup && !reset && <div className="auth-methods"><Button onClick={() => {setMethod('password');setChallenge(null);setConfirmationResult(null);confirmationResultRef.current=null;clearRecaptcha();setErrors({});}} aria-pressed={method === 'password'}>Password</Button><Button onClick={() => {setMethod('otp');setChallenge(null);setConfirmationResult(null);clearRecaptcha();setErrors({});}} aria-pressed={method === 'otp'}>Login with OTP</Button></div>}
@@ -242,7 +242,7 @@ export default function CustomerAuth({ kind = 'login' }) {
         <Button type="submit" variant="contained" size="large" disabled={busy || (expired && challenge)} sx={{ bgcolor:'#242424', borderRadius:2, py:1.5, boxShadow:'none', '&:hover':{bgcolor:'#414141'} }}>{busy ? 'Please wait…' : usesOtp && !challenge ? 'Get OTP' : signup ? 'Verify & create account' : reset ? 'Verify & reset password' : usesOtp ? 'Verify & sign in' : 'Sign in'}</Button>
       </Stack>
       {!signup && !reset && <Link className="auth-link" to="/forgotpassword">Forgot password?</Link>}
-      <Typography sx={{ mt:3, textAlign:'center', color:'#666' }}>{signup || reset ? 'Already have an account? ' : 'New to SevenShades? '}<Link className="auth-link" to={signup || reset ? '/signindisplay' : '/signupdisplay'} state={location.state}>{signup || reset ? 'Sign in' : 'Create an account'}</Link></Typography>
+      <Typography sx={{ mt:3, textAlign:'center', color:'#666' }}>{signup || reset ? 'Already have an account? ' : 'New to Doordrape? '}<Link className="auth-link" to={signup || reset ? '/signindisplay' : '/signupdisplay'} state={location.state}>{signup || reset ? 'Sign in' : 'Create an account'}</Link></Typography>
     </Box></section>
   </main>;
 }

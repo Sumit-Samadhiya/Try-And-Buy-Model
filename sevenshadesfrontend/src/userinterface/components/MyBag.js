@@ -42,7 +42,7 @@ export default function MyBag(props) {
         size: item.selectedSize || item.size,
         color: item.color,
         name: item?.productid?.productname || item.productname,
-        brand: item?.brandid?.brandname || 'SevenShades',
+        brand: item?.brandid?.brandname || 'Doordrape',
         qty: (item.qty || 0) > 0 ? 1 : 0,
         price: (item.offerprice > 0 && item.offerprice <= item.price ? item.offerprice : item.price) * ((item.qty || 0) > 0 ? 1 : 0),
     })).filter((item) => item.qty > 0);
@@ -91,7 +91,7 @@ export default function MyBag(props) {
             <div key={item.id} className="product-card">
                 <img
                     src={item?.productid?.icon ? imageUrl(item.productid.icon) : imageUrl(item.icon?.split(',')[0] || '')}
-                    alt=""
+                    alt={item?.productname || "Trial product item"}
                     className="product-image"
                     loading="lazy"
                     decoding="async"
@@ -99,7 +99,7 @@ export default function MyBag(props) {
                 <div className="product-details">
                     <div className="product-name">{item?.productid?.productname || item.productname}</div>
                     <div>Size: {item.selectedSize || item.size || "Please reselect"} · {item.color}</div>
-                    <div className="product-brand">{item?.brandid?.brandname || 'SevenShades'}</div>
+                    <div className="product-brand">{item?.brandid?.brandname || 'Doordrape'}</div>
                     <div className="product-color">Color: {item.color || 'Selected at trial'}</div>
                     <div className="product-price">
                         {item.offerprice > 0 ? (

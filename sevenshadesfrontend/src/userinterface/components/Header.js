@@ -234,7 +234,7 @@ export default function Header() {
                                 color: '#ffffff',
                             }}
                         >
-                            SevenShades
+                            Doordrape
                         </Typography>
                         <span style={{
                             fontSize: 10,

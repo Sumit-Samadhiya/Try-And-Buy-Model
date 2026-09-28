@@ -28,7 +28,7 @@ export default function SliderComponent({ data = [], onBannerClick }) {
         <button type="button" className={`home-banner-slide ${women ? 'home-banner-slide-women' : 'home-banner-slide-men'}`} onClick={() => onBannerClick?.(item, index)} aria-label={`Shop ${audience.trim()} collection`}>
           <img {...responsiveImage(item.image, '100vw', true)} loading={index === 0 ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : 'auto'} decoding="async" alt={`${audience.trim()} fashion collection`} />
           <span className="home-banner-copy">
-            <span className="home-banner-eyebrow">SevenShades · Try & Buy</span>
+            <span className="home-banner-eyebrow">Doordrape · Try & Buy</span>
             <strong>{headline.trim()}</strong>
             <span>{subline.trim()}</span>
             <span className="home-banner-cta">Shop {audience.trim()} →</span>

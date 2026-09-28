@@ -1,11 +1,14 @@
 /**
- * Lightweight privacy-aware analytics service for SevenShades.
+ * Lightweight privacy-aware analytics service for Doordrape.
  * Respects cookie consent choices and safely handles missing tracking IDs.
  */
 
 export function hasAnalyticsConsent() {
     try {
-        return typeof window !== 'undefined' && localStorage.getItem('sevenshades_cookie_consent') === 'accepted';
+        return typeof window !== 'undefined' && (
+            localStorage.getItem('doordrape_cookie_consent') === 'accepted' ||
+            localStorage.getItem('sevenshades_cookie_consent') === 'accepted'
+        );
     } catch (e) {
         return false;
     }

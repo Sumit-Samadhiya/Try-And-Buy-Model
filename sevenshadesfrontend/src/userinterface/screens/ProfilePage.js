@@ -324,7 +324,7 @@ export default function ProfilePage() {
           {/* WALLET ACCOUNT CARD */}
           <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, bgcolor: '#111827', color: '#ffffff' }}>
             <Typography variant="caption" sx={{ textTransform: 'uppercase', letterSpacing: 1, color: '#9ca3af', fontWeight: 800 }}>
-              💳 SevenShades Wallet
+              💳 Doordrape Wallet
             </Typography>
             <Typography variant="h3" sx={{ fontWeight: 900, my: 1, color: '#4ade80' }}>
               ₹{walletBalance}

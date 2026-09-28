@@ -23,7 +23,7 @@ export default function ProductByCategory(props) {
                     No products found in this collection.
                 </p>
                 <p style={{ fontSize: '14px', maxWidth: '420px', margin: '0 auto' }}>
-                    Please check back soon or explore other curated categories on SevenShades.
+                    Please check back soon or explore other curated categories on Doordrape.
                 </p>
             </div>
         );
@@ -64,7 +64,7 @@ export default function ProductByCategory(props) {
 
                         <img
                             {...responsiveImage(item.icon)} decoding="async"
-                            alt={item.productname || 'SevenShades Product'}
+                            alt={item.productname || 'Doordrape Product'}
                             className="pbc-product-image"
                             loading="lazy"
                         />
@@ -73,7 +73,7 @@ export default function ProductByCategory(props) {
                     {/* Card Content with Clear Typography Hierarchy */}
                     <div className="pbc-card-body">
                         <div className="pbc-brand-label">
-                            {item.brandname || (item.categoryname ? `${item.categoryname}` : 'SevenShades')}
+                            {item.brandname || (item.categoryname ? `${item.categoryname}` : 'Doordrape')}
                         </div>
 
                         <h3 className="pbc-card-title" title={item.display_title || item.productname}>

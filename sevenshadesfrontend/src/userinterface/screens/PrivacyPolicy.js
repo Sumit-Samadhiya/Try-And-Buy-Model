@@ -9,7 +9,7 @@ import Footer from '../components/Footer';
 export default function PrivacyPolicy() {
     useEffect(() => {
         window.scrollTo(0, 0);
-        document.title = "Privacy Policy | SevenShades Try & Buy";
+        document.title = "Privacy Policy | Doordrape Try & Buy";
     }, []);
 
     return (
@@ -60,7 +60,7 @@ export default function PrivacyPolicy() {
                                     1. Introduction
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: '#475569', lineHeight: 1.7 }}>
-                                    SevenShades ("we", "our", or "us") operates a hyperlocal Doorstep Try & Buy fashion commerce platform. We are committed to safeguarding the privacy and security of your personal data. This Privacy Policy details how we collect, store, process, and protect your information when you access our website, mobile interface, and doorstep trial delivery services.
+                                    Doordrape ("we", "our", or "us") operates a hyperlocal Doorstep Try & Buy fashion commerce platform. We are committed to safeguarding the privacy and security of your personal data. This Privacy Policy details how we collect, store, process, and protect your information when you access our website, mobile interface, and doorstep trial delivery services.
                                 </Typography>
                             </section>
 
@@ -141,13 +141,13 @@ export default function PrivacyPolicy() {
                                 </Typography>
                                 <Box sx={{ mt: 1.5, p: 2, bgcolor: '#f1f5f9', borderRadius: 2, border: '1px solid #cbd5e1' }}>
                                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a' }}>
-                                        Grievance Officer — SevenShades Hyperlocal Fashion
+                                        Grievance Officer — Doordrape Hyperlocal Fashion
                                     </Typography>
                                     <Typography variant="body2" sx={{ color: '#475569' }}>
-                                        Email: privacy@sevenshades.in / support@sevenshades.in
+                                        Email: privacy@doordrape.in / support@doordrape.in
                                     </Typography>
                                     <Typography variant="body2" sx={{ color: '#475569' }}>
-                                        Location: SevenShades Logistics Hub, Prime India Tech Corridor
+                                        Location: Doordrape Logistics Hub, Prime India Tech Corridor
                                     </Typography>
                                 </Box>
                             </section>

@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 export default function CookieConsent() {
     const [visible, setVisible] = useState(() => {
         try {
-            return typeof window !== 'undefined' && !localStorage.getItem('sevenshades_cookie_consent');
+            return typeof window !== 'undefined' && !(localStorage.getItem('doordrape_cookie_consent') || localStorage.getItem('sevenshades_cookie_consent'));
         } catch (e) {
             return false;
         }
@@ -14,6 +14,7 @@ export default function CookieConsent() {
 
     const handleChoice = (choice) => {
         try {
+            localStorage.setItem('doordrape_cookie_consent', choice);
             localStorage.setItem('sevenshades_cookie_consent', choice);
             window.dispatchEvent(new CustomEvent('cookie-consent-updated', { detail: { choice } }));
         } catch (e) {}

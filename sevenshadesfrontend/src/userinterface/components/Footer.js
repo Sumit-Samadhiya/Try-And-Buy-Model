@@ -48,7 +48,7 @@ export default function Footer() {
 
                         <Grid item xs={12} sm={6} md={3}>
                             <p style={{ fontSize: '13px', letterSpacing: "1px", fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: 16 }}>
-                                ABOUT SEVENSHADES
+                                ABOUT DOORDRAPE
                             </p>
                             <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('about')}>
                                 Our Try & Buy Mission
@@ -111,7 +111,7 @@ export default function Footer() {
             }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, alignItems: 'center' }}>
                     <Typography variant="caption" sx={{ color: '#94a3b8' }}>
-                        © 2026 SevenShades Inc. All rights reserved. Built for modern doorstep fashion.
+                        © 2026 Doordrape Inc. All rights reserved. Built for modern doorstep fashion.
                     </Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3 }}>
                         <Link
@@ -169,8 +169,8 @@ export default function Footer() {
                 <DialogTitle sx={{ fontWeight: 800 }}>
                     {policyDialog === 'delivery' && 'Try & Buy Delivery & Returns Policy'}
                     {policyDialog === 'privacy' && 'Privacy & Cookies Policy'}
-                    {policyDialog === 'about' && 'About SevenShades'}
-                    {policyDialog === 'careers' && 'Careers at SevenShades'}
+                    {policyDialog === 'about' && 'About Doordrape'}
+                    {policyDialog === 'careers' && 'Careers at Doordrape'}
                 </DialogTitle>
                 <DialogContent dividers>
                     {policyDialog === 'delivery' && (
@@ -193,7 +193,7 @@ export default function Footer() {
                     {policyDialog === 'privacy' && (
                         <Box sx={{ color: '#374151', lineHeight: 1.6 }}>
                             <Typography variant="body2" sx={{ mb: 2 }}>
-                                SevenShades respects your privacy. We store only necessary profile, address and order information needed to complete trials and deliveries safely.
+                                Doordrape respects your privacy. We store only necessary profile, address and order information needed to complete trials and deliveries safely.
                             </Typography>
                             <Typography variant="body2">
                                 We do not sell your personal data to third parties. Authentication cookies are protected with HttpOnly and SameSite controls, and tokens are cryptographically signed.
@@ -203,7 +203,7 @@ export default function Footer() {
                     {(policyDialog === 'about' || policyDialog === 'careers') && (
                         <Box sx={{ color: '#374151', lineHeight: 1.6 }}>
                             <Typography variant="body2" sx={{ mb: 2 }}>
-                                SevenShades is a Hyperlocal "Try & Buy" fashion e-commerce platform blending online catalog selection with doorstep trial and instant fulfillment.
+                                Doordrape is a Hyperlocal "Try & Buy" fashion e-commerce platform blending online catalog selection with doorstep trial and instant fulfillment.
                             </Typography>
                             <Typography variant="body2">
                                 For inquiries or careers, connect with our support desk via the Help Center in your profile.
