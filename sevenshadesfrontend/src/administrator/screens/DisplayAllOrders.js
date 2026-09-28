@@ -6,6 +6,7 @@ import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import { getData } from '../../services/FetchDjangoApiServices';
 import TitleComponent from '../components/admin/TitleComponent';
 import { useStyles } from './CategoryCss';
+import DoordrapeLoader from '../../userinterface/components/DoordrapeLoader';
 
 const STATUS_MAP = {
   'TRY_REQUESTED': 'Try Requested',
@@ -90,59 +91,63 @@ export default function DisplayAllOrders() {
             {error} Showing cached data.
           </Alert>
         )}
-        <MaterialTable
-          title={
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%', pr: 2 }}>
-              <TitleComponent title="Order List" listicon="" />
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<RefreshRoundedIcon />}
-                onClick={fetchOrders}
-                disabled={loading}
-              >
-                Refresh
-              </Button>
-            </Stack>
-          }
-          isLoading={loading}
-          columns={[
-            { title: 'Sr', field: 'srno' },
-            { title: 'Try Order ID', field: 'tryOrderId' },
-            { title: 'Customer Mobile', field: 'mobile' },
-            {
-              title: 'Try Status',
-              render: (rowData) => <Chip size="small" color="info" label={rowData.tryStatus} />,
-            },
-            { title: 'Try Items', field: 'tryItemsCount' },
-            { title: 'Try Fee', render: (rowData) => `Rs ${rowData.tryFee}` },
-            { title: 'Try Items Detail', field: 'tryItemsSummary' },
-            { title: 'Address', field: 'address' },
-            {
-              title: 'Final Status',
-              render: (rowData) => (
-                <Chip
+        {loading && rows.length === 0 ? (
+          <DoordrapeLoader variant="admin" text="Synchronizing store orders & doorstep lifecycle…" size="medium" />
+        ) : (
+          <MaterialTable
+            title={
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%', pr: 2 }}>
+                <TitleComponent title="Order List" listicon="" />
+                <Button
                   size="small"
-                  color={rowData.finalStatus === 'completed' ? 'success' : rowData.finalStatus === 'payment_pending' ? 'warning' : 'default'}
-                  label={rowData.finalStatus}
-                />
-              ),
-            },
-            { title: 'Final Items', field: 'finalItemsSummary' },
-            { title: 'Final Payable', render: (rowData) => `Rs ${rowData.finalPayable}` },
-            { title: 'Wallet Credit', render: (rowData) => `Rs ${rowData.walletCredit}` },
-            { title: 'Payment', field: 'payment' },
-            { title: 'Created At', field: 'createdAt' },
-          ]}
-          data={tableData}
-          options={{
-            search: true,
-            paging: true,
-            pageSize: 10,
-            sorting: true,
-            headerStyle: { fontWeight: 700 },
-          }}
-        />
+                  variant="outlined"
+                  startIcon={<RefreshRoundedIcon />}
+                  onClick={fetchOrders}
+                  disabled={loading}
+                >
+                  Refresh
+                </Button>
+              </Stack>
+            }
+            isLoading={loading}
+            columns={[
+              { title: 'Sr', field: 'srno' },
+              { title: 'Try Order ID', field: 'tryOrderId' },
+              { title: 'Customer Mobile', field: 'mobile' },
+              {
+                title: 'Try Status',
+                render: (rowData) => <Chip size="small" color="info" label={rowData.tryStatus} />,
+              },
+              { title: 'Try Items', field: 'tryItemsCount' },
+              { title: 'Try Fee', render: (rowData) => `Rs ${rowData.tryFee}` },
+              { title: 'Try Items Detail', field: 'tryItemsSummary' },
+              { title: 'Address', field: 'address' },
+              {
+                title: 'Final Status',
+                render: (rowData) => (
+                  <Chip
+                    size="small"
+                    color={rowData.finalStatus === 'completed' ? 'success' : rowData.finalStatus === 'payment_pending' ? 'warning' : 'default'}
+                    label={rowData.finalStatus}
+                  />
+                ),
+              },
+              { title: 'Final Items', field: 'finalItemsSummary' },
+              { title: 'Final Payable', render: (rowData) => `Rs ${rowData.finalPayable}` },
+              { title: 'Wallet Credit', render: (rowData) => `Rs ${rowData.walletCredit}` },
+              { title: 'Payment', field: 'payment' },
+              { title: 'Created At', field: 'createdAt' },
+            ]}
+            data={tableData}
+            options={{
+              search: true,
+              paging: true,
+              pageSize: 10,
+              sorting: true,
+              headerStyle: { fontWeight: 700 },
+            }}
+          />
+        )}
       </div>
     </div>
   );

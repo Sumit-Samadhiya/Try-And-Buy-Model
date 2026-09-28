@@ -6,18 +6,23 @@ import { Box, Typography } from '@mui/material';
  *
  * @param {Object} props
  * @param {boolean} [props.fullPage=false] - If true, renders a centered full-viewport glassmorphic loader
+ * @param {boolean} [props.overlay=false] - If true, renders a centered semi-transparent backdrop overlay
+ * @param {boolean} [props.dark] - If true, renders deep dark glassmorphism (defaults to true for delivery)
  * @param {string} [props.text] - Custom loading text / status message
  * @param {('storefront'|'admin'|'delivery'|'session')} [props.variant='storefront'] - Brand aesthetic variant
  * @param {string} [props.role='status'] - Accessibility role (defaults to 'status')
- * @param {string} [props.size='medium'] - 'small' | 'medium' | 'large'
+ * @param {string} [props.size='medium'] - 'small' | 'medium' | 'large' | 'inline'
  */
 export default function DoordrapeLoader({
   fullPage = false,
+  overlay = false,
+  dark,
   text,
   variant = 'storefront',
   role = 'status',
   size = 'medium',
 }) {
+  const isDark = dark !== undefined ? dark : variant === 'delivery';
   // Theme configurations based on role/panel
   const configs = {
     storefront: {
@@ -99,11 +104,17 @@ export default function DoordrapeLoader({
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        p: isSmall ? 2 : fullPage ? { xs: 3.5, sm: 5 } : 3.5,
-        borderRadius: fullPage ? 5 : 3.5,
-        bgcolor: fullPage ? 'rgba(255, 255, 255, 0.94)' : 'transparent',
-        boxShadow: fullPage ? '0 20px 45px -10px rgba(6, 78, 59, 0.16), 0 0 0 1px rgba(16, 185, 129, 0.1)' : 'none',
-        backdropFilter: fullPage ? 'blur(16px)' : 'none',
+        p: isSmall ? 2 : (fullPage || overlay) ? { xs: 3.5, sm: 4.5 } : 3,
+        borderRadius: (fullPage || overlay) ? 4.5 : 3.5,
+        bgcolor: (fullPage || overlay)
+          ? (isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.94)')
+          : 'transparent',
+        boxShadow: (fullPage || overlay)
+          ? (isDark
+              ? '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.12)'
+              : '0 20px 45px -10px rgba(6, 78, 59, 0.16), 0 0 0 1px rgba(16, 185, 129, 0.1)')
+          : 'none',
+        backdropFilter: (fullPage || overlay) ? 'blur(16px)' : 'none',
         maxWidth: 420,
         width: '100%',
         position: 'relative',
@@ -154,7 +165,7 @@ export default function DoordrapeLoader({
             border: '3px solid transparent',
             borderTopColor: current.accentColor,
             borderRightColor: current.secondaryAccent,
-            borderBottomColor: 'rgba(16, 185, 129, 0.12)',
+            borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(16, 185, 129, 0.12)',
             animation: 'ddSpin 1.1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite',
           }}
         />
@@ -165,7 +176,7 @@ export default function DoordrapeLoader({
             position: 'absolute',
             inset: 6,
             borderRadius: '50%',
-            border: '2px dashed rgba(16, 185, 129, 0.35)',
+            border: `2px dashed ${isDark ? 'rgba(56, 189, 248, 0.3)' : 'rgba(16, 185, 129, 0.35)'}`,
             borderTopColor: current.secondaryAccent,
             animation: 'ddSpinReverse 2.2s linear infinite',
           }}
@@ -196,7 +207,7 @@ export default function DoordrapeLoader({
         sx={{
           fontWeight: 900,
           letterSpacing: 2.5,
-          color: current.primaryColor,
+          color: isDark ? '#f8fafc' : current.primaryColor,
           fontSize: isSmall ? 11 : 13,
           lineHeight: 1.2,
           textTransform: 'uppercase',
@@ -212,7 +223,7 @@ export default function DoordrapeLoader({
         sx={{
           mt: 0.6,
           fontWeight: 700,
-          color: '#334155',
+          color: isDark ? '#94a3b8' : '#334155',
           fontSize: isSmall ? 12 : 14,
         }}
       >
@@ -224,7 +235,7 @@ export default function DoordrapeLoader({
         sx={{
           width: isSmall ? 100 : 150,
           height: 3,
-          bgcolor: 'rgba(16, 185, 129, 0.15)',
+          bgcolor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(16, 185, 129, 0.15)',
           borderRadius: 2,
           mt: 1.8,
           overflow: 'hidden',
@@ -254,6 +265,33 @@ export default function DoordrapeLoader({
     </Box>
   );
 
+  if (overlay) {
+    return (
+      <Box
+        role={role}
+        aria-live="polite"
+        aria-label={text || current.tagline}
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 2,
+          bgcolor: isDark ? 'rgba(2, 6, 23, 0.72)' : 'rgba(255, 255, 255, 0.78)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 1200,
+          borderRadius: 'inherit',
+        }}
+      >
+        {content}
+      </Box>
+    );
+  }
+
   if (fullPage) {
     return (
       <Box
@@ -267,7 +305,9 @@ export default function DoordrapeLoader({
           alignItems: 'center',
           justifyContent: 'center',
           p: 2,
-          background: 'radial-gradient(circle at 50% 30%, #f0fdf4 0%, #f8fafc 70%, #ffffff 100%)',
+          background: isDark
+            ? 'radial-gradient(circle at 50% 30%, #0f172a 0%, #020617 80%, #000000 100%)'
+            : 'radial-gradient(circle at 50% 30%, #f0fdf4 0%, #f8fafc 70%, #ffffff 100%)',
           position: 'fixed',
           top: 0,
           left: 0,

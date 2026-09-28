@@ -9,6 +9,7 @@ import { RecaptchaVerifier, signInWithPhoneNumber, signOut } from 'firebase/auth
 import { auth } from '../../firebase';
 import { postData, clearCachedAccounts } from '../../services/FetchDjangoApiServices';
 import { validateFields } from '../../services/validation';
+import DoordrapeLoader from '../../userinterface/components/DoordrapeLoader';
 import './CustomerAuth.css';
 
 export default function CustomerAuth({ kind = 'login' }) {
@@ -222,7 +223,25 @@ export default function CustomerAuth({ kind = 'login' }) {
   };
   return <main className="customer-auth">
     <aside className="auth-story"><Link to="/home" className="auth-wordmark">Doordrape<span>TRY IT. LOVE IT. KEEP IT.</span></Link><div><p className="auth-eyebrow">YOUR STYLE. YOUR SPACE.</p><h1>Find your fit.<br /><em>At home.</em></h1><p>Try your favourites at your doorstep.<br />Keep only what feels right.</p><div className="auth-steps"><span>01 / Choose</span><span>02 / Try</span><span>03 / Keep</span></div></div><p className="auth-footnote">A little more choice. A lot more you.</p></aside>
-    <section className="auth-form-side"><Box className="auth-card">
+    <section className="auth-form-side"><Box className="auth-card" sx={{ position: 'relative', overflow: 'hidden' }}>
+      {busy && (
+        <DoordrapeLoader
+          overlay
+          variant="session"
+          text={
+            challenge
+              ? 'Verifying your security OTP…'
+              : usesOtp && !challenge
+              ? 'Sending verification code…'
+              : signup
+              ? 'Creating your Doordrape account…'
+              : reset
+              ? 'Updating security credentials…'
+              : 'Signing into your account…'
+          }
+          role="status"
+        />
+      )}
       <Button component={Link} to="/home" startIcon={<ArrowBack />} sx={{ color:'#666', alignSelf:'flex-start', mb:3 }}>Back to shopping</Button>
       <Typography variant="overline" sx={{ display:'block', color:'#8b6a3c', letterSpacing:2 }}>YOUR DOORDRAPE ACCOUNT</Typography>
       <Typography component="h1" variant="h4" sx={{ fontWeight:800, mt:1 }}>{signup ? 'Make yourself at home.' : reset ? 'A fresh start.' : 'Welcome back.'}</Typography>

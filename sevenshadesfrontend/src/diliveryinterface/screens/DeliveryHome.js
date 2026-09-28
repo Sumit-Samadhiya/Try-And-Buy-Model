@@ -3,6 +3,7 @@ import DoordrapeLoader from '../../userinterface/components/DoordrapeLoader';
 import useOrderEvents from '../../services/useOrderEvents';
 import { useEffect, useMemo, useState } from 'react';
 import Avatar from '@mui/material/Avatar';
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
@@ -91,14 +92,47 @@ export default function DeliveryHome() {
       activePage="dashboard"
     >
       <LocationButton rider />
-      <Paper elevation={0} sx={{ p: 2.5, borderRadius: 4, border: '1px solid #e5e7eb', mb: 3 }}>
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2.5,
+          borderRadius: 3.5,
+          bgcolor: 'rgba(30, 41, 59, 0.75)',
+          backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          mb: 3,
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+        }}
+      >
         <Stack direction="row" spacing={2} alignItems="center">
-          <Avatar sx={{ width: 58, height: 58, bgcolor: '#111827' }}>
-            <LocalShippingRoundedIcon />
+          <Avatar
+            sx={{
+              width: 58,
+              height: 58,
+              bgcolor: 'rgba(16, 185, 129, 0.2)',
+              border: '2px solid #10b981',
+              color: '#34d399',
+            }}
+          >
+            <LocalShippingRoundedIcon sx={{ fontSize: 32 }} />
           </Avatar>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: '#f8fafc' }}>
+              {loginData?.name || 'Partner Rider'}
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+              Active Zone: {loginData?.zone || 'Central Hub'}
+            </Typography>
+          </Box>
           <Stack direction="row" spacing={1}>
-            <Chip label={loginData?.status || 'Active'} color="success" />
-            <Chip label={loginData?.bike_number || 'Bike'} variant="outlined" />
+            <Chip
+              label={loginData?.status || 'Active'}
+              sx={{ bgcolor: 'rgba(16, 185, 129, 0.2)', color: '#34d399', fontWeight: 700 }}
+            />
+            <Chip
+              label={loginData?.bike_number || 'Partner Vehicle'}
+              sx={{ bgcolor: 'rgba(255, 255, 255, 0.08)', color: '#cbd5e1' }}
+            />
           </Stack>
         </Stack>
       </Paper>
@@ -111,19 +145,53 @@ export default function DeliveryHome() {
         ))}
       </Grid>
 
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 4, border: '1px solid #e5e7eb' }}>
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2.5,
+          borderRadius: 3.5,
+          bgcolor: 'rgba(30, 41, 59, 0.75)',
+          backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+        }}
+      >
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ gap: 1, flexWrap: 'wrap' }}>
-          <Typography sx={{ fontWeight: 800, color: '#111827' }}>Assigned Orders (Route Sorted)</Typography>
+          <Typography sx={{ fontWeight: 800, color: '#ffffff', fontSize: '1.05rem' }}>
+            Assigned Orders (Live Route Sequence)
+          </Typography>
           <Stack direction="row" spacing={1}>
-            <Chip size="small" label="Route optimized" color="info" />
-            <Button size="small" variant="outlined" onClick={loadTasks}>Refresh</Button>
+            <Chip
+              size="small"
+              label="Route optimized"
+              sx={{ bgcolor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', fontWeight: 700 }}
+            />
+            <Button
+              size="small"
+              variant="outlined"
+              sx={{ color: '#cbd5e1', borderColor: 'rgba(255, 255, 255, 0.2)' }}
+              onClick={loadTasks}
+            >
+              Refresh
+            </Button>
           </Stack>
         </Stack>
 
-        <Tabs value={tab} onChange={(_, value) => setTab(value)} variant="scrollable" scrollButtons="auto" sx={{ mt: 1 }}>
-          <Tab label="All" />
-          <Tab label="Active" />
-          <Tab label="Completed" />
+        <Tabs
+          value={tab}
+          onChange={(_, value) => setTab(value)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            mt: 1.5,
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            '& .MuiTab-root': { color: '#94a3b8', fontWeight: 700, textTransform: 'none', fontSize: '0.95rem', '&.Mui-selected': { color: '#34d399' } },
+            '& .MuiTabs-indicator': { bgcolor: '#10b981', height: 3 },
+          }}
+        >
+          <Tab label="All Tasks" />
+          <Tab label="In Progress" />
+          <Tab label="Completed Shift" />
         </Tabs>
 
         <Stack spacing={1.5} sx={{ mt: 2 }}>

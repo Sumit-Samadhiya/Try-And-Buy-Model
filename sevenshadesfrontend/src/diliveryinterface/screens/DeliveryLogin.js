@@ -27,6 +27,7 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { useNavigate, Link } from 'react-router-dom';
 import { setDeliveryLogin } from '../data/deliverySessionStore';
 import { postData, clearCachedAccounts } from '../../services/FetchDjangoApiServices';
+import DoordrapeLoader from '../../userinterface/components/DoordrapeLoader';
 
 export default function DeliveryLogin() {
   const [identifier, setIdentifier] = useState('');
@@ -130,9 +131,20 @@ export default function DeliveryLogin() {
             backdropFilter: 'blur(16px)',
             borderRadius: 4,
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)'
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
+            position: 'relative',
+            overflow: 'hidden',
           }}
         >
+          {loading && (
+            <DoordrapeLoader
+              overlay
+              variant="delivery"
+              dark
+              text="Authenticating delivery partner credentials…"
+              role="status"
+            />
+          )}
           <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
             {/* Header / Brand */}
             <Stack spacing={1} sx={{ textAlign: 'center', mb: 4 }}>
