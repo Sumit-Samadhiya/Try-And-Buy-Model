@@ -280,7 +280,7 @@ export default function DeliveryLogin() {
               <Box sx={{ textAlign: 'center' }}>
                 <SecurityRoundedIcon sx={{ color: '#34d399', fontSize: 24 }} />
                 <Typography variant="caption" display="block" sx={{ color: '#94a3b8', mt: 0.5 }}>
-                  Verified Barcode
+                  Direct Handover
                 </Typography>
               </Box>
               <Box sx={{ textAlign: 'center' }}>

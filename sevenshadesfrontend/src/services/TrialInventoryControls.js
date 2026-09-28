@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Button, Checkbox, Chip, FormControlLabel, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Button, Checkbox, FormControlLabel, Paper, Stack, TextField, Typography } from '@mui/material';
 import { postData } from './FetchDjangoApiServices';
 
 export function CancelTrialButton({ orderId, onCancelled }) {
@@ -42,26 +42,59 @@ export function TrialReturnCollection({ orderId, onCollected }) {
     await load(); setBusy(false);
     if (result.status) onCollected?.();
   };
-  return <Paper sx={{ p: 2, my: 2 }}><Typography variant="h6">Trial returns</Typography>
-    <Typography>After customer approval, scan each security barcode before physical collection. Missing or mismatched tags require admin reconciliation.</Typography>
-    <Button onClick={load} disabled={busy}>Refresh returned items</Button>
-    {message && <Alert severity="info">{message}</Alert>}
+
+  const collectAll = async () => {
+    const pending = items.filter(item => !item.selected && !item.return_status && item.stock_reserved);
+    if (!pending.length) return;
+    setBusy(true);
+    for (const item of pending) {
+      await postData('process_return', {
+        try_order_item_id: item.id,
+        condition: 'Good',
+        tag_intact: tags[item.id] === true,
+        ...(scannedTags[item.id] ? { scanned_tag: scannedTags[item.id] } : {})
+      });
+    }
+    setMessage('All unselected return items confirmed and collected.');
+    await load();
+    setBusy(false);
+    onCollected?.();
+  };
+
+  const pendingItems = items.filter(item => !item.selected && !item.return_status && item.stock_reserved);
+
+  return <Paper sx={{ p: 2, my: 2 }}>
+    <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+      <div>
+        <Typography variant="h6">Trial returns handover</Typography>
+        <Typography variant="body2" color="text.secondary">Confirm physical collection of unselected trial items from customer.</Typography>
+      </div>
+      {pendingItems.length > 1 && (
+        <Button variant="contained" color="primary" disabled={busy} onClick={collectAll}>
+          Collect All {pendingItems.length} Returns
+        </Button>
+      )}
+    </Stack>
+    <Button onClick={load} disabled={busy} sx={{ mt: 1 }}>Refresh returned items</Button>
+    {message && <Alert severity="info" sx={{ my: 1.5 }}>{message}</Alert>}
     {items.map(item => <Stack key={item.id} spacing={1} sx={{ my: 2 }}>
       <Stack direction="row" spacing={1} alignItems="center">
         <Typography>{item.product_name} · {item.size} · {item.color}</Typography>
-        {item.security_tag && <Chip size="small" label={`Barcode: ${item.security_tag}`} color="primary" variant="outlined" />}
       </Stack>
       {item.return_status ? <Typography>{item.return_status}</Typography> : item.selected ? <Typography>Selected for purchase</Typography> : item.stock_reserved ? <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-        <FormControlLabel control={<Checkbox checked={tags[item.id] === true} onChange={event => setTags(values => ({ ...values, [item.id]: event.target.checked }))} />} label="Security tag inspected and intact" />
         <TextField
           size="small"
           placeholder="Scan / Enter Barcode"
           value={scannedTags[item.id] || ''}
           onChange={event => setScannedTags(prev => ({ ...prev, [item.id]: event.target.value }))}
-          sx={{ width: 190 }}
+          sx={{ width: 180, display: 'none' }}
         />
-        <Button disabled={busy || !scannedTags[item.id]?.trim()} variant="outlined" onClick={() => collect(item.id, 'Good')}>Collected — good condition</Button>
-        <Button disabled={busy || !scannedTags[item.id]?.trim()} variant="outlined" color="error" onClick={() => collect(item.id, 'Damaged')}>Collected — damaged</Button>
+        <Button disabled={busy} variant="contained" onClick={() => collect(item.id, 'Good')}>
+          Collected — good condition
+        </Button>
+        <Button disabled={busy} variant="outlined" color="error" onClick={() => collect(item.id, 'Damaged')}>
+          Collected — damaged
+        </Button>
       </Stack> : <Typography>No active reservation</Typography>}
     </Stack>)}
   </Paper>;
