@@ -15,7 +15,7 @@ export default function Footer() {
         fontSize: sm ? "12px" : "13px",
         letterSpacing: "0.1px",
         cursor: "pointer",
-        color: "#94a3b8",
+        color: "#d1fae5",
         transition: "color 0.15s ease",
         margin: sm ? "5px 0" : "8px 0",
         display: "block",
@@ -31,7 +31,8 @@ export default function Footer() {
         return (
             <div style={{
                 width: "100%",
-                backgroundColor: "#0f172a",
+                background: "linear-gradient(135deg, #064e3b 0%, #065f46 60%, #022c22 100%)",
+                borderTop: "1px solid rgba(16, 185, 129, 0.25)",
                 color: "#ffffff",
                 padding: sm ? '24px 16px 20px' : '48px 24px 32px',
                 boxSizing: 'border-box'
@@ -50,16 +51,16 @@ export default function Footer() {
                             }}>
                                 Help &amp; Information
                             </h3>
-                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/profile">
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#d1fae5'} to="/profile">
                                 Help Center &amp; Support
                             </Link>
-                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/profile">
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#d1fae5'} to="/profile">
                                 Track Live Orders
                             </Link>
-                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/terms-and-conditions">
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#d1fae5'} to="/terms-and-conditions">
                                 Trial &amp; Returns Policy
                             </Link>
-                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/privacy-policy">
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#d1fae5'} to="/privacy-policy">
                                 Privacy Policy
                             </Link>
                         </Grid>
@@ -75,16 +76,16 @@ export default function Footer() {
                             }}>
                                 About Doordrape
                             </h3>
-                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('about')}>
+                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#d1fae5'} onClick={() => setPolicyDialog('about')}>
                                 Try &amp; Buy Mission
                             </button>
-                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('careers')}>
+                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#d1fae5'} onClick={() => setPolicyDialog('careers')}>
                                 Careers &amp; Culture
                             </button>
-                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('delivery')}>
+                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#d1fae5'} onClick={() => setPolicyDialog('delivery')}>
                                 Zero-Emission Fleet
                             </button>
-                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('about')}>
+                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#d1fae5'} onClick={() => setPolicyDialog('about')}>
                                 Investor Relations
                             </button>
                         </Grid>
@@ -100,13 +101,13 @@ export default function Footer() {
                             }}>
                                 Hyperlocal Services
                             </h3>
-                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/home">
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#d1fae5'} to="/home">
                                 Standard Try &amp; Buy
                             </Link>
-                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/home">
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#d1fae5'} to="/home">
                                 SOS Fast Fashion
                             </Link>
-                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/profile">
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#d1fae5'} to="/profile">
                                 Wallet &amp; Trial Credits
                             </Link>
                             <Link style={{ ...linkStyle, color: '#34d399', fontWeight: 700 }} onMouseEnter={(e) => e.target.style.color = '#6ee7b7'} onMouseLeave={(e) => e.target.style.color = '#34d399'} to="/delivery/login">
@@ -129,7 +130,7 @@ export default function Footer() {
                                 <span>Prime India Hubs</span>
                                 <img src={`${serverURL}/static/india.png`} style={{ width: 16, height: 16 }} alt="India flag" />
                             </div>
-                            <p style={{ fontSize: sm ? "11px" : "12px", color: "#94a3b8", lineHeight: 1.45, margin: 0 }}>
+                            <p style={{ fontSize: sm ? "11px" : "12px", color: "#a7f3d0", lineHeight: 1.45, margin: 0 }}>
                                 Delivering verified trials to residential apartments &amp; gated societies.
                             </p>
                         </Grid>
@@ -143,13 +144,13 @@ export default function Footer() {
         return (
             <div style={{
                 width: '100%',
-                backgroundColor: "#020617",
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                backgroundColor: "#022c22",
+                borderTop: '1px solid rgba(16, 185, 129, 0.2)',
                 padding: sm ? "14px 16px" : "24px 20px",
                 textAlign: 'center'
             }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: sm ? 1 : 1.5, alignItems: 'center' }}>
-                    <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: sm ? '0.7rem' : '0.75rem' }}>
+                    <Typography variant="caption" sx={{ color: '#a7f3d0', fontSize: sm ? '0.7rem' : '0.75rem' }}>
                         © 2026 Doordrape Inc. All rights reserved.
                     </Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: sm ? 2 : 3 }}>
@@ -159,11 +160,11 @@ export default function Footer() {
                                 textDecoration: 'none',
                                 fontSize: sm ? '0.7rem' : '0.75rem',
                                 fontWeight: 600,
-                                color: '#cbd5e1',
+                                color: '#d1fae5',
                                 transition: 'color 0.15s ease'
                             }}
                             onMouseEnter={(e) => e.target.style.color = '#ffffff'}
-                            onMouseLeave={(e) => e.target.style.color = '#cbd5e1'}
+                            onMouseLeave={(e) => e.target.style.color = '#d1fae5'}
                         >
                             Privacy Policy
                         </Link>
@@ -173,11 +174,11 @@ export default function Footer() {
                                 textDecoration: 'none',
                                 fontSize: sm ? '0.7rem' : '0.75rem',
                                 fontWeight: 600,
-                                color: '#cbd5e1',
+                                color: '#d1fae5',
                                 transition: 'color 0.15s ease'
                             }}
                             onMouseEnter={(e) => e.target.style.color = '#ffffff'}
-                            onMouseLeave={(e) => e.target.style.color = '#cbd5e1'}
+                            onMouseLeave={(e) => e.target.style.color = '#d1fae5'}
                         >
                             Terms of Service
                         </Link>
