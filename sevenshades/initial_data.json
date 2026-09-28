@@ -3168,42 +3168,6 @@
   }
 },
 {
-  "model": "sevenshadesapp.tryorderitem",
-  "pk": 10,
-  "fields": {
-    "stock_reserved": true,
-    "try_order": 6,
-    "product_details": 7,
-    "product_name": "Rare Rabbit Silk Touch Formal Shirt",
-    "brand_name": "Rare Rabbit",
-    "size": "XL",
-    "color": "Burgundy",
-    "qty": 1,
-    "unit_price": 1299,
-    "line_total": 1299,
-    "status": "TRY_REQUESTED",
-    "security_tag": "TAG-TRY-0B90C7649B"
-  }
-},
-{
-  "model": "sevenshadesapp.tryorderitem",
-  "pk": 11,
-  "fields": {
-    "stock_reserved": true,
-    "try_order": 6,
-    "product_details": 11,
-    "product_name": "Rare Rabbit Silk Touch Formal Shirt",
-    "brand_name": "Rare Rabbit",
-    "size": "M",
-    "color": "White",
-    "qty": 1,
-    "unit_price": 1199,
-    "line_total": 1199,
-    "status": "TRY_REQUESTED",
-    "security_tag": "TAG-TRY-C89BDE2C53"
-  }
-},
-{
   "model": "sevenshadesapp.finalorder",
   "pk": 1,
   "fields": {
