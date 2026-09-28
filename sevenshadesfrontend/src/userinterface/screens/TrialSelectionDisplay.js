@@ -8,11 +8,11 @@ import {
   Chip,
   Container,
   FormControlLabel,
-  CircularProgress,
   Paper,
   Stack,
   Typography,
 } from '@mui/material';
+import DoordrapeLoader from '../components/DoordrapeLoader';
 import { postData } from '../../services/FetchDjangoApiServices';
 
 export default function TrialSelectionDisplay() {
@@ -25,7 +25,7 @@ export default function TrialSelectionDisplay() {
   const [loading, setLoading] = useState(true);
   const [trialOrder, setTrialOrder] = useState(null);
   const [selectedItemIds, setSelectedItemIds] = useState([]);
-  const [paymentMode, setPaymentMode] = useState('cash');
+  const [paymentMode] = useState('cash');
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -104,9 +104,7 @@ export default function TrialSelectionDisplay() {
 
   if (loading) {
     return (
-      <Container maxWidth="sm" sx={{ py: 6, textAlign: 'center' }}>
-        <CircularProgress />
-      </Container>
+      <DoordrapeLoader text="Loading doorstep trial order…" role="status" />
     );
   }
 

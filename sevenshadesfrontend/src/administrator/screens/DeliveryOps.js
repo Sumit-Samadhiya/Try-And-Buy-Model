@@ -1,4 +1,5 @@
 import DeliveryOrderDetails from '../../diliveryinterface/screens/DeliveryOrderDetails';
+import DoordrapeLoader from '../../userinterface/components/DoordrapeLoader';
 import RiderSuggestions from './RiderSuggestions';
 import useOrderEvents from '../../services/useOrderEvents';
 import DeliveryBatches from './DeliveryBatches';
@@ -7,7 +8,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Divider,
   Dialog,
   DialogTitle,
@@ -246,9 +246,7 @@ export default function DeliveryOps() {
       </Tabs>
 
       {loading ? (
-        <Stack alignItems="center" sx={{ py: 6 }}>
-          <CircularProgress />
-        </Stack>
+        <DoordrapeLoader variant="admin" text="Syncing delivery operations and assignments…" role="status" />
       ) : null}
 
       {tabValue === 0 && !loading && (

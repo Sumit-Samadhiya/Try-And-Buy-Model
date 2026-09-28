@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { getData, clearCachedAccounts } from './FetchDjangoApiServices';
+import DoordrapeLoader from '../userinterface/components/DoordrapeLoader';
 
 export default function RequireSession({ role, children }) {
   const [status, setStatus] = useState('loading');
@@ -28,7 +29,7 @@ export default function RequireSession({ role, children }) {
     window.addEventListener('session-cleared', expire);
     return () => { active = false; window.removeEventListener('session-cleared', expire); };
   }, [role, location.pathname, dispatch]);
-  if (status === 'loading') return <p style={{ padding: 24 }}>Checking your session…</p>;
+  if (status === 'loading') return <DoordrapeLoader fullPage variant={role === 'admin' ? 'admin' : role === 'rider' ? 'delivery' : 'session'} text="Checking your session…" role="status" />;
   if (status === 'denied') {
     const to = role === 'admin' ? '/adminlogin' : role === 'rider' ? '/delivery/login' : '/signindisplay';
     return <Navigate to={to} replace state={{ redirectTo: location.pathname, checkoutState: location.state }} />;

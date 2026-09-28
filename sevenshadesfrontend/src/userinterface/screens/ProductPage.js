@@ -1,6 +1,7 @@
 import { collectionUrl, collectionFromSearch } from '../../services/collectionUrl';
 import { catalogData } from "../../services/FetchDjangoApiServices";
 import Header from "../components/Header";
+import DoordrapeLoader from "../components/DoordrapeLoader";
 import ProductByCategory from "../components/ProductByCategory";
 import Footer from "../components/Footer";
 import React, { useCallback, useEffect, useState } from "react";
@@ -132,9 +133,7 @@ export default function ProductPage(props) {
             {/* Product Grid Content */}
             <main style={{ flexGrow: 1, paddingBottom: 48 }}>
                 {error ? (<div role="alert" style={{ padding: 32 }}>{error} <button onClick={setPageView}>Retry</button></div>) : loading ? (
-                    <div style={{ textAlign: 'center', padding: '64px 16px', color: '#64748b' }}>
-                        <p style={{ fontSize: 16, fontWeight: 600 }}>Loading curated products...</p>
-                    </div>
+                    <DoordrapeLoader text="Loading curated products..." role="status" />
                 ) : (
                     <ProductByCategory data={productList} />
                 )}

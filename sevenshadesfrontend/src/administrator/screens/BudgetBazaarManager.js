@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import DoordrapeLoader from '../../userinterface/components/DoordrapeLoader';
 import {
   Box,
   Button,
@@ -25,7 +26,6 @@ import {
   FormControl,
   InputLabel,
   Paper,
-  CircularProgress,
   Tooltip
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -257,9 +257,7 @@ export default function BudgetBazaarManager() {
       {/* Deals Table */}
       <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3, border: '1px solid #e2e8f0' }}>
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
-            <CircularProgress size={36} />
-          </Box>
+          <DoordrapeLoader variant="admin" text="Loading Budget Bazaar catalog deals…" role="status" />
         ) : deals.length === 0 ? (
           <Box sx={{ textAlign: 'center', p: 6, color: '#64748b' }}>
             <Typography variant="h6" fontWeight={600}>No Budget Bazaar Deals Configured</Typography>

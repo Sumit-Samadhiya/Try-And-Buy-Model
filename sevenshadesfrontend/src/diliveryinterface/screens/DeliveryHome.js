@@ -1,10 +1,10 @@
 import LocationButton from '../../services/LocationButton';
+import DoordrapeLoader from '../../userinterface/components/DoordrapeLoader';
 import useOrderEvents from '../../services/useOrderEvents';
 import { useEffect, useMemo, useState } from 'react';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
-import CircularProgress from '@mui/material/CircularProgress';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
@@ -128,7 +128,7 @@ export default function DeliveryHome() {
 
         <Stack spacing={1.5} sx={{ mt: 2 }}>
           {loading ? (
-            <Stack alignItems="center" sx={{ py: 4 }}><CircularProgress size={24} /></Stack>
+            <DoordrapeLoader variant="delivery" text="Syncing assigned delivery tasks…" role="status" size="small" />
           ) : filteredTasks.length === 0 ? (
             <Typography variant="body2" sx={{ color: '#6b7280' }}>No tasks available.</Typography>
           ) : (

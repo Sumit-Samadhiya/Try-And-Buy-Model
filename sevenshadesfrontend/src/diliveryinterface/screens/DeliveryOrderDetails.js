@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, Checkbox, FormControlLabel, Paper, Stack, Typography } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import DeliveryShell from '../components/DeliveryShell';
+import DoordrapeLoader from '../../userinterface/components/DoordrapeLoader';
 import { postData, serverURL } from '../../services/FetchDjangoApiServices';
 import useOrderEvents from '../../services/useOrderEvents';
 import { remainingTrialSeconds } from '../../services/trialTimer';
@@ -67,7 +68,7 @@ export default function DeliveryOrderDetails({ orderId, embedded = false }) {
     <Stack spacing={2}>
       {!embedded && <Button onClick={() => navigate('/delivery/dashboard')}>Back to tasks</Button>}
       {message && <Alert severity="info">{message}</Alert>}
-      {!data ? <Typography>Loading order…</Typography> : <>
+      {!data ? <DoordrapeLoader variant="delivery" text="Loading doorstep order…" role="status" /> : <>
         <Paper sx={{ p: 2 }}><Typography variant="h6">{data.try_order.order_id}</Typography>
           <Typography>{data.try_order.address_text}, {data.try_order.city} — {data.try_order.postcode}</Typography>
           <Typography>Customer: {data.try_order.mobileno} · Slot: {data.try_order.delivery_slot}</Typography>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import ProductDetailsComponent from "../components/ProductDetailsComponent"
 import Header from "../components/Header"
 import Footer from "../components/Footer"
+import DoordrapeLoader from "../components/DoordrapeLoader"
 import { Container, Paper, Typography, Button } from "@mui/material"
 
 export default function ProductDetailsPage(props){
@@ -40,6 +41,16 @@ export default function ProductDetailsPage(props){
     useEffect(() => {
         fetchAllProducts()
     }, [fetchAllProducts, pageRefresh])
+
+    if (loading) {
+        return (
+            <div>
+                <Header />
+                <DoordrapeLoader text="Loading product details & available sizes…" role="status" />
+                <Footer />
+            </div>
+        )
+    }
 
     if (!productid || (!loading && productList.length === 0)) {
         return (
