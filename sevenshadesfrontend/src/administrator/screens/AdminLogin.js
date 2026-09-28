@@ -40,8 +40,7 @@ export default function AdminLogin() {
     setError('')
     const result = await postData('check_admin_login',{emailid, password})
     if(result?.status){
-      clearCachedAccounts();
-      window.dispatchEvent(new Event('session-cleared'));
+      clearCachedAccounts(true);
       // The httpOnly session cookie is the only credential; nothing about the
       // admin is cached in localStorage.
       navigate('/admindashboard')

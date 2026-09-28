@@ -2,11 +2,15 @@ import { render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { createStore } from 'redux';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import RequireSession from './RequireSession';
+import RequireSession, { resetVerifiedSession } from './RequireSession';
 import RootReducer from '../storage/RootReducer';
 import { getData } from './FetchDjangoApiServices';
 
 jest.mock('./FetchDjangoApiServices', () => ({ getData: jest.fn(), clearCachedAccounts: jest.fn() }));
+
+beforeEach(() => {
+  resetVerifiedSession();
+});
 
 function renderGuard(role = 'admin') {
   return render(<Provider store={createStore(RootReducer)}><MemoryRouter initialEntries={['/private']}>

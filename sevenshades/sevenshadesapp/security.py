@@ -60,7 +60,7 @@ def establish_session(request, role, account):
     request.session['account_role'] = role
     request.session['account_id'] = str(account.pk)
     request.session['account_fingerprint'] = fingerprint(account)
-    request.session.set_expiry(8 * 60 * 60)
+    request.session.set_expiry(14 * 24 * 60 * 60)
     rotate_token(request)
 
 
@@ -111,8 +111,10 @@ def protect_api(view, endpoint, public_catalog=False):
         bearer = request.META.get('HTTP_AUTHORIZATION', '').startswith('Bearer ')
         if bearer:
             from .mobile_tokens import bearer_actor
-            role, account = bearer_actor(request)
-            if not account:
+            bearer_role, bearer_account = bearer_actor(request)
+            if bearer_account:
+                role, account = bearer_role, bearer_account
+            elif not account:
                 return failure('Invalid or expired authentication token.', 401)
         request.account_role, request.account = role, account
         public = endpoint in PUBLIC or public_catalog

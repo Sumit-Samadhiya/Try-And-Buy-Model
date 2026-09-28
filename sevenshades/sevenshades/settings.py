@@ -95,7 +95,8 @@ CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(
 ))
 
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_AGE = 8 * 60 * 60
+SESSION_COOKIE_AGE = 14 * 24 * 60 * 60
+SESSION_SAVE_EVERY_REQUEST = True
 
 # Cross-domain cookies between Vercel and Render require SameSite=None and Secure=True in production
 if not DEBUG:

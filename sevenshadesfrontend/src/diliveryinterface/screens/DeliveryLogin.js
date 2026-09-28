@@ -64,8 +64,7 @@ export default function DeliveryLogin() {
         return;
       }
 
-      clearCachedAccounts();
-      window.dispatchEvent(new Event('session-cleared'));
+      clearCachedAccounts(true);
       setDeliveryLogin(result.data);
       navigate('/delivery/dashboard');
     } catch (err) {
