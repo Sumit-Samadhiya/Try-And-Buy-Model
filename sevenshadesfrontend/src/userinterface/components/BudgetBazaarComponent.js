@@ -15,6 +15,31 @@ function DealImage({ sources, label }) {
  * BudgetBazaarComponent
  * Renders value-led deals curated by admin with doorstep trials and honest catalog pricing.
  */
+const DISTINCT_KEYWORD_FALLBACKS = [
+    { regex: /karwa|karwachouth|kurti|kurta|anarkali|ethnic/i, icon: 'static/Kurti.png' },
+    { regex: /wedding|shaadi|bridal|festive/i, icon: 'static/d66cf6a4-83af-4822-9808-5a13356df2c2.png' },
+    { regex: /party|cocktail|western|bodycon/i, icon: 'static/western_dress.png' },
+    { regex: /oversized|tee|t-shirt/i, icon: 'static/oversized.png' },
+    { regex: /jeans|denim|baggy/i, icon: 'static/baggy_q1QqnWE.png' },
+    { regex: /top|crop/i, icon: 'static/top.png' },
+    { regex: /shoe|sneaker/i, icon: 'static/shoes.png' },
+    { regex: /short|lounge/i, icon: 'static/shorts.png' },
+    { regex: /shirt/i, icon: 'static/103.webp' },
+    { regex: /boot/i, icon: 'static/Boots.png' },
+];
+
+const DIVERSE_FALLBACK_POOL = [
+    'static/Kurti.png',
+    'static/western_dress.png',
+    'static/d66cf6a4-83af-4822-9808-5a13356df2c2.png',
+    'static/top.png',
+    'static/baggy_q1QqnWE.png',
+    'static/oversized.png',
+    'static/shoes.png',
+    'static/103.webp',
+    'static/Boots.png',
+];
+
 export default function BudgetBazaarComponent({ subcategories = [], products = [], onItemClick }) {
     const navigate = useNavigate();
     const [adminDeals, setAdminDeals] = useState([]);
@@ -73,6 +98,7 @@ export default function BudgetBazaarComponent({ subcategories = [], products = [
     };
 
     const displayItems = adminDeals.length > 0 ? adminDeals : fallbackItems;
+    const seenPrimaryImages = new Set();
 
     return (
         <div className="bbz-container">
@@ -85,8 +111,8 @@ export default function BudgetBazaarComponent({ subcategories = [], products = [
                 </div>
             </div>
 
-            {/* 3-Column Tier Grid */}
-            <div className="bbz-grid">
+            {/* Responsive Tier Grid */}
+            <div className={`bbz-grid ${displayItems.length <= 4 ? 'bbz-grid-4' : ''}`}>
                 {displayItems.map((item, idx) => {
                     const isDynamic = Boolean(adminDeals.length > 0);
                     let iconPath = '';
@@ -95,13 +121,11 @@ export default function BudgetBazaarComponent({ subcategories = [], products = [
                     let tierColor = 'blue';
 
                     if (isDynamic) {
-                        iconPath = item.icon || 'static/oversized.png';
-                        displayLabel = item.title;
+                        displayLabel = item.title || 'Special Deal';
                         priceTag = item.price_tag;
                         tierColor = item.tier_color || 'blue';
                     } else {
                         const matchedSub = findSubcategory(item.key);
-                        iconPath = matchedSub?.icon || item.defaultIcon;
                         displayLabel = matchedSub?.subcategoryname || item.label;
                         priceTag = item.priceTag;
                         tierColor = item.tierColor || 'blue';
@@ -109,16 +133,39 @@ export default function BudgetBazaarComponent({ subcategories = [], products = [
 
                     const category = subcategories.find(sub => Number(sub.id) === Number(item.subcategoryid));
                     const categoryIcon = category?.icon || item.subcategory_icon || item.maincategory_icon;
+
+                    const titleText = (item.title || displayLabel || '').toLowerCase();
+                    const keywordMatch = DISTINCT_KEYWORD_FALLBACKS.find(entry => entry.regex.test(titleText));
                     const matchedFallback = fallbackItems.find(f =>
-                        (item.title && f.label && (f.label.toLowerCase().includes(item.title.toLowerCase()) || item.title.toLowerCase().includes(f.label.toLowerCase()))) ||
-                        (item.title && f.key && item.title.toLowerCase().includes(f.key.toLowerCase()))
+                        (titleText && f.label && (f.label.toLowerCase().includes(titleText) || titleText.includes(f.label.toLowerCase()))) ||
+                        (titleText && f.key && titleText.includes(f.key.toLowerCase()))
                     );
-                    const titleFallbackIcon = matchedFallback?.defaultIcon;
+
+                    let distinctDealIcon = keywordMatch?.icon || matchedFallback?.defaultIcon;
+
+                    if (isDynamic) {
+                        if (item.icon && !seenPrimaryImages.has(item.icon)) {
+                            iconPath = item.icon;
+                        } else if (distinctDealIcon && !seenPrimaryImages.has(distinctDealIcon)) {
+                            iconPath = distinctDealIcon;
+                        } else {
+                            // Find an unused icon from the diverse pool to prevent identical cards
+                            const unused = DIVERSE_FALLBACK_POOL.find(img => !seenPrimaryImages.has(img));
+                            iconPath = unused || item.icon || distinctDealIcon || 'static/oversized.png';
+                        }
+                    } else {
+                        const matchedSub = findSubcategory(item.key);
+                        iconPath = matchedSub?.icon || distinctDealIcon || item.defaultIcon;
+                    }
+
+                    if (iconPath) {
+                        seenPrimaryImages.add(iconPath);
+                    }
 
                     const sources = [...new Set([
                         imageUrl(iconPath),
                         imageUrl(categoryIcon),
-                        imageUrl(titleFallbackIcon),
+                        imageUrl(distinctDealIcon),
                         '/images/product-placeholder.svg',
                     ].filter(Boolean))];
 

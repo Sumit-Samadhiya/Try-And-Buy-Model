@@ -29,9 +29,9 @@ export default function Footer() {
                 <div style={{ maxWidth: 1360, margin: '0 auto' }}>
                     <Grid container spacing={4} justifyContent="space-between">
                         <Grid item xs={12} sm={6} md={3}>
-                            <p style={{ fontSize: '13px', letterSpacing: "1px", fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: 16 }}>
-                                HELP & INFORMATION
-                            </p>
+                            <h3 style={{ fontSize: '14px', letterSpacing: "0.02em", fontWeight: '700', color: '#ffffff', margin: '0 0 16px' }}>
+                                Help &amp; Information
+                            </h3>
                             <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/profile">
                                 Help Center & Support Tickets
                             </Link>
@@ -47,9 +47,9 @@ export default function Footer() {
                         </Grid>
 
                         <Grid item xs={12} sm={6} md={3}>
-                            <p style={{ fontSize: '13px', letterSpacing: "1px", fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: 16 }}>
-                                ABOUT DOORDRAPE
-                            </p>
+                            <h3 style={{ fontSize: '14px', letterSpacing: "0.02em", fontWeight: '700', color: '#ffffff', margin: '0 0 16px' }}>
+                                About Doordrape
+                            </h3>
                             <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('about')}>
                                 Our Try & Buy Mission
                             </button>
@@ -65,9 +65,9 @@ export default function Footer() {
                         </Grid>
 
                         <Grid item xs={12} sm={6} md={3}>
-                            <p style={{ fontSize: '13px', letterSpacing: "1px", fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: 16 }}>
-                                HYPERLOCAL SERVICES
-                            </p>
+                            <h3 style={{ fontSize: '14px', letterSpacing: "0.02em", fontWeight: '700', color: '#ffffff', margin: '0 0 16px' }}>
+                                Hyperlocal Services
+                            </h3>
                             <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/home">
                                 Standard Try & Buy (Same Day)
                             </Link>
@@ -83,9 +83,9 @@ export default function Footer() {
                         </Grid>
 
                         <Grid item xs={12} sm={6} md={3}>
-                            <p style={{ fontSize: '13px', letterSpacing: "1px", fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: 16 }}>
-                                DOORSTEP COVERAGE
-                            </p>
+                            <h3 style={{ fontSize: '14px', letterSpacing: "0.02em", fontWeight: '700', color: '#ffffff', margin: '0 0 16px' }}>
+                                Doorstep Coverage
+                            </h3>
                             <div style={{ fontSize: "14px", color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                                 <span>Serving Prime India Hubs</span>
                                 <img src={`${serverURL}/static/india.png`} style={{ width: 18, height: 18 }} alt="India flag" />

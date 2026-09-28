@@ -161,6 +161,7 @@ export default function Home(props) {
             {!loading && !loadError && !listMainCategory.length && <p style={{ padding: 24 }}>New collections are coming soon.</p>}
 
             <main style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1 }}>
+                <h1 className="sr-only">Doordrape | Try &amp; Buy Fashion at Your Doorstep</h1>
                 {/* Hero Banner Carousel */}
                 <section style={{ width: '100%', padding: sm_matches ? '8px 10px 0' : '16px 16px 0', boxSizing: 'border-box' }}>
                     <SliderComponent data={listBanner} onBannerClick={handleBannerClick} />

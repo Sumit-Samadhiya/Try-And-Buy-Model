@@ -30,11 +30,11 @@ export default function SubcategoryComponent({ data = [], onItemClick }) {
       )}
       <Slider
         ref={slider}
-        dots={data.length > count}
+        dots={small ? data.length > 1 : Math.ceil(data.length / count) > 1}
         infinite={data.length > count}
         speed={500}
         slidesToShow={count}
-        slidesToScroll={1}
+        slidesToScroll={small ? 1 : count}
         arrows={false}
       >
         {data.map((item) => (

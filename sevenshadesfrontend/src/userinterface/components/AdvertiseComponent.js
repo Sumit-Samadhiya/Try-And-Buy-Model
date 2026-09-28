@@ -94,17 +94,18 @@ export default function AdvertiseComponent() {
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, flexShrink: 0 }}>
                     <button
                         type="button"
+                        className="btn-cta-white"
                         style={{
                             backgroundColor: '#ffffff',
                             color: '#0f172a',
                             border: 'none',
-                            borderRadius: '12px',
-                            padding: '14px 32px',
-                            fontSize: '15px',
-                            fontWeight: 800,
-                            letterSpacing: '0.02em',
+                            borderRadius: '10px',
+                            padding: '12px 28px',
+                            fontSize: '14px',
+                            fontWeight: 700,
+                            letterSpacing: '0.01em',
                             cursor: 'pointer',
-                            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
+                            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.2)',
                             transition: 'all 0.2s ease',
                         }}
                         onMouseOver={(e) => {

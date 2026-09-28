@@ -50,12 +50,12 @@ export default function CategoryShowcaseCard({
                 <h2 className="csc-title">{title}</h2>
                 <button
                     type="button"
-                    className="csc-arrow-btn"
+                    className="csc-view-all-btn"
                     onClick={onViewAll}
                     aria-label={`View all in ${title}`}
-                    title={`View all in ${title}`}
                 >
-                    &rarr;
+                    <span>View All</span>
+                    <span className="csc-view-all-arrow" aria-hidden="true">&rarr;</span>
                 </button>
             </div>
 

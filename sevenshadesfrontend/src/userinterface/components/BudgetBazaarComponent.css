@@ -67,13 +67,25 @@
     font-weight: 500;
 }
 
-/* Grid: 3 columns matching demo image */
+/* Grid: Balanced layout (4-in-a-row for 4 deals, 2x2 on mobile) */
 .bbz-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
     width: 100%;
     box-sizing: border-box;
+}
+
+.bbz-grid.bbz-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 900px) {
+    .bbz-grid,
+    .bbz-grid.bbz-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
 }
 
 /* Individual Card */
