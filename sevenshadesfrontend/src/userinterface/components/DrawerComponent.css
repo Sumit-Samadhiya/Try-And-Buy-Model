@@ -1,0 +1,302 @@
+/* ==========================================================================
+   DRAWER COMPONENT (MODERN SIDEBAR NAVIGATION)
+   Doordrape • Try & Buy Fashion at Your Doorstep
+   ========================================================================== */
+
+.drawer-wrapper {
+    width: 320px;
+    max-width: 85vw;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #ffffff;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+/* Header */
+.drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.drawer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    text-align: left;
+}
+
+.drawer-brand-title {
+    font-size: 19px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.drawer-brand-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #2563eb;
+    background-color: #eff6ff;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    width: fit-content;
+}
+
+.drawer-close-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: #f1f5f9;
+    color: #475569;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.drawer-close-btn:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+
+/* User Profile / Welcome Card */
+.drawer-user-card {
+    margin: 14px 16px 6px;
+    padding: 14px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-sizing: border-box;
+    text-align: left;
+}
+
+.drawer-user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.drawer-user-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+}
+
+.drawer-user-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.drawer-user-name {
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.drawer-user-sub {
+    font-size: 12px;
+    color: #64748b;
+    margin: 2px 0 0;
+}
+
+.drawer-auth-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 9px 14px;
+    background-color: #0f172a;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background-color 0.15s ease;
+}
+
+.drawer-auth-btn:hover {
+    background-color: #1e293b;
+}
+
+/* Scrollable Content Body */
+.drawer-scroll-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 0 12px;
+}
+
+.drawer-section-title {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    padding: 12px 18px 6px;
+    text-align: left;
+}
+
+/* Item Button */
+.drawer-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    width: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: background-color 0.15s ease;
+    text-align: left;
+}
+
+.drawer-item:hover {
+    background-color: #f8fafc;
+}
+
+.drawer-item:active {
+    background-color: #f1f5f9;
+}
+
+.drawer-item-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.drawer-item-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background-color: #f1f5f9;
+    color: #0f172a;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.drawer-item-img {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+}
+
+.drawer-item-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.drawer-item-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.drawer-item-desc {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 2px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.drawer-item-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    color: #94a3b8;
+}
+
+.drawer-badge {
+    background-color: #2563eb;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    letter-spacing: 0.02em;
+}
+
+.drawer-divider {
+    height: 1px;
+    background-color: #f1f5f9;
+    margin: 8px 16px;
+}
+
+/* Footer Section */
+.drawer-footer {
+    padding: 12px 16px 16px;
+    border-top: 1px solid #f1f5f9;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.drawer-logout-btn {
+    width: 100%;
+    padding: 10px 14px;
+    background-color: #fef2f2;
+    border: 1px solid #fee2e2;
+    color: #dc2626;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.drawer-logout-btn:hover {
+    background-color: #fee2e2;
+    border-color: #fca5a5;
+}
+
+.drawer-footer-note {
+    font-size: 11px;
+    color: #94a3b8;
+    text-align: center;
+    margin: 0;
+    font-weight: 500;
+}
