@@ -38,11 +38,11 @@ export default function Footer() {
                             <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/profile">
                                 Track Live Trial Orders
                             </Link>
-                            <button type="button" style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} onClick={() => setPolicyDialog('delivery')}>
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/terms-and-conditions">
                                 Doorstep Trial & Returns Policy
-                            </button>
-                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/home">
-                                Curated Catalog Sitemap
+                            </Link>
+                            <Link style={linkStyle} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = '#94a3b8'} to="/privacy-policy">
+                                Privacy & Cookie Policy
                             </Link>
                         </Grid>
 
@@ -114,20 +114,34 @@ export default function Footer() {
                         © 2026 SevenShades Inc. All rights reserved. Built for modern doorstep fashion.
                     </Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3 }}>
-                        <Typography
-                            variant="caption" component="button" type="button"
-                            sx={{ background: "none", border: 0, padding: 0, cursor: 'pointer', fontWeight: 600, color: '#cbd5e1', '&:hover': { color: '#ffffff' } }}
-                            onClick={() => setPolicyDialog('privacy')}
+                        <Link
+                            to="/privacy-policy"
+                            style={{
+                                textDecoration: 'none',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                color: '#cbd5e1',
+                                transition: 'color 0.15s ease'
+                            }}
+                            onMouseEnter={(e) => e.target.style.color = '#ffffff'}
+                            onMouseLeave={(e) => e.target.style.color = '#cbd5e1'}
                         >
                             Privacy Policy & Cookies
-                        </Typography>
-                        <Typography
-                            variant="caption" component="button" type="button"
-                            sx={{ background: "none", border: 0, padding: 0, cursor: 'pointer', fontWeight: 600, color: '#cbd5e1', '&:hover': { color: '#ffffff' } }}
-                            onClick={() => setPolicyDialog('delivery')}
+                        </Link>
+                        <Link
+                            to="/terms-and-conditions"
+                            style={{
+                                textDecoration: 'none',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                color: '#cbd5e1',
+                                transition: 'color 0.15s ease'
+                            }}
+                            onMouseEnter={(e) => e.target.style.color = '#ffffff'}
+                            onMouseLeave={(e) => e.target.style.color = '#cbd5e1'}
                         >
                             Try & Buy Terms of Service
-                        </Typography>
+                        </Link>
                     </Box>
                 </Box>
             </div>

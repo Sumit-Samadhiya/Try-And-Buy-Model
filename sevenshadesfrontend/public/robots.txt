@@ -1,3 +1,18 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Disallow: /adminlogin
+Disallow: /admindashboard/
+Disallow: /delivery/
+Disallow: /deliverydashboard
+Disallow: /displaycheckout
+Disallow: /ordersuccess
+Disallow: /profile
+Disallow: /maincart
+Allow: /
+Allow: /home
+Allow: /productpage
+Allow: /productdetailspage
+Allow: /privacy-policy
+Allow: /terms-and-conditions
+
+Sitemap: https://try-and-buy-model.vercel.app/sitemap.xml

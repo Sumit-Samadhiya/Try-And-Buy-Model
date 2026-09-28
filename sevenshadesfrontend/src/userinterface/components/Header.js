@@ -124,7 +124,7 @@ export default function Header() {
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                    <img src={imageUrl(item?.icon)} alt="" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+                    <img src={imageUrl(item?.icon)} alt={item?.brandname || "Brand logo"} style={{ width: 24, height: 24, objectFit: 'contain' }} />
                     <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{item?.brandname}</span>
                 </div>
             );

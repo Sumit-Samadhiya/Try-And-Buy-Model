@@ -1,5 +1,6 @@
 import CustomerOrderNotifications from './services/CustomerOrderNotifications';
 import RequireSession from './services/RequireSession';
+import CookieConsent from './userinterface/components/CookieConsent';
 import { getData, clearCachedAccounts } from './services/FetchDjangoApiServices';
 import { useEffect, lazy, Suspense } from 'react';
 import { useDispatch } from 'react-redux';
@@ -25,6 +26,8 @@ const DeliveryLogin = lazy(() => import('./diliveryinterface/screens/DeliveryLog
 const DeliveryHome = lazy(() => import('./diliveryinterface/screens/DeliveryHome'));
 const DeliveryOrderDetails = lazy(() => import('./diliveryinterface/screens/DeliveryOrderDetails'));
 const DeliveryHelpCenter = lazy(() => import('./diliveryinterface/screens/DeliveryHelpCenter'));
+const PrivacyPolicy = lazy(() => import('./userinterface/screens/PrivacyPolicy'));
+const TermsAndConditions = lazy(() => import('./userinterface/screens/TermsAndConditions'));
 const NotFound = lazy(() => import('./userinterface/screens/NotFound'));
 
 function App() {
@@ -69,8 +72,11 @@ function App() {
         <Route element={<RequireSession role="rider"><DeliveryOrderDetails/></RequireSession>} path={"/delivery/order/:taskId"}/>
         <Route element={<RequireSession role="rider"><DeliveryHelpCenter/></RequireSession>} path={"/delivery/help-center"}/>
         <Route element={<Navigate to="/delivery/login" replace />} path={"/deliverydashboard"}/>
+        <Route element={<PrivacyPolicy />} path="/privacy-policy" />
+        <Route element={<TermsAndConditions />} path="/terms-and-conditions" />
         <Route path="*" element={<NotFound />} />
       </Routes></Suspense>
+      <CookieConsent />
       </BrowserRouter>
      
       {/* <Category/> */}
