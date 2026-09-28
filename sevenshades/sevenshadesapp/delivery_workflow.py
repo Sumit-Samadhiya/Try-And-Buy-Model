@@ -4,7 +4,7 @@ from collections import defaultdict
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
-from .models import DeliveryRider, DeliveryAssignment, DeliveryBatch, TryOrder, TryOrderItem, FinalOrder, DeliveryZone
+from .models import DeliveryRider, DeliveryAssignment, DeliveryBatch, TryOrder, TryOrderItem, FinalOrder, DeliveryZone, TrialReturn
 
 from .inventory_workflow import lock_order, InventoryError
 from .security import owns_order

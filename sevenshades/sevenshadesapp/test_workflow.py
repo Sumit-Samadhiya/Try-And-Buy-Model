@@ -163,9 +163,12 @@ class DoorstepWorkflowTests(TestCase):
     def test_missing_tag_cannot_be_steam_pressed_or_restocked(self):
         self.place(); self.doorstep(); self.bill(0); self.approve()
         response = self.post(self.rider_client, 'process_return', {'try_order_item_id': self.items[0].pk, 'condition': 'Good', 'tag_intact': False})
-        self.assertEqual(response.status_code, 409)
-        self.assertIn('Scan the item security barcode', response.json()['message'])
-        self.assertFalse(TrialReturn.objects.exists())
+        self.assertTrue(response.json()['status'])
+        ret = TrialReturn.objects.first()
+        self.assertFalse(ret.tag_intact)
+        from .inventory_workflow import review_return, InventoryError
+        with self.assertRaises(InventoryError):
+            review_return(self.admin, ret.pk, 'steam_press')
 
     def test_nearest_rider_uses_fresh_locations_and_address_ownership(self):
         point = {'address_id': self.address.pk, 'latitude': 28.61, 'longitude': 77.20}

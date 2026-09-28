@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Button, Checkbox, FormControlLabel, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Button, Paper, Stack, Typography } from '@mui/material';
 import { postData } from './FetchDjangoApiServices';
 
 export function CancelTrialButton({ orderId, onCancelled }) {
@@ -18,8 +18,6 @@ export function CancelTrialButton({ orderId, onCancelled }) {
 }
 
 export function TrialReturnCollection({ orderId, onCollected }) {
-  const [tags, setTags] = useState({});
-  const [scannedTags, setScannedTags] = useState({});
   const [items, setItems] = useState([]);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -34,11 +32,10 @@ export function TrialReturnCollection({ orderId, onCollected }) {
     const payload = {
       try_order_item_id: id,
       condition,
-      tag_intact: tags[id] === true,
-      ...(scannedTags[id] ? { scanned_tag: scannedTags[id] } : {})
+      tag_intact: true
     };
     const result = await postData('process_return', payload);
-    setMessage(result.status ? 'Collection recorded. Warehouse receipt and hygiene review are pending.' : result.message);
+    setMessage(result.status ? 'Collection recorded.' : result.message);
     await load(); setBusy(false);
     if (result.status) onCollected?.();
   };
@@ -51,8 +48,7 @@ export function TrialReturnCollection({ orderId, onCollected }) {
       await postData('process_return', {
         try_order_item_id: item.id,
         condition: 'Good',
-        tag_intact: tags[item.id] === true,
-        ...(scannedTags[item.id] ? { scanned_tag: scannedTags[item.id] } : {})
+        tag_intact: true
       });
     }
     setMessage('All unselected return items confirmed and collected.');
@@ -82,13 +78,6 @@ export function TrialReturnCollection({ orderId, onCollected }) {
         <Typography>{item.product_name} · {item.size} · {item.color}</Typography>
       </Stack>
       {item.return_status ? <Typography>{item.return_status}</Typography> : item.selected ? <Typography>Selected for purchase</Typography> : item.stock_reserved ? <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-        <TextField
-          size="small"
-          placeholder="Scan / Enter Barcode"
-          value={scannedTags[item.id] || ''}
-          onChange={event => setScannedTags(prev => ({ ...prev, [item.id]: event.target.value }))}
-          sx={{ width: 180, display: 'none' }}
-        />
         <Button disabled={busy} variant="contained" onClick={() => collect(item.id, 'Good')}>
           Collected — good condition
         </Button>

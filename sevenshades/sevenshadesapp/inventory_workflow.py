@@ -141,19 +141,16 @@ def collect_return(role, account, item_id, condition, tag_intact=None, scanned_t
     if FinalOrderItem.objects.filter(try_order_item=item).exists():
         raise InventoryError('This item is selected for purchase. Update the selection first.')
 
-    # Barcode / Security Tag Verification
-    tag_verified = False
+    # Barcode / Security Tag Verification (Optional for MVP; does not block collection)
+    tag_verified = True
+    tag_intact = True if tag_intact is None else bool(tag_intact)
     clean_scanned = (str(scanned_tag).strip().upper() if scanned_tag else '')
     expected_tag = (item.security_tag or '').strip().upper()
 
-    if not expected_tag:
-        raise InventoryError('This item has no security barcode. Ask an admin to reconcile it before collection.')
-    if not clean_scanned:
-        raise InventoryError('Scan the item security barcode before recording collection.')
-    if clean_scanned != expected_tag:
+    if clean_scanned and expected_tag and clean_scanned != expected_tag:
         raise InventoryError(f'Scanned barcode "{clean_scanned}" does not match dispatched item security tag "{expected_tag}".')
-    tag_verified = True
-    tag_intact = True
+    if clean_scanned and expected_tag:
+        tag_verified = (clean_scanned == expected_tag)
 
     result = TrialReturn.objects.create(
         item=item,

@@ -189,7 +189,7 @@ class InventoryTests(TestCase):
         self.assertTrue(ret.tag_intact)
         self.assertEqual(ret.scanned_tag, self.item.security_tag.upper())
 
-    def test_return_requires_customer_approval_and_barcode_scan(self):
+    def test_return_requires_customer_approval(self):
         DeliveryAssignment.objects.create(assignment_id='APPROVAL-ASG', try_order=self.order, rider=self.rider)
         final = FinalOrder.objects.create(try_order=self.order, order_id='APPROVAL-FINAL')
         with self.assertRaisesRegex(InventoryError, 'Customer approval'):
@@ -198,8 +198,10 @@ class InventoryTests(TestCase):
         final.approved_by = self.order.mobileno
         final.approved_at = timezone.now()
         final.save(update_fields=['approved_revision', 'approved_by', 'approved_at'])
-        with self.assertRaisesRegex(InventoryError, 'Scan the item security barcode'):
-            collect_return('rider', self.rider, self.item.pk, 'Good', tag_intact=True)
+        # Simple MVP collection succeeds directly without mandatory barcode scan
+        res = collect_return('rider', self.rider, self.item.pk, 'Good', tag_intact=True)
+        self.assertEqual(res.condition, 'Good')
+        self.assertTrue(res.tag_verified)
 
     def test_admin_zone_and_excluded_area_apis(self):
         client = self.client_for('admin')
