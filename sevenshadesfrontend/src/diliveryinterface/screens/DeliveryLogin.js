@@ -79,7 +79,7 @@ export default function DeliveryLogin() {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'radial-gradient(circle at 10% 20%, #0f172a 0%, #020617 90%)',
+        background: 'radial-gradient(circle at 50% 20%, #064e3b 0%, #022c22 55%, #011a14 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -98,7 +98,7 @@ export default function DeliveryLogin() {
           transform: 'translateX(-50%)',
           width: '600px',
           height: '600px',
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(0, 0, 0, 0) 70%)',
+          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(0, 0, 0, 0) 70%)',
           pointerEvents: 'none'
         }}
       />
@@ -109,7 +109,7 @@ export default function DeliveryLogin() {
             component={Link}
             to="/home"
             startIcon={<ArrowBackRoundedIcon />}
-            sx={{ color: '#94a3b8', textTransform: 'none', '&:hover': { color: '#ffffff' } }}
+            sx={{ color: '#a7f3d0', textTransform: 'none', '&:hover': { color: '#ffffff' } }}
           >
             Customer Store
           </Button>
@@ -117,21 +117,21 @@ export default function DeliveryLogin() {
             icon={<TwoWheelerRoundedIcon sx={{ color: '#10b981 !important' }} />}
             label="Delivery Partner App"
             sx={{
-              bgcolor: 'rgba(16, 185, 129, 0.12)',
+              bgcolor: 'rgba(16, 185, 129, 0.18)',
               color: '#34d399',
               fontWeight: 700,
-              border: '1px solid rgba(16, 185, 129, 0.25)'
+              border: '1px solid rgba(16, 185, 129, 0.35)'
             }}
           />
         </Box>
 
         <Card
           sx={{
-            bgcolor: 'rgba(30, 41, 59, 0.85)',
+            bgcolor: 'rgba(2, 44, 34, 0.92)',
             backdropFilter: 'blur(16px)',
             borderRadius: 4,
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
+            border: '1px solid rgba(52, 211, 153, 0.25)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px rgba(5, 150, 105, 0.2)',
             position: 'relative',
             overflow: 'hidden',
           }}

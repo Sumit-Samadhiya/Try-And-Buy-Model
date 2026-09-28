@@ -195,13 +195,14 @@ export default function Header() {
 
     return (
         <Box sx={{ flexGrow: 1, position: 'sticky', top: 0, zIndex: 100 }}>
-            {/* Primary Dark Slate Header */}
+            {/* Primary Luxury Emerald Header (matching user profile) */}
             <AppBar
                 elevation={0}
                 position="static"
                 sx={{
-                    backgroundColor: '#0f172a',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                    background: 'linear-gradient(135deg, #064e3b 0%, #065f46 55%, #022c22 100%)',
+                    borderBottom: '1px solid rgba(16, 185, 129, 0.25)',
+                    boxShadow: '0 4px 20px rgba(6, 78, 59, 0.25)',
                 }}
             >
                 <Toolbar sx={{ height: 68, px: { xs: 2, sm: 3 } }}>
@@ -238,11 +239,12 @@ export default function Header() {
                         </Typography>
                         <span style={{
                             fontSize: 10,
-                            fontWeight: 700,
-                            letterSpacing: '0.6px',
-                            color: '#94a3b8',
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            padding: '2px 6px',
+                            fontWeight: 800,
+                            letterSpacing: '0.8px',
+                            color: '#a7f3d0',
+                            backgroundColor: 'rgba(16, 185, 129, 0.22)',
+                            border: '1px solid rgba(52, 211, 153, 0.35)',
+                            padding: '2px 7px',
                             borderRadius: 4,
                             textTransform: 'uppercase',
                         }}>
@@ -268,8 +270,9 @@ export default function Header() {
                                     py: 0.6,
                                     textTransform: 'none',
                                     color: '#ffffff',
-                                    backgroundColor: backgroundColor === menId ? 'rgba(255, 255, 255, 0.16)' : 'transparent',
-                                    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.22)' }
+                                    backgroundColor: backgroundColor === menId ? 'rgba(16, 185, 129, 0.3)' : 'transparent',
+                                    border: backgroundColor === menId ? '1px solid rgba(52, 211, 153, 0.4)' : '1px solid transparent',
+                                    '&:hover': { backgroundColor: 'rgba(16, 185, 129, 0.25)' }
                                 }}
                             >
                                 Men
@@ -289,8 +292,9 @@ export default function Header() {
                                     py: 0.6,
                                     textTransform: 'none',
                                     color: '#ffffff',
-                                    backgroundColor: backgroundColor === womenId ? 'rgba(255, 255, 255, 0.16)' : 'transparent',
-                                    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.22)' }
+                                    backgroundColor: backgroundColor === womenId ? 'rgba(16, 185, 129, 0.3)' : 'transparent',
+                                    border: backgroundColor === womenId ? '1px solid rgba(52, 211, 153, 0.4)' : '1px solid transparent',
+                                    '&:hover': { backgroundColor: 'rgba(16, 185, 129, 0.25)' }
                                 }}
                             >
                                 Women
@@ -319,11 +323,11 @@ export default function Header() {
                                 borderRadius: '8px',
                                 transition: 'background-color 0.15s ease',
                             }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                         >
                             <PersonOutlineIcon style={{ fontSize: 24, color: '#ffffff' }} />
-                            <span style={{ fontSize: 11, fontWeight: 600, color: '#cbd5e1' }}>
+                            <span style={{ fontSize: 11, fontWeight: 600, color: '#d1fae5' }}>
                                 {userData?.fname || 'Sign In'}
                             </span>
                         </div>
@@ -339,23 +343,24 @@ export default function Header() {
                                 borderRadius: '8px',
                                 transition: 'background-color 0.15s ease',
                             }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                         >
                             <Badge
                                 badgeContent={keys.length}
                                 sx={{
                                     '& .MuiBadge-badge': {
-                                        backgroundColor: '#3b82f6',
+                                        backgroundColor: '#10b981',
                                         color: '#ffffff',
                                         fontWeight: 800,
                                         fontSize: 11,
+                                        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
                                     }
                                 }}
                             >
                                 <ShoppingBagOutlinedIcon style={{ fontSize: 24, color: '#ffffff' }} />
                             </Badge>
-                            <span style={{ fontSize: 11, fontWeight: 600, color: '#cbd5e1' }}>
+                            <span style={{ fontSize: 11, fontWeight: 600, color: '#d1fae5' }}>
                                 Try Bag
                             </span>
                         </div>
@@ -366,13 +371,14 @@ export default function Header() {
             {/* Sub-header / Subcategory Strip */}
             {!md_matches && (
                 <div style={{
-                    backgroundColor: '#1e293b',
+                    backgroundColor: '#022c22',
                     height: 44,
                     color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     padding: '0 24px',
-                    boxShadow: '0 2px 6px rgba(15, 23, 42, 0.08)',
+                    borderTop: '1px solid rgba(16, 185, 129, 0.15)',
+                    boxShadow: '0 2px 8px rgba(2, 44, 34, 0.25)',
                 }}>
                     <div style={{ display: 'flex', overflowX: 'auto', alignItems: 'center', scrollbarWidth: 'none' }}>
                         {showAllSubCategory()}

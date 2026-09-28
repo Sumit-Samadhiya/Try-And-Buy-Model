@@ -74,7 +74,7 @@ export default function AdminLogin() {
       <Box
         sx={{
           minHeight: '100vh',
-          background: 'radial-gradient(circle at 50% 20%, #064e3b 0%, #022c22 40%, #020617 85%)',
+          background: 'radial-gradient(circle at 50% 20%, #064e3b 0%, #022c22 50%, #011a14 100%)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -94,7 +94,7 @@ export default function AdminLogin() {
             transform: 'translateX(-50%)',
             width: 700,
             height: 700,
-            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, rgba(0, 0, 0, 0) 70%)',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(0, 0, 0, 0) 70%)',
             pointerEvents: 'none',
           }}
         />
@@ -108,7 +108,7 @@ export default function AdminLogin() {
               component={RouterLink}
               to="/home"
               startIcon={<ArrowBackRoundedIcon />}
-              sx={{ color: '#94a3b8', textTransform: 'none', '&:hover': { color: '#ffffff' } }}
+              sx={{ color: '#a7f3d0', textTransform: 'none', '&:hover': { color: '#ffffff' } }}
             >
               Customer Store
             </Button>
@@ -117,21 +117,21 @@ export default function AdminLogin() {
               label="Secured Portal"
               size="small"
               sx={{
-                bgcolor: 'rgba(16, 185, 129, 0.12)',
+                bgcolor: 'rgba(16, 185, 129, 0.18)',
                 color: '#34d399',
                 fontWeight: 700,
-                border: '1px solid rgba(16, 185, 129, 0.25)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
               }}
             />
           </Box>
 
           <Card
             sx={{
-              bgcolor: 'rgba(15, 23, 42, 0.88)',
+              bgcolor: 'rgba(2, 44, 34, 0.92)',
               backdropFilter: 'blur(20px)',
               borderRadius: 4,
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 30px rgba(5, 150, 105, 0.15)',
+              border: '1px solid rgba(52, 211, 153, 0.25)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px rgba(5, 150, 105, 0.2)',
               position: 'relative',
               overflow: 'hidden',
             }}
@@ -164,7 +164,7 @@ export default function AdminLogin() {
                 <Typography component="h1" variant="h5" sx={{ fontWeight: 800, color: '#f8fafc', mt: 1 }}>
                   Sign in
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#94a3b8', mt: 0.5, textAlign: 'center' }}>
+                <Typography variant="body2" sx={{ color: '#a7f3d0', mt: 0.5, textAlign: 'center' }}>
                   Doordrape Store Administration
                 </Typography>
               </Box>
@@ -189,12 +189,12 @@ export default function AdminLogin() {
                   onChange={(e) => setEmailId(e.target.value)}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      bgcolor: 'rgba(2, 6, 23, 0.5)',
+                      bgcolor: 'rgba(1, 26, 20, 0.65)',
                       borderRadius: 2.5,
-                      '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.12)' },
+                      '& fieldset': { borderColor: 'rgba(52, 211, 153, 0.25)' },
                       '&:hover fieldset': { borderColor: '#10b981' },
                     },
-                    '& .MuiInputLabel-root': { color: '#94a3b8' },
+                    '& .MuiInputLabel-root': { color: '#a7f3d0' },
                   }}
                 />
                 <TextField
@@ -210,12 +210,12 @@ export default function AdminLogin() {
                   onChange={(e) => setPassword(e.target.value)}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      bgcolor: 'rgba(2, 6, 23, 0.5)',
+                      bgcolor: 'rgba(1, 26, 20, 0.65)',
                       borderRadius: 2.5,
-                      '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.12)' },
+                      '& fieldset': { borderColor: 'rgba(52, 211, 153, 0.25)' },
                       '&:hover fieldset': { borderColor: '#10b981' },
                     },
-                    '& .MuiInputLabel-root': { color: '#94a3b8' },
+                    '& .MuiInputLabel-root': { color: '#a7f3d0' },
                   }}
                 />
                 <Button

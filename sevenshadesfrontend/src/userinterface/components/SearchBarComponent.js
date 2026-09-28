@@ -98,12 +98,12 @@ export default function SearchBarComponent(props) {
             padding: '0 12px',
             margin: '0 20px',
             position: 'relative',
-            boxShadow: isFocused ? '0 0 0 2px #3b82f6, 0 4px 12px rgba(0,0,0,0.1)' : '0 2px 6px rgba(0,0,0,0.08)',
+            boxShadow: isFocused ? '0 0 0 2px #10b981, 0 4px 14px rgba(6, 78, 59, 0.2)' : '0 2px 6px rgba(0,0,0,0.1)',
             transition: 'box-shadow 0.2s ease',
         }}>
             <SearchOutlinedIcon
                 onClick={handleSearchClick}
-                style={{ color: '#64748b', cursor: 'pointer', marginRight: '8px', fontSize: '20px' }}
+                style={{ color: '#059669', cursor: 'pointer', marginRight: '8px', fontSize: '20px' }}
             />
             <input
                 type="text"
