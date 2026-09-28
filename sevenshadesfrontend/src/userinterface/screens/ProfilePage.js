@@ -44,10 +44,11 @@ export default function ProfilePage() {
   const [ticketMessage, setTicketMessage] = useState('');
 
   const [orderHistory, setOrderHistory] = useState([]);
+  const filterDeleted = list => (list || []).filter(item => !item?.try_order?.order_id?.includes('B8A58EAE81CE4A5CB74B'));
   useOrderEvents(async () => {
     if (!userData?.mobileno) return;
     const result = await postData('user_order_lifecycle_list', { mobileno: userData.mobileno });
-    if (result.status) setOrderHistory(result.data);
+    if (result.status) setOrderHistory(filterDeleted(result.data));
   }, !!userData?.mobileno);
   const [reviews, setReviews] = useState([]);
   const [tickets, setTickets] = useState([]);
@@ -75,7 +76,7 @@ export default function ProfilePage() {
       if (support.status) setTickets(support.data);
       const result = await postData('user_order_lifecycle_list', { mobileno: userData.mobileno });
       if (result?.status) {
-        setOrderHistory(result.data || []);
+        setOrderHistory(filterDeleted(result.data));
         if (result.wallet) {
           setWalletBalance(result.wallet.balance || 0);
         }

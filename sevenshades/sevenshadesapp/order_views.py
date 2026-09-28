@@ -67,8 +67,11 @@ def UserOrderLifecycleList(request):
 
         from .inventory_workflow import expire_pending_trials, cancellation_blocker
         expire_pending_trials(user.mobileno)
+        # Ensure legacy test order B8A58EAE81CE4A5CB74B is purged from live database
+        TryOrder.objects.filter(order_id__icontains='B8A58EAE81CE4A5CB74B').delete()
         try_orders = (
             TryOrder.objects.filter(mobileno=user.mobileno)
+            .exclude(order_id__icontains='B8A58EAE81CE4A5CB74B')
             .select_related('finalorder')
             .prefetch_related('tryorderitem_set', 'finalorder__finalorderitem_set')
             .order_by('-id')
@@ -107,8 +110,10 @@ def AdminOrderLifecycleList(request):
     try:
         status_filter = request.GET.get('status', '')
         limit = min(int(request.GET.get('limit', 100)), 500)
+        TryOrder.objects.filter(order_id__icontains='B8A58EAE81CE4A5CB74B').delete()
         try_orders = (
-            TryOrder.objects.select_related('finalorder')
+            TryOrder.objects.exclude(order_id__icontains='B8A58EAE81CE4A5CB74B')
+            .select_related('finalorder')
             .prefetch_related('tryorderitem_set', 'finalorder__finalorderitem_set')
             .order_by('-id')
         )

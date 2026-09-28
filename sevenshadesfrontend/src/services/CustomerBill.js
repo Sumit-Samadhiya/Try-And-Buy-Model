@@ -100,8 +100,8 @@ export default function CustomerBill({ orderId }) {
             </Stack>
           )}
           {data.receipt_number && (
-            <Button component="a" href={serverURL + '/api/receipt_download?order_id=' + encodeURIComponent(orderId)}>
-              Download Payment Receipt
+            <Button variant="contained" sx={{ bgcolor: '#111827', fontWeight: 700 }} aria-label="Download Payment Receipt" component="a" href={serverURL + '/api/receipt_download?order_id=' + encodeURIComponent(orderId)}>
+              📄 Download Tax Invoice
             </Button>
           )}
         </>
