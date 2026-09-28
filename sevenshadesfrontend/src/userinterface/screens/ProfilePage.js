@@ -9,8 +9,6 @@ import {
   Badge,
   Box,
   Button,
-  Card,
-  CardContent,
   Chip,
   Container,
   Divider,

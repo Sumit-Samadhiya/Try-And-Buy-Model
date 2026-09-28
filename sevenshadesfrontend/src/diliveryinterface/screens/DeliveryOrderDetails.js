@@ -62,8 +62,6 @@ export default function DeliveryOrderDetails({ orderId, embedded = false }) {
   const final = data?.final_order;
   const remaining = remainingTrialSeconds(data?.trial_ends_at, now + offset.current);
   const stage = data?.assignment_status;
-  const billItems = new Set(final?.finalorderitem_set.map(item => item.try_order_item) || []);
-  const collected = data?.try_order.tryorderitem_set.every(item => billItems.has(item.id) || item.status === 'RETURNED' || !item.stock_reserved);
   const advance = status => action('delivery_assignment_update_status', { assignment_id: data.assignment_id, status });
   return <Shell title={'Doorstep order · ' + taskId} subtitle="Trial, customer approval and settlement" activePage="dashboard">
     <Stack spacing={2}>
