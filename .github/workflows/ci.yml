@@ -60,14 +60,16 @@ jobs:
           cache: npm
           cache-dependency-path: sevenshadesfrontend/package-lock.json
       - run: npm ci
-      - run: npm test -- --watchAll=false --runInBand
+      - name: Check dependency compatibility
+        run: npm ls --all
+      - run: npm run test:ci
         env:
           CI: 'true'
       - run: npm run build
         env:
           CI: 'true'
-      - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
+      - name: Audit all dependencies including build and test tools
+        run: npm audit --audit-level=high
 
   postgres-workflow:
     runs-on: ubuntu-latest
