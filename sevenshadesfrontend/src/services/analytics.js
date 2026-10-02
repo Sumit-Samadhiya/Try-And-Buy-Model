@@ -205,7 +205,7 @@ export const trackAuthEvent = (action, mobile = '') => {
     });
 };
 
-export default {
+const analytics = {
     getSessionId,
     hasAnalyticsConsent,
     trackPageView,
@@ -218,3 +218,5 @@ export default {
     trackOrderPlaced,
     trackAuthEvent,
 };
+
+export default analytics;

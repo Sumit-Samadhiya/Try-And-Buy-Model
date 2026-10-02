@@ -1,5 +1,5 @@
 import { validateFields } from '../../services/validation';
-import { trackOrderPlaced, trackCheckoutStep } from '../../services/analytics';
+import { trackOrderPlaced } from '../../services/analytics';
 import { deliverySlots, indiaDate, slotAvailable } from '../../services/deliverySchedule';
 import LocationButton from '../../services/LocationButton';
 import Avatar from '@mui/material/Avatar';
