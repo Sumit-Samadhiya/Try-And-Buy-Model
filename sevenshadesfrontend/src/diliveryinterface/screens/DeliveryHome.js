@@ -1,7 +1,8 @@
 import LocationButton from '../../services/LocationButton';
 import DoordrapeLoader from '../../userinterface/components/DoordrapeLoader';
 import useOrderEvents from '../../services/useOrderEvents';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -25,13 +26,24 @@ export default function DeliveryHome() {
   const [tasks, setTasks] = useState([]);
   const [loginData, setLoginData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const inFlight = useRef(false);
 
   const loadTasks = async () => {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setLoading(true);
-    const active = getDeliveryLogin();
-    const next = await fetchDeliveryTasksFromApi(active?.phone);
-    setTasks(next);
-    setLoading(false);
+    try {
+      const active = getDeliveryLogin();
+      const next = await fetchDeliveryTasksFromApi(active?.phone);
+      setTasks(next);
+      setLoadError('');
+    } catch {
+      setLoadError('Delivery tasks could not be refreshed. Retry before updating an order.');
+    } finally {
+      setLoading(false);
+      inFlight.current = false;
+    }
   };
 
   useOrderEvents(loadTasks);
@@ -51,7 +63,7 @@ export default function DeliveryHome() {
     const pendingFee = tasks.filter((item) => item.feeAmount > 0 && item.status !== 'completed').length;
     return [
       { key: 'assigned', label: 'Assigned Trials', value: assigned },
-      { key: 'completed', label: 'Completed Today', value: completed },
+      { key: 'completed', label: 'Completed Trials', value: completed },
       { key: 'pendingFee', label: 'Pending Fee Collection', value: pendingFee },
       { key: 'orders', label: 'Total Orders', value: tasks.length },
     ];
@@ -65,6 +77,7 @@ export default function DeliveryHome() {
 
   const handleStatusChange = (taskId, nextStatus) => {
     const updateStatus = async () => {
+      if (loadError || loading) return;
       const currentTask = tasks.find((item) => item.id === taskId);
       if (!currentTask?.assignmentId) return;
 
@@ -104,7 +117,7 @@ export default function DeliveryHome() {
           boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
         }}
       >
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} alignItems="center" useFlexGap flexWrap="wrap">
           <Avatar
             sx={{
               width: 58,
@@ -116,7 +129,7 @@ export default function DeliveryHome() {
           >
             <LocalShippingRoundedIcon sx={{ fontSize: 32 }} />
           </Avatar>
-          <Box sx={{ flex: 1 }}>
+          <Box sx={{ flex: 1, minWidth: 140, overflowWrap: 'anywhere' }}>
             <Typography variant="h6" sx={{ fontWeight: 800, color: '#f8fafc' }}>
               {loginData?.name || 'Partner Rider'}
             </Typography>
@@ -124,14 +137,14 @@ export default function DeliveryHome() {
               Active Zone: {loginData?.zone || 'Central Hub'}
             </Typography>
           </Box>
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ maxWidth: '100%' }}>
             <Chip
               label={loginData?.status || 'Active'}
               sx={{ bgcolor: 'rgba(16, 185, 129, 0.2)', color: '#34d399', fontWeight: 700 }}
             />
             <Chip
               label={loginData?.bike_number || 'Partner Vehicle'}
-              sx={{ bgcolor: 'rgba(255, 255, 255, 0.08)', color: '#cbd5e1' }}
+              sx={{ bgcolor: 'rgba(255, 255, 255, 0.08)', color: '#cbd5e1', maxWidth: '100%' }}
             />
           </Stack>
         </Stack>
@@ -140,7 +153,7 @@ export default function DeliveryHome() {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {stats.map((item) => (
           <Grid item xs={6} md={3} key={item.key}>
-            <StatCard label={item.label} value={item.value} />
+            <StatCard label={item.label} value={loadError || loading ? '—' : item.value} />
           </Grid>
         ))}
       </Grid>
@@ -171,6 +184,7 @@ export default function DeliveryHome() {
               variant="outlined"
               sx={{ color: '#cbd5e1', borderColor: 'rgba(255, 255, 255, 0.2)' }}
               onClick={loadTasks}
+              disabled={loading}
             >
               Refresh
             </Button>
@@ -191,12 +205,14 @@ export default function DeliveryHome() {
         >
           <Tab label="All Tasks" />
           <Tab label="In Progress" />
-          <Tab label="Completed Shift" />
+          <Tab label="Completed" />
         </Tabs>
 
         <Stack spacing={1.5} sx={{ mt: 2 }}>
           {loading ? (
             <DoordrapeLoader variant="delivery" text="Syncing assigned delivery tasks…" role="status" size="small" />
+          ) : loadError ? (
+            <Alert severity="error" action={<Button color="inherit" onClick={loadTasks}>Retry</Button>}>{loadError}</Alert>
           ) : filteredTasks.length === 0 ? (
             <Typography variant="body2" sx={{ color: '#6b7280' }}>No tasks available.</Typography>
           ) : (

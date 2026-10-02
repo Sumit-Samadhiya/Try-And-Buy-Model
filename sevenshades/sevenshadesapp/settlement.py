@@ -75,6 +75,10 @@ def approve_bill(account, order_id, revision, mode):
         raise InventoryError('This bill cannot be approved with those payment details.')
     if mode is None and approved(final):
         return final
+    if mode == 'cash' and GatewayPayment.objects.filter(
+        try_order=order, purpose='final', revision=revision
+    ).exists():
+        raise InventoryError('An online payment attempt exists for this bill. Reconcile it before choosing cash.')
     final.approved_revision, final.approved_by, final.approved_at = revision, account.pk, timezone.now()
     final.payment_mode = mode or ''
     final.status = 'approved_awaiting_payment'

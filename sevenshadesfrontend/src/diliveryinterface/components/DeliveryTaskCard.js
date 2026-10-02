@@ -6,9 +6,7 @@ import Typography from '@mui/material/Typography';
 import StatusPill from './StatusPill';
 
 export default function DeliveryTaskCard({ task, onStatusChange, onOpenDetails }) {
-  const handleCall = () => {
-    alert(`Calling ${task.customerName} (${task.customerPhone})`);
-  };
+  const phone = String(task.customerPhone || '').replace(/[^\d+]/g, '');
 
   return (
     <Paper
@@ -36,7 +34,7 @@ export default function DeliveryTaskCard({ task, onStatusChange, onOpenDetails }
         />
         <Chip
           size="small"
-          label={`${task.routeDistanceKm} km`}
+          label={task.routeDistanceKm == null ? 'Distance unavailable' : `${task.routeDistanceKm} km`}
           sx={{ bgcolor: 'rgba(255, 255, 255, 0.08)', color: '#cbd5e1' }}
         />
       </Stack>
@@ -54,7 +52,9 @@ export default function DeliveryTaskCard({ task, onStatusChange, onOpenDetails }
           size="small"
           variant="outlined"
           sx={{ color: '#cbd5e1', borderColor: 'rgba(255, 255, 255, 0.2)' }}
-          onClick={handleCall}
+          component="a"
+          href={phone ? `tel:${phone}` : undefined}
+          disabled={!phone}
         >
           Call
         </Button>
@@ -91,9 +91,9 @@ export default function DeliveryTaskCard({ task, onStatusChange, onOpenDetails }
             size="small"
             variant="contained"
             sx={{ bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' } }}
-            onClick={() => onStatusChange(task.id, 'completed')}
+            onClick={() => onOpenDetails(task.id)}
           >
-            Mark Complete
+            Select Items & Generate Bill
           </Button>
         )}
       </Stack>

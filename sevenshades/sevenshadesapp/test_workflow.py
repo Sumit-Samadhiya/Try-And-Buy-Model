@@ -125,11 +125,7 @@ class DoorstepWorkflowTests(TestCase):
         self.assertIn('receipt_url', inv_res.json())
         self.assertEqual(self.other_client.get('/api/receipt_download', {'order_id': self.order_id}).status_code, 404)
 
-        for return_id in returns:
-            self.assertTrue(self.post(self.admin_client, 'update_hygiene_status', {'return_id': return_id, 'action': 'receive'}).json()['status'])
-            self.assertEqual(self.post(self.admin_client, 'update_hygiene_status', {'return_id': return_id, 'action': 'approve'}).status_code, 409)
-            for action in ('steam_press', 'approve', 'approve'):
-                self.assertTrue(self.post(self.admin_client, 'update_hygiene_status', {'return_id': return_id, 'action': action}).json()['status'])
+        self.assertEqual(TrialReturn.objects.filter(pk__in=returns, status='Approved').count(), 2)
         self.assertEqual(list(ProductDetails.objects.filter(pk__in=[item.pk for item in self.variants]).order_by('pk').values_list('qty', flat=True)), [0, 0, 1, 1])
         order.refresh_from_db()
         self.assertEqual(order.status, 'DELIVERED')
@@ -160,15 +156,30 @@ class DoorstepWorkflowTests(TestCase):
         self.assertEqual(TryOrder.objects.get(order_id=self.order_id).status, 'NO_PURCHASE')
         self.assertFalse(OrderReceipt.objects.exists())
 
-    def test_missing_tag_cannot_be_steam_pressed_or_restocked(self):
+    def test_return_api_requires_approval_and_retries_do_not_duplicate_collection(self):
+        self.place(); self.doorstep(); self.bill(1)
+        payload = {'try_order_item_id': self.items[1].pk, 'condition': 'Good'}
+        rejected = self.post(self.rider_client, 'process_return', payload)
+        self.assertEqual(rejected.status_code, 409)
+        self.assertFalse(TrialReturn.objects.exists())
+        self.approve()
+        first = self.post(self.rider_client, 'process_return', payload)
+        repeated = self.post(self.rider_client, 'process_return', payload)
+        self.assertTrue(first.json()['status'], first.content)
+        self.assertEqual(first.json()['data']['id'], repeated.json()['data']['id'])
+        self.assertEqual(TrialReturn.objects.count(), 1)
+        purchased = self.post(self.rider_client, 'process_return', dict(payload, try_order_item_id=self.items[0].pk))
+        self.assertEqual(purchased.status_code, 409)
+
+    def test_missing_tag_is_collected_without_restocking(self):
         self.place(); self.doorstep(); self.bill(0); self.approve()
         response = self.post(self.rider_client, 'process_return', {'try_order_item_id': self.items[0].pk, 'condition': 'Good', 'tag_intact': False})
         self.assertTrue(response.json()['status'])
         ret = TrialReturn.objects.first()
         self.assertFalse(ret.tag_intact)
-        from .inventory_workflow import review_return, InventoryError
-        with self.assertRaises(InventoryError):
-            review_return(self.admin, ret.pk, 'steam_press')
+        self.assertEqual(ret.status, 'Rejected')
+        self.variants[0].refresh_from_db()
+        self.assertEqual(self.variants[0].qty, 0)
 
     def test_nearest_rider_uses_fresh_locations_and_address_ownership(self):
         point = {'address_id': self.address.pk, 'latitude': 28.61, 'longitude': 77.20}
@@ -245,6 +256,27 @@ class DoorstepWorkflowTests(TestCase):
         self.assertEqual(changed.status_code, 409)
         self.assertIn('Reconcile', changed.json()['message'])
 
+    def test_cash_approval_cannot_override_pending_online_payment(self):
+        self.place(); self.doorstep(); bill = self.bill(count=1)
+        self.approve()
+        final = FinalOrder.objects.get(try_order__order_id=self.order_id)
+        final.payment_mode = 'razorpay'
+        final.save(update_fields=['payment_mode'])
+        GatewayPayment.objects.create(try_order=final.try_order, purpose='final',
+            revision=bill['bill_revision'], amount_paise=bill['final_payable'] * 100,
+            state='READY', gateway_order_id='order_PendingOnline')
+        response = self.post(self.customer, 'customer_approve_bill', {
+            'order_id': self.order_id, 'bill_revision': bill['bill_revision'], 'payment_mode': 'cash'})
+        self.assertEqual(response.status_code, 409)
+        final.refresh_from_db()
+        self.assertEqual(final.payment_mode, 'razorpay')
+        from .payments import apply_capture
+        apply_capture(GatewayPayment.objects.get().pk, {
+            'id': 'pay_PendingOnline', 'order_id': 'order_PendingOnline',
+            'amount': bill['final_payable'] * 100, 'currency': 'INR', 'status': 'captured'})
+        final.refresh_from_db()
+        self.assertEqual(final.payment_status, 'paid')
+
     @override_settings(RAZORPAY_KEY_ID='rzp_test_example', RAZORPAY_KEY_SECRET='test-secret')
     @patch('sevenshadesapp.payments.gateway_request')
     def test_uncertain_gateway_creation_does_not_create_second_payment(self, gateway):
@@ -299,4 +331,3 @@ class DoorstepWorkflowTests(TestCase):
         self.assertTrue(any(p['page_path'] == '/productdetailspage?pid=101' for p in data['top_pages']))
         self.assertTrue(any(e['event_name'] == 'add_to_cart' for e in data['top_events']))
         self.assertGreaterEqual(len(data['recent_events']), 2)
-

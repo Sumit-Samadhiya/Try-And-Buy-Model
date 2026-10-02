@@ -24,6 +24,29 @@ const detail = () => ({
   online_available: false,
 });
 
+test('failed bill load offers retry instead of claiming the trial bill is not ready', async () => {
+  postData.mockResolvedValueOnce({ status: false, message: 'Connection unavailable' })
+    .mockResolvedValue({ status: true, data: detail() });
+  render(<CustomerBill orderId="T1" />);
+  expect(await screen.findByText('Connection unavailable')).toBeInTheDocument();
+  expect(screen.queryByText(/will appear here after/)).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+  expect(await screen.findByText('Items Total: ₹500')).toBeInTheDocument();
+  expect(screen.queryByText('Connection unavailable')).not.toBeInTheDocument();
+});
+
+test('customer can review totals and prepaid credit before approving', async () => {
+  const data = detail();
+  data.final_order.wallet_credit = 99;
+  data.final_order.final_payable = 401;
+  postData.mockResolvedValue({ status: true, data });
+  render(<CustomerBill orderId="T1" />);
+  expect(await screen.findByText('Items Total: ₹500')).toBeInTheDocument();
+  expect(screen.getByText('Prepaid Trial Fee Credit: ₹99')).toBeInTheDocument();
+  expect(screen.getByText('Total Cash Payable: ₹401')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Approve Selection/ })).toBeEnabled();
+});
+
 test('customer approves the displayed bill revision and cash remains awaiting rider collection', async () => {
   const data = detail();
   postData.mockImplementation(async (endpoint, payload) => {

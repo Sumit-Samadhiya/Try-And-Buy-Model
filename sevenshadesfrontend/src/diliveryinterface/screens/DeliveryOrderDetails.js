@@ -16,12 +16,14 @@ export default function DeliveryOrderDetails({ orderId, embedded = false }) {
   const [selected, setSelected] = useState([]);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [now, setNow] = useState(Date.now());
   const dirty = useRef(false);
   const offset = useRef(0);
   const load = useCallback(async () => {
     const result = await postData('settlement_detail', { order_id: taskId });
-    if (!result.status) { setMessage(result.message); return; }
+    if (!result.status) { setLoadError(result.message || 'Unable to load the order. Please retry.'); return; }
+    setLoadError('');
     const value = result.data;
     offset.current = Date.parse(value.server_time) - Date.now();
     setData(value);
@@ -47,20 +49,16 @@ export default function DeliveryOrderDetails({ orderId, embedded = false }) {
       setBusy(false);
       return;
     }
-    const unselected = (data?.try_order?.tryorderitem_set || []).filter(item => !selected.includes(item.id) && item.status !== 'RETURNED');
-    for (const item of unselected) {
-      await postData('process_return', {
-        try_order_item_id: item.id,
-        condition: 'Good',
-        tag_intact: true
-      });
-    }
     dirty.current = false;
     setMessage('Dynamic bill generated. Awaiting customer in-app approval.');
     await load();
     setBusy(false);
   };
   const final = data?.final_order;
+  const purchasedIds = new Set(final?.finalorderitem_set.map(item => item.try_order_item) || []);
+  const pendingReturns = final ? (data?.try_order?.tryorderitem_set || []).filter(
+    item => !purchasedIds.has(item.id) && item.status !== 'RETURNED' && item.stock_reserved
+  ) : [];
   const remaining = remainingTrialSeconds(data?.trial_ends_at, now + offset.current);
   const stage = data?.assignment_status;
   const advance = status => action('delivery_assignment_update_status', { assignment_id: data.assignment_id, status });
@@ -78,7 +76,8 @@ export default function DeliveryOrderDetails({ orderId, embedded = false }) {
             </Button>
           )}
           {message && <Alert severity="info" sx={{ bgcolor: 'rgba(14, 165, 233, 0.15)', color: '#38bdf8', border: '1px solid rgba(14, 165, 233, 0.3)' }}>{message}</Alert>}
-          {!data ? (
+          {loadError && <Alert severity="error" action={<Button color="inherit" onClick={load}>Retry</Button>}>{loadError}</Alert>}
+          {!data && loadError ? null : !data ? (
             <DoordrapeLoader variant="delivery" dark text="Loading doorstep order…" role="status" />
           ) : (
             <>
@@ -294,12 +293,30 @@ export default function DeliveryOrderDetails({ orderId, embedded = false }) {
                 </Paper>
               )}
 
+              {final && pendingReturns.length > 0 && (
+                <Paper sx={{ p: 2.5 }}>
+                  <Typography variant="h6">Collect unpurchased items</Typography>
+                  <Typography>After customer approval, confirm each item physically received from the customer.</Typography>
+                  {pendingReturns.map(item => (
+                    <Stack key={item.id} spacing={1} sx={{ mt: 2 }}>
+                      <Typography>{item.product_name} · {item.size} · {item.color}</Typography>
+                      {['Good', 'Damaged'].map(condition => (
+                        <Button key={condition} disabled={busy || !!loadError || !data.customer_approved || dirty.current}
+                          onClick={() => action('process_return', { try_order_item_id: item.id, condition })}>
+                          Confirm {item.product_name} {item.size} {item.color} collected — {condition}
+                        </Button>
+                      ))}
+                    </Stack>
+                  ))}
+                </Paper>
+              )}
+
               {stage !== 'Delivered' && (
                 <Button
                   variant="contained"
                   color="success"
                   size="large"
-                  disabled={busy || !data.customer_approved || final?.payment_status !== 'paid' || stage !== 'Trial Completed'}
+                  disabled={busy || !!loadError || pendingReturns.length > 0 || !data.customer_approved || final?.payment_status !== 'paid' || stage !== 'Trial Completed'}
                   onClick={() => advance('Delivered')}
                   sx={{ py: 1.5, fontWeight: 800, borderRadius: 2.5 }}
                 >
@@ -314,7 +331,7 @@ export default function DeliveryOrderDetails({ orderId, embedded = false }) {
                   href={serverURL + '/api/receipt_download?order_id=' + encodeURIComponent(taskId)}
                   sx={{ color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.4)' }}
                 >
-                  📄 Download Tax Invoice / Receipt
+                  📄 Download Payment Receipt
                 </Button>
               )}
 

@@ -160,48 +160,16 @@ def collect_return(role, account, item_id, condition, tag_intact=None, scanned_t
         scanned_tag=clean_scanned,
         recorded_by=f'{role}:{account.pk}'
     )
-    item.status = 'RETURNED'
-    item.save(update_fields=['status'])
+    if condition == 'Good' and tag_intact and tag_verified:
+        release_item(item)
+        result.status = 'Approved'
+    else:
+        item.status = 'RETURNED'
+        item.save(update_fields=['status'])
+        result.status = 'Rejected'
+    result.reviewed_at = timezone.now()
+    result.reviewed_by = f'{role}:{account.pk}'
+    result.save(update_fields=['status', 'reviewed_at', 'reviewed_by'])
     from .order_events import order_changed
     order_changed(order, 'return_collected')
-    return result
-
-
-
-@transaction.atomic
-def review_return(account, return_id, action):
-    if type(return_id) is not int or action not in ('receive', 'steam_press', 'approve', 'reject'):
-        raise InventoryError('Invalid return action.')
-    result = TrialReturn.objects.select_related('item__try_order').filter(pk=return_id).first()
-    if not result:
-        raise InventoryError('Return not found.')
-    lock_order(result.item.try_order.order_id)
-    result.refresh_from_db()
-    if action == 'steam_press':
-        if result.status != 'Received' or result.condition != 'Good' or not result.tag_intact or not result.tag_verified:
-            raise InventoryError('Only received, undamaged items with verified tags can enter steam-press.')
-        if not result.steam_pressed_at:
-            result.steam_pressed_at, result.steam_pressed_by = timezone.now(), str(account.pk)
-            result.save(update_fields=['steam_pressed_at', 'steam_pressed_by'])
-        return result
-    target = {'receive': 'Received', 'approve': 'Approved', 'reject': 'Rejected'}[action]
-    if result.status == target:
-        return result
-    if action == 'receive':
-        if result.status != 'Collected':
-            raise InventoryError('This return cannot be received again.')
-        result.received_at, result.received_by = timezone.now(), str(account.pk)
-    else:
-        if result.status != 'Received':
-            raise InventoryError('Confirm warehouse receipt before hygiene review.')
-        if action == 'approve':
-            if result.condition != 'Good' or not result.tag_intact or not result.tag_verified or not result.steam_pressed_at:
-                raise InventoryError('Restocking requires a verified tag, good condition and recorded steam-press completion.')
-            item = TryOrderItem.objects.get(pk=result.item_id)
-            if FinalOrderItem.objects.filter(try_order_item=item).exists():
-                raise InventoryError('A selected purchase cannot be restocked.')
-            release_item(item)
-        result.reviewed_at, result.reviewed_by = timezone.now(), str(account.pk)
-    result.status = target
-    result.save()
     return result

@@ -1,0 +1,106 @@
+name: Release checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.12', '3.14']
+    env:
+      DJANGO_DEBUG: '1'
+      DJANGO_SECRET_KEY: 'isolated-ci-only-not-a-production-secret-key-472-test'
+      DATABASE_URL: ''
+      DB_ENGINE: django.db.backends.sqlite3
+      DB_NAME: ':memory:'
+      REDIS_URL: ''
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: sevenshades/requirements.txt
+      - run: python -m pip install -r sevenshades/requirements.txt
+      - run: python -m pip check
+      - run: python scripts/check-dependencies.py
+      - run: python manage.py makemigrations --check --dry-run
+        working-directory: sevenshades
+      - run: python manage.py test sevenshadesapp --noinput
+        working-directory: sevenshades
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: sevenshadesfrontend
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: sevenshadesfrontend/package-lock.json
+      - run: npm ci
+      - run: npm test -- --watchAll=false --runInBand
+        env:
+          CI: 'true'
+      - run: npm run build
+        env:
+          CI: 'true'
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+  postgres-workflow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: doordrape_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DJANGO_DEBUG: '1'
+      DJANGO_SECRET_KEY: 'isolated-ci-only-not-a-production-secret-key-472-test'
+      DATABASE_URL: postgres://ci:ci-only@localhost:5432/doordrape_ci
+      REDIS_URL: ''
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: sevenshades/requirements.txt
+      - run: python -m pip install -r sevenshades/requirements.txt
+      - name: Check transaction and COD flows on PostgreSQL
+        run: python manage.py test sevenshadesapp.test_inventory sevenshadesapp.test_workflow sevenshadesapp.test_delivery sevenshadesapp.test_health --noinput
+        working-directory: sevenshades

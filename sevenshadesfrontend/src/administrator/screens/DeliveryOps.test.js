@@ -1,11 +1,33 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import DeliveryOps from './DeliveryOps';
+import axe from 'axe-core';
 import { getData, postData } from '../../services/FetchDjangoApiServices';
 jest.mock('../../services/FetchDjangoApiServices', () => ({ getData: jest.fn(), postData: jest.fn() }));
 jest.mock('../../services/useOrderEvents', () => () => {});
 jest.mock('./RiderSuggestions', () => () => null);
 jest.mock('./DeliveryBatches', () => () => null);
 jest.mock('../../diliveryinterface/screens/DeliveryOrderDetails', () => ({ orderId }) => <div>Selection panel for {orderId}</div>);
+test('delivery forms expose programmatic field labels', async () => {
+  getData.mockResolvedValue({ status: true, data: [] });
+  const { container } = render(<DeliveryOps />);
+  await screen.findByText('No riders found.');
+  expect(screen.getByLabelText('Status')).toBeInTheDocument();
+  const result = await axe.run(container, { runOnly: { type: 'rule', values: ['label', 'select-name', 'button-name'] } });
+  expect(result.violations).toEqual([]);
+  await act(async () => { fireEvent.click(screen.getByRole('tab', { name: 'Order Assignment' })); });
+  expect(screen.getByLabelText('Select Order')).toBeInTheDocument();
+  expect(screen.getByLabelText('Select Rider')).toBeInTheDocument();
+  await act(async () => { fireEvent.click(screen.getByRole('tab', { name: 'Latest Status' })); });
+  expect(screen.getByLabelText('Delivery date')).toBeInTheDocument();
+});
+test('admin sees delivery loading failures and can retry', async () => {
+  getData.mockResolvedValue({ status: false });
+  render(<DeliveryOps />);
+  expect(await screen.findByText(/Some delivery data could not be loaded/)).toBeInTheDocument();
+  getData.mockResolvedValue({ status: true, data: [] });
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Retry' })); });
+  expect(screen.queryByText(/Some delivery data could not be loaded/)).not.toBeInTheDocument();
+});
 test('completing a trial in Delivery Ops opens its customer selection panel', async () => {
   const assignment = { assignment_id: 'A1', status: 'Trial In Progress', assigned_at: '2026-09-24', try_order: { order_id: 'T1', mobileno: '9000000000' }, rider: {} };
   getData.mockImplementation(async endpoint => ({ status: true, data: endpoint === 'delivery_assignments_list' ? [assignment] : [] }));

@@ -7,7 +7,7 @@ from threading import Barrier
 from . import test_checkout as fixtures
 from .checkout import create_trial
 from .models import AdminLogin, DeliveryRider, DeliveryAssignment, FinalOrder, FinalOrderItem, TrialReturn, TryOrder
-from .inventory_workflow import cancel_trial, collect_return, review_return, InventoryError
+from .inventory_workflow import cancel_trial, collect_return, InventoryError
 
 PASSWORD = 'Checkout-test-472!'
 
@@ -84,36 +84,22 @@ class InventoryTests(TestCase):
             cancel_trial('customer', self.user, self.order.order_id)
         self.assertEqual(self.stock(), 0)
 
-    def test_collection_receipt_and_approval_release_exactly_once(self):
+    def test_collection_releases_exactly_once(self):
         result = self.prepare_return()
-        repeated = collect_return('rider', self.rider, self.item.pk, 'Good', scanned_tag=self.item.security_tag)
+        repeated = collect_return('rider', self.rider, self.item.pk, 'Good')
         self.assertEqual(result.pk, repeated.pk)
-        with self.assertRaises(InventoryError):
-            review_return(self.admin, result.pk, 'approve')
-        self.assertEqual(self.stock(), 0)
-        review_return(self.admin, result.pk, 'receive')
-        self.assertEqual(self.stock(), 0)
-        with self.assertRaises(InventoryError):
-            review_return(self.admin, result.pk, 'approve')
-        review_return(self.admin, result.pk, 'steam_press')
-        review_return(self.admin, result.pk, 'approve')
-        review_return(self.admin, result.pk, 'approve')
         self.assertEqual(self.stock(), 1)
         self.assertEqual(TrialReturn.objects.count(), 1)
         self.item.refresh_from_db()
         self.assertFalse(self.item.stock_reserved)
-        result.refresh_from_db()
-        self.assertTrue(result.received_by and result.reviewed_by and result.recorded_by)
-        with self.assertRaises(InventoryError):
-            review_return(self.admin, result.pk, 'reject')
+        self.assertEqual(result.status, 'Approved')
+        self.assertTrue(result.reviewed_by and result.recorded_by)
 
-    def test_damaged_and_rejected_returns_never_restock(self):
+    def test_damaged_returns_never_restock_even_if_retried_as_good(self):
         result = self.prepare_return('Damaged')
-        review_return(self.admin, result.pk, 'receive')
-        with self.assertRaises(InventoryError):
-            review_return(self.admin, result.pk, 'approve')
-        review_return(self.admin, result.pk, 'reject')
-        review_return(self.admin, result.pk, 'reject')
+        repeated = collect_return('rider', self.rider, self.item.pk, 'Good')
+        self.assertEqual(result.pk, repeated.pk)
+        self.assertEqual(repeated.status, 'Rejected')
         self.assertEqual(self.stock(), 0)
 
     def test_legacy_and_selected_purchase_cannot_be_restocked(self):
@@ -141,9 +127,11 @@ class InventoryTests(TestCase):
         self.assertEqual(admin.post('/api/update_hygiene_status', {'return_id': result.pk, 'action': 'receive'}, format='json').status_code, 403)
         for endpoint, body in [('delivery_selection_update', {'selected_item_ids': [self.item.pk]}), ('submit_final_selection', {'selected_items': [{'try_order_item_id': self.item.pk, 'qty': 1}]})]:
             self.assertFalse(self.post(admin, endpoint, dict(body, order_id=self.order.order_id)).json()['status'])
-        self.assertEqual(self.stock(), 0)
+        self.assertEqual(self.stock(), 1)
         self.assertEqual(admin.get('/api/inventory_returns').status_code, 200)
         self.assertEqual(customer.get('/api/inventory_returns').status_code, 403)
+
+        self.assertEqual(self.post(admin, 'update_hygiene_status', {'return_id': result.pk, 'action': 'approve'}).status_code, 410)
 
     def test_finalized_purchase_has_no_return_or_refund_option(self):
         final = FinalOrder.objects.create(try_order=self.order, order_id='PAID', payment_status='paid', selected_items_count=1)
@@ -235,26 +223,24 @@ class InventoryConcurrencyTests(TransactionTestCase):
         final = FinalOrder.objects.create(try_order=order, order_id='FIN', approved_revision=1,
             approved_by=order.mobileno, approved_at=timezone.now())
         item = order.tryorderitem_set.get()
-        result = collect_return('admin', self.admin, item.pk, 'Good', scanned_tag=item.security_tag)
-        review_return(self.admin, result.pk, 'receive')
-        review_return(self.admin, result.pk, 'steam_press')
-        self.return_id = result.pk
+        self.item_id = item.pk
 
-    def test_simultaneous_approvals_credit_stock_once(self):
+    def test_simultaneous_collections_credit_stock_once(self):
         barrier = Barrier(2)
-        def approve():
+        def collect():
             close_old_connections()
             try:
                 barrier.wait(timeout=10)
-                review_return(self.admin, self.return_id, 'approve')
+                collect_return('admin', self.admin, self.item_id, 'Good')
             except OperationalError:
                 pass  # SQLite contention is surfaced as a retryable response.
             finally:
                 close_old_connections()
         with ThreadPoolExecutor(max_workers=2) as pool:
-            futures = [pool.submit(approve), pool.submit(approve)]
+            futures = [pool.submit(collect), pool.submit(collect)]
             for future in futures:
                 future.result(timeout=20)
-        review_return(self.admin, self.return_id, 'approve')
+        collect_return('admin', self.admin, self.item_id, 'Good')
         self.variant.refresh_from_db()
         self.assertEqual(self.variant.qty, 1)
+        self.assertEqual(TrialReturn.objects.count(), 1)

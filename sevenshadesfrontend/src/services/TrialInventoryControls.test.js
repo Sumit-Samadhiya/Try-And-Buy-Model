@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { CancelTrialButton, TrialReturnCollection } from './TrialInventoryControls';
 import InventoryReturns from '../administrator/screens/InventoryReturns';
 import { getData, postData } from './FetchDjangoApiServices';
@@ -27,14 +27,15 @@ test('rider collection sends a trial item directly without barcode scanning', as
   expect(screen.queryByRole('button', { name: /Approve hygiene/ })).not.toBeInTheDocument();
 });
 
-test('warehouse approval appears only after receipt and is disabled for damaged items', async () => {
-  let status = 'Collected';
-  getData.mockImplementation(async () => ({ status: true, data: { items: [], returns: [{ id: 3, order_id: 'T1', product_name: 'Shirt', condition: 'Damaged', status }] } }));
-  postData.mockImplementation(async () => { status = 'Received'; return { status: true }; });
+test('return history shows stock outcomes without warehouse controls', async () => {
+  getData.mockResolvedValue({ status: true, data: { items: [], returns: [
+    { id: 3, order_id: 'T1', product_name: 'Shirt', condition: 'Damaged', status: 'Rejected' },
+    { id: 4, order_id: 'T2', product_name: 'Jeans', condition: 'Good', status: 'Approved' },
+    { id: 5, order_id: 'T3', product_name: 'Tee', condition: 'Good', status: 'Collected' },
+  ] } });
   render(<InventoryReturns />);
-  const receive = await screen.findByRole('button', { name: 'Confirm warehouse receipt' });
-  expect(screen.queryByRole('button', { name: /Approve hygiene/ })).not.toBeInTheDocument();
-  fireEvent.click(receive);
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Approve hygiene & release stock' })).toBeDisabled());
-  expect(postData).toHaveBeenCalledWith('update_hygiene_status', { return_id: 3, action: 'receive' });
+  await screen.findByText('Unavailable for sale');
+  expect(screen.getByText('Stock restored')).toBeInTheDocument();
+  expect(screen.getByText('Legacy return: stock reconciliation required')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /warehouse|hygiene|steam/i })).not.toBeInTheDocument();
 });

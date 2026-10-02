@@ -6,11 +6,13 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
 
-def order_changed(order, reason):
+def order_changed(order, reason, previous_rider_id=None):
     payload = {'order_id': order.order_id, 'status': order.status, 'reason': reason}
     groups = [f'order_{order.order_id}', f'account_customer_{order.mobileno}', 'account_admin']
     if order.assigned_rider_id:
         groups.append(f'account_rider_{order.assigned_rider_id}')
+    if previous_rider_id and previous_rider_id != order.assigned_rider_id:
+        groups.append(f'account_rider_{previous_rider_id}')
     transaction.on_commit(partial(publish, groups, payload))
 
 

@@ -47,9 +47,9 @@ def Brands_List(request):
                sid=request.data.get('subcategoryid')
                mid=request.data.get('maincategoryid')
                if sid and mid:
-                   product_list=Product.objects.all().filter(subcategoryid_id=sid, maincategoryid_id=mid)
-                   product_serializer_list=ProductGetSerializer(product_list,many=True)
-                   finalresult=fetchData('brandid',product_serializer_list.data)
+                   brand_ids=Product.objects.filter(subcategoryid_id=sid, maincategoryid_id=mid).values('brandid_id')
+                   brand_list=Brands.objects.filter(pk__in=brand_ids).order_by('pk')
+                   finalresult=BrandsSerializer(brand_list,many=True).data
                    return JsonResponse({"data":finalresult, "status":True})
                else:
                    brand_list=Brands.objects.all()

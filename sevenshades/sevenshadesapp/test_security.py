@@ -81,6 +81,36 @@ class AccountSecurityTests(TestCase):
         response = self.client.post('/api/check_costumer_login', {'mobileno': self.alice.pk, 'password': PASSWORD}, format='json', HTTP_X_CSRFTOKEN=token, HTTP_ORIGIN='https://untrusted.example')
         self.assertEqual(response.status_code, 403)
 
+    def test_invalid_bearer_cannot_bypass_session_csrf_for_any_role(self):
+        for role in ('customer', 'admin', 'rider'):
+            with self.subTest(role=role):
+                self.login(role)
+                response = self.client.post('/api/auth_logout', {}, format='json',
+                    HTTP_AUTHORIZATION='Bearer invalid-token')
+                self.assertEqual(response.status_code, 401)
+                # The rejected request must not log out the cookie-authenticated account.
+                self.assertEqual(self.client.get('/api/auth_session').json()['role'], role)
+                self.assertEqual(self.client.post('/api/auth_logout', {}, format='json').status_code, 403)
+                self.assertEqual(self.post('auth_logout', {}).status_code, 200)
+
+    def test_valid_customer_bearer_does_not_inherit_admin_session_permissions(self):
+        from .mobile_tokens import issue_token
+        self.login('admin')
+        response = self.client.get('/api/delivery_rider_list',
+            HTTP_AUTHORIZATION='Bearer ' + issue_token(self.alice))
+        self.assertEqual(response.status_code, 403)
+
+    def test_account_and_private_responses_are_not_cacheable(self):
+        for role in ('customer', 'admin', 'rider'):
+            with self.subTest(role=role):
+                login = self.login(role)
+                for response in (login, self.client.get('/api/auth_session'), self.client.get('/api/auth_csrf')):
+                    self.assertIn('no-store', response['Cache-Control'])
+                    self.assertIn('private', response['Cache-Control'])
+        self.login('customer')
+        response = self.post('fetch_user_address', {})
+        self.assertIn('no-store', response['Cache-Control'])
+
     def test_customer_cannot_impersonate_or_manage_catalog(self):
         self.login()
         for endpoint, key in [('fetch_user_address', 'mobile'), ('address_submit', 'mobileno'), ('address_update', 'mobile'), ('address_delete', 'mobile'), ('user_order_lifecycle_list', 'mobileno'), ('try_order_create', 'mobileno'), ('submit_product_review', 'user_mobile')]:

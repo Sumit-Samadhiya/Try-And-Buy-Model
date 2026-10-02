@@ -8,10 +8,14 @@ export default function CustomerBill({ orderId }) {
   const [data, setData] = useState(null);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   const load = useCallback(async () => {
     const result = await postData('settlement_detail', { order_id: orderId });
-    if (result.status) setData(result.data); else { setData(null); setMessage(result.message); }
+    if (result.status) { setData(result.data); setLoadError(''); }
+    else { setData(null); setLoadError(result.message || 'Unable to load your bill. Please retry.'); }
+    setLoading(false);
   }, [orderId]);
 
   useEffect(() => { load(); }, [load]);
@@ -39,7 +43,9 @@ export default function CustomerBill({ orderId }) {
       <Typography variant="h6">{orderId}</Typography>
       {data && <Typography>Status: {data.try_order.status.replaceAll('_', ' ')}</Typography>}
       {data?.can_cancel && <CancelTrialButton orderId={orderId} onCancelled={load} />}
-      {data?.try_order.status === 'CANCELLED' ? (
+      {loading ? <Typography role="status">Loading your bill…</Typography> : loadError ? (
+        <Alert severity="error" action={<Button color="inherit" onClick={load}>Retry</Button>}>{loadError}</Alert>
+      ) : data?.try_order.status === 'CANCELLED' ? (
         <Alert severity="info">Trial cancelled. Reserved stock has been released.</Alert>
       ) : !final ? (
         <Typography>Your itemized bill will appear here after the doorstep trial.</Typography>
@@ -59,9 +65,10 @@ export default function CustomerBill({ orderId }) {
               No items retained. All trial clothes will be returned to the rider.
             </Typography>
           )}
-          {data.customer_approved && (
+          {(
             <Paper sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2 }}>
               <Typography>Items Total: ₹{final.items_total}</Typography>
+              {final.wallet_credit > 0 && <Typography>Prepaid Trial Fee Credit: ₹{final.wallet_credit}</Typography>}
               {final.selected_items_count > 0 ? (
                 <Typography sx={{ color: '#047857' }}>Doorstep Delivery Charge: FREE (Waived on purchase)</Typography>
               ) : (
@@ -101,7 +108,7 @@ export default function CustomerBill({ orderId }) {
           )}
           {data.receipt_number && (
             <Button variant="contained" sx={{ bgcolor: '#111827', fontWeight: 700 }} aria-label="Download Payment Receipt" component="a" href={serverURL + '/api/receipt_download?order_id=' + encodeURIComponent(orderId)}>
-              📄 Download Tax Invoice
+              📄 Download Payment Receipt
             </Button>
           )}
         </>

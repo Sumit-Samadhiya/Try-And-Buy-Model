@@ -3,6 +3,7 @@ from django.test import TestCase, TransactionTestCase
 from django.db import close_old_connections, OperationalError, IntegrityError, transaction
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
+from unittest.mock import patch
 from rest_framework.test import APIClient
 from .models import SignUp, AdminLogin, DeliveryRider, DeliveryAssignment, DeliveryBatch, TryOrder, FinalOrder, TryOrderItem
 from .delivery_workflow import assign_order, advance_assignment, generate_batches, reassign_order
@@ -44,6 +45,32 @@ class DeliveryTests(TestCase):
         self.assertEqual(batch.status, 'Completed')
         self.assertIsNone(assignment.batch_id)
         self.assertEqual(assignment.rider_id, self.other.pk)
+
+    def test_reassign_same_rider_preserves_batch(self):
+        order = self.order()
+        batch = DeliveryBatch.objects.create(batch_id='KEEP-BATCH', rider=self.rider, status='Pending')
+        assignment = assign_order(order.order_id, self.rider.rider_id)
+        assignment.batch = batch
+        assignment.save(update_fields=['batch'])
+        reassign_order(order.order_id, self.rider.rider_id)
+        assignment.refresh_from_db()
+        batch.refresh_from_db()
+        self.assertEqual(assignment.batch_id, batch.pk)
+        self.assertEqual(batch.status, 'Pending')
+
+    def test_reassignment_notifies_both_riders_and_revokes_old_access(self):
+        order = self.order()
+        assignment = assign_order(order.order_id, self.rider.rider_id)
+        with self.captureOnCommitCallbacks(execute=True), patch('sevenshadesapp.order_events.publish') as publish:
+            reassign_order(order.order_id, self.other.rider_id)
+            publish.assert_not_called()
+        groups, payload = publish.call_args.args
+        self.assertIn(f'account_rider_{self.rider.pk}', groups)
+        self.assertIn(f'account_rider_{self.other.pk}', groups)
+        self.assertEqual(payload['reason'], 'reassigned')
+        with self.assertRaises(InventoryError):
+            advance_assignment('rider', self.rider, assignment.assignment_id, 'On Route')
+        advance_assignment('rider', self.other, assignment.assignment_id, 'On Route')
 
     def test_terminal_inactive_and_skipped_initial_status_rejected(self):
         for status in ('CANCELLED', 'DELIVERED', 'NO_PURCHASE', 'PAYMENT_PENDING'):

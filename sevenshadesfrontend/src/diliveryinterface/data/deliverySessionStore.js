@@ -39,11 +39,11 @@ const mapAssignmentToTask = (assignment, index) => {
     id: tryOrder.order_id,
     assignmentId: assignment.assignment_id,
     routeOrder: index + 1,
-    routeDistanceKm: Number((1.6 + index * 0.6).toFixed(1)),
+    routeDistanceKm: null,
     customerName: tryOrder.mobileno ? `Customer ${tryOrder.mobileno}` : 'Customer',
     customerPhone: tryOrder.mobileno || 'N/A',
     address: `${tryOrder.address_text || ''}, ${tryOrder.city || ''}, ${tryOrder.country || ''} - ${tryOrder.postcode || ''}`,
-    slot: 'Today',
+    slot: [tryOrder.scheduled_date, tryOrder.delivery_slot].filter(Boolean).join(' · ') || 'Not scheduled',
     trialType: 'Home Trial',
     feeAmount: tryOrder.try_fee || 0,
     status: mapAssignmentStatus(assignment.status),
@@ -104,8 +104,7 @@ export const fetchDeliveryTasksFromApi = async (phone) => {
     return mapped;
   }
 
-  setDeliveryTasks([]);
-  return [];
+  throw new Error('Unable to refresh delivery tasks. Please retry.');
 };
 
 export const setDeliveryLogin = (riderData) => {

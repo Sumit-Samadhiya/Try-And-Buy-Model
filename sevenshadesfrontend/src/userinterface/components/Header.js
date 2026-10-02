@@ -7,6 +7,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Button, Badge } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
+import ButtonBase from '@mui/material/ButtonBase';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Divider, Grid } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
@@ -184,7 +185,7 @@ export default function Header() {
                         <div style={{ fontSize: 13, color: '#475569', lineHeight: 1.6 }}>
                             <p style={{ margin: '0 0 8px 0' }}>• Choose multiple sizes or colors</p>
                             <p style={{ margin: '0 0 8px 0' }}>• Doorstep delivery with scheduled call</p>
-                            <p style={{ margin: '0 0 8px 0' }}>• 100% Cash / UPI on Delivery</p>
+                            <p style={{ margin: '0 0 8px 0' }}>• Cash on Delivery</p>
                             <p style={{ margin: 0, fontWeight: 700, color: '#0f172a' }}>• Pay only for what you keep</p>
                         </div>
                     </Grid>
@@ -312,8 +313,9 @@ export default function Header() {
                         alignItems: 'center',
                         gap: 20,
                     }}>
-                        <div
+                        <ButtonBase
                             onClick={handleLoginPage}
+                            sx={{ '&.Mui-focusVisible': { outline: '2px solid white', outlineOffset: 3 } }}
                             style={{
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -330,10 +332,11 @@ export default function Header() {
                             <span style={{ fontSize: 11, fontWeight: 600, color: '#d1fae5' }}>
                                 {userData?.fname || 'Sign In'}
                             </span>
-                        </div>
+                        </ButtonBase>
 
-                        <div
+                        <ButtonBase
                             onClick={handleGotoCartPage}
+                            sx={{ '&.Mui-focusVisible': { outline: '2px solid white', outlineOffset: 3 } }}
                             style={{
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -363,7 +366,7 @@ export default function Header() {
                             <span style={{ fontSize: 11, fontWeight: 600, color: '#d1fae5' }}>
                                 Try Bag
                             </span>
-                        </div>
+                        </ButtonBase>
                     </div>
                 </Toolbar>
             </AppBar>

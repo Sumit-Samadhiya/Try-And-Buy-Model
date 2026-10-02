@@ -5,7 +5,7 @@ from django.db import OperationalError, IntegrityError, DatabaseError
 from sevenshadesapp.models import ReturnedItem, TamperProofTag, FinalOrderItem
 from sevenshadesapp.serializer import ReturnedItemSerializer, TamperProofTagSerializer
 from .models import TryOrderItem, TrialReturn, FinalOrderItem
-from .inventory_workflow import InventoryError, collect_return, review_return, cancel_trial
+from .inventory_workflow import InventoryError, collect_return, cancel_trial
 from .security import failure
 
 logger = logging.getLogger(__name__)
@@ -72,7 +72,7 @@ def ProcessReturn(request):
 
 @api_view(['POST'])
 def UpdateHygieneStatus(request):
-    return mutation(lambda: return_data(review_return(request.account, request.data.get('return_id'), request.data.get('action'))))
+    return failure('Warehouse review has been retired. Record physical trial returns using process_return.', 410)
 
 
 @api_view(['POST'])

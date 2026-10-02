@@ -9,7 +9,7 @@ from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APIRequestFactory
 from .models import MainCategory, MySubCategory, Brands, Product
 from .upload_security import optimize_uploaded_image, generate_thumbnail, secure_media_serve
-from .userinterface import User_Products_Maincategory
+from .userinterface import User_Products_Maincategory, Brands_List
 
 
 class ImagePerformanceTests(SimpleTestCase):
@@ -36,6 +36,19 @@ class ImagePerformanceTests(SimpleTestCase):
 
 
 class CatalogLimitTests(TestCase):
+    def test_filtered_brands_use_one_query_and_return_unique_matching_brands(self):
+        category = MainCategory.objects.create(maincategoryname='Men')
+        sub = MySubCategory.objects.create(maincategoryid=category, subcategoryname='Shirts')
+        brand = Brands.objects.create(brandname='Matching')
+        Brands.objects.create(brandname='Unused')
+        for index in range(8):
+            Product.objects.create(maincategoryid=category, subcategoryid=sub, brandid=brand, productname=f'Shirt {index}')
+        request = APIRequestFactory().post('/', {'maincategoryid': category.pk, 'subcategoryid': sub.pk}, format='json')
+        with CaptureQueriesContext(connection) as queries:
+            response = Brands_List(request)
+        self.assertEqual([row['id'] for row in json.loads(response.content)['data']], [brand.pk])
+        self.assertEqual(len(queries), 1)
+
     def test_limit_is_applied_in_sql_and_full_catalog_remains_available(self):
         category = MainCategory.objects.create(maincategoryname='Men')
         sub = MySubCategory.objects.create(maincategoryid=category, subcategoryname='Shirts')

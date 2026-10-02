@@ -12,6 +12,17 @@ const makeData = () => ({
 });
 function show() { render(<MemoryRouter initialEntries={['/delivery/order/T1']}><Routes><Route path="/delivery/order/:taskId" element={<DeliveryOrderDetails />} /></Routes></MemoryRouter>); }
 
+test('failed order load offers retry and stops the loading message', async () => {
+  postData.mockResolvedValueOnce({ status: false, message: 'Order unavailable' })
+    .mockResolvedValue({ status: true, data: makeData() });
+  show();
+  expect(await screen.findByText('Order unavailable')).toBeInTheDocument();
+  expect(screen.queryByText('Loading doorstep order…')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+  expect(await screen.findByRole('button', { name: 'Confirm ₹500 Cash Physically Received' })).toBeInTheDocument();
+  expect(screen.queryByText('Order unavailable')).not.toBeInTheDocument();
+});
+
 test('rider cannot approve for customer and can collect only after server approval', async () => {
   const data = makeData();
   postData.mockImplementation(async endpoint => ({ status: true, data: endpoint === 'trial_return_items' ? [] : data }));
@@ -31,9 +42,39 @@ test('generate bill sends item IDs and does not mark the customer approved', asy
   postData.mockResolvedValue({ status: true, data });
   show();
   const actionButton = await screen.findByRole('button', { name: 'Send Selection for Customer Approval' });
+  fireEvent.click(screen.getByRole('checkbox'));
   await act(async () => { fireEvent.click(actionButton); });
-  await waitFor(() => expect(postData).toHaveBeenCalledWith('submit_final_selection', { order_id: 'T1', selected_items: [{ try_order_item_id: 1, qty: 1 }] }));
+  await waitFor(() => expect(postData).toHaveBeenCalledWith('submit_final_selection', { order_id: 'T1', selected_items: [] }));
   expect(postData.mock.calls.some(([endpoint]) => endpoint === 'customer_approve_bill')).toBe(false);
+  expect(postData.mock.calls.some(([endpoint]) => endpoint === 'process_return')).toBe(false);
+});
+
+test('returns require approval and successful physical collection before delivery', async () => {
+  const data = makeData();
+  data.final_order.finalorderitem_set = [];
+  data.final_order.payment_status = 'paid';
+  let fail = true;
+  postData.mockImplementation(async endpoint => {
+    if (endpoint === 'process_return') {
+      if (fail) return { status: false, message: 'Collection not saved' };
+      data.try_order.tryorderitem_set[0].status = 'RETURNED';
+    }
+    return { status: true, data };
+  });
+  show();
+  const collect = await screen.findByRole('button', { name: /Confirm Shirt M Blue collected — Good/ });
+  expect(collect).toBeDisabled();
+  const delivery = screen.getByRole('button', { name: /Confirm Delivery/ });
+  expect(delivery).toBeDisabled();
+  data.customer_approved = true;
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Refresh verified status' })); });
+  await act(async () => { fireEvent.click(collect); });
+  expect(await screen.findByText('Collection not saved')).toBeInTheDocument();
+  expect(delivery).toBeDisabled();
+  fail = false;
+  await act(async () => { fireEvent.click(collect); });
+  expect(postData).toHaveBeenCalledWith('process_return', { try_order_item_id: 1, condition: 'Good' });
+  expect(delivery).toBeEnabled();
 });
 
 test('selection opens only after trial completed is saved', async () => {

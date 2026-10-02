@@ -5,6 +5,7 @@ import useOrderEvents from '../../services/useOrderEvents';
 import DeliveryBatches from './DeliveryBatches';
 import { useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
   Box,
   Button,
   Chip,
@@ -35,6 +36,7 @@ export default function DeliveryOps() {
   const [orders, setOrders] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   const [riderForm, setRiderForm] = useState({
     name: '',
@@ -63,6 +65,9 @@ export default function DeliveryOps() {
       getData('admin_order_lifecycle_list'),
       getData('delivery_assignments_list'),
     ]);
+
+    setLoadError([riderResult, orderResult, assignmentResult].every(result => result?.status)
+      ? '' : 'Some delivery data could not be loaded. Retry before assigning orders.');
 
     setRiders(riderResult?.status ? riderResult.data || [] : []);
     const allTryOrders = (orderResult?.status ? orderResult.data || [] : []).map((row) => row.try_order).filter(Boolean);
@@ -216,8 +221,8 @@ export default function DeliveryOps() {
             Current Rider: {reassignTarget?.rider?.name} ({reassignTarget?.rider?.phone})
           </Typography>
           <FormControl fullWidth size="small" sx={{ mt: 1 }}>
-            <InputLabel>Select New Active Rider</InputLabel>
-            <Select
+            <InputLabel id="reassign-rider-label">Select New Active Rider</InputLabel>
+            <Select labelId="reassign-rider-label"
               label="Select New Active Rider"
               value={newRiderId}
               onChange={(e) => setNewRiderId(e.target.value)}
@@ -245,6 +250,7 @@ export default function DeliveryOps() {
         <Tab label="Latest Status" />
       </Tabs>
 
+      {loadError && <Alert severity="error" action={<Button color="inherit" onClick={loadAll}>Retry</Button>}>{loadError}</Alert>}
       {loading ? (
         <DoordrapeLoader variant="admin" text="Syncing delivery operations and assignments…" role="status" />
       ) : null}
@@ -271,8 +277,8 @@ export default function DeliveryOps() {
               </Grid>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Status</InputLabel>
-                  <Select label="Status" value={riderForm.status} onChange={(e) => setRiderForm({ ...riderForm, status: e.target.value })}>
+                  <InputLabel id="rider-status-label">Status</InputLabel>
+                  <Select labelId="rider-status-label" label="Status" value={riderForm.status} onChange={(e) => setRiderForm({ ...riderForm, status: e.target.value })}>
                     <MenuItem value="Active">Active</MenuItem>
                     <MenuItem value="Inactive">Inactive</MenuItem>
                   </Select>
@@ -329,8 +335,8 @@ export default function DeliveryOps() {
             <Grid container spacing={1.5}>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Select Order</InputLabel>
-                  <Select label="Select Order" value={assignOrderId} onChange={(e) => setAssignOrderId(e.target.value)}>
+                  <InputLabel id="assign-order-label">Select Order</InputLabel>
+                  <Select labelId="assign-order-label" label="Select Order" value={assignOrderId} onChange={(e) => setAssignOrderId(e.target.value)}>
                     {unassignedOrders.map((order) => (
                       <MenuItem key={order.order_id} value={order.order_id}>
                         {order.order_id} • {order.mobileno}
@@ -341,8 +347,8 @@ export default function DeliveryOps() {
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Select Rider</InputLabel>
-                  <Select label="Select Rider" value={assignRiderId} onChange={(e) => setAssignRiderId(e.target.value)}>
+                  <InputLabel id="assign-rider-label">Select Rider</InputLabel>
+                  <Select labelId="assign-rider-label" label="Select Rider" value={assignRiderId} onChange={(e) => setAssignRiderId(e.target.value)}>
                     {riders.filter((rider) => rider.status === 'Active').map((rider) => (
                       <MenuItem key={rider.rider_id} value={rider.rider_id}>
                         {rider.name} • {rider.zone}
@@ -353,8 +359,8 @@ export default function DeliveryOps() {
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Status</InputLabel>
-                  <Select label="Status" value={assignmentStatus} onChange={(e) => setAssignmentStatus(e.target.value)}>
+                  <InputLabel id="assign-status-label">Status</InputLabel>
+                  <Select labelId="assign-status-label" label="Status" value={assignmentStatus} onChange={(e) => setAssignmentStatus(e.target.value)}>
                     <MenuItem value="Assigned">Assigned</MenuItem>
                   </Select>
                 </FormControl>
@@ -423,8 +429,8 @@ export default function DeliveryOps() {
             <Grid container spacing={1.5}>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Rider</InputLabel>
-                  <Select label="Rider" value={filterRider} onChange={(e) => setFilterRider(e.target.value)}>
+                  <InputLabel id="filter-rider-label">Rider</InputLabel>
+                  <Select labelId="filter-rider-label" label="Rider" value={filterRider} onChange={(e) => setFilterRider(e.target.value)}>
                     <MenuItem value="ALL">All Riders</MenuItem>
                     {riders.map((rider) => (
                       <MenuItem key={rider.rider_id} value={rider.rider_id}>{rider.name}</MenuItem>
@@ -434,8 +440,8 @@ export default function DeliveryOps() {
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Status</InputLabel>
-                  <Select label="Status" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+                  <InputLabel id="filter-status-label">Status</InputLabel>
+                  <Select labelId="filter-status-label" label="Status" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
                     <MenuItem value="ALL">All Status</MenuItem>
                     <MenuItem value="Assigned">Assigned</MenuItem>
                     <MenuItem value="On Route">On Route</MenuItem>
@@ -446,7 +452,7 @@ export default function DeliveryOps() {
                 </FormControl>
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField fullWidth size="small" type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
+                <TextField fullWidth size="small" type="date" label="Delivery date" InputLabelProps={{ shrink: true }} value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
               </Grid>
             </Grid>
 

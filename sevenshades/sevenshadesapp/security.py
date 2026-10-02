@@ -9,6 +9,7 @@ from django.db import DatabaseError, OperationalError, IntegrityError
 from django.http import JsonResponse
 from django.middleware.csrf import CsrfViewMiddleware, rotate_token
 from django.utils.crypto import constant_time_compare, salted_hmac
+from django.utils.cache import add_never_cache_headers
 
 from .models import AdminLogin, SignUp, DeliveryRider, DeliveryAssignment, TryOrder, TamperProofTag, FinalOrderItem
 from .error_handling import sanitize_error_message
@@ -114,7 +115,7 @@ def protect_api(view, endpoint, public_catalog=False):
             bearer_role, bearer_account = bearer_actor(request)
             if bearer_account:
                 role, account = bearer_role, bearer_account
-            elif not account:
+            else:
                 return failure('Invalid or expired authentication token.', 401)
         request.account_role, request.account = role, account
         public = endpoint in PUBLIC or public_catalog
@@ -237,5 +238,7 @@ def protect_api(view, endpoint, public_catalog=False):
             elif response.status_code in (400, 401) and endpoint in {'reset_password', 'otp_login', 'signup_submit', 'auth/verify-otp'}:
                 record_auth_failure(auth_identifier)
 
+        if not public_catalog:
+            add_never_cache_headers(response)
         return response
     return guarded

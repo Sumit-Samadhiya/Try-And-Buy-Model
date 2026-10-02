@@ -141,13 +141,13 @@ export default function DeliveryShell({ title, subtitle, activePage, children })
             }}
           >
             <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <IconButton onClick={() => setMenuOpen(true)} sx={{ color: '#ffffff' }}>
+              <IconButton aria-label="Open delivery menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)} sx={{ color: '#ffffff' }}>
                 <MenuIcon />
               </IconButton>
               <Typography sx={{ fontWeight: 800, color: '#f8fafc' }}>Delivery Panel</Typography>
               <Chip
                 size="small"
-                label="Radar Live"
+                label="Rider app"
                 sx={{ bgcolor: 'rgba(16, 185, 129, 0.15)', color: '#34d399', fontWeight: 700, border: '1px solid rgba(16, 185, 129, 0.3)' }}
               />
             </Stack>
@@ -172,7 +172,7 @@ export default function DeliveryShell({ title, subtitle, activePage, children })
             </Box>
           </Grid>
 
-          <Grid item xs={12} md={9}>
+          <Grid item xs={12} md={9} sx={{ minWidth: 0 }}>
             <Paper
               elevation={0}
               sx={{
@@ -192,7 +192,7 @@ export default function DeliveryShell({ title, subtitle, activePage, children })
                 </Box>
                 <Chip
                   size="small"
-                  label="Sync Active"
+                  label="Order workspace"
                   sx={{
                     bgcolor: 'rgba(16, 185, 129, 0.15)',
                     color: '#34d399',

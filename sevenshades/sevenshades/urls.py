@@ -21,7 +21,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from sevenshadesapp.health import health
+from sevenshadesapp.health import health, ready
 from django.urls import path
 from sevenshadesapp import maincategory_views,mysubcategory_views,brands_views,product_views,productdetails_views,admin_login_view,userinterface,banner_views,signup_views,order_views,delivery_ops_views,inventory_views,admin_analytics_views
 
@@ -34,6 +34,7 @@ from sevenshadesapp.upload_security import secure_media_serve
 
 urlpatterns = [
     path('health/', health, name='health'),
+    path('ready/', ready, name='ready'),
     path('api/auth/firebase-login/', firebase_views.firebase_login),
     path('api/auth/firebase-login', firebase_views.firebase_login),
     path('api/auth/send-otp/', firebase_views.legacy_otp_disabled),

@@ -40,36 +40,12 @@ export function TrialReturnCollection({ orderId, onCollected }) {
     if (result.status) onCollected?.();
   };
 
-  const collectAll = async () => {
-    const pending = items.filter(item => !item.selected && !item.return_status && item.stock_reserved);
-    if (!pending.length) return;
-    setBusy(true);
-    for (const item of pending) {
-      await postData('process_return', {
-        try_order_item_id: item.id,
-        condition: 'Good',
-        tag_intact: true
-      });
-    }
-    setMessage('All unselected return items confirmed and collected.');
-    await load();
-    setBusy(false);
-    onCollected?.();
-  };
-
-  const pendingItems = items.filter(item => !item.selected && !item.return_status && item.stock_reserved);
-
   return <Paper sx={{ p: 2, my: 2 }}>
     <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
       <div>
         <Typography variant="h6">Trial returns handover</Typography>
         <Typography variant="body2" color="text.secondary">Confirm physical collection of unselected trial items from customer.</Typography>
       </div>
-      {pendingItems.length > 1 && (
-        <Button variant="contained" color="primary" disabled={busy} onClick={collectAll}>
-          Collect All {pendingItems.length} Returns
-        </Button>
-      )}
     </Stack>
     <Button onClick={load} disabled={busy} sx={{ mt: 1 }}>Refresh returned items</Button>
     {message && <Alert severity="info" sx={{ my: 1.5 }}>{message}</Alert>}

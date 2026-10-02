@@ -1,9 +1,11 @@
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import UseMediaQuery from '@mui/material/useMediaQuery';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 export default function AdvertiseComponent() {
+    const navigate = useNavigate();
     const theme = useTheme();
     const sm_matches = UseMediaQuery(theme.breakpoints.down('sm'));
 
@@ -67,7 +69,7 @@ export default function AdvertiseComponent() {
                         margin: '0 0 20px 0',
                         lineHeight: 1.6,
                     }}>
-                        Order up to 4 sizes or colors with zero upfront commitment. Try them in the comfort of your home, and pay with Cash or UPI only for what you love.
+                        Choose up to 4 items to try at home. Review your bill and pay cash for the items you keep. Applicable trial and delivery fees are shown at checkout.
                     </p>
 
                     <div style={{
@@ -84,7 +86,7 @@ export default function AdvertiseComponent() {
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <CheckCircleOutlineIcon style={{ fontSize: 18, color: '#34d399' }} />
-                            <span>100% Cash / UPI on Delivery</span>
+                            <span>Cash on Delivery</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <LocalShippingOutlinedIcon style={{ fontSize: 18, color: '#34d399' }} />
@@ -121,7 +123,7 @@ export default function AdvertiseComponent() {
                             e.currentTarget.style.boxShadow = '0 4px 14px rgba(0, 0, 0, 0.2)';
                         }}
                         onClick={() => {
-                            window.scrollTo({ top: 300, behavior: 'smooth' });
+                            navigate('/productpage');
                         }}
                     >
                         Browse Curated Styles &rarr;
