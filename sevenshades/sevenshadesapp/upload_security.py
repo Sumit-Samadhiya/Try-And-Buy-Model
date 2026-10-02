@@ -88,7 +88,8 @@ def sanitize_filename(filename: str, fallback_ext: str = '.jpg') -> str:
     - Enforces a whitelisted image extension
     - Restricts filename length
     """
-    clean = os.path.basename(str(filename or ''))
+    # Upload names can contain Windows separators even on Linux hosts.
+    clean = os.path.basename(str(filename or '').replace('\\', '/'))
     clean = clean.replace('\x00', '').strip()
     clean = re.sub(r'[,;\'"\\/]', '_', clean)
     if clean.startswith('.') and clean.count('.') == 1:

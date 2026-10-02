@@ -39,6 +39,8 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
   },
   "overrides": {
+    "@grpc/grpc-js": "^1.13.6",
+    "underscore": "^1.13.8",
     "websocket-driver": "^0.7.5",
     "ws": "^8.21.0",
     "yaml": "^2.8.3",
