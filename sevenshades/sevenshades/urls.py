@@ -100,6 +100,7 @@ urlpatterns = [
     path('api/deleteproductdata', product_views.DeleteProduct_Data),
     path('api/product_mysubcategory_list_by_maincategoryid', product_views.mysubcategory_list_by_maincategoryid),
     path('api/productdetails_submit', productdetails_views.ProductDetails_Submit),
+    path('api/productdetails_batch_submit', productdetails_views.ProductDetails_BatchSubmit),
     path('api/productdetails_list', productdetails_views.ProductDetails_List),
     path('api/editproductdetails_icon', productdetails_views.EditProductDetails_Icon),
     path('api/editproductdetails_data', productdetails_views.EditProductDetails_Data),

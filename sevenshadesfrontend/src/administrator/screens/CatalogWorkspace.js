@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Box, Button, ButtonGroup, Chip, Dialog, DialogContent, DialogTitle, Grid, LinearProgress, MenuItem, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, ButtonGroup, Chip, Dialog, DialogContent, DialogTitle, Divider, Grid, IconButton, LinearProgress, MenuItem, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { getData, postData } from '../../services/FetchDjangoApiServices';
 import { validateFields } from '../../services/validation';
 import imageUrl from '../../services/imageUrl';
 
 const idOf = value => String(value?.id ?? value ?? '');
-const blank = {maincategoryid:'',subcategoryid:'',brandid:'',productid:'',productname:'',productsubname:'',description:'',qty:'0',price:'',offerprice:'0',color:'',size:'',offertype:'None'};
-const endpoints = variant => variant ? {list:'productdetails_list',create:'productdetails_submit',edit:'editproductdetails_data',image:'editproductdetails_icon',remove:'deleteproductdetails',route:'productdetails',listRoute:'displayproductdetails'} : {list:'product_list',create:'product_submit',edit:'editproduct_data',image:'editproduct_icon',remove:'deleteproductdata',route:'product',listRoute:'displayallproduct'};
+const blank = {maincategoryid:'',subcategoryid:'',brandid:'',productid:'',productname:'',productsubname:'',description:'',qty:'0',price:'',offerprice:'0',color:'',size:'',offertype:'None',sku:''};
+const endpoints = variant => variant ? {list:'productdetails_list',create:'productdetails_submit',batch:'productdetails_batch_submit',edit:'editproductdetails_data',image:'editproductdetails_icon',remove:'deleteproductdetails',route:'productdetails',listRoute:'displayproductdetails'} : {list:'product_list',create:'product_submit',edit:'editproduct_data',image:'editproduct_icon',remove:'deleteproductdata',route:'product',listRoute:'displayallproduct'};
+
+// Quick-select sizes for the variant matrix; admins may also add a custom size.
+const COMMON_SIZES = ['Free Size', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+const newSizeRow = (size, basePrice = '') => ({ size, qty: '', price: basePrice, offerprice: '0', sku: '' });
 
 function ProductForm({variant, row, parentProduct, catalog, onSaved, onCancel}) {
   const api = endpoints(variant);
@@ -30,6 +34,49 @@ function ProductForm({variant, row, parentProduct, catalog, onSaved, onCancel}) 
   const [values, setValues] = useState(initial), [files, setFiles] = useState([]), [errors, setErrors] = useState({}), [message, setMessage] = useState(''), [busy, setBusy] = useState(false), [fileKey, setFileKey] = useState(0);
   const previews = useMemo(() => files.map(file => URL.createObjectURL(file)), [files]);
   useEffect(() => () => previews.forEach(url => URL.revokeObjectURL(url)), [previews]);
+
+  // Size matrix: only when creating NEW variants (single colour, many sizes).
+  const useMatrix = variant && !row;
+  const [sizeRows, setSizeRows] = useState([]); // [{size, qty, price, offerprice, sku}]
+  const [customSize, setCustomSize] = useState('');
+  const [variantError, setVariantError] = useState('');
+  const selectedSizes = sizeRows.map(r => r.size.toLowerCase());
+
+  // Sizes that already exist for the chosen product + colour (backend rejects duplicates).
+  const existingSizes = useMemo(() => {
+    if (!useMatrix || !values.productid || !values.color.trim()) return new Set();
+    const color = values.color.trim().toLowerCase();
+    return new Set((catalog.variants || [])
+      .filter(v => idOf(v.productid?.id ?? v.productid) === String(values.productid) && String(v.color || '').trim().toLowerCase() === color)
+      .map(v => String(v.size || '').trim().toLowerCase()));
+  }, [useMatrix, values.productid, values.color, catalog.variants]);
+
+  const toggleSize = (size) => {
+    setVariantError('');
+    setSizeRows(previous => {
+      const exists = previous.find(r => r.size.toLowerCase() === size.toLowerCase());
+      if (exists) return previous.filter(r => r.size.toLowerCase() !== size.toLowerCase());
+      // Preserve existing rows; seed price from the current base price if entered.
+      return [...previous, newSizeRow(size, values.price || '')];
+    });
+  };
+
+  const addCustomSize = () => {
+    const label = customSize.trim();
+    if (!label) return;
+    if (selectedSizes.includes(label.toLowerCase())) { setCustomSize(''); return; }
+    if (existingSizes.has(label.toLowerCase())) { setVariantError(`Size "${label}" already exists for this product and colour.`); return; }
+    setSizeRows(previous => [...previous, newSizeRow(label, values.price || '')]);
+    setCustomSize('');
+    setVariantError('');
+  };
+
+  const updateSizeRow = (size, key, value) => {
+    setVariantError('');
+    setSizeRows(previous => previous.map(r => r.size === size ? { ...r, [key]: value } : r));
+  };
+
+  const removeSizeRow = (size) => setSizeRows(previous => previous.filter(r => r.size !== size));
 
   const subs = (catalog.subcategories || []).filter(item => idOf(item.maincategoryid) === values.maincategoryid);
   const products = (catalog.products || []).filter(item => idOf(item.maincategoryid) === values.maincategoryid && idOf(item.subcategoryid) === values.subcategoryid);
@@ -60,10 +107,58 @@ function ProductForm({variant, row, parentProduct, catalog, onSaved, onCancel}) 
     </Grid>
   );
 
+  const submitMatrix = async () => {
+    setMessage('');
+    setVariantError('');
+    // Shared product-level fields must be filled before the size rows.
+    const sharedKeys = ['maincategoryid', 'subcategoryid', 'brandid', 'productid', 'productsubname', 'description', 'color', 'offertype'];
+    const shared = Object.fromEntries(sharedKeys.map(key => [key, typeof values[key] === 'string' ? values[key].trim() : values[key]]));
+    const sharedMissing = {};
+    sharedKeys.forEach(key => { if (!String(shared[key] ?? '').trim()) sharedMissing[key] = 'This field is required.'; });
+    if (!sizeRows.length) { setVariantError('Select at least one size and enter its stock and price.'); setErrors(sharedMissing); return; }
+    if (Object.keys(sharedMissing).length) { setErrors(sharedMissing); return; }
+
+    const variants = sizeRows.map(r => ({
+      size: r.size.trim(),
+      qty: String(r.qty).trim(),
+      price: String(r.price).trim(),
+      offerprice: String(r.offerprice ?? '0').trim() || '0',
+      sku: (r.sku || '').trim(),
+    }));
+
+    const body = new FormData();
+    Object.entries(shared).forEach(([key, value]) => body.append(key, value));
+    body.append('variants', JSON.stringify(variants));
+    files.forEach(file => body.append('icon', file));
+
+    const validation = validateFields(api.batch, body);
+    setErrors(validation);
+    if (validation.variants) setVariantError(validation.variants);
+    if (Object.keys(validation).length) return;
+
+    setBusy(true);
+    const result = await postData(api.batch, body);
+    setBusy(false);
+    if (result.status) {
+      onSaved(result.message);
+      setValues({ ...blank }); setFiles([]); setFileKey(key => key + 1); setSizeRows([]); setCustomSize('');
+    } else {
+      setMessage(result.message || 'Could not save the sizes. Please retry.');
+      const flattened = Object.fromEntries(Object.entries(result.errors || {}).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value]));
+      setErrors(flattened);
+      const firstVariantError = Object.entries(result.errors || {}).find(([key]) => key.startsWith('variants'));
+      if (firstVariantError) {
+        const val = firstVariantError[1];
+        setVariantError(Array.isArray(val) ? val[0] : (typeof val === 'string' ? val : 'Check the size rows.'));
+      }
+    }
+  };
+
   const submit = async (event) => {
     event.preventDefault();
     if (busy) return;
-    const keys = ['maincategoryid', 'subcategoryid', 'brandid', 'description', ...(variant ? ['productid', 'productsubname', 'qty', 'price', 'offerprice', 'size', 'color', 'offertype'] : ['productname'])];
+    if (useMatrix) return submitMatrix();
+    const keys = ['maincategoryid', 'subcategoryid', 'brandid', 'description', ...(variant ? ['productid', 'productsubname', 'qty', 'price', 'offerprice', 'size', 'color', 'offertype', 'sku'] : ['productname'])];
     const payload = Object.fromEntries(keys.map(key => [key, typeof values[key] === 'string' ? values[key].trim() : values[key]]));
     if (row) { payload.id = row.id; if (variant) payload.expected_qty = row.qty; }
     let body = payload;
@@ -115,7 +210,7 @@ function ProductForm({variant, row, parentProduct, catalog, onSaved, onCancel}) 
           {select('brandid', 'Brand', catalog.brands, 'brandname', variant || !!parentProduct)}
           {field(variant ? 'productsubname' : 'productname', variant ? 'Variant name' : 'Product name')}
           {field('description', 'Description', 150)}
-          {variant && (
+          {variant && !useMatrix && (
             <>
               {field('qty', 'Quantity', 70, true)}
               {field('price', 'Regular price', 70, true)}
@@ -123,9 +218,111 @@ function ProductForm({variant, row, parentProduct, catalog, onSaved, onCancel}) 
               {field('size', 'Size')}
               {field('color', 'Colour')}
               {field('offertype', 'Offer type')}
+              {field('sku', 'SKU', 60)}
+            </>
+          )}
+          {useMatrix && (
+            <>
+              {field('color', 'Colour')}
+              {field('offertype', 'Offer type')}
             </>
           )}
         </Grid>
+
+        {useMatrix && (
+          <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+            <Stack spacing={1.5}>
+              <Typography variant="subtitle1" fontWeight={700}>Sizes & stock</Typography>
+              <Typography variant="body2" color="text.secondary">
+                Pick the sizes for this {values.color ? `"${values.color}" ` : ''}product. Each selected size gets its own stock, price and optional SKU below.
+              </Typography>
+              <Stack direction="row" gap={1} flexWrap="wrap">
+                {COMMON_SIZES.map(sizeLabel => {
+                  const active = selectedSizes.includes(sizeLabel.toLowerCase());
+                  const alreadyExists = existingSizes.has(sizeLabel.toLowerCase());
+                  return (
+                    <Chip
+                      key={sizeLabel}
+                      label={alreadyExists ? `${sizeLabel} ✓` : sizeLabel}
+                      color={active ? 'primary' : 'default'}
+                      variant={active ? 'filled' : 'outlined'}
+                      onClick={() => !alreadyExists && toggleSize(sizeLabel)}
+                      disabled={busy || alreadyExists}
+                      title={alreadyExists ? 'This size already exists for this product/colour' : undefined}
+                      sx={{ fontWeight: 600 }}
+                    />
+                  );
+                })}
+              </Stack>
+              {existingSizes.size > 0 && (
+                <Typography variant="caption" color="text.secondary">
+                  Sizes marked ✓ already exist for this product and colour, so they can’t be added again.
+                </Typography>
+              )}
+              <Stack direction="row" gap={1} alignItems="center">
+                <TextField
+                  size="small"
+                  label="Custom size"
+                  value={customSize}
+                  disabled={busy}
+                  onChange={e => setCustomSize(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomSize(); } }}
+                  inputProps={{ maxLength: 70 }}
+                  sx={{ maxWidth: 200 }}
+                />
+                <Button variant="outlined" size="small" disabled={busy || !customSize.trim()} onClick={addCustomSize}>
+                  Add size
+                </Button>
+              </Stack>
+
+              {variantError && <Alert severity="error">{variantError}</Alert>}
+
+              {sizeRows.length > 0 && (
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        {['Size', 'Stock', 'Price (₹)', 'Offer (₹)', 'SKU', ''].map(h => <TableCell key={h}>{h}</TableCell>)}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {sizeRows.map(r => (
+                        <TableRow key={r.size}>
+                          <TableCell><Chip size="small" label={r.size} /></TableCell>
+                          <TableCell>
+                            <TextField type="number" size="small" value={r.qty} disabled={busy}
+                              inputProps={{ min: 0, step: 1, 'aria-label': `Stock for ${r.size}` }}
+                              onChange={e => updateSizeRow(r.size, 'qty', e.target.value)} sx={{ width: 90 }} />
+                          </TableCell>
+                          <TableCell>
+                            <TextField type="number" size="small" value={r.price} disabled={busy}
+                              inputProps={{ min: 1, step: 1, 'aria-label': `Price for ${r.size}` }}
+                              onChange={e => updateSizeRow(r.size, 'price', e.target.value)} sx={{ width: 100 }} />
+                          </TableCell>
+                          <TableCell>
+                            <TextField type="number" size="small" value={r.offerprice} disabled={busy}
+                              inputProps={{ min: 0, step: 1, 'aria-label': `Offer price for ${r.size}` }}
+                              onChange={e => updateSizeRow(r.size, 'offerprice', e.target.value)} sx={{ width: 100 }} />
+                          </TableCell>
+                          <TableCell>
+                            <TextField size="small" value={r.sku} disabled={busy} placeholder="optional"
+                              inputProps={{ maxLength: 60, 'aria-label': `SKU for ${r.size}` }}
+                              onChange={e => updateSizeRow(r.size, 'sku', e.target.value)} sx={{ width: 130 }} />
+                          </TableCell>
+                          <TableCell>
+                            <IconButton size="small" color="error" disabled={busy} aria-label={`Remove ${r.size}`} onClick={() => removeSizeRow(r.size)}>✕</IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </Stack>
+          </Paper>
+        )}
+
+        {useMatrix && <Divider />}
         <Typography variant="body2">{row ? 'Replace images (optional)' : 'Product images'} · {variant ? '1–10 images' : '1 image'}, up to 5 MB each</Typography>
         <input key={fileKey} aria-label="Product images" type="file" accept=".jpg,.jpeg,.png,.webp,.avif,.gif" multiple={variant} disabled={busy} onChange={event => { setFiles(Array.from(event.target.files || [])); setErrors(previous => ({ ...previous, icon: '' })); }} />
         {errors.icon && <Alert severity="error">{errors.icon}</Alert>}
@@ -135,9 +332,9 @@ function ProductForm({variant, row, parentProduct, catalog, onSaved, onCancel}) 
           ))}
         </Stack>
         <Stack direction="row" gap={1} flexWrap="wrap">
-          <Button type="submit" variant="contained" disabled={busy}>{busy ? 'Saving…' : row ? 'Save details' : 'Create ' + (variant ? 'variant' : 'product')}</Button>
+          <Button type="submit" variant="contained" disabled={busy}>{busy ? 'Saving…' : row ? 'Save details' : useMatrix ? `Create ${sizeRows.length || ''} variant${sizeRows.length === 1 ? '' : 's'}`.replace('  ', ' ') : 'Create ' + (variant ? 'variant' : 'product')}</Button>
           {row && <Button disabled={busy || !files.length} onClick={saveImages}>Replace images</Button>}
-          <Button disabled={busy} onClick={() => { setValues(initial()); setFiles([]); setErrors({}); setMessage(''); setFileKey(key => key + 1); }}>Reset</Button>
+          <Button disabled={busy} onClick={() => { setValues(initial()); setFiles([]); setErrors({}); setMessage(''); setFileKey(key => key + 1); setSizeRows([]); setCustomSize(''); setVariantError(''); }}>Reset</Button>
           {onCancel && <Button disabled={busy} onClick={onCancel}>Close</Button>}
         </Stack>
       </Stack>

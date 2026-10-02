@@ -285,11 +285,15 @@ ENDPOINT_SCHEMAS = {
     },
     'productdetails_submit': {
         'required': ['maincategoryid', 'subcategoryid', 'brandid', 'productid', 'productsubname', 'description', 'qty', 'price', 'offerprice', 'color', 'size', 'offertype'],
-        'allowed': {'maincategoryid', 'subcategoryid', 'brandid', 'productid', 'productsubname', 'description', 'qty', 'price', 'offerprice', 'color', 'size', 'offertype'}
+        'allowed': {'maincategoryid', 'subcategoryid', 'brandid', 'productid', 'productsubname', 'description', 'qty', 'price', 'offerprice', 'color', 'size', 'offertype', 'sku'}
+    },
+    'productdetails_batch_submit': {
+        'required': ['maincategoryid', 'subcategoryid', 'brandid', 'productid', 'productsubname', 'description', 'color', 'offertype', 'variants'],
+        'allowed': {'maincategoryid', 'subcategoryid', 'brandid', 'productid', 'productsubname', 'description', 'color', 'offertype', 'variants'}
     },
     'editproductdetails_data': {
         'required': ['id', 'maincategoryid', 'subcategoryid', 'brandid', 'productid', 'productsubname', 'description', 'qty', 'price', 'offerprice', 'color', 'size', 'offertype'],
-        'allowed': {'id', 'maincategoryid', 'subcategoryid', 'brandid', 'productid', 'productsubname', 'description', 'qty', 'price', 'offerprice', 'color', 'size', 'offertype', 'expected_qty'}
+        'allowed': {'id', 'maincategoryid', 'subcategoryid', 'brandid', 'productid', 'productsubname', 'description', 'qty', 'price', 'offerprice', 'color', 'size', 'offertype', 'expected_qty', 'sku'}
     },
     'editproductdetails_icon': {
         'required': ['id'],
@@ -349,7 +353,7 @@ TEXT_LIMITS = {
     'fname': 70, 'lname': 70, 'name': 120, 'adminname': 70,
     'maincategoryname': 70, 'subcategoryname': 70, 'brandname': 70,
     'productname': 70, 'productsubname': 70, 'description': 150,
-    'color': 70, 'size': 70, 'offertype': 70, 'bannerdescription': 70,
+    'color': 70, 'size': 70, 'offertype': 70, 'sku': 60, 'bannerdescription': 70,
     'address': 70, 'city': 70, 'country': 70, 'state': 70, 'landmark': 70,
     'zone': 70, 'zone_name': 70, 'bike_number': 40, 'order_id': 40,
     'assignment_id': 40, 'rider_id': 30, 'tag_id': 40, 'batch_id': 40,
@@ -442,8 +446,60 @@ def validate_final_selection_item(item):
     return None
 
 
+def validate_batch_variant_row(item):
+    """One size row inside a productdetails_batch_submit variants array."""
+    if not isinstance(item, dict):
+        return 'Each size row must be an object.'
+    size = item.get('size')
+    if not isinstance(size, str) or not size.strip() or len(size) > 70 or '\x00' in size:
+        return 'Each size row needs a valid size label.'
+    qty = item.get('qty')
+    if type(qty) is bool or not isinstance(qty, (int, str)) or not re.fullmatch(r'[0-9]+', str(qty)) or not (0 <= int(qty) <= 100000):
+        return 'Enter a whole stock quantity (0–100000) for every size.'
+    price = item.get('price')
+    if type(price) is bool or not isinstance(price, (int, str)) or not re.fullmatch(r'[0-9]+', str(price)) or not (1 <= int(price) <= 2147483647):
+        return 'Enter a valid price (1 or more) for every size.'
+    offer = item.get('offerprice', 0)
+    if offer in (None, ''):
+        offer = 0
+    if type(offer) is bool or not isinstance(offer, (int, str)) or not re.fullmatch(r'[0-9]+', str(offer)) or not (0 <= int(offer) <= 2147483647):
+        return 'Offer price must be a whole number (0 for no offer).'
+    if int(offer) > int(price):
+        return 'Offer price cannot exceed the regular price.'
+    sku = item.get('sku')
+    if sku is not None and (not isinstance(sku, str) or len(sku) > 60 or '\x00' in sku):
+        return 'SKU must be text up to 60 characters.'
+    return None
+
+
 def validate_request(endpoint, data, files):
+    import json as _json
     errors = {}
+
+    # The batch variant endpoint carries its size rows as a JSON string in multipart.
+    if endpoint == 'productdetails_batch_submit':
+        raw = data.get('variants')
+        if isinstance(raw, str):
+            try:
+                raw = _json.loads(raw)
+            except (ValueError, TypeError):
+                raw = None
+        if not isinstance(raw, list) or not raw:
+            errors['variants'] = ['Add at least one size row.']
+        elif len(raw) > 20:
+            errors['variants'] = ['Add at most 20 size rows per submission.']
+        else:
+            seen = set()
+            for idx, row in enumerate(raw):
+                row_error = validate_batch_variant_row(row)
+                if row_error:
+                    errors[f'variants[{idx}]'] = [row_error]
+                    break
+                key = str(row.get('size')).strip().casefold()
+                if key in seen:
+                    errors[f'variants[{idx}].size'] = ['This size is repeated in the form.']
+                    break
+                seen.add(key)
 
     schema = ENDPOINT_SCHEMAS.get(endpoint)
 
@@ -480,7 +536,7 @@ def validate_request(endpoint, data, files):
                 errors[key] = [f'Exceeds maximum length of {max_len} characters.']
             elif '\x00' in value or RE_CONTROL_CHARS.search(value):
                 errors[key] = ['Null bytes and invalid control characters are not permitted.']
-            elif not value.strip() and key not in ('review_text', 'bannerdescription', 'notes', 'resolution', 'landmark', 'reason'):
+            elif not value.strip() and key not in ('review_text', 'bannerdescription', 'notes', 'resolution', 'landmark', 'reason', 'sku'):
                 errors[key] = [f'Enter valid text up to {max_len} characters.']
 
         # Mobile and Phone numbers
@@ -643,7 +699,7 @@ def validate_request(endpoint, data, files):
                     errors[field] = ['Must match the selected product.']
 
     # 6. File & Image Upload Validations
-    image_creates = {'maincategory_submit', 'mysubcategory_submit', 'brand_submit', 'product_submit', 'productdetails_submit', 'banner_submit'}
+    image_creates = {'maincategory_submit', 'mysubcategory_submit', 'brand_submit', 'product_submit', 'productdetails_submit', 'productdetails_batch_submit', 'banner_submit'}
     if endpoint in image_creates or endpoint.endswith('_icon'):
         if not files.get('icon'):
             errors['icon'] = ['Choose an image to upload.']

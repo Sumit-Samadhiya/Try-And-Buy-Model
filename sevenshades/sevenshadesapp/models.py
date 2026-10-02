@@ -59,6 +59,7 @@ class ProductDetails(models.Model):
     size=models.CharField(max_length=70,blank=False,default='')
     offerprice=models.IntegerField(blank=False,default='') 
     offertype=models.CharField(max_length=70,blank=False,default='')
+    sku=models.CharField(max_length=60,blank=True,default='')
     icon=models.TextField(default='')
     avg_rating = models.FloatField(default=0.0)
     total_reviews = models.IntegerField(default=0)

@@ -9,7 +9,7 @@ from .security import failure
 
 from .upload_security import sanitize_filename
 
-FIELDS=('maincategoryid','subcategoryid','brandid','productid','productsubname','description','qty','price','color','size','offerprice','offertype')
+FIELDS=('maincategoryid','subcategoryid','brandid','productid','productsubname','description','qty','price','color','size','offerprice','offertype','sku')
 
 def Upload_Files(files):
     from .upload_security import sanitize_filename, optimize_uploaded_image
@@ -29,11 +29,20 @@ def cleanup(names):
     for name in names.split(','):
         if name: default_storage.delete(name)
 
+def _field_value(request, key):
+    value = request.data.get(key)
+    if key == 'sku':
+        return value.strip() if isinstance(value, str) else ''  # Optional; never null.
+    if key in ('color', 'size') and isinstance(value, str):
+        return value.strip()
+    return value
+
+
 @api_view(['POST'])
 @transaction.atomic
 def ProductDetails_Submit(request):
     # Validate a plain copy before saving files; multipart request.data may be immutable.
-    data={key:(request.data.get(key).strip() if key in ('color','size') and isinstance(request.data.get(key),str) else request.data.get(key)) for key in FIELDS}
+    data={key:_field_value(request, key) for key in FIELDS}
     serializer=ProductDetailsSerializer(data=data)
     if not serializer.is_valid():
         return JsonResponse({'status':False,'message':'Check variant fields.','errors':serializer.errors},status=400)
@@ -43,6 +52,80 @@ def ProductDetails_Submit(request):
         cleanup(names)
         raise
     return JsonResponse({'status':True,'message':'Variant created successfully.'})
+
+
+# Shared fields apply to every size row; per-size fields come from the variants array.
+BATCH_SHARED = ('maincategoryid', 'subcategoryid', 'brandid', 'productid', 'productsubname', 'description', 'color', 'offertype')
+BATCH_PER_SIZE = ('size', 'qty', 'price', 'offerprice', 'sku')
+
+
+@api_view(['POST'])
+@transaction.atomic
+def ProductDetails_BatchSubmit(request):
+    """Create several same-colour size variants in one atomic request.
+
+    One shared image set is stored once per row. Either every row is created or
+    none are: the unique (productid, color, size) constraint and offerprice<=price
+    rule are enforced per row, so a single bad or duplicate size rolls back all.
+    """
+    import json
+
+    shared = {}
+    for key in BATCH_SHARED:
+        value = request.data.get(key)
+        shared[key] = value.strip() if key in ('color',) and isinstance(value, str) else value
+
+    raw_variants = request.data.get('variants')
+    if isinstance(raw_variants, str):
+        try:
+            raw_variants = json.loads(raw_variants)
+        except (ValueError, TypeError):
+            return JsonResponse({'status': False, 'message': 'Variants must be a valid list.'}, status=400)
+    if not isinstance(raw_variants, list) or not raw_variants:
+        return JsonResponse({'status': False, 'message': 'Add at least one size row.'}, status=400)
+    if len(raw_variants) > 20:
+        return JsonResponse({'status': False, 'message': 'Add at most 20 size rows per submission.'}, status=400)
+
+    # Validate every row against the model serializer before touching storage.
+    prepared, seen_sizes, errors = [], set(), {}
+    for index, entry in enumerate(raw_variants):
+        if not isinstance(entry, dict):
+            errors[f'variants[{index}]'] = ['Each size row must be an object.']
+            break
+        size = entry.get('size')
+        size = size.strip() if isinstance(size, str) else size
+        key = str(size).casefold() if isinstance(size, str) else size
+        if key in seen_sizes:
+            errors[f'variants[{index}].size'] = ['This size is repeated in the form.']
+            break
+        seen_sizes.add(key)
+        row = dict(shared)
+        row.update({
+            'size': size,
+            'qty': entry.get('qty'),
+            'price': entry.get('price'),
+            'offerprice': entry.get('offerprice', 0),
+            'sku': (entry.get('sku') or '').strip() if isinstance(entry.get('sku'), str) else '',
+        })
+        serializer = ProductDetailsSerializer(data=row)
+        if not serializer.is_valid():
+            errors[f'variants[{index}]'] = serializer.errors
+            break
+        prepared.append(serializer)
+
+    if errors:
+        return JsonResponse({'status': False, 'message': 'Check the size rows.', 'errors': errors}, status=400)
+
+    names = Upload_Files(request.FILES)
+    try:
+        created = 0
+        for serializer in prepared:
+            serializer.save(icon=names)
+            created += 1
+    except Exception:
+        cleanup(names)
+        raise
+    return JsonResponse({'status': True, 'message': f'{created} size variant{"s" if created != 1 else ""} created successfully.', 'created': created})
 
 @api_view(['POST'])
 def Productdetail_product_list_by_subcategoryid(request):
@@ -87,7 +170,7 @@ def EditProductDetails_Data(request):
         return failure('Stock changed while this form was open. Close and refresh the list before saving.',409)
     if TryOrderItem.objects.filter(product_details=variant).exists() and any(str(getattr(variant,key+'_id') if key in ('productid','maincategoryid','subcategoryid','brandid') else getattr(variant,key))!=str(request.data.get(key)) for key in ('productid','maincategoryid','subcategoryid','brandid','size','color')):
         return failure('An ordered variant cannot change product, category, brand, size or colour. Create a new variant instead.',409)
-    edit_data={key:(request.data.get(key).strip() if key in ('color','size') and isinstance(request.data.get(key),str) else request.data.get(key)) for key in FIELDS}
+    edit_data={key:_field_value(request, key) for key in FIELDS}
     serializer=ProductDetailsSerializer(variant,data=edit_data,partial=True)
     if not serializer.is_valid():
         return JsonResponse({'status':False,'message':'Check variant fields.','errors':serializer.errors},status=400)
