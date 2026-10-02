@@ -1,6 +1,6 @@
 # Release verification — 2026-10-02
 
-Release branch: `codex/cod-reliability-release`. Production promotion is blocked.
+Historical hold record. The toolchain blocker below was resolved by the Vite/Jest migration and released as `746ac68` on 2026-10-02. See [frontend-toolchain-migration.md](frontend-toolchain-migration.md) and the [fresh audit](frontend-security-audit-2026-10-02.json). The remainder describes the earlier CRA investigation, not the current release status.
 
 ## Initial CI evidence
 

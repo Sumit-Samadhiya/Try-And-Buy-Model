@@ -56,4 +56,6 @@ Evidence: `.runtime/render-build-cleanup.jpg` and `.runtime/render-health-config
 
 ## Release branch verification — 2026-10-02
 
+Update: the subsequent Vite/Jest migration resolved the High/Critical audit blocker and was deployed after all CI jobs passed. See [frontend-toolchain-migration.md](frontend-toolchain-migration.md) for the exact production revision, deployment IDs, audit and rollback record. The paragraph below records the earlier hold.
+
 Changes and CI are now published on `codex/cod-reliability-release`; main and production code have not been promoted. Run 36997505948 confirms the corrected filename handling passes the complete backend suites on Python 3.12 and 3.14, plus the PostgreSQL workflow. The updated frontend production build passes locally after pinning the admin-table dependency to its React 18 compatible version. Security audit remains a release blocker; see [release-security-review.md](release-security-review.md) for the findings and required toolchain work. Do not treat successful compilation as a green release gate.
