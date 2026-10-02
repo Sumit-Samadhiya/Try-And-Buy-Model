@@ -221,9 +221,9 @@ export default function Header() {
                     )}
 
                     {/* Logo & Brand Name */}
-                    <div
+                    <button type="button" aria-label="Doordrape home"
                         onClick={() => navigate('/home')}
-                        style={{ cursor: 'pointer', display: 'flex', alignItems: 'baseline', gap: 6 }}
+                        style={{ border: 0, padding: 0, background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'baseline', gap: 6 }}
                     >
                         <Typography
                             variant="h6"
@@ -251,7 +251,7 @@ export default function Header() {
                         }}>
                             TRY & BUY
                         </span>
-                    </div>
+                    </button>
 
                     {/* Men / Women Switcher */}
                     {!sm_matches && (

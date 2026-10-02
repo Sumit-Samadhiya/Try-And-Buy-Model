@@ -1,0 +1,122 @@
+[
+  {
+    "run": "home-desktop-1.report",
+    "timestamp": "2026-10-02T11:37:12.785Z",
+    "scores": {
+      "performance": 0.71,
+      "accessibility": 0.92
+    },
+    "metrics": {
+      "first-contentful-paint": 1074.0599000000002,
+      "largest-contentful-paint": 2719.9309,
+      "total-blocking-time": 0,
+      "cumulative-layout-shift": 0.1770671841381783,
+      "speed-index": 2211.0797826381904,
+      "total-byte-weight": 777337
+    },
+    "failures": [
+      "aria-hidden-focus",
+      "heading-order",
+      "label-content-name-mismatch",
+      "target-size"
+    ],
+    "warnings": [],
+    "runtimeError": null
+  },
+  {
+    "run": "home-desktop-2.report",
+    "timestamp": "2026-10-02T11:39:12.547Z",
+    "scores": {
+      "performance": 0.68,
+      "accessibility": 0.92
+    },
+    "metrics": {
+      "first-contentful-paint": 1288.1544999999996,
+      "largest-contentful-paint": 2647.897,
+      "total-blocking-time": 0,
+      "cumulative-layout-shift": 0.19855332377977206,
+      "speed-index": 2324.028891636857,
+      "total-byte-weight": 776825
+    },
+    "failures": [
+      "aria-hidden-focus",
+      "heading-order",
+      "label-content-name-mismatch",
+      "target-size"
+    ],
+    "warnings": [],
+    "runtimeError": null
+  },
+  {
+    "run": "home-mobile-1.report",
+    "timestamp": "2026-10-02T11:36:07.242Z",
+    "scores": {
+      "performance": 0.43,
+      "accessibility": 0.91
+    },
+    "metrics": {
+      "first-contentful-paint": 4029.1479999999997,
+      "largest-contentful-paint": 7045.147000000001,
+      "total-blocking-time": 56,
+      "cumulative-layout-shift": 0.3780944422523397,
+      "speed-index": 8104.807913865052,
+      "total-byte-weight": 721620
+    },
+    "failures": [
+      "aria-hidden-focus",
+      "heading-order",
+      "label-content-name-mismatch",
+      "target-size"
+    ],
+    "warnings": [],
+    "runtimeError": null
+  },
+  {
+    "run": "home-mobile-2.report",
+    "timestamp": "2026-10-02T11:38:27.039Z",
+    "scores": {
+      "performance": 0.46,
+      "accessibility": 0.91
+    },
+    "metrics": {
+      "first-contentful-paint": 3139.642,
+      "largest-contentful-paint": 5604.254500000001,
+      "total-blocking-time": 70,
+      "cumulative-layout-shift": 0.6387814765793285,
+      "speed-index": 5637.263211210795,
+      "total-byte-weight": 721418
+    },
+    "failures": [
+      "aria-hidden-focus",
+      "heading-order",
+      "label-content-name-mismatch",
+      "target-size"
+    ],
+    "warnings": [],
+    "runtimeError": null
+  },
+  {
+    "run": "home-mobile-3.report",
+    "timestamp": "2026-10-02T11:38:49.583Z",
+    "scores": {
+      "performance": 0.44,
+      "accessibility": 0.91
+    },
+    "metrics": {
+      "first-contentful-paint": 3737.3188499999997,
+      "largest-contentful-paint": 5812.83855,
+      "total-blocking-time": 54,
+      "cumulative-layout-shift": 0.4896524325338619,
+      "speed-index": 6816.586141653403,
+      "total-byte-weight": 722030
+    },
+    "failures": [
+      "aria-hidden-focus",
+      "heading-order",
+      "label-content-name-mismatch",
+      "target-size"
+    ],
+    "warnings": [],
+    "runtimeError": null
+  }
+]

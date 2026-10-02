@@ -1,3 +1,5 @@
+> Superseded status: the reviewed fixes were deployed in release `746ac68`. The historical observations below are retained; use [the post-deployment recheck](launch-recheck-2026-10-02.md) for current performance, accessibility findings and verification limits.
+
 # DoorDrape UI finish gate — 2026-10-02
 
 ## Design contract

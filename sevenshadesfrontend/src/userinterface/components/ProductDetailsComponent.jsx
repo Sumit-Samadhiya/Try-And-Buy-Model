@@ -205,14 +205,14 @@ export default function ProductDetailsComponent(props) {
 
     const show = () => {
         return items.map((item, itemIndex) => (
-            <div
+            <button type="button"
                 key={item + '-' + itemIndex}
                 onClick={() => handleThumbnailClick(itemIndex)}
                 className={`pdp-thumbnail-item ${activeImgIndex === itemIndex ? 'active' : ''}`}
-                title={`View image ${itemIndex + 1}`}
+                aria-label={`View image ${itemIndex + 1}`} aria-pressed={activeImgIndex === itemIndex}
             >
                 <img src={imageUrl(item)} alt="" className="pdp-thumbnail-img" loading="lazy" decoding="async" />
-            </div>
+            </button>
         ));
     };
 

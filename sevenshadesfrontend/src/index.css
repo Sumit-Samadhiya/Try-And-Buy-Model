@@ -3,7 +3,6 @@
    Standardized 8px Grid • Neutral Palette • Production-Ready Hierarchy
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
   /* ------------------------------------------------------------------------
@@ -287,3 +286,7 @@ code {
 }
 
 button:focus-visible, a:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+/* Shared minimum touch areas; retain inline text links as inline blocks. */
+button, a[href], [role="button"], input[type="checkbox"], input[type="radio"] { min-width: 44px; min-height: 44px; }
+a[href] { display: inline-flex; align-items: center; }
+button:focus-visible, a:focus-visible, [role="button"]:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }

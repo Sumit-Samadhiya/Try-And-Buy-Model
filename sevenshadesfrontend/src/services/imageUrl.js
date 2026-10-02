@@ -14,7 +14,7 @@ const optimized = (source, width, useCloud = false) => {
 export const responsiveImage = (value, sizes = '(max-width: 600px) 50vw, 25vw', hero = false) => {
   const first = String(value || '').split(',')[0].trim();
   const widths = hero ? [480, 960, 1600] : [480, 960];
-  const sources = widths.map(width => optimized(first, width, true));
+  const sources = widths.map(width => optimized(first, width));
   if (sources.some(source => !source)) {
     const original = imageUrl(value);
     const localUpload = original?.startsWith(`${serverURL.replace(/\/+$/, '')}/media/`);

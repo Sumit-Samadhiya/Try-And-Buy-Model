@@ -1,0 +1,12 @@
+[
+  {
+    "id": 2,
+    "bannerdescription": "Men|The Everyday Edit|Try up to 4 styles at home",
+    "image": "static/sevenshades-men-hero.webp"
+  },
+  {
+    "id": 3,
+    "bannerdescription": "Women|Made for every version of you|Pay only for what you keep",
+    "image": "static/sevenshades-women-hero.webp"
+  }
+]

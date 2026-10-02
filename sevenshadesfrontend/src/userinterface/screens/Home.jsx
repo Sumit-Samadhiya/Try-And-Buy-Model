@@ -1,5 +1,6 @@
+import initialBanners from "../../services/homeBanners.json";
 import Header from "../components/Header";
-import DoordrapeLoader from "../components/DoordrapeLoader";
+
 import SubcategoryComponent from "../components/SubcategoryComponent";
 import SliderComponent from "../components/SliderComponent";
 import CategoryShowcaseCard from "../components/CategoryShowcaseCard";
@@ -25,7 +26,7 @@ export default function Home(props) {
     const navigate = useNavigate();
     const theme = useTheme();
     const sm_matches = useMediaQuery(theme.breakpoints.down('sm'));
-    const [listBanner, setListBanner] = useState([]);
+    const [listBanner, setListBanner] = useState(initialBanners);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [reload, setReload] = useState(0);
@@ -54,7 +55,7 @@ export default function Home(props) {
             });
             setListBanner(allImages);
         } else {
-            setListBanner([]); setLoadError(true);
+            setLoadError(true);
         }
     }, []);
 
@@ -127,7 +128,7 @@ export default function Home(props) {
     };
 
     const handleBannerClick = (item, index) => {
-        if (!listMainCategory.length) return;
+        if (!listMainCategory.length) { navigate('/productpage'); return; }
         const desc = (typeof item === 'object' ? item.bannerdescription : '')?.toLowerCase() || '';
         if (desc) {
             const matchedCategory = listMainCategory.find(cat =>
@@ -157,7 +158,7 @@ export default function Home(props) {
     return (
         <div style={{ position: 'relative', width: '100%', backgroundColor: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
-            {loading && <DoordrapeLoader text="Loading curated collections…" role="status" />}
+            {loading && <span className="sr-only" role="status">Loading curated collections...</span>}
             {!loading && loadError && <div role="alert" style={{ padding: 24 }}>Some collections could not load. <button onClick={() => setReload(value => value + 1)}>Retry collections</button></div>}
             {!loading && !loadError && !listMainCategory.length && <p style={{ padding: 24 }}>New collections are coming soon.</p>}
 
@@ -169,8 +170,8 @@ export default function Home(props) {
                 </section>
 
                 {/* Subcategories Strip */}
-                {listSubCategory.length > 0 && (
-                    <section style={{ width: '100%', maxWidth: 1360, marginTop: 40, padding: '0 16px', boxSizing: 'border-box' }}>
+                {(loading || listSubCategory.length > 0) && (
+                    <section className="home-category-slot" style={{ width: '100%', maxWidth: 1360, marginTop: 40, padding: '0 16px', boxSizing: 'border-box' }}>
                         <div style={{ marginBottom: 16, textAlign: 'left' }}>
                             <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#64748b' }}>
                                 Trending Categories
@@ -184,8 +185,8 @@ export default function Home(props) {
                 )}
 
                 {/* Featured Collections: Women & Men (Displayed Horizontally Side-by-Side) */}
-                {listMainCategory.length > 0 && (
-                    <section style={{ width: '100%', maxWidth: 1360, marginTop: sm_matches ? 28 : 48, padding: '0 16px', boxSizing: 'border-box' }}>
+                {(loading || listMainCategory.length > 0) && (
+                    <section className="home-collection-slot" style={{ width: '100%', maxWidth: 1360, marginTop: sm_matches ? 28 : 48, padding: '0 16px', boxSizing: 'border-box' }}>
                         <MainCategoryComponent data={listMainCategory} />
                     </section>
                 )}
