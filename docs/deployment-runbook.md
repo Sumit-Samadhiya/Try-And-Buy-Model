@@ -50,6 +50,10 @@ Verified after saving and reloading Render settings:
 - Health Check Path changed from blank to `/health/`, which is already live. Keep `/ready/` pending until its implementation is deployed.
 - Last successfully deployed revision remained `c448af1716707bd6881a9e6bf6be57449e49b733` after reload.
 - Post-change HTTPS checks: backend /health/ 200 (1.14s), frontend /home 200 (0.48s). These are single response samples, not sustained uptime evidence.
-- Existing notification preferences unchanged. Local UI/SRE/backend changes and CI workflow have not been published.
+- Existing notification preferences unchanged. These settings were verified before publishing the release branch; see the later verification record below.
 
 Evidence: `.runtime/render-build-cleanup.jpg` and `.runtime/render-health-configured.jpg` (local screenshots, ignored by Git).
+
+## Release branch verification — 2026-10-02
+
+Changes and CI are now published on `codex/cod-reliability-release`; main and production code have not been promoted. Run 36997505948 confirms the corrected filename handling passes the complete backend suites on Python 3.12 and 3.14, plus the PostgreSQL workflow. The updated frontend production build passes locally after pinning the admin-table dependency to its React 18 compatible version. Security audit remains a release blocker; see [release-security-review.md](release-security-review.md) for the findings and required toolchain work. Do not treat successful compilation as a green release gate.

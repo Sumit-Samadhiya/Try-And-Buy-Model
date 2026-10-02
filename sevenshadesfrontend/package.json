@@ -5,7 +5,7 @@
   "dependencies": {
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.0",
-    "@material-table/core": "^6.3.2",
+    "@material-table/core": "6.3.2",
     "@mui/icons-material": "^5.15.12",
     "@mui/joy": "^5.0.0-beta.36",
     "@mui/lab": "^5.0.0-alpha.169",
@@ -39,6 +39,10 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
   },
   "overrides": {
+    "@material-table/core": {
+      "@mui/icons-material": "$@mui/icons-material",
+      "@mui/material": "$@mui/material"
+    },
     "@grpc/grpc-js": "^1.13.6",
     "underscore": "^1.13.8",
     "websocket-driver": "^0.7.5",

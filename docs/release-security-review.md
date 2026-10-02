@@ -14,6 +14,8 @@ Run https://github.com/Sumit-Samadhiya/Try-And-Buy-Model/actions/runs/3699561446
 
 Compatible lockfile updates reduced the full audit from 74 findings (including 2 critical and 39 high) to 29 (0 critical, 13 high, 7 moderate, 9 low). Axios is 1.20.0 and React Router DOM is 6.30.6. Explicit compatible overrides select grpc-js >=1.13.6 (installed 1.14.5) and underscore >=1.13.8 because parent packages retain affected versions.
 
+The first updated frontend dependency tree passed 25 suites / 72 tests, but the production build caught an incompatible material-table update. Material-table is now pinned to the existing 6.3.2 and its MUI dependencies constrained to the application's direct MUI 5 ranges: newer releases within its previous caret range require React 19, while this application uses React 18. The final dependency tree passed the production build and all 25 suites / 72 tests locally. GitHub run 36997505948 passed both complete backend suites (Python 3.12 and 3.14) and PostgreSQL workflow after the upload fix.
+
 Remaining high findings belong to the Create React App build/development tool chain: SVGR/SVGO, nested PostCSS, workbox/serialize-javascript, webpack-dev-server/middleware, and selfsigned/node-forge. Dependency findings include affected parents, so 13 findings do not represent 13 independent vulnerabilities. They are not evidence that all these packages execute in the deployed static browser bundle, but build and development exposure still require review.
 
 The node-forge advisory has no patched version: https://github.com/advisories/GHSA-86w9-cpqp-85rv . Blind `npm audit fix --force` proposes react-scripts 0.0.0 and is not a valid remediation. Do not disable the audit gate or force incompatible overrides merely to obtain a green check.
