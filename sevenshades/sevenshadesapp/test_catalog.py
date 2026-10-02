@@ -170,3 +170,62 @@ class CatalogTests(TestCase):
         with self.assertRaises(IntegrityError), transaction.atomic():
             ProductReview.objects.create(product_details=variant, user_mobile='9000000099', rating=6, review_text='Invalid')
 
+    def test_productdetails_batch_submit_and_variant_matrix(self):
+        import json
+        batch_payload = {
+            'maincategoryid': self.category.pk,
+            'subcategoryid': self.sub.pk,
+            'brandid': self.brand.pk,
+            'productid': self.product.pk,
+            'productsubname': 'Red Classic',
+            'description': 'Pure cotton shirt in red',
+            'color': 'Red',
+            'offertype': 'None',
+            'variants': json.dumps([
+                {'size': 'S', 'price': 499, 'qty': 20, 'sku': 'RED-S', 'offerprice': 0},
+                {'size': 'M', 'price': 499, 'qty': 35, 'sku': 'RED-M', 'offerprice': 0},
+                {'size': 'L', 'price': 549, 'qty': 10, 'sku': 'RED-L', 'offerprice': 0},
+                {'size': 'Free Size', 'price': 499, 'qty': 15, 'sku': 'RED-FS', 'offerprice': 0},
+            ]),
+            'icon': [self.image()]
+        }
+        res = self.post('productdetails_batch_submit', batch_payload, 'multipart')
+        self.assertEqual(res.status_code, 200, res.content)
+        data = res.json()
+        self.assertTrue(data['status'])
+        self.assertEqual(data.get('created'), 4)
+
+        # Database Verification
+        saved = list(ProductDetails.objects.filter(productid=self.product, color='Red').order_by('size'))
+        self.assertEqual(len(saved), 4)
+        sizes_saved = {v.size: {'qty': v.qty, 'price': v.price, 'sku': v.sku} for v in saved}
+        self.assertEqual(sizes_saved['S'], {'qty': 20, 'price': 499, 'sku': 'RED-S'})
+        self.assertEqual(sizes_saved['M'], {'qty': 35, 'price': 499, 'sku': 'RED-M'})
+        self.assertEqual(sizes_saved['L'], {'qty': 10, 'price': 549, 'sku': 'RED-L'})
+        self.assertEqual(sizes_saved['Free Size'], {'qty': 15, 'price': 499, 'sku': 'RED-FS'})
+
+        # Validation: Duplicate size in payload rejected
+        dup_payload = dict(batch_payload, color='Blue2', variants=json.dumps([
+            {'size': 'S', 'price': 499, 'qty': 20, 'sku': 'BL-S'},
+            {'size': 'S', 'price': 499, 'qty': 10, 'sku': 'BL-S2'}
+        ]))
+        res_dup = self.post('productdetails_batch_submit', dup_payload, 'multipart')
+        self.assertEqual(res_dup.status_code, 400)
+        self.assertFalse(ProductDetails.objects.filter(color='Blue2').exists())
+
+        # Validation: Duplicate size already existing in DB for same (product, color) rolls back all
+        res_conflict = self.post('productdetails_batch_submit', dict(batch_payload, color='Red', variants=json.dumps([
+            {'size': 'S', 'price': 499, 'qty': 5, 'sku': 'RED-S2'},
+            {'size': 'XL', 'price': 599, 'qty': 10, 'sku': 'RED-XL'}
+        ])), 'multipart')
+        self.assertEqual(res_conflict.status_code, 400)
+        # Verify atomic rollback: XL must not be saved
+        self.assertFalse(ProductDetails.objects.filter(productid=self.product, color='Red', size='XL').exists())
+
+        # Validation: blank or invalid stock / price rejected
+        res_invalid = self.post('productdetails_batch_submit', dict(batch_payload, color='Green', variants=json.dumps([
+            {'size': 'M', 'price': '', 'qty': 10}
+        ])), 'multipart')
+        self.assertEqual(res_invalid.status_code, 400)
+
+

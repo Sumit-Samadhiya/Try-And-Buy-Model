@@ -31,3 +31,95 @@ test('list search and delete errors are visible',async()=>{
 test('failed catalog loads offer retry without crashing',async()=>{
  getData.mockResolvedValue({status:false,message:'Offline'});show({variant:true});await screen.findByText('Offline');expect(screen.getByRole('button',{name:'Retry'})).toBeInTheDocument();
 });
+
+test('size variant matrix: selection, data retention on removal, and validation', async () => {
+  show({ variant: true });
+  await screen.findByLabelText('Variant name');
+
+  // Fill shared fields
+  await choose('Category', 'Clothing');
+  await choose('Subcategory', 'Shirts');
+  await choose('Product', 'Cotton shirt');
+  fireEvent.change(screen.getByLabelText('Variant name'), { target: { value: 'Red Casual' } });
+  fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Casual shirt' } });
+  fireEvent.change(screen.getByLabelText('Colour'), { target: { value: 'Red' } });
+  fireEvent.change(screen.getByLabelText('Offer type'), { target: { value: 'None' } });
+
+  // 1. Single size select (S) -> exactly 1 row
+  fireEvent.click(screen.getByText('S'));
+  expect(screen.getByLabelText('Stock for S')).toBeInTheDocument();
+  expect(screen.queryByLabelText('Stock for M')).not.toBeInTheDocument();
+
+  // 2. Select M, L, Free Size -> matching rows render
+  fireEvent.click(screen.getByText('M'));
+  fireEvent.click(screen.getByText('L'));
+  fireEvent.click(screen.getByText('Free Size'));
+  expect(screen.getByLabelText('Stock for S')).toBeInTheDocument();
+  expect(screen.getByLabelText('Stock for M')).toBeInTheDocument();
+  expect(screen.getByLabelText('Stock for L')).toBeInTheDocument();
+  expect(screen.getByLabelText('Stock for Free Size')).toBeInTheDocument();
+
+  // Enter data in S, M, L
+  fireEvent.change(screen.getByLabelText('Stock for S'), { target: { value: '20' } });
+  fireEvent.change(screen.getByLabelText('Price for S'), { target: { value: '499' } });
+  fireEvent.change(screen.getByLabelText('SKU for S'), { target: { value: 'RED-S' } });
+
+  fireEvent.change(screen.getByLabelText('Stock for M'), { target: { value: '35' } });
+  fireEvent.change(screen.getByLabelText('Price for M'), { target: { value: '499' } });
+  fireEvent.change(screen.getByLabelText('SKU for M'), { target: { value: 'RED-M' } });
+
+  fireEvent.change(screen.getByLabelText('Stock for L'), { target: { value: '10' } });
+  fireEvent.change(screen.getByLabelText('Price for L'), { target: { value: '549' } });
+  fireEvent.change(screen.getByLabelText('SKU for L'), { target: { value: 'RED-L' } });
+
+  // 3. Remove M via Remove button
+  fireEvent.click(screen.getByLabelText('Remove M'));
+  expect(screen.queryByLabelText('Stock for M')).not.toBeInTheDocument();
+
+  // Verify Data Retention: S and L data still intact
+  expect(screen.getByLabelText('Stock for S')).toHaveValue(20);
+  expect(screen.getByLabelText('Price for S')).toHaveValue(499);
+  expect(screen.getByLabelText('SKU for S')).toHaveValue('RED-S');
+  expect(screen.getByLabelText('Stock for L')).toHaveValue(10);
+  expect(screen.getByLabelText('Price for L')).toHaveValue(549);
+  expect(screen.getByLabelText('SKU for L')).toHaveValue('RED-L');
+
+  // 4. Remove Free Size via chip toggle
+  fireEvent.click(screen.getAllByText('Free Size')[0]);
+  expect(screen.queryByLabelText('Stock for Free Size')).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Stock for S')).toHaveValue(20);
+
+  // 5. Validation: Blank price in S
+  fireEvent.change(screen.getByLabelText('Price for S'), { target: { value: '' } });
+  fireEvent.click(screen.getByRole('button', { name: /Create.*variant/i }));
+  expect(await screen.findByText('Enter a price (1 or more) for every size.')).toBeInTheDocument();
+  expect(postData).not.toHaveBeenCalled();
+
+  // Validation: Blank stock in S
+  fireEvent.change(screen.getByLabelText('Price for S'), { target: { value: '499' } });
+  fireEvent.change(screen.getByLabelText('Stock for S'), { target: { value: '' } });
+  fireEvent.click(screen.getByRole('button', { name: /Create.*variant/i }));
+  expect(await screen.findByText('Enter stock (0–100000) for every size.')).toBeInTheDocument();
+  expect(postData).not.toHaveBeenCalled();
+
+  // Fix S, and attach image
+  fireEvent.change(screen.getByLabelText('Stock for S'), { target: { value: '20' } });
+  fireEvent.change(screen.getByLabelText('Product images'), {
+    target: { files: [new File(['dummy'], 'red.png', { type: 'image/png' })] }
+  });
+
+  // 6. Submit valid batch
+  fireEvent.click(screen.getByRole('button', { name: /Create.*variant/i }));
+  await waitFor(() => expect(postData).toHaveBeenCalledWith('productdetails_batch_submit', expect.any(FormData)));
+
+  // Inspect the submitted FormData
+  const callArgs = postData.mock.calls.find(c => c[0] === 'productdetails_batch_submit');
+  const formData = callArgs[1];
+  expect(formData.get('color')).toBe('Red');
+  const submittedVariants = JSON.parse(formData.get('variants'));
+  expect(submittedVariants).toEqual([
+    { size: 'S', qty: '20', price: '499', offerprice: '0', sku: 'RED-S' },
+    { size: 'L', qty: '10', price: '549', offerprice: '0', sku: 'RED-L' }
+  ]);
+});
+
