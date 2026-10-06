@@ -229,3 +229,28 @@ class CatalogTests(TestCase):
         self.assertEqual(res_invalid.status_code, 400)
 
 
+
+    def test_catalog_summary_uses_constant_queries_and_preserves_values(self):
+        from .models import ProductReview
+        from .product_views import catalog_products
+        from .serializer import ProductGetSerializer
+        for number in range(8):
+            product = Product.objects.create(maincategoryid=self.category, subcategoryid=self.sub, brandid=self.brand, productname=f'Product {number}')
+            first = ProductDetails.objects.create(productid=product, maincategoryid=self.category, subcategoryid=self.sub, brandid=self.brand, qty=2, price=1000, offerprice=700, color='Blue', size='M')
+            ProductDetails.objects.create(productid=product, maincategoryid=self.category, subcategoryid=self.sub, brandid=self.brand, qty=0, price=400, offerprice=200, color='Blue', size='L')
+            ProductReview.objects.create(product_details=first, user_mobile=f'900000{number:04}', rating=4)
+            ProductReview.objects.create(product_details=first, user_mobile=f'800000{number:04}', rating=5)
+        with self.assertNumQueries(2):
+            rows = ProductGetSerializer(catalog_products(), many=True).data
+        self.assertEqual(len(rows), 9)
+        for row in rows:
+            if row['id'] == self.product.pk:
+                self.assertFalse(row['is_available'])
+                self.assertEqual(row['total_reviews'], 0)
+                continue
+            self.assertTrue(row['is_available'])
+            self.assertEqual(row['variants_count'], 2)
+            self.assertEqual(row['total_reviews'], 2)
+            self.assertEqual(row['avg_rating'], 4.5)
+            self.assertEqual(row['min_price'], 1000)
+            self.assertEqual(row['min_offerprice'], 700)

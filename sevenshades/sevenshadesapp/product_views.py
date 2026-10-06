@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Avg, Count, Prefetch
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from .models import MySubCategory, Product, ProductDetails
@@ -34,9 +34,22 @@ def mysubcategory_list_by_maincategoryid(request):
     rows=MySubCategory.objects.filter(maincategoryid=request.data.get('maincategoryid')).select_related('maincategoryid')
     return JsonResponse({'status':True,'data':MySubCategoryGetSerializer(rows,many=True).data})
 
+def catalog_products():
+    # Aggregate once rather than issuing six queries for every product.
+    return Product.objects.select_related('maincategoryid', 'subcategoryid', 'brandid').annotate(
+        catalog_variant_count=Count('productdetails', distinct=True),
+        catalog_review_count=Count('productdetails__productreview', distinct=True),
+        catalog_avg_rating=Avg('productdetails__productreview__rating'),
+    ).prefetch_related(Prefetch(
+        'productdetails_set',
+        queryset=ProductDetails.objects.filter(qty__gt=0).only('id', 'productid', 'price', 'offerprice'),
+        to_attr='catalog_available_variants',
+    )).order_by('-pk')
+
+
 @api_view(['GET'])
 def Product_List(request):
-    rows=Product.objects.select_related('maincategoryid','subcategoryid','brandid').order_by('-pk')
+    rows=catalog_products()
     return JsonResponse({'status':True,'data':ProductGetSerializer(rows,many=True).data})
 
 @api_view(['POST'])

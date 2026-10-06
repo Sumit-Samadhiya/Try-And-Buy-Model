@@ -68,21 +68,29 @@ class  ProductGetSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_is_available(self, obj):
+        if hasattr(obj, 'catalog_available_variants'):
+            return bool(obj.catalog_available_variants)
         return obj.productdetails_set.filter(qty__gt=0).exists()
 
     def get_variants_count(self, obj):
+        if hasattr(obj, 'catalog_variant_count'):
+            return obj.catalog_variant_count
         return obj.productdetails_set.count()
 
     def get_avg_rating(self, obj):
+        if hasattr(obj, 'catalog_avg_rating'):
+            return round(obj.catalog_avg_rating, 1) if obj.catalog_avg_rating is not None else 0.0
         from django.db.models import Avg
         val = ProductReview.objects.filter(product_details__productid=obj).aggregate(Avg('rating'))['rating__avg']
         return round(val, 1) if val is not None else 0.0
 
     def get_total_reviews(self, obj):
+        if hasattr(obj, 'catalog_review_count'):
+            return obj.catalog_review_count
         return ProductReview.objects.filter(product_details__productid=obj).count()
 
     def _best_available_variant(self, obj):
-        variants = list(obj.productdetails_set.filter(qty__gt=0).only('price', 'offerprice'))
+        variants = obj.catalog_available_variants if hasattr(obj, 'catalog_available_variants') else list(obj.productdetails_set.filter(qty__gt=0).only('price', 'offerprice'))
         if not variants:
             return None
         return min(variants, key=lambda row: row.offerprice if 0 < row.offerprice <= row.price else row.price)
