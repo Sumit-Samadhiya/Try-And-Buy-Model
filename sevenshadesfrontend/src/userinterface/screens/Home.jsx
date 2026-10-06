@@ -10,7 +10,6 @@ import MainCategoryComponent from "../components/MainCategoryComponent";
 import AdvertiseComponent from "../components/AdvertiseComponent";
 import HowItWorksSection from "../components/HowItWorksSection";
 import HomeFaqSection from "../components/HomeFaqSection";
-import HeroVariantA from "../components/HeroVariantA";
 import { useNavigate } from "react-router-dom";
 import { useCallback, useState, useEffect } from "react";
 import { useTheme } from "@mui/material/styles";
@@ -160,31 +159,16 @@ export default function Home(props) {
     return (
         <div style={{ position: 'relative', width: '100%', backgroundColor: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
+            {loading && <DoordrapeLoader text="Loading curated collections…" role="status" />}
+            {!loading && loadError && <div role="alert" style={{ padding: 24 }}>Some collections could not load. <button onClick={() => setReload(value => value + 1)}>Retry collections</button></div>}
+            {!loading && !loadError && !listMainCategory.length && <p style={{ padding: 24 }}>New collections are coming soon.</p>}
+
             <main style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1 }}>
-                {/* Modern High-Converting Hero Section (Variant A) */}
-                <HeroVariantA />
-
-                {/* Loading indicator or error banner */}
-                {loading && (
-                    <div style={{ width: '100%', padding: '16px 0' }}>
-                        <DoordrapeLoader text="Loading curated collections…" role="status" size="small" />
-                    </div>
-                )}
-                {!loading && loadError && (
-                    <div role="alert" style={{ padding: 24, textAlign: 'center', color: '#b91c1c' }}>
-                        Some collections could not load. <button onClick={() => setReload(value => value + 1)}>Retry collections</button>
-                    </div>
-                )}
-                {!loading && !loadError && !listMainCategory.length && (
-                    <p style={{ padding: 24, color: '#64748b' }}>New collections are coming soon.</p>
-                )}
-
-                {/* Hero Banner Carousel (Shown when banners available) */}
-                {listBanner.length > 0 && (
-                    <section style={{ width: '100%', padding: sm_matches ? '8px 10px 0' : '16px 16px 0', boxSizing: 'border-box' }}>
-                        <SliderComponent data={listBanner} onBannerClick={handleBannerClick} />
-                    </section>
-                )}
+                <h1 className="sr-only">Doordrape: Doorstep Try &amp; Buy Fashion — Try Clothes at Home Before You Buy</h1>
+                {/* Hero Banner Carousel */}
+                <section style={{ width: '100%', padding: sm_matches ? '8px 10px 0' : '16px 16px 0', boxSizing: 'border-box' }}>
+                    <SliderComponent data={listBanner} onBannerClick={handleBannerClick} />
+                </section>
 
                 {/* Trust & Value Proposition Strip */}
                 <section style={{ width: '100%', maxWidth: 1360, padding: sm_matches ? '12px 16px 0' : '20px 16px 0', boxSizing: 'border-box' }}>
