@@ -1,3 +1,4 @@
+import BrandLogo from './BrandLogo';
 import { Grid, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -38,6 +39,7 @@ export default function Footer() {
                 boxSizing: 'border-box'
             }}>
                 <div style={{ maxWidth: 1360, margin: '0 auto' }}>
+                    <div style={{ fontSize: 28, marginBottom: 28 }}><BrandLogo light size={38} /></div>
                     {/* Responsive 2x2 Grid on Mobile (xs=6), 4 columns on Desktop (md=3) */}
                     <Grid container spacing={sm ? 2.5 : 4} justifyContent="space-between">
                         {/* Column 1: Help & Information */}

@@ -1,3 +1,4 @@
+import { BrandMark } from './BrandLogo';
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 
@@ -197,7 +198,7 @@ export default function DoordrapeLoader({
             transform: `scale(${iconScale})`,
           }}
         >
-          {current.icon}
+          <BrandMark size={28} />
         </Box>
       </Box>
 

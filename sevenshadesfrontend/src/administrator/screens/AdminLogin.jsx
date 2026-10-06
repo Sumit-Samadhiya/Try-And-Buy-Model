@@ -1,3 +1,4 @@
+import { BrandMark } from '../../userinterface/components/BrandLogo';
 import * as React from 'react';
 import Avatar from '@mui/material/Avatar';
 import Alert from '@mui/material/Alert';
@@ -159,7 +160,7 @@ export default function AdminLogin() {
                     boxShadow: '0 8px 20px rgba(16, 185, 129, 0.3)',
                   }}
                 >
-                  <AdminPanelSettingsRoundedIcon sx={{ fontSize: 30, color: '#ffffff' }} />
+                  <BrandMark size={34} />
                 </Avatar>
                 <Typography component="h1" variant="h5" sx={{ fontWeight: 800, color: '#f8fafc', mt: 1 }}>
                   Sign in

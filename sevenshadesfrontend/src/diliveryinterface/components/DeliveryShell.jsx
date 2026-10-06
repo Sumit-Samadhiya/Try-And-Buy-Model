@@ -1,3 +1,4 @@
+import BrandLogo from '../../userinterface/components/BrandLogo';
 import { logout } from '../../services/FetchDjangoApiServices';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -50,6 +51,7 @@ export default function DeliveryShell({ title, subtitle, activePage, children })
         boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
       }}
     >
+      <div style={{ fontSize: 24, marginBottom: 16 }}><BrandLogo light size={30} /></div>
       <Stack direction="row" spacing={1.2} alignItems="center" sx={{ mb: 1 }}>
         <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#10b981', boxShadow: '0 0 10px #10b981' }} />
         <Typography sx={{ fontWeight: 800, color: '#f8fafc', fontSize: '1.1rem' }}>Rider Operations</Typography>

@@ -1,3 +1,4 @@
+import BrandLogo from './BrandLogo';
 import imageUrl from '../../services/imageUrl';
 import * as React from 'react';
 import { useState, useEffect } from 'react';
@@ -236,7 +237,7 @@ export default function Header() {
                                 color: '#ffffff',
                             }}
                         >
-                            Doordrape
+                            <BrandLogo light size={28} />
                         </Typography>
                         <span style={{
                             fontSize: 10,

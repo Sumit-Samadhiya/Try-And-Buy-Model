@@ -1,3 +1,4 @@
+import { BrandMark } from '../../userinterface/components/BrandLogo';
 import React, { useState } from 'react';
 import {
   Box,
@@ -161,7 +162,7 @@ export default function DeliveryLogin() {
                   boxShadow: '0 10px 25px -5px rgba(16, 185, 129, 0.5)'
                 }}
               >
-                <TwoWheelerRoundedIcon sx={{ fontSize: 36, color: '#ffffff' }} />
+                <BrandMark size={40} />
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 900, color: '#ffffff', letterSpacing: '-0.5px' }}>
                 Doordrape

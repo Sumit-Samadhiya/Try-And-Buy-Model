@@ -48,7 +48,7 @@
     letter-spacing: -0.02em;
 }
 
-.auth-wordmark span {
+.auth-wordmark > span:not(.dd-brand) {
     display: block;
     font-size: 10px;
     letter-spacing: 2px;

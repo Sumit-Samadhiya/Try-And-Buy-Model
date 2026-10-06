@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 112" fill="none" color="#064e3b"><title>DoorDrape</title>    <path d="M14 100V47a36 36 0 0 1 72 0v53H14Z" stroke="currentColor" stroke-width="4" stroke-linejoin="round" />
+    <path  d="M23 47a27 27 0 0 1 23-27c-1 26-8 40-23 51V47Z" fill="currentColor" />
+    <path  d="M77 47a27 27 0 0 0-23-27c1 26 8 40 23 51V47Z" fill="currentColor" />
+    <path d="M39 88V61h10c18 0 18 27 0 27H39Z" stroke="currentColor" stroke-width="4" stroke-linejoin="round" />
+    <path d="M10 100h80" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
+</svg>

@@ -7,7 +7,7 @@
 .dd-intro__curtain {
   position: absolute; top: 0; bottom: 0; width: 50.5%;
   background: repeating-linear-gradient(90deg, #082e29 0%, #12493d 9%, #0b382f 17%, #05251f 23%, #124538 32%);
-  box-shadow: inset 0 0 100px #001a1680; transition: transform 700ms cubic-bezier(.76,0,.24,1);
+  box-shadow: inset 0 0 100px #001a1680; transition: transform 700ms cubic-bezier(.22,.65,.3,1);
 }
 .dd-intro__curtain--left { left: 0; border-right: 1px solid #c6ae7840; }
 .dd-intro__curtain--right { right: 0; transform: scaleX(-1); }
@@ -19,7 +19,7 @@
 .dd-intro__fold--right { transform-origin: right top; animation-delay: .15s; }
 .dd-intro__wordmark { font-size: clamp(40px, 10vw, 64px); letter-spacing: -2px; margin-top: 18px; animation: dd-arrive .8s ease both; }
 .dd-intro__wordmark span { font-style: italic; }
-.dd-intro__tagline { margin: 18px 0 0; font: 10px/1.6 Arial, sans-serif; letter-spacing: .28em; }
+.dd-intro__tagline { margin: 18px 0 0; font: 10px/1.6 Arial, sans-serif; letter-spacing: .28em; color: #eadbc1; }
 .dd-intro__status { margin: 48px 20px 0; font: 12px/1.5 Arial, sans-serif; color: #d5dacf; }
 .dd-intro__skip { position: absolute; right: max(24px, env(safe-area-inset-right)); bottom: max(24px, env(safe-area-inset-bottom)); min-height: 44px; padding: 10px 16px; border: 1px solid #eadbc16b; border-radius: 30px; background: #082e29; color: #eadbc1; font: 12px Arial, sans-serif; cursor: pointer; }
 .dd-intro__skip:focus-visible { outline: 2px solid #eadbc1; outline-offset: 4px; }

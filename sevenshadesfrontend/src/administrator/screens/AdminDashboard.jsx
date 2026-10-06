@@ -1,3 +1,4 @@
+import { BrandMark } from '../../userinterface/components/BrandLogo';
 import PaymentRecovery from './PaymentRecovery';
 import { useState } from 'react';
 import { Box, Button, Chip, Drawer, IconButton, List, ListItemButton, ListItemText, Stack, ThemeProvider, Toolbar, Typography, createTheme } from '@mui/material';
@@ -98,7 +99,7 @@ export default function AdminDashboard() {
             justifyContent: 'center',
             boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
           }}>
-            <Typography sx={{ fontWeight: 900, color: '#ffffff', fontSize: 18 }}>D</Typography>
+            <BrandMark size={26} />
           </Box>
           <Box>
             <Typography variant="h6" fontWeight={900} sx={{ letterSpacing: 0.5, lineHeight: 1.1 }}>

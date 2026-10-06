@@ -1,3 +1,4 @@
+import BrandLogo from './BrandLogo';
 import React, { useState, useEffect } from 'react';
 import { Drawer } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -89,7 +90,7 @@ export default function DrawerComponent({ open, setOpen }) {
                 {/* Drawer Header */}
                 <div className="drawer-header">
                     <div className="drawer-brand">
-                        <span className="drawer-brand-title">Doordrape</span>
+                        <span className="drawer-brand-title"><BrandLogo light size={28} /></span>
                         <span className="drawer-brand-tag">⚡ Try &amp; Buy Fashion</span>
                     </div>
                     <button

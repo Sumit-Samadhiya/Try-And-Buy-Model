@@ -9,7 +9,6 @@ import Footer from "../components/Footer";
 import { catalogData } from "../../services/FetchDjangoApiServices";
 import MainCategoryComponent from "../components/MainCategoryComponent";
 import AdvertiseComponent from "../components/AdvertiseComponent";
-import HowItWorksSection from "../components/HowItWorksSection";
 import HomeFaqSection from "../components/HomeFaqSection";
 import { useNavigate } from "react-router-dom";
 import { useCallback, useState, useEffect } from "react";
@@ -71,8 +70,8 @@ export default function Home(props) {
     }, []);
 
     const fetchCategoryProducts = useCallback(async (categories) => {
-        const menCat = categories.find(c => (c.maincategoryname || '').toLowerCase() === 'men') ;
-        const womenCat = categories.find(c => (c.maincategoryname || '').toLowerCase() === 'women') ;
+        const menCat = categories.find(c => (c.maincategoryname || '').toLowerCase() === 'men');
+        const womenCat = categories.find(c => (c.maincategoryname || '').toLowerCase() === 'women');
 
         setMenCategory(menCat);
         setWomenCategory(womenCat);
@@ -215,8 +214,7 @@ export default function Home(props) {
                     </div>
                 </section>
 
-                {/* How It Works 3-Step Process */}
-                <HowItWorksSection />
+
 
                 {/* Subcategories Strip */}
                 {listSubCategory.length > 0 && (
@@ -281,6 +279,7 @@ export default function Home(props) {
                         />
                     </section>
                 )}
+
 
                 {/* FAQ Section matching JSON-LD Schema */}
                 <HomeFaqSection />

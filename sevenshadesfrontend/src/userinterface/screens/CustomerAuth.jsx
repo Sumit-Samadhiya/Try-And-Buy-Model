@@ -1,3 +1,4 @@
+import BrandLogo from '../../userinterface/components/BrandLogo';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -268,7 +269,7 @@ export default function CustomerAuth({ kind = 'login' }) {
     <main className="customer-auth">
       <aside className="auth-story">
         <Link to="/home" className="auth-wordmark">
-          Doordrape<span>TRY IT. LOVE IT. KEEP IT.</span>
+          <BrandLogo light size={36} /><span>TRY IT. LOVE IT. KEEP IT.</span>
         </Link>
         <div>
           <p className="auth-eyebrow">YOUR STYLE. YOUR SPACE.</p>
