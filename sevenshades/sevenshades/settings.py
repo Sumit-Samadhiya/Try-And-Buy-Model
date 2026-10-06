@@ -18,11 +18,13 @@ import secrets
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Local key file is ignored by git. Production should use the environment variable.
 _sms_key_file = BASE_DIR / '.fast2sms-key'
 FAST2SMS_API_KEY = os.environ.get('FAST2SMS_API_KEY', '')
 if not FAST2SMS_API_KEY and _sms_key_file.exists():
     FAST2SMS_API_KEY = _sms_key_file.read_text().strip()
+
+# WhatsApp Baileys Microservice Configuration
+WHATSAPP_SERVICE_URL = os.environ.get('WHATSAPP_SERVICE_URL', 'http://127.0.0.1:5001').strip().rstrip('/')
 
 
 # Quick-start development settings - unsuitable for production

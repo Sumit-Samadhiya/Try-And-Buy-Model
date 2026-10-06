@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import re
 import secrets
 import urllib.request
@@ -21,7 +22,13 @@ logger = logging.getLogger(__name__)
 
 RE_MOBILE = re.compile(r'^[6-9]\d{9}$')
 RE_OTP = re.compile(r'^\d{6}$')
-DEFAULT_SERVICE_URL = getattr(settings, 'WHATSAPP_SERVICE_URL', 'http://127.0.0.1:5001')
+
+
+def _get_service_url():
+    """Retrieve configured WhatsApp Baileys service URL dynamically from settings or environment."""
+    configured = getattr(settings, 'WHATSAPP_SERVICE_URL', None) or os.environ.get('WHATSAPP_SERVICE_URL', '')
+    url = str(configured).strip().rstrip('/') if configured else 'http://127.0.0.1:5001'
+    return url or 'http://127.0.0.1:5001'
 
 
 def _clean_phone(raw):
@@ -31,10 +38,16 @@ def _clean_phone(raw):
     return digits
 
 
-def _call_baileys_service(endpoint, payload=None, method='POST', timeout=10):
-    url = f"{DEFAULT_SERVICE_URL.rstrip('/')}/{endpoint.lstrip('/')}"
+def _call_baileys_service(endpoint, payload=None, method='POST', timeout=20):
+    service_url = _get_service_url()
+    url = f"{service_url}/{endpoint.lstrip('/')}"
     data_bytes = json.dumps(payload).encode('utf-8') if payload is not None else None
-    headers = {'Content-Type': 'application/json'} if payload is not None else {}
+    headers = {
+        'User-Agent': 'SevenShades-Backend/1.0',
+        'Accept': 'application/json'
+    }
+    if payload is not None:
+        headers['Content-Type'] = 'application/json'
     req = urllib.request.Request(url, data=data_bytes, headers=headers, method=method)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -48,7 +61,11 @@ def _call_baileys_service(endpoint, payload=None, method='POST', timeout=10):
         return exc.code, err_content
     except Exception as exc:
         logger.warning("Failed to reach WhatsApp Baileys service at %s: %s", url, exc)
-        return 503, {'message': 'WhatsApp service unreachable.'}
+        return 503, {
+            'message': 'WhatsApp service unreachable.',
+            'target_url': url,
+            'detail': str(exc)
+        }
 
 
 @api_view(['POST'])
@@ -224,7 +241,8 @@ def verify_whatsapp_otp(request):
 @api_view(['GET'])
 def whatsapp_status(request):
     """Inspect WhatsApp Baileys service connection status and QR availability."""
-    status_code, resp = _call_baileys_service('status', method='GET', timeout=5)
+    service_url = _get_service_url()
+    status_code, resp = _call_baileys_service('status', method='GET', timeout=15)
     if status_code == 200:
         return JsonResponse({
             'status': True,
@@ -233,12 +251,15 @@ def whatsapp_status(request):
             'user_jid': resp.get('userJid'),
             'has_qr': resp.get('hasQr', False),
             'qr_code': resp.get('currentQr'),
-            'qr_page_url': f"{DEFAULT_SERVICE_URL.rstrip('/')}/qr",
+            'qr_page_url': f"{service_url}/qr",
+            'service_url': service_url,
         })
     return JsonResponse({
         'status': False,
         'service_online': False,
         'is_connected': False,
         'message': 'WhatsApp Baileys service is currently offline.',
-        'help': 'Run "npm start" inside whatsapp_service folder to start the engine.',
+        'target_url': service_url,
+        'details': resp.get('message') if isinstance(resp, dict) else str(resp),
+        'help': 'Verify WHATSAPP_SERVICE_URL in Render environment variables.',
     }, status=503)
