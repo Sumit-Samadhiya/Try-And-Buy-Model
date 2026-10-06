@@ -12,23 +12,23 @@ test('reveals content once ready and removes the modal', () => {
   const { rerender } = render(<CurtainIntro />);
   expect(screen.getByRole('dialog')).toBeVisible();
   rerender(<CurtainIntro ready />);
-  act(() => jest.advanceTimersByTime(3999));
+  act(() => jest.advanceTimersByTime(5499));
   expect(screen.getByRole('dialog')).toBeVisible();
   act(() => jest.advanceTimersByTime(1));
-  act(() => jest.advanceTimersByTime(700));
+  act(() => jest.advanceTimersByTime(800));
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
 
 test('slow requests cannot leave customers behind a permanent curtain', () => {
   render(<CurtainIntro />);
-  act(() => jest.advanceTimersByTime(8500));
-  act(() => jest.advanceTimersByTime(700));
+  act(() => jest.advanceTimersByTime(9500));
+  act(() => jest.advanceTimersByTime(800));
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
 
 test('customers can skip the intro', () => {
   render(<CurtainIntro />);
   fireEvent.click(screen.getByRole('button', { name: /skip intro/i }));
-  act(() => jest.advanceTimersByTime(700));
+  act(() => jest.advanceTimersByTime(800));
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
