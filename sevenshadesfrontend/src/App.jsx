@@ -79,12 +79,6 @@ function App() {
       </Routes></Suspense>
       <CookieConsent />
       </BrowserRouter>
-     
-      {/* <Category/> */}
-      {/* <DisplayAllCategory/> */}
-      {/* <MySubCategory/> */}
-      {/* <DisplayAllSubCategory/> */}
-
     </div>
   );
 }

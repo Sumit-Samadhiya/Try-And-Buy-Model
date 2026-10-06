@@ -1,7 +1,5 @@
 from sevenshadesapp import payment_recovery_views
-from sevenshadesapp import mobile_auth_views
 from sevenshadesapp import admin_workspace_views
-from sevenshadesapp import otp_views
 from sevenshadesapp import location_views
 from sevenshadesapp import settlement_views
 """
