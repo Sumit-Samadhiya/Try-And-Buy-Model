@@ -1,6 +1,7 @@
 import CustomerOrderNotifications from './services/CustomerOrderNotifications';
 import PageTracker from './services/PageTracker';
 import DoordrapeLoader from './userinterface/components/DoordrapeLoader';
+import CurtainIntro from './userinterface/components/CurtainIntro';
 import RequireSession from './services/RequireSession';
 import CookieConsent from './userinterface/components/CookieConsent';
 import { getData, clearCachedAccounts } from './services/FetchDjangoApiServices';
@@ -51,7 +52,7 @@ function App() {
       <BrowserRouter>
       <PageTracker />
       <CustomerOrderNotifications />
-      <Suspense fallback={<DoordrapeLoader fullPage text="Loading page..." role="status" />}><Routes>
+      <Suspense fallback={['/', '/home'].includes(window.location.pathname) ? <CurtainIntro /> : <DoordrapeLoader fullPage text="Loading page..." role="status" />}><Routes>
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route element={<AdminLogin/>} path="/adminlogin"/>
         <Route element={<RequireSession role="admin"><AdminDashboard/></RequireSession>} path="/admindashboard/*"/>

@@ -1,4 +1,5 @@
 import Header from "../components/Header";
+import CurtainIntro from "../components/CurtainIntro";
 import DoordrapeLoader from "../components/DoordrapeLoader";
 import SubcategoryComponent from "../components/SubcategoryComponent";
 import SliderComponent from "../components/SliderComponent";
@@ -158,6 +159,7 @@ export default function Home(props) {
 
     return (
         <div style={{ position: 'relative', width: '100%', backgroundColor: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <CurtainIntro ready={!loading} />
             <Header />
             {loading && <DoordrapeLoader text="Loading curated collections…" role="status" />}
             {!loading && loadError && <div role="alert" style={{ padding: 24 }}>Some collections could not load. <button onClick={() => setReload(value => value + 1)}>Retry collections</button></div>}
