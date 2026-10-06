@@ -76,7 +76,11 @@ export default function DeliveryOps() {
     setLoading(false);
   };
 
-  useOrderEvents(loadAll);
+  useOrderEvents((event) => {
+    if (['order_created', 'order_status_updated', 'assignment_updated'].includes(event?.reason)) {
+      loadAll();
+    }
+  });
   useEffect(() => {
     loadAll();
   }, []);

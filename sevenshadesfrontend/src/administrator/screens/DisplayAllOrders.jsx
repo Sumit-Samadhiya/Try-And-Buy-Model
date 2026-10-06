@@ -50,8 +50,11 @@ export default function DisplayAllOrders() {
     }
   }, []);
 
-  // Consolidate live updates and polling into useOrderEvents (which manages 15-second polling fallback)
-  useOrderEvents(fetchOrders);
+  useOrderEvents((event) => {
+    if (['order_created', 'order_status_updated', 'trial_payment_captured', 'final_payment_updated'].includes(event?.reason)) {
+      fetchOrders();
+    }
+  });
 
   useEffect(() => {
     fetchOrders();

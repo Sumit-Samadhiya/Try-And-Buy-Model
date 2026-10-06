@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, Chip, Dialog, DialogContent, DialogTitle, Grid, LinearProgress, MenuItem, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { getData, postData } from '../../services/FetchDjangoApiServices';
-import useOrderEvents from '../../services/useOrderEvents';
 import DoordrapeLoader from '../../userinterface/components/DoordrapeLoader';
 
 const money = value => new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(value || 0);
@@ -16,7 +15,7 @@ function useReport(endpoint, filters) {
  const [result,setResult]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false); const sequence=useRef(0);
  const query=new URLSearchParams(Object.entries(filters).filter(([,value])=>value!=='' )).toString();
  const load=useCallback(async()=>{const id=++sequence.current;setBusy(true);const response=await getData(endpoint+'?'+query);if(id!==sequence.current)return;setBusy(false);if(response.status){setResult(response);setError('');}else{setResult(null);setError(response.message||'Unable to load report.');}},[endpoint,query]);
- useEffect(()=>{load();const cleanupSequence=sequence.current;return()=>{sequence.current=cleanupSequence+1;};},[load]); useOrderEvents(load);
+ useEffect(()=>{load();const cleanupSequence=sequence.current;return()=>{sequence.current=cleanupSequence+1;};},[load]);
  return {result,error,busy,load};
 }
 

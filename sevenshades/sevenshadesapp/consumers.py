@@ -31,6 +31,10 @@ class OrderConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
+    async def receive(self, text_data=None, bytes_data=None):
+        # Gracefully accept client ping/keepalive frames
+        pass
+
     async def order_status_updated(self, event):
         if not await self.authorized():
             await self.close(code=4403)
