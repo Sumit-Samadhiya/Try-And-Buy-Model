@@ -1,6 +1,6 @@
 from django.utils import timezone
 from django.test import TestCase, TransactionTestCase
-from django.db import close_old_connections, OperationalError, IntegrityError, transaction
+from django.db import close_old_connections, connections, OperationalError, IntegrityError, transaction
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
 from unittest.mock import patch
@@ -277,7 +277,8 @@ class DeliveryConcurrencyTests(TransactionTestCase):
             except OperationalError:
                 pass
             finally:
-                close_old_connections()
+                # Workers must close healthy persistent connections before exiting.
+                connections.close_all()
         with ThreadPoolExecutor(max_workers=2) as pool:
             futures = [pool.submit(generate), pool.submit(generate)]
             for future in futures:

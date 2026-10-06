@@ -1,5 +1,5 @@
 from django.test import TestCase, TransactionTestCase
-from django.db import close_old_connections, OperationalError
+from django.db import close_old_connections, connections, OperationalError
 from django.utils import timezone
 from rest_framework.test import APIClient
 from concurrent.futures import ThreadPoolExecutor
@@ -235,7 +235,8 @@ class InventoryConcurrencyTests(TransactionTestCase):
             except OperationalError:
                 pass  # SQLite contention is surfaced as a retryable response.
             finally:
-                close_old_connections()
+                # Workers must close healthy persistent connections before exiting.
+                connections.close_all()
         with ThreadPoolExecutor(max_workers=2) as pool:
             futures = [pool.submit(collect), pool.submit(collect)]
             for future in futures:
