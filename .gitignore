@@ -37,3 +37,5 @@ dist/
 media/
 sevenshades/media/*
 !sevenshades/media/.gitkeep
+auth_info_baileys/
+**/auth_info_baileys/

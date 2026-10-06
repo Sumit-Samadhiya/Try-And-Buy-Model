@@ -497,3 +497,18 @@ class CouponUsage(models.Model):
     def __str__(self):
         return f"{self.user_identifier} used {self.coupon.code} (-₹{self.discount_amount})"
 
+
+class WhatsAppOtp(models.Model):
+    phone = models.CharField(max_length=15, db_index=True)
+    otp_hash = models.CharField(max_length=128)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    is_consumed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    expires_at = models.DateTimeField(db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"WhatsApp OTP for {self.phone} (consumed={self.is_consumed})"
+

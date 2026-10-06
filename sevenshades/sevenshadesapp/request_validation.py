@@ -56,6 +56,18 @@ ENDPOINT_SCHEMAS = {
         'required': ['phone', 'otp'],
         'allowed': {'phone', 'otp'}
     },
+    'auth/send-whatsapp-otp': {
+        'required': [],
+        'allowed': {'phone', 'mobileno'}
+    },
+    'auth/verify-whatsapp-otp': {
+        'required': ['otp'],
+        'allowed': {'phone', 'mobileno', 'otp'}
+    },
+    'auth/whatsapp-status': {
+        'required': [],
+        'allowed': set()
+    },
     'fetch_user_address': {
         'required': [],
         'allowed': {'mobile', 'mobileno'}
@@ -550,7 +562,7 @@ def validate_request(endpoint, data, files):
         if key in errors:
             continue
 
-        if endpoint in ('auth/send-otp', 'auth/verify-otp') and key == 'phone' and isinstance(value, str):
+        if endpoint in ('auth/send-otp', 'auth/verify-otp', 'auth/send-whatsapp-otp', 'auth/verify-whatsapp-otp') and key == 'phone' and isinstance(value, str):
             value = value.strip()
 
         # Checkout's nested address dictionary is handled separately

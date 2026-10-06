@@ -23,7 +23,7 @@ Including another URLconf
 from django.contrib import admin
 from sevenshadesapp.health import health, ready
 from django.urls import path
-from sevenshadesapp import maincategory_views,mysubcategory_views,brands_views,product_views,productdetails_views,admin_login_view,userinterface,banner_views,signup_views,order_views,delivery_ops_views,inventory_views,admin_analytics_views,coupon_views
+from sevenshadesapp import maincategory_views,mysubcategory_views,brands_views,product_views,productdetails_views,admin_login_view,userinterface,banner_views,signup_views,order_views,delivery_ops_views,inventory_views,admin_analytics_views,coupon_views,whatsapp_auth_views
 
 from django.urls import include,re_path
 from sevenshadesapp import auth_views
@@ -39,6 +39,12 @@ urlpatterns = [
     path('api/auth/firebase-login', firebase_views.firebase_login),
     path('api/auth/send-otp/', firebase_views.legacy_otp_disabled),
     path('api/auth/verify-otp/', firebase_views.legacy_otp_disabled),
+    path('api/auth/send-whatsapp-otp/', whatsapp_auth_views.send_whatsapp_otp),
+    path('api/auth/send-whatsapp-otp', whatsapp_auth_views.send_whatsapp_otp),
+    path('api/auth/verify-whatsapp-otp/', whatsapp_auth_views.verify_whatsapp_otp),
+    path('api/auth/verify-whatsapp-otp', whatsapp_auth_views.verify_whatsapp_otp),
+    path('api/auth/whatsapp-status/', whatsapp_auth_views.whatsapp_status),
+    path('api/auth/whatsapp-status', whatsapp_auth_views.whatsapp_status),
     path('api/admin_payment_recovery', payment_recovery_views.RecoveryQueue),
     path('api/admin_expire_reservations', payment_recovery_views.ExpireReservations),
     path('api/admin_recover_payment', payment_recovery_views.RecoverPayment),

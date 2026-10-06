@@ -147,3 +147,78 @@ test('reset sends the new password with the Firebase proof', async () => {
   expect(await screen.findByText('Signed in home')).toBeInTheDocument();
   expect(localStorage.getItem('sevenshades_token')).toBe('new-token');
 });
+
+test('WhatsApp OTP flow requests OTP via backend and verifies code successfully', async () => {
+  postData
+    .mockResolvedValueOnce({
+      status: true,
+      success: true,
+      message: 'OTP sent to your WhatsApp successfully.',
+      phone: '9876543210',
+      cooldown: 60,
+      expiresIn: 300
+    })
+    .mockResolvedValueOnce({
+      status: true,
+      success: true,
+      token: 'jwt-whatsapp-token-abc',
+      user: { mobileno: '9876543210', fname: 'Customer' },
+      data: [{ mobileno: '9876543210', fname: 'Customer' }]
+    });
+
+  show();
+  await screen.findByText('Welcome back.');
+
+  // Switch to WhatsApp OTP tab
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /WhatsApp OTP/i }));
+  });
+
+  fill(/Mobile number/, '9876543210');
+
+  // Click Get OTP on WhatsApp
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /Get OTP on WhatsApp/i }));
+  });
+
+  // Verify backend endpoint was called
+  expect(postData).toHaveBeenCalledWith('auth/send-whatsapp-otp', { phone: '9876543210' });
+  expect(await screen.findByText(/OTP sent to your WhatsApp/i)).toBeInTheDocument();
+
+  // Enter 6-digit OTP
+  fill(/WhatsApp OTP/, '654321');
+
+  // Submit verification
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /Verify & sign in/i }));
+  });
+
+  expect(postData).toHaveBeenCalledWith('auth/verify-whatsapp-otp', {
+    phone: '9876543210',
+    otp: '654321'
+  });
+  expect(await screen.findByText('Signed in home')).toBeInTheDocument();
+  expect(localStorage.getItem('sevenshades_token')).toBe('jwt-whatsapp-token-abc');
+});
+
+test('WhatsApp OTP displays error message when service is offline or rate limited', async () => {
+  postData.mockResolvedValueOnce({
+    status: false,
+    success: false,
+    message: 'Too many OTP requests. Please wait 15 minutes before requesting again.'
+  });
+
+  show();
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /WhatsApp OTP/i }));
+  });
+
+  fill(/Mobile number/, '9876543210');
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /Get OTP on WhatsApp/i }));
+  });
+
+  expect(await screen.findByText(/Too many OTP requests/i)).toBeInTheDocument();
+});
+

@@ -5,6 +5,7 @@ import { Alert, Box, Button, IconButton, InputAdornment, Stack, TextField, Typog
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import ArrowBack from '@mui/icons-material/ArrowBack';
+import WhatsApp from '@mui/icons-material/WhatsApp';
 import { RecaptchaVerifier, signInWithPhoneNumber, signOut } from 'firebase/auth';
 import { auth } from '../../firebase';
 import { postData, clearCachedAccounts } from '../../services/FetchDjangoApiServices';
@@ -25,7 +26,9 @@ export default function CustomerAuth({ kind = 'login' }) {
   const confirmationResultRef = useRef(null);
   const recaptchaVerifierRef = useRef(null);
   const signup = kind === 'signup', reset = kind === 'reset';
-  const usesOtp = signup || reset || method === 'otp';
+  const isWhatsApp = method === 'whatsapp';
+  const usesFirebaseOtp = !isWhatsApp && (signup || reset || method === 'otp');
+  const usesOtp = isWhatsApp || usesFirebaseOtp;
   const cooldown = Math.max(0, Math.ceil(((challenge?.resendAt || 0) - now) / 1000));
   const expired = challenge && now >= challenge.expiresAt;
 
@@ -61,8 +64,6 @@ export default function CustomerAuth({ kind = 'login' }) {
   const getRecaptchaVerifier = () => {
     if (typeof window === 'undefined') return null;
 
-    // 1. Before creating a new RecaptchaVerifier, check if window.recaptchaVerifier exists.
-    // If so, call window.recaptchaVerifier.clear() and set it to null.
     if (window.recaptchaVerifier) {
       try { window.recaptchaVerifier.clear(); } catch (_) {}
       window.recaptchaVerifier = null;
@@ -72,7 +73,6 @@ export default function CustomerAuth({ kind = 'login' }) {
       recaptchaVerifierRef.current = null;
     }
 
-    // 2. Clear the innerHTML of document.getElementById('recaptcha-container') before instantiating.
     const container = document.getElementById('recaptcha-container');
     if (!container) return null;
     container.innerHTML = '';
@@ -113,7 +113,75 @@ export default function CustomerAuth({ kind = 'login' }) {
     return error?.message || 'OTP send karne me error aaya.';
   };
 
-  // 1. Send OTP using Firebase Web SDK (NO backend fetch call to /send-otp/)
+  // WhatsApp OTP Flow via Baileys Engine
+  const requestWhatsAppOtp = () => run(async () => {
+    const rawNumber = form.mobileno.trim();
+    if (!/^[6-9]\d{9}$/.test(rawNumber)) {
+      setErrors({ mobileno: 'Enter a valid 10-digit mobile number' });
+      return;
+    }
+
+    try {
+      const res = await postData('auth/send-whatsapp-otp', { phone: rawNumber });
+      if (!res.status && !res.success) {
+        setResult(res);
+        return;
+      }
+      const timestamp = Date.now();
+      const cooldownSec = res.cooldown || 60;
+      const expiresSec = res.expiresIn || 300;
+      setChallenge({
+        id: 'whatsapp-auth',
+        resendAt: timestamp + (cooldownSec * 1000),
+        expiresAt: timestamp + (expiresSec * 1000),
+        phone: rawNumber
+      });
+      setForm(old => ({ ...old, otp: '' }));
+      setErrors({});
+      setMessage(res.message || `Verification code sent to WhatsApp (+91 ${rawNumber}). Valid for 5 minutes.`);
+    } catch (err) {
+      console.error('WhatsApp OTP send error:', err);
+      setMessage(err?.message || 'Service temporarily unavailable, please try again in a few moments.');
+    }
+  });
+
+  const verifyWhatsAppOtp = () => run(async () => {
+    const rawNumber = form.mobileno.trim();
+    const rawOtp = form.otp.trim();
+    if (!/^[0-9]{6}$/.test(rawOtp)) {
+      setErrors({ otp: 'Please enter 6-digit OTP' });
+      return;
+    }
+
+    try {
+      const res = await postData('auth/verify-whatsapp-otp', {
+        phone: rawNumber,
+        otp: rawOtp
+      });
+      if (!res.status && !res.success) {
+        setResult(res);
+        return;
+      }
+
+      clearCachedAccounts();
+      if (res.token) {
+        localStorage.setItem('sevenshades_token', res.token);
+      }
+      const user = res.user || (res.data && res.data[0]);
+      if (user) {
+        dispatch({ type: 'ADD_USER', payLoad: [user.mobileno, user] });
+        trackAuthEvent(res.created ? 'signup_success' : 'login_success', user.mobileno);
+      }
+
+      const destination = location.state?.redirectTo;
+      navigate(typeof destination === 'string' && destination.startsWith('/') && !destination.startsWith('//') ? destination : '/home', { replace: true, state: location.state?.checkoutState });
+    } catch (err) {
+      console.error('WhatsApp OTP verify error:', err);
+      setMessage(err?.message || 'Verification failed. Please try again.');
+    }
+  });
+
+  // SMS OTP Flow via Firebase Web SDK
   const requestOtp = () => run(async () => {
     const rawNumber = form.mobileno.trim();
     if (!/^[6-9]\d{9}$/.test(rawNumber)) {
@@ -130,10 +198,8 @@ export default function CustomerAuth({ kind = 'login' }) {
         return;
       }
       const phoneNumber = '+91' + rawNumber;
-      // Firebase Web SDK signInWithPhoneNumber with invisible recaptcha-container
       const result = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
 
-      // Store confirmationResult in state
       setConfirmationResult(result);
       confirmationResultRef.current = result;
 
@@ -142,10 +208,8 @@ export default function CustomerAuth({ kind = 'login' }) {
       setForm(old => ({ ...old, otp: '' }));
       setErrors({});
       setMessage(`OTP sent to ${phoneNumber} via SMS.`);
-      return;
     } catch (fbError) {
       console.error('Firebase signInWithPhoneNumber error:', fbError);
-      // 4. Catch errors in signInWithPhoneNumber and ensure the verifier is cleared if the send operation fails.
       clearRecaptcha();
       const friendlyMsg = getFriendlyFirebaseError(fbError);
       setMessage(friendlyMsg);
@@ -154,10 +218,25 @@ export default function CustomerAuth({ kind = 'login' }) {
 
   const submit = event => {
     event.preventDefault();
-    if (usesOtp && !challenge) { requestOtp(); return; }
+
+    // 1. WhatsApp OTP Flow
+    if (isWhatsApp) {
+      if (!challenge) {
+        requestWhatsAppOtp();
+      } else {
+        verifyWhatsAppOtp();
+      }
+      return;
+    }
+
+    // 2. Firebase Phone Auth Flow (SMS OTP)
+    if (usesFirebaseOtp && !challenge) {
+      requestOtp();
+      return;
+    }
+
     run(async () => {
-      // 2. Firebase Phone Auth Verification Flow (OTP login / signup / reset)
-      if (usesOtp) {
+      if (usesFirebaseOtp) {
         const activeConfirmation = confirmationResult || confirmationResultRef.current;
         if (!activeConfirmation) {
           setMessage('No active OTP session. Please click "Get OTP" first.');
@@ -169,15 +248,12 @@ export default function CustomerAuth({ kind = 'login' }) {
         }
 
         try {
-          // Verify using confirmationResult.confirm(otp)
           const userCredential = await activeConfirmation.confirm(form.otp.trim());
-          // Get the Firebase ID token
           const idToken = await userCredential.user.getIdToken();
 
-          // Send THAT token to our Django backend /api/auth/firebase-login/
           const payload = {
             id_token: idToken,
-            ...(usesOtp && (signup || reset) ? { purpose: signup ? 'signup' : 'reset', password: form.password, confirm_password: form.confirm_password } : {}),
+            ...(usesFirebaseOtp && (signup || reset) ? { purpose: signup ? 'signup' : 'reset', password: form.password, confirm_password: form.confirm_password } : {}),
             ...(signup ? { fname: form.fname, lname: form.lname, emailid: form.emailid, password: form.password } : {})
           };
 
@@ -224,6 +300,7 @@ export default function CustomerAuth({ kind = 'login' }) {
       navigate(typeof destination === 'string' && destination.startsWith('/') && !destination.startsWith('//') ? destination : '/home', { replace: true, state: location.state?.checkoutState });
     });
   };
+
   return <main className="customer-auth">
     <aside className="auth-story"><Link to="/home" className="auth-wordmark">Doordrape<span>TRY IT. LOVE IT. KEEP IT.</span></Link><div><p className="auth-eyebrow">YOUR STYLE. YOUR SPACE.</p><h1>Find your fit.<br /><em>At home.</em></h1><p>Try your favourites at your doorstep.<br />Keep only what feels right.</p><div className="auth-steps"><span>01 / Choose</span><span>02 / Try</span><span>03 / Keep</span></div></div><p className="auth-footnote">A little more choice. A lot more you.</p></aside>
     <section className="auth-form-side"><Box className="auth-card" sx={{ position: 'relative', overflow: 'hidden' }}>
@@ -234,6 +311,8 @@ export default function CustomerAuth({ kind = 'login' }) {
           text={
             challenge
               ? 'Verifying your security OTP…'
+              : isWhatsApp && !challenge
+              ? 'Sending WhatsApp verification code…'
               : usesOtp && !challenge
               ? 'Sending verification code…'
               : signup
@@ -249,19 +328,124 @@ export default function CustomerAuth({ kind = 'login' }) {
       <Typography variant="overline" sx={{ display:'block', color:'#059669', letterSpacing:2, fontWeight: 700 }}>YOUR DOORDRAPE ACCOUNT</Typography>
       <Typography component="h1" variant="h4" sx={{ fontWeight:800, mt:1 }}>{signup ? 'Make yourself at home.' : reset ? 'A fresh start.' : 'Welcome back.'}</Typography>
       <Typography sx={{ color:'#727272', mt:1, mb:3 }}>{signup ? 'Create your account and verify your mobile number.' : reset ? 'Verify your mobile to set a new password.' : 'Your next favourite outfit is waiting.'}</Typography>
-      {!signup && !reset && <div className="auth-methods"><Button onClick={() => {setMethod('password');setChallenge(null);setConfirmationResult(null);confirmationResultRef.current=null;clearRecaptcha();setErrors({});}} aria-pressed={method === 'password'}>Password</Button><Button onClick={() => {setMethod('otp');setChallenge(null);setConfirmationResult(null);clearRecaptcha();setErrors({});}} aria-pressed={method === 'otp'}>Login with OTP</Button></div>}
+      {!signup && !reset && (
+        <div className="auth-methods">
+          <Button
+            onClick={() => {
+              setMethod('password');
+              setChallenge(null);
+              setConfirmationResult(null);
+              confirmationResultRef.current = null;
+              clearRecaptcha();
+              setErrors({});
+              setMessage('');
+            }}
+            aria-pressed={method === 'password'}
+          >
+            Password
+          </Button>
+          <Button
+            onClick={() => {
+              setMethod('whatsapp');
+              setChallenge(null);
+              setConfirmationResult(null);
+              confirmationResultRef.current = null;
+              clearRecaptcha();
+              setErrors({});
+              setMessage('');
+            }}
+            aria-pressed={method === 'whatsapp'}
+            startIcon={<WhatsApp sx={{ fontSize: '18px !important', color: method === 'whatsapp' ? '#25d366' : 'inherit' }} />}
+          >
+            WhatsApp OTP
+          </Button>
+          <Button
+            onClick={() => {
+              setMethod('otp');
+              setChallenge(null);
+              setConfirmationResult(null);
+              confirmationResultRef.current = null;
+              clearRecaptcha();
+              setErrors({});
+              setMessage('');
+            }}
+            aria-pressed={method === 'otp'}
+          >
+            Login with OTP
+          </Button>
+        </div>
+      )}
       <Stack component="form" noValidate onSubmit={submit} spacing={2}>
         {location.state?.authMessage && kind === 'login' && <Alert severity="success">{location.state.authMessage}</Alert>}
         {message && <Alert severity="info" role="status">{message}</Alert>}
         {signup && <div className="auth-name-row">{field('fname','First name',{ autoComplete:'given-name', inputProps:{maxLength:70} })}{field('lname','Last name',{autoComplete:'family-name', inputProps:{maxLength:70}})}</div>}
         {field('mobileno','Mobile number',{ type:'tel', autoComplete:'tel-national', inputProps:{ inputMode:'numeric', maxLength:10 }, InputProps:{startAdornment:<InputAdornment position="start">+91</InputAdornment>} })}
         {signup && field('emailid','Email address',{type:'email',autoComplete:'email',inputProps:{maxLength:70}})}
-        {(signup || reset || !usesOtp) && passwordField('password',reset ? 'New password' : 'Password')}
+        {(signup || reset || (!usesOtp && method === 'password')) && passwordField('password',reset ? 'New password' : 'Password')}
         {(signup || reset) && <><Typography variant="caption" color="text.secondary">Use 8–128 characters. Avoid common or numeric-only passwords.</Typography>{passwordField('confirm_password','Confirm password')}</>}
-        {challenge && <>{field('otp','6-digit OTP',{autoComplete:'one-time-code',inputProps:{inputMode:'numeric',maxLength:6}})}<Typography variant="caption" color={expired ? 'error' : 'text.secondary'}>{expired ? 'OTP expired. Request a new code.' : 'OTP expires in ' + Math.max(0,Math.ceil((challenge.expiresAt-now)/1000)) + ' seconds.'}</Typography><Stack direction="row" justifyContent="space-between"><Button disabled={busy || cooldown>0} onClick={requestOtp}>{cooldown ? 'Resend in '+cooldown+'s' : 'Resend OTP'}</Button><Button disabled={busy} onClick={() => {setChallenge(null);setConfirmationResult(null);clearRecaptcha();setForm(old=>({...old,otp:''}));}}>Change mobile</Button></Stack></>}
-        {usesOtp && <Typography variant="caption">Your phone number is sent to Google for phone verification and abuse prevention.</Typography>}
+        {challenge && (
+          <>
+            {field('otp', isWhatsApp ? '6-digit WhatsApp OTP' : '6-digit OTP', { autoComplete:'one-time-code', inputProps:{inputMode:'numeric', maxLength:6} })}
+            <Typography variant="caption" color={expired ? 'error' : 'text.secondary'}>
+              {expired ? 'OTP expired. Request a new code.' : 'OTP expires in ' + Math.max(0, Math.ceil((challenge.expiresAt-now)/1000)) + ' seconds.'}
+            </Typography>
+            <Stack direction="row" justifyContent="space-between">
+              <Button
+                disabled={busy || cooldown > 0}
+                onClick={challenge.id === 'whatsapp-auth' ? requestWhatsAppOtp : requestOtp}
+              >
+                {cooldown ? 'Resend in ' + cooldown + 's' : 'Resend OTP'}
+              </Button>
+              <Button
+                disabled={busy}
+                onClick={() => {
+                  setChallenge(null);
+                  setConfirmationResult(null);
+                  clearRecaptcha();
+                  setForm(old => ({ ...old, otp: '' }));
+                }}
+              >
+                Change mobile
+              </Button>
+            </Stack>
+          </>
+        )}
+        {usesFirebaseOtp && <Typography variant="caption">Your phone number is sent to Google for phone verification and abuse prevention.</Typography>}
+        {isWhatsApp && !challenge && (
+          <Typography variant="caption" sx={{ color: '#047857', display: 'block', textAlign: 'center' }}>
+            ⚡ Instant sign-in via WhatsApp • Zero waiting • ₹0 cost
+          </Typography>
+        )}
         <div id="recaptcha-container"></div>
-        <Button type="submit" variant="contained" size="large" disabled={busy || (expired && challenge)} sx={{ bgcolor:'#064e3b', borderRadius:2.5, py:1.5, boxShadow:'0 4px 14px rgba(6, 78, 59, 0.3)', '&:hover':{bgcolor:'#043629'} }}>{busy ? 'Please wait…' : usesOtp && !challenge ? 'Get OTP' : signup ? 'Verify & create account' : reset ? 'Verify & reset password' : usesOtp ? 'Verify & sign in' : 'Sign in'}</Button>
+        <Button
+          type="submit"
+          variant="contained"
+          size="large"
+          disabled={busy || (expired && challenge)}
+          startIcon={isWhatsApp && !challenge ? <WhatsApp /> : null}
+          sx={{
+            bgcolor: isWhatsApp ? '#25d366' : '#064e3b',
+            color: '#ffffff',
+            borderRadius: 2.5,
+            py: 1.5,
+            boxShadow: isWhatsApp ? '0 4px 14px rgba(37, 211, 102, 0.35)' : '0 4px 14px rgba(6, 78, 59, 0.3)',
+            '&:hover': { bgcolor: isWhatsApp ? '#1da851' : '#043629' }
+          }}
+        >
+          {busy
+            ? 'Please wait…'
+            : isWhatsApp && !challenge
+            ? 'Get OTP on WhatsApp'
+            : usesOtp && !challenge
+            ? 'Get OTP'
+            : signup
+            ? 'Verify & create account'
+            : reset
+            ? 'Verify & reset password'
+            : usesOtp
+            ? 'Verify & sign in'
+            : 'Sign in'}
+        </Button>
       </Stack>
       {!signup && !reset && <Link className="auth-link" to="/forgotpassword">Forgot password?</Link>}
       <Typography sx={{ mt:3, textAlign:'center', color:'#666' }}>{signup || reset ? 'Already have an account? ' : 'New to Doordrape? '}<Link className="auth-link" to={signup || reset ? '/signindisplay' : '/signupdisplay'} state={location.state}>{signup || reset ? 'Sign in' : 'Create an account'}</Link></Typography>

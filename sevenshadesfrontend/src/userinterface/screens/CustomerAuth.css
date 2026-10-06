@@ -123,18 +123,25 @@
     border-radius: 12px;
     padding: 4px;
     margin-bottom: 24px;
+    gap: 4px;
 }
 
 .auth-methods button {
-    width: 50%;
+    flex: 1;
     color: #065f46;
     border-radius: 8px;
     font-weight: 600;
+    font-size: 13px;
     border: none;
-    padding: 8px 12px;
+    padding: 8px 10px;
     cursor: pointer;
     background: transparent;
     transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
 }
 
 .auth-methods button[aria-pressed=true] {
