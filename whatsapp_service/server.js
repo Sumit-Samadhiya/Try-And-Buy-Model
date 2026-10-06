@@ -30,6 +30,7 @@ app.get('/health', (req, res) => {
     status: status.isConnected ? 'connected' : 'waiting_qr',
     connected: status.isConnected,
     user: status.userJid,
+    authStoreType: status.authStoreType,
   });
 });
 
