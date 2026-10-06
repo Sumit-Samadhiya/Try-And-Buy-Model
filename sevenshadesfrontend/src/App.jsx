@@ -7,11 +7,11 @@ import { getData, clearCachedAccounts } from './services/FetchDjangoApiServices'
 import { useEffect, lazy, Suspense } from 'react';
 import { useDispatch } from 'react-redux';
 import {BrowserRouter,Routes,Route, Navigate} from 'react-router-dom'
-const AdminLogin = lazy(() => import('./administrator/screens/AdminLogin'));
+import AdminLogin from './administrator/screens/AdminLogin';
 const ForgotPassword = lazy(() => import('./userinterface/screens/ForgotPassword'));
 
 const AdminDashboard = lazy(() => import('./administrator/screens/AdminDashboard'));
-import Home from './userinterface/screens/Home';
+const Home = lazy(() => import('./userinterface/screens/Home'));
 const ProductPage = lazy(() => import('./userinterface/screens/ProductPage'));
 const ProductDetailsPage = lazy(() => import('./userinterface/screens/ProductDetailsPage'));
 const MyBagDisplay = lazy(() => import('./userinterface/screens/MyBagDisplay'));

@@ -1,4 +1,4 @@
-import { responsiveImage } from '../../services/imageUrl';
+import imageUrl from '../../services/imageUrl';
 import { useTheme } from '@mui/material/styles';
 import UseMediaQuery from '@mui/material/useMediaQuery';
 import { useNavigate } from 'react-router-dom';
@@ -49,7 +49,7 @@ export default function MainCategoryComponent(props) {
                 >
                     <div style={{ width: '100%', aspectRatio: sm_matches ? '1 / 1.15' : '4 / 5', overflow: 'hidden', backgroundColor: '#f1f5f9' }}>
                         <img
-                            {...responsiveImage(item.icon, "(max-width: 600px) 50vw, 520px")} width="480" height="600"
+                            src={imageUrl(item.icon)}
                             alt={item.maincategoryname || ''}
                             loading="lazy"
                             decoding="async"

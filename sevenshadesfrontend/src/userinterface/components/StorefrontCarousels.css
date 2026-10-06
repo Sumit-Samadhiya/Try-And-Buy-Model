@@ -330,18 +330,3 @@
 .brand-card:hover img {
     filter: grayscale(0%);
 }
-
-.home-banner-slide img { height: auto; }
-.hero-placeholder { aspect-ratio: 1440 / 460; background: #f1f5f9; }
-.hero-controls { position: absolute; right: 8px; top: 8px; display: flex; align-items: center; gap: 4px; padding: 2px; background: #fff; color: #172033; border-radius: 8px; }
-.hero-controls button { min-width: 44px; min-height: 44px; border: 0; background: #fff; color: #172033; cursor: pointer; }
-.home-subcategories .slick-dots { position: static; display: flex !important; flex-wrap: wrap; justify-content: center; }
-.home-subcategories .slick-dots li, .home-subcategories .slick-dots li button { width: 44px; height: 44px; margin: 0; }
-.home-subcategories .slick-dots li button:before { width: 44px; height: 44px; line-height: 44px; }
-.home-subcategories .category-arrow { width: 44px; height: 44px; }
-.home-category-slot { min-height: 540px; }
-.home-collection-slot { min-height: 820px; }
-@media(max-width: 900px) { .home-category-slot { min-height: 650px; } }
-@media(max-width: 600px) { .home-category-slot { min-height: calc((100vw - 48px) * 4 / 3 + 185px); } .home-collection-slot { min-height: calc((100vw - 48px) * .575 + 130px); } }
-@media(max-width:768px) { .hero-placeholder { aspect-ratio:16 / 10; min-height:220px; } }
-@media(max-width:480px) { .hero-placeholder { aspect-ratio:4 / 3; min-height:240px; } }
