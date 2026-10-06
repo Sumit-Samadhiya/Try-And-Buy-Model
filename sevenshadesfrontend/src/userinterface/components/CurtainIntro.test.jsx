@@ -12,13 +12,16 @@ test('reveals content once ready and removes the modal', () => {
   const { rerender } = render(<CurtainIntro />);
   expect(screen.getByRole('dialog')).toBeVisible();
   rerender(<CurtainIntro ready />);
+  act(() => jest.advanceTimersByTime(3999));
+  expect(screen.getByRole('dialog')).toBeVisible();
+  act(() => jest.advanceTimersByTime(1));
   act(() => jest.advanceTimersByTime(700));
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
 
 test('slow requests cannot leave customers behind a permanent curtain', () => {
   render(<CurtainIntro />);
-  act(() => jest.advanceTimersByTime(6000));
+  act(() => jest.advanceTimersByTime(8500));
   act(() => jest.advanceTimersByTime(700));
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });

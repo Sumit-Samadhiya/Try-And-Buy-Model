@@ -33,3 +33,25 @@
 @media (prefers-reduced-motion: reduce) {
   .dd-intro *, .dd-intro *::before { animation: none !important; transition: none !important; }
 }
+.dd-intro__spotlight { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 38%, #ecd6a619, transparent 55%); animation: dd-light 5s ease-in-out infinite alternate; }
+.dd-intro__brand > .dd-brand-mark { filter: drop-shadow(0 4px 18px #eed7a62b); }
+.dd-intro__fashion { position: absolute; color: #eadbc1; opacity: .45; pointer-events: none; animation: dd-float 4s ease-in-out infinite alternate; }
+.dd-intro__fashion--one { left: calc(50% - 190px); top: 29%; font-size: 32px; }
+.dd-intro__fashion--two { right: calc(50% - 210px); top: 38%; animation-delay: -.8s; transform: rotate(12deg); }
+.dd-intro__fashion--three { left: calc(50% - 160px); top: 61%; font-size: 15px; animation-delay: -2s; }
+.dd-intro__story { position: relative; width: 100%; height: 30px; margin-top: 40px; text-align: center; font: italic 19px/30px Georgia, serif; color: #f2e5ce; }
+.dd-intro__story span { position: absolute; inset: 0; opacity: 0; animation: dd-story 6s ease-in-out infinite; }
+.dd-intro__story span:nth-child(2) { animation-delay: 2s; }
+.dd-intro__story span:nth-child(3) { animation-delay: 4s; }
+.dd-intro__steps { display: flex; align-items: center; gap: 10px; margin-top: 22px; font: 9px/1.5 Arial, sans-serif; letter-spacing: .15em; color: #d7cab3; }
+.dd-intro__steps span { animation: dd-step 6s ease-in-out infinite; }
+.dd-intro__steps span:nth-of-type(2) { animation-delay: 2s; }
+.dd-intro__steps span:nth-of-type(3) { animation-delay: 4s; }
+.dd-intro__steps i { width: 22px; height: 1px; background: #eadbc145; }
+@keyframes dd-light { to { opacity: .55; transform: scale(1.12); } }
+@keyframes dd-float { to { translate: 0 -10px; opacity: .7; } }
+@keyframes dd-story { 0% { opacity: 0; transform: translateY(6px); } 8%, 27% { opacity: 1; transform: translateY(0); } 34%, 100% { opacity: 0; transform: translateY(-6px); } }
+@keyframes dd-step { 0%, 33% { color: #fff5e2; } 40%, 100% { color: #b4b6a5; } }
+@media (max-width: 480px) { .dd-intro__fashion--one { left: 12%; top: 23%; } .dd-intro__fashion--two { right: 7%; top: 34%; } .dd-intro__fashion--three { left: 12%; top: 63%; } .dd-intro__story { font-size: 17px; } }
+@media (max-height: 620px) { .dd-intro__brand > .dd-brand-mark { width: 76px; height: 86px; } .dd-intro__story { margin-top: 20px; } }
+@media (prefers-reduced-motion: reduce) { .dd-intro__story span { display: none; } .dd-intro__story span:first-child { display: block; opacity: 1; } }
