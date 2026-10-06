@@ -74,7 +74,7 @@ export default function CategoryShowcaseCard({
                             <div className="csc-img-wrapper">
                                 <img
                                     {...responsiveImage(item.icon)} decoding="async"
-                                    alt={item.productname || ''}
+                                    alt={item.productname ? `${item.productname} - Doorstep Try & Buy` : 'Fashion item - Doordrape'}
                                     className="csc-img"
                                     loading="lazy"
                                 />

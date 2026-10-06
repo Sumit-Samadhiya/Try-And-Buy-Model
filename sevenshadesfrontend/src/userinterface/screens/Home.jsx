@@ -8,6 +8,8 @@ import Footer from "../components/Footer";
 import { catalogData } from "../../services/FetchDjangoApiServices";
 import MainCategoryComponent from "../components/MainCategoryComponent";
 import AdvertiseComponent from "../components/AdvertiseComponent";
+import HowItWorksSection from "../components/HowItWorksSection";
+import HomeFaqSection from "../components/HomeFaqSection";
 import { useNavigate } from "react-router-dom";
 import { useCallback, useState, useEffect } from "react";
 import { useTheme } from "@mui/material/styles";
@@ -162,11 +164,57 @@ export default function Home(props) {
             {!loading && !loadError && !listMainCategory.length && <p style={{ padding: 24 }}>New collections are coming soon.</p>}
 
             <main style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1 }}>
-                <h1 className="sr-only">Doordrape | Try &amp; Buy Fashion at Your Doorstep</h1>
+                <h1 className="sr-only">Doordrape: Doorstep Try &amp; Buy Fashion — Try Clothes at Home Before You Buy</h1>
                 {/* Hero Banner Carousel */}
                 <section style={{ width: '100%', padding: sm_matches ? '8px 10px 0' : '16px 16px 0', boxSizing: 'border-box' }}>
                     <SliderComponent data={listBanner} onBannerClick={handleBannerClick} />
                 </section>
+
+                {/* Trust & Value Proposition Strip */}
+                <section style={{ width: '100%', maxWidth: 1360, padding: sm_matches ? '12px 16px 0' : '20px 16px 0', boxSizing: 'border-box' }}>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: sm_matches ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+                        gap: sm_matches ? 10 : 16,
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: sm_matches ? '12px' : '16px',
+                        padding: sm_matches ? '14px 12px' : '16px 20px',
+                        boxShadow: '0 2px 6px rgba(15, 23, 42, 0.03)',
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{ fontSize: 20 }}>⚡</span>
+                            <div>
+                                <strong style={{ display: 'block', fontSize: sm_matches ? '12px' : '13px', color: '#0f172a' }}>30-45 Min Delivery</strong>
+                                <span style={{ fontSize: '11px', color: '#64748b' }}>Fast doorstep service</span>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{ fontSize: 20 }}>👗</span>
+                            <div>
+                                <strong style={{ display: 'block', fontSize: sm_matches ? '12px' : '13px', color: '#0f172a' }}>15-Min Home Trial</strong>
+                                <span style={{ fontSize: '11px', color: '#64748b' }}>Try multiple sizes</span>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{ fontSize: 20 }}>💵</span>
+                            <div>
+                                <strong style={{ display: 'block', fontSize: sm_matches ? '12px' : '13px', color: '#0f172a' }}>Pay After Trial</strong>
+                                <span style={{ fontSize: '11px', color: '#64748b' }}>Cash on Delivery / UPI</span>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{ fontSize: 20 }}>🔄</span>
+                            <div>
+                                <strong style={{ display: 'block', fontSize: sm_matches ? '12px' : '13px', color: '#0f172a' }}>Instant Returns</strong>
+                                <span style={{ fontSize: '11px', color: '#64748b' }}>Hand back on the spot</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* How It Works 3-Step Process */}
+                <HowItWorksSection />
 
                 {/* Subcategories Strip */}
                 {listSubCategory.length > 0 && (
@@ -221,7 +269,7 @@ export default function Home(props) {
 
                 {/* Section 2: Shop for Women (Showcase Card Matching Demo Layout) */}
                 {womenProducts.length > 0 && (
-                    <section style={{ width: '100%', maxWidth: 1360, marginTop: sm_matches ? 20 : 32, marginBottom: sm_matches ? 36 : 56, padding: '0 16px', boxSizing: 'border-box' }}>
+                    <section style={{ width: '100%', maxWidth: 1360, marginTop: sm_matches ? 20 : 32, padding: '0 16px', boxSizing: 'border-box' }}>
                         <CategoryShowcaseCard
                             title="Shop for Women"
                             items={womenProducts}
@@ -231,6 +279,9 @@ export default function Home(props) {
                         />
                     </section>
                 )}
+
+                {/* FAQ Section matching JSON-LD Schema */}
+                <HomeFaqSection />
             </main>
 
             <Footer />

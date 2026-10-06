@@ -50,7 +50,7 @@ export default function MainCategoryComponent(props) {
                     <div style={{ width: '100%', aspectRatio: sm_matches ? '1 / 1.15' : '4 / 5', overflow: 'hidden', backgroundColor: '#f1f5f9' }}>
                         <img
                             src={imageUrl(item.icon)}
-                            alt={item.maincategoryname || ''}
+                            alt={`${item.maincategoryname || 'Fashion'} collection - Doorstep Try & Buy`}
                             loading="lazy"
                             decoding="async"
                             style={{
