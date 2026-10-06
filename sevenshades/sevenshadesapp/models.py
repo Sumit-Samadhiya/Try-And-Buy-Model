@@ -447,3 +447,53 @@ class AnalyticsEvent(models.Model):
     def __str__(self):
         return f"{self.event_type}:{self.event_name} @ {self.page_path}"
 
+
+class Coupon(models.Model):
+    DISCOUNT_TYPES = (
+        ('percentage', 'Percentage'),
+        ('flat', 'Flat Amount'),
+    )
+    SCOPES = (
+        ('all', 'Entire Store / All Products'),
+        ('category', 'Specific Categories'),
+        ('subcategory', 'Specific Subcategories'),
+        ('product', 'Specific Products'),
+    )
+
+    code = models.CharField(max_length=50, unique=True, db_index=True)
+    description = models.CharField(max_length=255, blank=True, default='')
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPES, default='percentage')
+    discount_value = models.FloatField(default=0.0)
+    max_discount = models.FloatField(null=True, blank=True)
+    min_order_amount = models.FloatField(default=0.0)
+    scope = models.CharField(max_length=20, choices=SCOPES, default='all')
+    target_ids = models.JSONField(default=list, blank=True)
+    total_usage_limit = models.IntegerField(null=True, blank=True)
+    used_count = models.IntegerField(default=0)
+    per_user_limit = models.IntegerField(default=1)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.code} ({self.discount_type}: {self.discount_value})"
+
+
+class CouponUsage(models.Model):
+    coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE, related_name='usages')
+    user_identifier = models.CharField(max_length=50, db_index=True)
+    order_id = models.CharField(max_length=50, blank=True, default='')
+    discount_amount = models.FloatField(default=0.0)
+    used_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-used_at']
+
+    def __str__(self):
+        return f"{self.user_identifier} used {self.coupon.code} (-₹{self.discount_amount})"
+

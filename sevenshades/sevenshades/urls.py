@@ -23,7 +23,7 @@ Including another URLconf
 from django.contrib import admin
 from sevenshadesapp.health import health, ready
 from django.urls import path
-from sevenshadesapp import maincategory_views,mysubcategory_views,brands_views,product_views,productdetails_views,admin_login_view,userinterface,banner_views,signup_views,order_views,delivery_ops_views,inventory_views,admin_analytics_views
+from sevenshadesapp import maincategory_views,mysubcategory_views,brands_views,product_views,productdetails_views,admin_login_view,userinterface,banner_views,signup_views,order_views,delivery_ops_views,inventory_views,admin_analytics_views,coupon_views
 
 from django.urls import include,re_path
 from sevenshadesapp import auth_views
@@ -169,6 +169,12 @@ urlpatterns = [
     path('api/admin_budget_bazaar_list', admin_workspace_views.Admin_Budget_Bazaar_List),
     path('api/admin_budget_bazaar_save', admin_workspace_views.Admin_Budget_Bazaar_Save),
     path('api/admin_budget_bazaar_delete', admin_workspace_views.Admin_Budget_Bazaar_Delete),
+    path('api/admin_coupon_list', coupon_views.AdminCouponList),
+    path('api/admin_coupon_save', coupon_views.AdminCouponSave),
+    path('api/admin_coupon_toggle', coupon_views.AdminCouponToggle),
+    path('api/admin_coupon_delete', coupon_views.AdminCouponDelete),
+    path('api/admin_coupon_dependencies', coupon_views.AdminCouponDependencies),
+    path('api/validate_coupon', coupon_views.ValidateCoupon),
     re_path(r'^media/(?P<path>.*)$', secure_media_serve, name='media_serve'),
     re_path(r'^(?P<path>static/.*)$', secure_media_serve, name='static_serve'),
 ]

@@ -347,12 +347,36 @@ ENDPOINT_SCHEMAS = {
         'required': [],
         'allowed': {'area_id', 'id'}
     },
+    'admin_coupon_list': {
+        'required': [],
+        'allowed': {'search', 'status', 'scope'}
+    },
+    'admin_coupon_save': {
+        'required': ['code', 'discount_type', 'discount_value', 'scope', 'start_date', 'end_date'],
+        'allowed': {'id', 'code', 'description', 'discount_type', 'discount_value', 'max_discount', 'min_order_amount', 'scope', 'target_ids', 'total_usage_limit', 'per_user_limit', 'start_date', 'end_date', 'is_active'}
+    },
+    'admin_coupon_toggle': {
+        'required': ['id'],
+        'allowed': {'id', 'is_active'}
+    },
+    'admin_coupon_delete': {
+        'required': ['id'],
+        'allowed': {'id'}
+    },
+    'admin_coupon_dependencies': {
+        'required': [],
+        'allowed': set()
+    },
+    'validate_coupon': {
+        'required': ['code', 'items'],
+        'allowed': {'code', 'items', 'user_identifier', 'mobileno'}
+    },
 }
 
 TEXT_LIMITS = {
     'fname': 70, 'lname': 70, 'name': 120, 'adminname': 70,
     'maincategoryname': 70, 'subcategoryname': 70, 'brandname': 70,
-    'productname': 70, 'productsubname': 70, 'description': 150,
+    'productname': 70, 'productsubname': 70, 'description': 255,
     'color': 70, 'size': 70, 'offertype': 70, 'sku': 60, 'bannerdescription': 70,
     'address': 70, 'city': 70, 'country': 70, 'state': 70, 'landmark': 70,
     'zone': 70, 'zone_name': 70, 'bike_number': 40, 'order_id': 40,
@@ -361,6 +385,7 @@ TEXT_LIMITS = {
     'resolution': 2000, 'response': 2000, 'reason': 255, 'filter': 40,
     'area_name': 70, 'postcodes': 500, 'priority': 40, 'customer': 70, 'source': 40,
     'delivery_slot': 70,
+    'code': 50, 'search': 100, 'scope': 50, 'discount_type': 50, 'start_date': 60, 'end_date': 60,
 }
 
 ENUM_CHOICES = {
@@ -407,6 +432,8 @@ INTEGER_LIMITS = {
     'area_id': (1, 2147483647),
     'zone_id': (1, 2147483647),
     'version': (0, 1000000),
+    'per_user_limit': (1, 1000000),
+    'total_usage_limit': (1, 1000000),
 }
 
 FLOAT_LIMITS = {
@@ -416,6 +443,9 @@ FLOAT_LIMITS = {
     'lng': (-180.0, 180.0),
     'start_lat': (-90.0, 90.0),
     'start_lng': (-180.0, 180.0),
+    'discount_value': (0.01, 10000000.0),
+    'max_discount': (0.0, 10000000.0),
+    'min_order_amount': (0.0, 10000000.0),
 }
 
 
@@ -536,7 +566,7 @@ def validate_request(endpoint, data, files):
                 errors[key] = [f'Exceeds maximum length of {max_len} characters.']
             elif '\x00' in value or RE_CONTROL_CHARS.search(value):
                 errors[key] = ['Null bytes and invalid control characters are not permitted.']
-            elif not value.strip() and key not in ('review_text', 'bannerdescription', 'notes', 'resolution', 'landmark', 'reason', 'sku'):
+            elif not value.strip() and key not in ('review_text', 'bannerdescription', 'notes', 'resolution', 'landmark', 'reason', 'sku', 'description', 'search'):
                 errors[key] = [f'Enter valid text up to {max_len} characters.']
 
         # Mobile and Phone numbers

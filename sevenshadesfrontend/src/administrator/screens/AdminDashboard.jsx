@@ -23,6 +23,7 @@ import DisplayAllOrders from './DisplayAllOrders';
 import Dashboard from './Dashboard';
 import PincodeManager from './PincodeManager';
 import BudgetBazaarManager from './BudgetBazaarManager';
+import CouponManager from './CouponManager';
 
 
 
@@ -60,7 +61,7 @@ const theme = createTheme({
 const sections = [
   ['OVERVIEW', [['Quick Dashboard', 'dashboard'], ['Sales Report', 'sales'], ['Support Tickets', 'tickets'], ['Analytics & Tracking', 'analytics']]],
   ['OPERATIONS', [['Orders', 'orders'], ['Payment Recovery', 'payment-recovery'], ['Delivery Ops', 'deliveryops'], ['Pincodes & Zones', 'pincodes']]],
-  ['CATALOG', [['Categories', 'category'], ['Subcategories', 'subcategory'], ['Brands', 'brand'], ['Products & Variants', 'displayallproduct'], ['Budget Bazaar Deals', 'budgetbazaar'], ['Banners', 'banner']]],
+  ['CATALOG', [['Categories', 'category'], ['Subcategories', 'subcategory'], ['Brands', 'brand'], ['Products & Variants', 'displayallproduct'], ['Budget Bazaar Deals', 'budgetbazaar'], ['Coupons & Discounts', 'coupons'], ['Banners', 'banner']]],
 ];
 
 export default function AdminDashboard() {
@@ -307,6 +308,7 @@ export default function AdminDashboard() {
               <Route element={<DisplayProductDetails />} path="/displayproductdetails" />
               <Route element={<Banner />} path="/banner" />
               <Route element={<BudgetBazaarManager />} path="/budgetbazaar" />
+              <Route element={<CouponManager />} path="/coupons" />
               <Route element={<DeliveryOps />} path="/deliveryops" />
               <Route element={<PincodeManager />} path="/pincodes" />
               <Route element={<PincodeManager />} path="/deliveryzones" />
