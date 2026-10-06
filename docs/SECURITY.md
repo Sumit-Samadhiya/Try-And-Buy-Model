@@ -8,7 +8,7 @@
 ---
 
 ## 2. Authentication & Session Security
-- **Customer Authentication:** Firebase Phone Auth with invisible reCAPTCHA prevents automated credential stuffing and bot spam.
+- **Customer Authentication:** Self-hosted WhatsApp OTP via Baileys microservice (`whatsapp_service/`) with strict phone number existence verification on login/reset and cryptographic OTP expiration.
 - **Admin & Rider Authentication:** Password hashing using PBKDF2 / Django standards.
 - **Session Tokens:** Transmitted via secure, HttpOnly, and SameSite cookies to protect against XSS token harvesting.
 
