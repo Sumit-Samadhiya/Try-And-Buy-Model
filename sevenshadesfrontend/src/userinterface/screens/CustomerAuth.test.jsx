@@ -260,3 +260,52 @@ test('WhatsApp OTP displays error message when service is offline or rate limite
 
   expect(await screen.findByText(/Too many OTP requests/i)).toBeInTheDocument();
 });
+
+test('shows error when unregistered mobile tries to sign in', async () => {
+  postData.mockResolvedValueOnce({
+    status: false,
+    success: false,
+    message: 'No account found with this mobile number. Please sign up first.',
+    errors: { mobileno: 'No account found with this mobile number. Please sign up first.' }
+  });
+
+  show();
+  fill(/Mobile number/, '9998887776');
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /Get OTP on WhatsApp/i }));
+  });
+
+  expect(postData).toHaveBeenCalledWith('auth/send-whatsapp-otp', {
+    phone: '9998887776',
+    purpose: 'login'
+  });
+  expect((await screen.findAllByText(/No account found with this mobile number/i)).length).toBeGreaterThan(0);
+  expect(screen.queryByLabelText(/WhatsApp OTP/)).not.toBeInTheDocument();
+});
+
+test('shows error when unregistered mobile tries to reset password', async () => {
+  postData.mockResolvedValueOnce({
+    status: false,
+    success: false,
+    message: 'No account found with this mobile number. Please sign up first.',
+    errors: { mobileno: 'No account found with this mobile number. Please sign up first.' }
+  });
+
+  show('reset');
+  fill(/Mobile number/, '9998887776');
+  fill(/New password/, 'SecretPass123!');
+  fill(/Confirm password/, 'SecretPass123!');
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /Get OTP on WhatsApp/i }));
+  });
+
+  expect(postData).toHaveBeenCalledWith('auth/send-whatsapp-otp', {
+    phone: '9998887776',
+    purpose: 'reset'
+  });
+  expect((await screen.findAllByText(/No account found with this mobile number/i)).length).toBeGreaterThan(0);
+  expect(screen.queryByLabelText(/WhatsApp OTP/)).not.toBeInTheDocument();
+});
+

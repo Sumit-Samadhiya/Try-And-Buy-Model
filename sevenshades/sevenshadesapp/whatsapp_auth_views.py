@@ -85,20 +85,22 @@ def send_whatsapp_otp(request):
             'message': 'Enter a valid 10-digit Indian mobile number.'
         }, status=400)
 
-    # Validate purpose constraints before sending OTP
-    if purpose == 'reset':
+    # Validate purpose constraints before sending OTP (Do NOT send OTP to unregistered numbers on login or reset)
+    if purpose in ('login', 'reset'):
         if not SignUp.objects.filter(mobileno=phone).exists():
             return JsonResponse({
                 'status': False,
                 'success': False,
-                'message': 'No account found with this mobile number. Please create an account.'
+                'message': 'No account found with this mobile number. Please sign up first.',
+                'errors': {'mobileno': 'No account found with this mobile number. Please sign up first.'}
             }, status=404)
     elif purpose == 'signup':
         if SignUp.objects.filter(mobileno=phone).exists():
             return JsonResponse({
                 'status': False,
                 'success': False,
-                'message': 'An account already exists with this mobile number. Please sign in.'
+                'message': 'An account already exists with this mobile number. Please sign in.',
+                'errors': {'mobileno': 'An account already exists with this mobile number. Please sign in.'}
             }, status=409)
 
     now = timezone.now()
@@ -307,18 +309,16 @@ def verify_whatsapp_otp(request):
             'data': [user_data]
         })
 
-    # 3. Default Login Flow (Fetch or auto-create account)
+    # 3. Default Login Flow (Only allow registered accounts)
     else:
         account = SignUp.objects.filter(mobileno=phone).first()
-        created = False
         if not account:
-            account = SignUp.objects.create(
-                mobileno=phone,
-                fname='Customer',
-                lname='',
-                password=make_password(None)
-            )
-            created = True
+            return JsonResponse({
+                'status': False,
+                'success': False,
+                'message': 'No account found with this mobile number. Please sign up first.',
+                'errors': {'mobileno': 'No account found with this mobile number.'}
+            }, status=404)
 
         get_user_model().objects.get_or_create(
             username=phone,
@@ -326,7 +326,7 @@ def verify_whatsapp_otp(request):
                 'first_name': account.fname,
                 'last_name': account.lname,
                 'email': account.emailid or '',
-                'password': make_password(None),
+                'password': account.password or make_password(None),
             }
         )
         establish_session(request, 'customer', account)
@@ -340,7 +340,7 @@ def verify_whatsapp_otp(request):
             'token': token,
             'token_type': 'Bearer',
             'expires_in': 3600,
-            'created': created,
+            'created': False,
             'user': user_data,
             'data': [user_data],
         })

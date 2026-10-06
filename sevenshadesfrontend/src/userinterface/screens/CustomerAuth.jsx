@@ -18,6 +18,7 @@ export default function CustomerAuth({ kind = 'login' }) {
   const [method, setMethod] = useState('whatsapp');
   const [form, setForm] = useState({ mobileno:'', fname:'', lname:'', emailid:'', password:'', confirm_password:'', otp:'' });
   const [errors, setErrors] = useState({}), [message, setMessage] = useState('');
+  const [severity, setSeverity] = useState('error');
   const [challenge, setChallenge] = useState(null);
   const [busy, setBusy] = useState(false), [showPassword, setShowPassword] = useState(false), [now, setNow] = useState(Date.now());
   const pending = useRef(false);
@@ -37,6 +38,7 @@ export default function CustomerAuth({ kind = 'login' }) {
   };
 
   const setResult = result => {
+    setSeverity('error');
     setMessage(result.message || 'Please check your details.');
     setErrors(Object.fromEntries(Object.entries(result.errors || {}).map(([key, value]) => [
       key,
@@ -151,9 +153,11 @@ export default function CustomerAuth({ kind = 'login' }) {
       });
       setForm(old => ({ ...old, otp: '' }));
       setErrors({});
+      setSeverity('success');
       setMessage(res.message || `Verification code sent to WhatsApp (+91 ${rawNumber}). Valid for 5 minutes.`);
     } catch (err) {
       console.error('WhatsApp OTP send error:', err);
+      setSeverity('error');
       setMessage(err?.message || 'Service temporarily unavailable, please try again in a few moments.');
     }
   });
@@ -346,7 +350,7 @@ export default function CustomerAuth({ kind = 'login' }) {
             {location.state?.authMessage && kind === 'login' && (
               <Alert severity="success">{location.state.authMessage}</Alert>
             )}
-            {message && <Alert severity="info" role="status">{message}</Alert>}
+            {message && <Alert severity={severity} role="status">{message}</Alert>}
 
             {signup && (
               <div className="auth-name-row">
