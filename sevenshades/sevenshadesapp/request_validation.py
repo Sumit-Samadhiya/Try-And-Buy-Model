@@ -58,11 +58,11 @@ ENDPOINT_SCHEMAS = {
     },
     'auth/send-whatsapp-otp': {
         'required': [],
-        'allowed': {'phone', 'mobileno'}
+        'allowed': {'phone', 'mobileno', 'purpose'}
     },
     'auth/verify-whatsapp-otp': {
         'required': ['otp'],
-        'allowed': {'phone', 'mobileno', 'otp'}
+        'allowed': {'phone', 'mobileno', 'otp', 'purpose', 'fname', 'lname', 'emailid', 'password', 'confirm_password'}
     },
     'auth/whatsapp-status': {
         'required': [],

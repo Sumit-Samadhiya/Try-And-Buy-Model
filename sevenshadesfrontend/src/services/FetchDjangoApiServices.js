@@ -36,7 +36,7 @@ const apiError = error => {
   };
 };
 
-const loginEndpoints = new Set(['check_costumer_login', 'check_admin_login', 'delivery_rider_login', 'auth/firebase-login']);
+const loginEndpoints = new Set(['check_costumer_login', 'check_admin_login', 'delivery_rider_login', 'auth/firebase-login', 'auth/verify-whatsapp-otp']);
 const tokenHeaders = url => {
   const token = localStorage.getItem('sevenshades_token');
   return token && !loginEndpoints.has(url.replace(/\/$/, '')) ? { Authorization: `Bearer ${token}` } : {};

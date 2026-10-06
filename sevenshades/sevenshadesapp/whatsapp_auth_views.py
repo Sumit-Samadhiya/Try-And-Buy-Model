@@ -9,6 +9,8 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.utils import timezone
 from rest_framework.decorators import api_view
@@ -74,6 +76,7 @@ def send_whatsapp_otp(request):
     data = request.data
     raw_phone = data.get('phone') or data.get('mobileno')
     phone = _clean_phone(raw_phone)
+    purpose = str(data.get('purpose') or 'login').strip().lower()
 
     if not phone or not RE_MOBILE.fullmatch(phone):
         return JsonResponse({
@@ -81,6 +84,22 @@ def send_whatsapp_otp(request):
             'success': False,
             'message': 'Enter a valid 10-digit Indian mobile number.'
         }, status=400)
+
+    # Validate purpose constraints before sending OTP
+    if purpose == 'reset':
+        if not SignUp.objects.filter(mobileno=phone).exists():
+            return JsonResponse({
+                'status': False,
+                'success': False,
+                'message': 'No account found with this mobile number. Please create an account.'
+            }, status=404)
+    elif purpose == 'signup':
+        if SignUp.objects.filter(mobileno=phone).exists():
+            return JsonResponse({
+                'status': False,
+                'success': False,
+                'message': 'An account already exists with this mobile number. Please sign in.'
+            }, status=409)
 
     now = timezone.now()
 
@@ -139,11 +158,12 @@ def send_whatsapp_otp(request):
 
 @api_view(['POST'])
 def verify_whatsapp_otp(request):
-    """Verify 6-digit WhatsApp OTP, authenticate/create customer account, and return JWT credentials."""
+    """Verify 6-digit WhatsApp OTP for login, registration, or password reset."""
     data = request.data
     raw_phone = data.get('phone') or data.get('mobileno')
     phone = _clean_phone(raw_phone)
     otp = str(data.get('otp') or '').strip()
+    purpose = str(data.get('purpose') or 'login').strip().lower()
 
     if not phone or not RE_MOBILE.fullmatch(phone):
         return JsonResponse({
@@ -197,45 +217,133 @@ def verify_whatsapp_otp(request):
     otp_record.is_consumed = True
     otp_record.save(update_fields=['is_consumed'])
 
-    # Authenticate or auto-register user with phone number
-    account = SignUp.objects.filter(mobileno=phone).first()
-    created = False
-    if not account:
+    # 1. Reset Password Flow
+    if purpose == 'reset':
+        password = str(data.get('password') or '')
+        confirm_password = str(data.get('confirm_password') or '')
+        if not password or not confirm_password:
+            return JsonResponse({'status': False, 'success': False, 'message': 'New password and confirmation are required.'}, status=400)
+        if password != confirm_password:
+            return JsonResponse({'status': False, 'success': False, 'message': 'Passwords do not match.'}, status=400)
+        try:
+            validate_password(password)
+        except ValidationError as exc:
+            return JsonResponse({'status': False, 'success': False, 'message': ' '.join(exc.messages)}, status=400)
+
+        account = SignUp.objects.filter(mobileno=phone).first()
+        if not account:
+            return JsonResponse({'status': False, 'success': False, 'message': 'No account found with this mobile number.'}, status=404)
+
+        account.password = make_password(password)
+        account.save(update_fields=['password'])
+
+        u, _ = get_user_model().objects.get_or_create(username=phone)
+        u.password = account.password
+        u.save(update_fields=['password'])
+
+        establish_session(request, 'customer', account)
+        token = issue_token(account)
+        user_data = SignUpSafeSerializer(account).data
+        return JsonResponse({
+            'status': True,
+            'success': True,
+            'message': 'Password reset successfully. You are now signed in.',
+            'token': token,
+            'token_type': 'Bearer',
+            'expires_in': 3600,
+            'created': False,
+            'user': user_data,
+            'data': [user_data]
+        })
+
+    # 2. Signup Flow
+    elif purpose == 'signup':
+        password = str(data.get('password') or '')
+        confirm_password = str(data.get('confirm_password') or '')
+        fname = str(data.get('fname') or 'Customer').strip()
+        lname = str(data.get('lname') or '').strip()
+        emailid = str(data.get('emailid') or '').strip()
+
+        if password or confirm_password:
+            if password != confirm_password:
+                return JsonResponse({'status': False, 'success': False, 'message': 'Passwords do not match.'}, status=400)
+            try:
+                validate_password(password)
+            except ValidationError as exc:
+                return JsonResponse({'status': False, 'success': False, 'message': ' '.join(exc.messages)}, status=400)
+
+        account = SignUp.objects.filter(mobileno=phone).first()
+        if account:
+            return JsonResponse({'status': False, 'success': False, 'message': 'An account already exists with this mobile number. Please sign in.'}, status=409)
+
         account = SignUp.objects.create(
             mobileno=phone,
-            fname='Customer',
-            lname='',
-            password=make_password(None)
+            fname=fname or 'Customer',
+            lname=lname,
+            emailid=emailid,
+            password=make_password(password) if password else make_password(None)
         )
-        created = True
+        get_user_model().objects.get_or_create(
+            username=phone,
+            defaults={
+                'first_name': account.fname,
+                'last_name': account.lname,
+                'email': account.emailid or '',
+                'password': account.password,
+            }
+        )
+        establish_session(request, 'customer', account)
+        token = issue_token(account)
+        user_data = SignUpSafeSerializer(account).data
+        return JsonResponse({
+            'status': True,
+            'success': True,
+            'message': 'Account created successfully via WhatsApp verification.',
+            'token': token,
+            'token_type': 'Bearer',
+            'expires_in': 3600,
+            'created': True,
+            'user': user_data,
+            'data': [user_data]
+        })
 
-    # Sync standard User model for compatibility
-    get_user_model().objects.get_or_create(
-        username=phone,
-        defaults={
-            'first_name': account.fname,
-            'last_name': account.lname,
-            'email': account.emailid or '',
-            'password': make_password(None),
-        }
-    )
+    # 3. Default Login Flow (Fetch or auto-create account)
+    else:
+        account = SignUp.objects.filter(mobileno=phone).first()
+        created = False
+        if not account:
+            account = SignUp.objects.create(
+                mobileno=phone,
+                fname='Customer',
+                lname='',
+                password=make_password(None)
+            )
+            created = True
 
-    # Establish session & issue tokens
-    establish_session(request, 'customer', account)
-    token = issue_token(account)
-    user_data = SignUpSafeSerializer(account).data
+        get_user_model().objects.get_or_create(
+            username=phone,
+            defaults={
+                'first_name': account.fname,
+                'last_name': account.lname,
+                'email': account.emailid or '',
+                'password': make_password(None),
+            }
+        )
+        establish_session(request, 'customer', account)
+        token = issue_token(account)
+        user_data = SignUpSafeSerializer(account).data
 
-    return JsonResponse({
-        'status': True,
-        'success': True,
-        'message': 'Signed in successfully via WhatsApp.',
-        'token': token,
-        'token_type': 'Bearer',
-        'expires_in': 3600,
-        'created': created,
-        'user': user_data,
-        'data': [user_data],
-    })
+        return JsonResponse({
+            'status': True,
+            'success': True,
+            'message': 'Signed in successfully via WhatsApp.',
+            'token': token,
+            'token_type': 'Bearer',
+            'expires_in': 3600,
+            'created': created,
+            'user': user_data,
+            'data': [user_data],
+        })
 
 
 @api_view(['GET'])

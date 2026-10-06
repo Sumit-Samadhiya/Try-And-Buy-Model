@@ -1,11 +1,10 @@
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, cleanup } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { createStore } from 'redux';
 import CustomerAuth from './CustomerAuth';
 import RootReducer from '../../storage/RootReducer';
 import { postData } from '../../services/FetchDjangoApiServices';
-import { signInWithPhoneNumber, signOut, RecaptchaVerifier } from 'firebase/auth';
 
 jest.mock('../../services/FetchDjangoApiServices', () => ({
   getData: jest.fn(),
@@ -13,19 +12,19 @@ jest.mock('../../services/FetchDjangoApiServices', () => ({
   clearCachedAccounts: jest.fn()
 }));
 
-jest.mock('firebase/auth', () => {
-  return {
-    getAuth: jest.fn(() => ({})),
-    signOut: jest.fn().mockResolvedValue(),
-    RecaptchaVerifier: jest.fn().mockImplementation(() => ({
-      clear: jest.fn()
-    })),
-    signInWithPhoneNumber: jest.fn()
-  };
-});
+jest.mock('../../services/analytics', () => ({
+  trackAuthEvent: jest.fn(),
+  trackEvent: jest.fn()
+}));
+
+let currentView = null;
 
 function show(kind = 'login') {
-  render(
+  if (currentView) {
+    try { currentView.unmount(); } catch (_) {}
+    currentView = null;
+  }
+  currentView = render(
     <Provider store={createStore(RootReducer)}>
       <MemoryRouter initialEntries={['/auth']}>
         <Routes>
@@ -36,6 +35,7 @@ function show(kind = 'login') {
       </MemoryRouter>
     </Provider>
   );
+  return currentView;
 }
 
 function fill(label, value) {
@@ -45,12 +45,28 @@ function fill(label, value) {
 beforeEach(() => {
   jest.clearAllMocks();
   postData.mockReset();
-  signOut.mockResolvedValue();
+  if (typeof localStorage !== 'undefined') {
+    localStorage.clear();
+  }
+});
+
+afterEach(() => {
+  if (currentView) {
+    try { currentView.unmount(); } catch (_) {}
+    currentView = null;
+  }
+  cleanup();
 });
 
 test('invalid login fields show inline errors without a request', async () => {
   show();
   await screen.findByText('Welcome back.');
+
+  // Switch to Password tab
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Password' }));
+  });
+
   fill(/Mobile number/, '123');
   fill(/^Password/, 'test');
   await act(async () => {
@@ -60,95 +76,7 @@ test('invalid login fields show inline errors without a request', async () => {
   expect(postData).not.toHaveBeenCalled();
 });
 
-test('OTP login uses pure Firebase signInWithPhoneNumber without backend send-otp call', async () => {
-  const mockConfirm = jest.fn().mockResolvedValue({
-    user: {
-      getIdToken: jest.fn().mockResolvedValue('fake-firebase-id-token')
-    }
-  });
-
-  signInWithPhoneNumber.mockResolvedValue({
-    confirm: mockConfirm
-  });
-
-  postData.mockResolvedValue({
-    status: true,
-    user: { mobileno: '9000000091', fname: 'Test' },
-    token: 'jwt-token-123'
-  });
-
-  show();
-  await act(async () => {
-    fireEvent.click(screen.getByRole('button', { name: 'Login with OTP' }));
-  });
-
-  fill(/Mobile number/, '9000000091');
-
-  // Click Get OTP
-  await act(async () => {
-    fireEvent.click(screen.getByRole('button', { name: 'Get OTP' }));
-  });
-
-  // 1. signInWithPhoneNumber was called with +919000000091
-  expect(signInWithPhoneNumber).toHaveBeenCalled();
-  const phoneArg = signInWithPhoneNumber.mock.calls[0][1];
-  expect(phoneArg).toBe('+919000000091');
-
-  // 2. NO backend fetch call to auth/send-otp/
-  expect(postData).not.toHaveBeenCalledWith('auth/send-otp/', expect.anything());
-
-  // Enter 6-digit OTP
-  fill(/6-digit OTP/, '123456');
-
-  // Click verify
-  await act(async () => {
-    fireEvent.click(screen.getByRole('button', { name: 'Verify & sign in' }));
-  });
-
-  // 3. confirm was called with the OTP
-  expect(mockConfirm).toHaveBeenCalledWith('123456');
-
-  // 4. Token was sent to Django backend auth/firebase-login/
-  expect(postData).toHaveBeenCalledWith('auth/firebase-login/', { id_token: 'fake-firebase-id-token' });
-  expect(await screen.findByText('Signed in home')).toBeInTheDocument();
-});
-
-test('signup rejects mismatched confirmation before requesting OTP', async () => {
-  show('signup');
-  await screen.findByText(/Create your account/);
-  fill(/First name/, 'New');
-  fill(/Last name/, 'User');
-  fill(/Mobile number/, '9000000091');
-  fill(/Email address/, 'new@example.test');
-  fill(/^Password/, 'Strong-example!');
-  fill(/Confirm password/, 'different');
-  await act(async () => {
-    fireEvent.click(screen.getByRole('button', { name: 'Get OTP' }));
-  });
-  expect(await screen.findByText('Passwords do not match.')).toBeInTheDocument();
-  expect(signInWithPhoneNumber).not.toHaveBeenCalled();
-});
-
-test('reset sends the new password with the Firebase proof', async () => {
-  signInWithPhoneNumber.mockResolvedValue({ confirm: jest.fn().mockResolvedValue({
-    user: { getIdToken: jest.fn().mockResolvedValue('reset-proof') }
-  }) });
-  postData.mockResolvedValue({ status:true, token:'new-token', user:{mobileno:'9000000091'} });
-  show('reset');
-  fill(/Mobile number/, '9000000091');
-  fill(/New password/, 'Fresh-password!429');
-  fill(/Confirm password/, 'Fresh-password!429');
-  await act(async () => fireEvent.click(screen.getByRole('button', {name:'Get OTP'})));
-  fill(/6-digit OTP/, '123456');
-  await act(async () => fireEvent.click(screen.getByRole('button', {name:'Verify & reset password'})));
-  expect(postData).toHaveBeenCalledWith('auth/firebase-login/', {
-    id_token:'reset-proof', purpose:'reset', password:'Fresh-password!429', confirm_password:'Fresh-password!429'
-  });
-  expect(await screen.findByText('Signed in home')).toBeInTheDocument();
-  expect(localStorage.getItem('sevenshades_token')).toBe('new-token');
-});
-
-test('WhatsApp OTP flow requests OTP via backend and verifies code successfully', async () => {
+test('WhatsApp OTP login requests OTP and logs in successfully', async () => {
   postData
     .mockResolvedValueOnce({
       status: true,
@@ -169,11 +97,6 @@ test('WhatsApp OTP flow requests OTP via backend and verifies code successfully'
   show();
   await screen.findByText('Welcome back.');
 
-  // Switch to WhatsApp OTP tab
-  await act(async () => {
-    fireEvent.click(screen.getByRole('button', { name: /WhatsApp OTP/i }));
-  });
-
   fill(/Mobile number/, '9876543210');
 
   // Click Get OTP on WhatsApp
@@ -181,11 +104,13 @@ test('WhatsApp OTP flow requests OTP via backend and verifies code successfully'
     fireEvent.click(screen.getByRole('button', { name: /Get OTP on WhatsApp/i }));
   });
 
-  // Verify backend endpoint was called
-  expect(postData).toHaveBeenCalledWith('auth/send-whatsapp-otp', { phone: '9876543210' });
+  expect(postData).toHaveBeenCalledWith('auth/send-whatsapp-otp', {
+    phone: '9876543210',
+    purpose: 'login'
+  });
   expect(await screen.findByText(/OTP sent to your WhatsApp/i)).toBeInTheDocument();
 
-  // Enter 6-digit OTP
+  // Enter 6-digit WhatsApp OTP
   fill(/WhatsApp OTP/, '654321');
 
   // Submit verification
@@ -195,10 +120,128 @@ test('WhatsApp OTP flow requests OTP via backend and verifies code successfully'
 
   expect(postData).toHaveBeenCalledWith('auth/verify-whatsapp-otp', {
     phone: '9876543210',
-    otp: '654321'
+    otp: '654321',
+    purpose: 'login'
   });
   expect(await screen.findByText('Signed in home')).toBeInTheDocument();
   expect(localStorage.getItem('sevenshades_token')).toBe('jwt-whatsapp-token-abc');
+});
+
+test('signup rejects mismatched confirmation before requesting WhatsApp OTP', async () => {
+  show('signup');
+  await screen.findByText(/Create your account/);
+  fill(/First name/, 'New');
+  fill(/Last name/, 'User');
+  fill(/Mobile number/, '9000000091');
+  fill(/Email address/, 'new@example.test');
+  fill(/^Password/, 'Strong-example!429');
+  fill(/Confirm password/, 'different');
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /Get OTP on WhatsApp/i }));
+  });
+
+  expect(await screen.findByText('Passwords do not match.')).toBeInTheDocument();
+  expect(postData).not.toHaveBeenCalled();
+});
+
+test('signup sends registration details with WhatsApp OTP verification', async () => {
+  postData
+    .mockResolvedValueOnce({
+      status: true,
+      success: true,
+      message: 'OTP sent to your WhatsApp successfully.',
+      phone: '9000000091'
+    })
+    .mockResolvedValueOnce({
+      status: true,
+      success: true,
+      token: 'jwt-new-user-token',
+      created: true,
+      user: { mobileno: '9000000091', fname: 'New' }
+    });
+
+  show('signup');
+  fill(/First name/, 'New');
+  fill(/Last name/, 'User');
+  fill(/Mobile number/, '9000000091');
+  fill(/Email address/, 'new@example.test');
+  fill(/^Password/, 'Strong-pass!429');
+  fill(/Confirm password/, 'Strong-pass!429');
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /Get OTP on WhatsApp/i }));
+  });
+
+  expect(postData).toHaveBeenCalledWith('auth/send-whatsapp-otp', {
+    phone: '9000000091',
+    purpose: 'signup'
+  });
+
+  fill(/WhatsApp OTP/, '112233');
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /Verify & create account/i }));
+  });
+
+  expect(postData).toHaveBeenCalledWith('auth/verify-whatsapp-otp', {
+    phone: '9000000091',
+    otp: '112233',
+    purpose: 'signup',
+    fname: 'New',
+    lname: 'User',
+    emailid: 'new@example.test',
+    password: 'Strong-pass!429',
+    confirm_password: 'Strong-pass!429'
+  });
+  expect(await screen.findByText('Signed in home')).toBeInTheDocument();
+  expect(localStorage.getItem('sevenshades_token')).toBe('jwt-new-user-token');
+});
+
+test('reset sends new password with WhatsApp OTP verification', async () => {
+  postData
+    .mockResolvedValueOnce({
+      status: true,
+      success: true,
+      message: 'OTP sent to your WhatsApp successfully.',
+      phone: '9000000091'
+    })
+    .mockResolvedValueOnce({
+      status: true,
+      success: true,
+      token: 'jwt-reset-token',
+      user: { mobileno: '9000000091' }
+    });
+
+  show('reset');
+  fill(/Mobile number/, '9000000091');
+  fill(/New password/, 'Fresh-password!429');
+  fill(/Confirm password/, 'Fresh-password!429');
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /Get OTP on WhatsApp/i }));
+  });
+
+  expect(postData).toHaveBeenCalledWith('auth/send-whatsapp-otp', {
+    phone: '9000000091',
+    purpose: 'reset'
+  });
+
+  fill(/WhatsApp OTP/, '998877');
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /Verify & reset password/i }));
+  });
+
+  expect(postData).toHaveBeenCalledWith('auth/verify-whatsapp-otp', {
+    phone: '9000000091',
+    otp: '998877',
+    purpose: 'reset',
+    password: 'Fresh-password!429',
+    confirm_password: 'Fresh-password!429'
+  });
+  expect(await screen.findByText('Signed in home')).toBeInTheDocument();
+  expect(localStorage.getItem('sevenshades_token')).toBe('jwt-reset-token');
 });
 
 test('WhatsApp OTP displays error message when service is offline or rate limited', async () => {
@@ -209,10 +252,6 @@ test('WhatsApp OTP displays error message when service is offline or rate limite
   });
 
   show();
-  await act(async () => {
-    fireEvent.click(screen.getByRole('button', { name: /WhatsApp OTP/i }));
-  });
-
   fill(/Mobile number/, '9876543210');
 
   await act(async () => {
@@ -221,4 +260,3 @@ test('WhatsApp OTP displays error message when service is offline or rate limite
 
   expect(await screen.findByText(/Too many OTP requests/i)).toBeInTheDocument();
 });
-
