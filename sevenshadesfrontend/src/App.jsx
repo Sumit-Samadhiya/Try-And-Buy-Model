@@ -5,7 +5,7 @@ import CurtainIntro from './userinterface/components/CurtainIntro';
 import RequireSession from './services/RequireSession';
 import CookieConsent from './userinterface/components/CookieConsent';
 import { getData, clearCachedAccounts } from './services/FetchDjangoApiServices';
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { useDispatch } from 'react-redux';
 import {BrowserRouter,Routes,Route, Navigate} from 'react-router-dom'
 import AdminLogin from './administrator/screens/AdminLogin';
@@ -33,6 +33,12 @@ const NotFound = lazy(() => import('./userinterface/screens/NotFound'));
 
 function App() {
   const dispatch = useDispatch();
+  const [introReady, setIntroReady] = useState(false);
+  useEffect(() => {
+    const ready = () => setIntroReady(true);
+    window.addEventListener('doordrape-home-ready', ready);
+    return () => window.removeEventListener('doordrape-home-ready', ready);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -49,10 +55,11 @@ function App() {
 
   return (
     <div>
+      <CurtainIntro ready={introReady} />
       <BrowserRouter>
       <PageTracker />
       <CustomerOrderNotifications />
-      <Suspense fallback={['/', '/home'].includes(window.location.pathname) ? <CurtainIntro /> : <DoordrapeLoader fullPage text="Loading page..." role="status" />}><Routes>
+      <Suspense fallback={<DoordrapeLoader fullPage text="Loading page..." role="status" />}><Routes>
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route element={<AdminLogin/>} path="/adminlogin"/>
         <Route element={<RequireSession role="admin"><AdminDashboard/></RequireSession>} path="/admindashboard/*"/>

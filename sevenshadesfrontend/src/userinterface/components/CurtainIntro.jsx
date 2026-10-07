@@ -2,6 +2,12 @@ import { BrandMark } from './BrandLogo';
 import { useEffect, useRef, useState } from 'react';
 import './CurtainIntro.css';
 
+const SESSION_KEY = 'doordrape-intro-seen';
+let seenInMemory = false;
+function alreadySeen() {
+  try { return sessionStorage.getItem(SESSION_KEY) === '1'; } catch { return seenInMemory; }
+}
+
 const STORY_STEPS = [
   {
     tag: '01 · CURATED SELECTION',
@@ -9,7 +15,7 @@ const STORY_STEPS = [
     desc: 'Select your favorites to try at home with zero upfront pressure.',
   },
   {
-    tag: '02 · 10-MINUTE TRIAL',
+    tag: '02 · YOUR HOME TRIAL',
     title: 'Your Room Is Your Runway',
     desc: 'Try outfits with your own accessories, footwear, and mirror lighting.',
   },
@@ -24,13 +30,14 @@ const STORY_STEPS = [
  * A luxury theatrical curtain reveal that introduces DoorDrape's Try-and-Buy
  * experience through bespoke brand storytelling without feeling like a loading screen.
  */
-export default function CurtainIntro({ ready = false, minDuration = 5500, maxDuration = 9500 }) {
+export default function CurtainIntro({ ready = false, minDuration = 1800, maxDuration = 6000 }) {
   const dialog = useRef(null);
-  const [phase, setPhase] = useState('loading');
+  const [phase, setPhase] = useState(() => alreadySeen() ? 'done' : 'loading');
   const [introComplete, setIntroComplete] = useState(false);
   const [activeStory, setActiveStory] = useState(0);
 
   useEffect(() => {
+    if (alreadySeen()) return undefined;
     dialog.current?.showModal?.();
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     const minimum = setTimeout(() => setIntroComplete(true), reduced ? 0 : minDuration);
@@ -60,11 +67,13 @@ export default function CurtainIntro({ ready = false, minDuration = 5500, maxDur
   // Cleanup dialog when opening transition finishes
   useEffect(() => {
     if (phase !== 'opening') return undefined;
+    seenInMemory = true;
+    try { sessionStorage.setItem(SESSION_KEY, '1'); } catch { /* In-memory fallback for restricted storage. */ }
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     const timeout = setTimeout(() => {
       dialog.current?.close?.();
       setPhase('done');
-    }, reduced ? 0 : 800);
+    }, reduced ? 0 : 950);
     return () => clearTimeout(timeout);
   }, [phase]);
 
@@ -125,7 +134,7 @@ export default function CurtainIntro({ ready = false, minDuration = 5500, maxDur
         <p className="dd-intro__tagline">YOUR STYLE. AT YOUR DOOR.</p>
 
         {/* Dynamic Storytelling Vignette Card */}
-        <div className="dd-intro__story-card" aria-live="polite">
+        <div className="dd-intro__story-card" key={activeStory}>
           <div className="dd-intro__story-pill">
             {STORY_STEPS[activeStory].tag}
           </div>
