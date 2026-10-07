@@ -89,22 +89,22 @@ export default function Banner(){
             </Grid>
            
 
-            <Grid item xs={6} style={{display:'flex',justifyContent:'center',alignItems:'center',flexDirection:'column'}}>
-                <Button fullWidth variant="contained" component='label'>
-                    Upload Icon
-                    <input  type="file" hidden accept="image/*" onChange={handleChange} multiple />
+            <Grid item xs={12} sm={7} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <Button fullWidth variant="outlined" component='label' sx={{ py: 1.4, borderStyle: 'dashed', borderWidth: 2, borderColor: formError.icon ? '#d32f2f' : '#cbd5e1', color: '#064e3b', bgcolor: '#f8fafc' }}>
+                    Choose Banner Images
+                    <input type="file" hidden accept="image/*" onChange={handleChange} multiple />
                 </Button>
-                {formError.icon?<><div style={{color:'#d32f2f',fontSize:'0.75rem',fontWeight:400,fontFamily:'"Roboto","Helvetica","Arial","sans-serif"',marginTop:4}}>{formError.icon}</div></>:<></>}
-                </Grid>
-                <Grid item xs={6} style={{display:'flex',justifyContent:'center',alignItems:'center'}}>
-           {showImages()}
+                {formError.icon && <div style={{ color: '#d32f2f', fontSize: '0.75rem', marginTop: 4 }}>{formError.icon}</div>}
+            </Grid>
+            <Grid item xs={12} sm={5} sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
+                {showImages()}
             </Grid>
 
-            <Grid item xs={6} style={{display:'flex'}}>
-                <Button onClick={handleClick} variant="contained" fullWidth>Submit</Button>
+            <Grid item xs={12} sm={6}>
+                <Button onClick={handleClick} variant="contained" fullWidth sx={{ py: 1.2, bgcolor: '#064e3b', color: '#fff', fontWeight: 700, '&:hover': { bgcolor: '#047857' } }}>Submit Banner</Button>
             </Grid>
-            <Grid item xs={6}>
-                <Button onClick={handleReset} variant="contained" fullWidth>Reset</Button>
+            <Grid item xs={12} sm={6}>
+                <Button onClick={handleReset} variant="outlined" fullWidth sx={{ py: 1.2, borderColor: '#cbd5e1', color: '#475569', fontWeight: 700 }}>Reset</Button>
             </Grid>
         </Grid>
       </div>

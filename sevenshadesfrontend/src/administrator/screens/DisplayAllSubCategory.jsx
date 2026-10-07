@@ -4,12 +4,24 @@ import { useStyles } from "./CategoryCss";
 import { useEffect,useState } from "react";
 import TitleComponent from "../components/admin/TitleComponent";
 import Swal from "sweetalert2";
-import {FormControl,FormHelperText,InputLabel, Select,MenuItem, Button,TextField,Avatar } from "@mui/material";
+import {
+  FormControl,
+  FormHelperText,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  TextField,
+  Avatar,
+  Box,
+  Chip,
+  Typography,
+  Grid,
+} from "@mui/material";
 import { getData, postData } from "../../services/FetchDjangoApiServices";
-import Dialog from  '@mui/material/Dialog';
-import  DialogActions  from "@mui/material/DialogActions";
+import Dialog from '@mui/material/Dialog';
+import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
-import {Grid} from "@mui/material";
 import DialogTitle from "@mui/material/DialogTitle";
 
 
@@ -143,122 +155,270 @@ export default function DisplayAllSubCategory(){
         }
     };
     function listAllCategory() {
-        
-        return (
+      return (
+        <Box sx={{ width: '100%', overflowX: 'auto' }}>
           <MaterialTable
-            title={<TitleComponent title={'List Sub Category'} listicon='' />}
+            title={
+              <TitleComponent
+                title="All Subcategories"
+                link="/admindashboard/subcategory"
+                buttonText="Add New Subcategory"
+              />
+            }
             columns={[
-              { title: 'id', field: 'id' },
-              { title: 'Main Category id', render:(rowData)=><div><div>{rowData.maincategoryid.id}</div><div>{rowData.maincategoryid.maincategoryname}</div></div> },
-              { title: 'Sub Category name', field: 'subcategoryname' },
-              { title: 'icon',render:(row)=><><img src={imageUrl(row.icon)} alt="icons" style={{width:40,height:40,borderRadius:10}}  /></> },
-             
-            ]}
-            data={mySubCategoryList}        
-           
-            actions={[
               {
-                icon:'edit',
-                tooltip:'Edit Category',
-                onClick:(event,rowData)=>handleOpenDialog(rowData)
+                title: 'ID',
+                field: 'id',
+                width: 80,
+                render: (row) => (
+                  <Chip size="small" label={`#${row.id}`} sx={{ fontWeight: 700, bgcolor: '#f1f5f9' }} />
+                ),
               },
               {
-                icon:'delete',
-                tooltip:'remove Category',
-                onClick:(event,rowData)=> handleDeleteData(rowData)
-              }
+                title: 'Icon',
+                field: 'icon',
+                width: 90,
+                render: (row) => (
+                  <Avatar
+                    src={imageUrl(row.icon)}
+                    alt={row.subcategoryname || "Subcategory"}
+                    variant="rounded"
+                    sx={{ width: 44, height: 44, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', p: 0.5 }}
+                  />
+                ),
+              },
+              {
+                title: 'Subcategory Name',
+                field: 'subcategoryname',
+                render: (row) => (
+                  <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem' }}>
+                    {row.subcategoryname}
+                  </Typography>
+                ),
+              },
+              {
+                title: 'Parent Category',
+                render: (rowData) => (
+                  <Chip
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                    label={rowData.maincategoryid?.maincategoryname || `ID #${rowData.maincategoryid?.id || rowData.maincategoryid}`}
+                    sx={{ fontWeight: 600, borderColor: '#064e3b', color: '#064e3b' }}
+                  />
+                ),
+              },
+            ]}
+            data={mySubCategoryList}
+            options={{
+              search: true,
+              paging: true,
+              pageSize: 10,
+              pageSizeOptions: [10, 25, 50],
+              headerStyle: {
+                backgroundColor: '#f8fafc',
+                color: '#1e293b',
+                fontWeight: 800,
+                fontSize: 13,
+                borderBottom: '2px solid #e2e8f0',
+              },
+              rowStyle: {
+                borderBottom: '1px solid #f1f5f9',
+              },
+            }}
+            actions={[
+              {
+                icon: 'edit',
+                tooltip: 'Edit Subcategory',
+                onClick: (event, rowData) => handleOpenDialog(rowData),
+              },
+              {
+                icon: 'delete',
+                tooltip: 'Remove Subcategory',
+                onClick: (event, rowData) => handleDeleteData(rowData),
+              },
             ]}
           />
-        )
+        </Box>
+      );
     }
- 
-    const handleEditData=async()=>{
-        var body={id:id,subcategoryname:subCategoryName,maincategoryid:mainCategoryId};
-          
-           var result=await postData('editmysubcategory_data',body)
-           if(result.status)
-           {
-            Swal.fire({
-              title:"The Seven Shades",
-              text:result.message,
-              icon:"success",
-              toast:true,
-            })
-           }
-           else{
-            Swal.fire({
-              title:"The Seven Shades",
-              text:result.message,
-              icon:"error",
-              toast:true,
-            })
-           }
-           fetchAllSubCategory()
-           
+
+    const handleEditData = async () => {
+      var body = { id: id, subcategoryname: subCategoryName, maincategoryid: mainCategoryId };
+      var result = await postData('editmysubcategory_data', body);
+      if (result.status) {
+        Swal.fire({
+          title: "The Seven Shades",
+          text: result.message,
+          icon: "success",
+          toast: true,
+          timer: 3000,
+          position: "top-end",
+          showConfirmButton: false,
+        });
+      } else {
+        Swal.fire({
+          title: "The Seven Shades",
+          text: result.message,
+          icon: "error",
+          toast: true,
+          timer: 3000,
+          position: "top-end",
+          showConfirmButton: false,
+        });
       }
+      fetchAllSubCategory();
+    };
 
-    const showCategoryDialog=()=>{
-        return(<Dialog open={open} fullWidth={true} maxWidth={"sm"}>
-          <DialogTitle>
-            <TitleComponent title={'Update Category'} listicon=''/>
+    const showCategoryDialog = () => {
+      return (
+        <Dialog
+          open={open}
+          onClose={handleClose}
+          fullWidth
+          maxWidth="sm"
+          PaperProps={{
+            sx: { borderRadius: 3, p: { xs: 0.5, sm: 1.5 } },
+          }}
+        >
+          <DialogTitle sx={{ pb: 1 }}>
+            <TitleComponent title="Update Subcategory" />
           </DialogTitle>
-          <DialogContent>
-          <div style={{margin:5}}>
-          <Grid container spacing={2}>
-          <Grid item xs={12}>
-          <FormControl fullWidth>
-                        <InputLabel>MainCategory Id</InputLabel>
-                        <Select onFocus={()=>handleError('','maincategoryid')} error={formError.maincategoryid} value={mainCategoryId} label={"MainCategory Id"} onChange={(event)=>setMainCategoryId(event.target.value)}>
-                          <MenuItem value="Select Category">Select Category</MenuItem>
-                          {fillMainCategory()}
-                        </Select>
-                        <FormHelperText>{formError.maincategoryid}</FormHelperText>
-                      </FormControl>
-            </Grid>
-            <Grid item xs={12}>
-                <TextField value={subCategoryName} error={formError.subcategoryname} helperText={formError.maincategoryname} onFocus={()=>handleError(false,'subcategoryname')} onChange={(event)=>setSubCategoryName(event.target.value)} fullWidth label="Sub Category Name"></TextField>
-            </Grid>
-            <Grid item xs={6} style={{display:'flex',justifyContent:'center',alignItems:'center',flexDirection:'column'}}>
-             {btnStatus?
-             <div>
-                <Button fullWidth variant="contained" component='label'>
-                    Upload Icon
-                    <input  type="file" hidden accept="images/*"  onChange={handleChange}/>
-                </Button>
-               
-                {formError.icon?<><div style={{color:'#d32f2f',fontSize:'0.75rem',fontWeight:400,fontFamily:'"Roboto","Helvetica","Arial","sans-serif"',marginTop:4}}>{formError.icon}</div></>:<></>}
-                </div>:<div><Button onClick={handleEditIcon}>Save</Button><Button onClick={handleCancel}>Cancel</Button></div>}
-               
-            </Grid>
+          <DialogContent dividers sx={{ borderBottom: '1px solid #f1f5f9' }}>
+            <Box sx={{ py: 1 }}>
+              <Grid container spacing={{ xs: 2, sm: 2.5 }}>
+                <Grid item xs={12}>
+                  <FormControl fullWidth error={Boolean(formError.maincategoryid)}>
+                    <InputLabel id="edit-parent-category-label">Parent Main Category</InputLabel>
+                    <Select
+                      labelId="edit-parent-category-label"
+                      label="Parent Main Category"
+                      onFocus={() => handleError('', 'maincategoryid')}
+                      value={mainCategoryId}
+                      onChange={(event) => setMainCategoryId(event.target.value)}
+                    >
+                      <MenuItem value="" disabled>
+                        <em>Select Category</em>
+                      </MenuItem>
+                      {fillMainCategory()}
+                    </Select>
+                    {formError.maincategoryid && (
+                      <FormHelperText>{formError.maincategoryid}</FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    value={subCategoryName}
+                    error={Boolean(formError.subcategoryname)}
+                    helperText={formError.subcategoryname}
+                    onFocus={() => handleError(false, 'subcategoryname')}
+                    onChange={(event) => setSubCategoryName(event.target.value)}
+                    fullWidth
+                    label="Subcategory Name"
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  sm={7}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {btnStatus ? (
+                    <div>
+                      <Button
+                        fullWidth
+                        variant="outlined"
+                        component="label"
+                        sx={{
+                          py: 1.2,
+                          borderStyle: 'dashed',
+                          borderWidth: 2,
+                          borderColor: formError.icon ? '#d32f2f' : '#cbd5e1',
+                          color: '#064e3b',
+                          bgcolor: '#f8fafc',
+                        }}
+                      >
+                        Change Subcategory Icon
+                        <input type="file" hidden accept="image/*" onChange={handleChange} />
+                      </Button>
+                      {formError.icon && (
+                        <Typography variant="caption" sx={{ color: '#d32f2f', mt: 0.5, display: 'block' }}>
+                          {formError.icon}
+                        </Typography>
+                      )}
+                    </div>
+                  ) : (
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={handleEditIcon}
+                        sx={{ bgcolor: '#064e3b', color: '#fff', '&:hover': { bgcolor: '#047857' } }}
+                      >
+                        Save Icon
+                      </Button>
+                      <Button variant="outlined" size="small" onClick={handleCancel}>
+                        Cancel
+                      </Button>
+                    </Box>
+                  )}
+                </Grid>
 
-            <Grid item xs={6} style={{display:'flex',justifyContent:'center',alignItems:'center'}}>
-            <Avatar
-            alt="Icon"
-            variant="rounded"
-            src={icon.file}
-            sx={{ width: 78,height:78 }}/>
-            </Grid>
-
-           
-        </Grid>
-        </div>
-        
+                <Grid
+                  item
+                  xs={12}
+                  sm={5}
+                  sx={{ display: 'flex', justifyContent: { xs: 'flex-start', sm: 'center' }, alignItems: 'center' }}
+                >
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Avatar
+                      alt="Icon"
+                      variant="rounded"
+                      src={icon.file}
+                      sx={{
+                        width: { xs: 64, sm: 78 },
+                        height: { xs: 64, sm: 78 },
+                        border: '1px solid #e2e8f0',
+                        bgcolor: '#f8fafc',
+                        p: 0.5,
+                      }}
+                    />
+                    <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', mt: 0.5 }}>
+                      Preview
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
           </DialogContent>
-          <DialogActions>
-          <Button onClick={handleEditData} >Edit Data</Button>
-            <Button onClick={handleClose} >Close</Button>
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button variant="outlined" onClick={handleClose} sx={{ color: '#64748b' }}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleEditData}
+              sx={{ bgcolor: '#064e3b', color: '#fff', fontWeight: 700, '&:hover': { bgcolor: '#047857' } }}
+            >
+              Save Changes
+            </Button>
           </DialogActions>
-        </Dialog>)
-      } 
+        </Dialog>
+      );
+    };
 
-
-
-    return(
-        <div className={classes.display_root}>
+    return (
+      <div className={classes.display_root}>
         <div className={classes.display_box}>
-        {listAllCategory()}
+          {listAllCategory()}
         </div>
         {showCategoryDialog()}
-    </div>
+      </div>
     );
 }
