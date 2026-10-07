@@ -15,4 +15,4 @@ Allow: /productdetailspage
 Allow: /privacy-policy
 Allow: /terms-and-conditions
 
-Sitemap: https://try-and-buy-model.vercel.app/sitemap.xml
+Sitemap: https://doordrape.com/sitemap.xml
