@@ -20,6 +20,7 @@ import FormControl from '@mui/material/FormControl';
 import PlusMinusComponent from './PlusMinuComponent'
 import Select from '@mui/material/Select';
 import Rating from '@mui/material/Rating';
+import RecommendedProducts from './RecommendedProducts';
 
 export default function ProductDetailsComponent(props) {
 
@@ -708,6 +709,14 @@ export default function ProductDetailsComponent(props) {
                         {productdetails()}
                     </div>
                 </div>
+
+                {/* Recommended for You - Cross-subcategory randomized recommendations */}
+                <RecommendedProducts
+                    currentProductId={product.productid?.id || product.productid || product.id}
+                    mainCategoryId={product.maincategoryid?.id || product.maincategoryid || product.productid?.maincategoryid?.id || product.productid?.maincategoryid}
+                    mainCategoryName={product.maincategoryid?.maincategoryname || product.categoryname || (typeof product.maincategoryid === 'string' ? product.maincategoryid : '')}
+                    currentSubcategoryId={product.subcategoryid?.id || product.subcategoryid || product.productid?.subcategoryid?.id || product.productid?.subcategoryid}
+                />
             </div>
             <Footer />
         </div>

@@ -46,6 +46,10 @@ export default function ProductDetailsPage(props){
         fetchAllProducts()
     }, [fetchAllProducts, pageRefresh])
 
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }, [productid])
+
     if (loading) {
         return (
             <div>

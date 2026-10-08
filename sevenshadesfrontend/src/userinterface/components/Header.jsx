@@ -239,7 +239,7 @@ export default function Header() {
                         >
                             <BrandLogo light size={28} />
                         </Typography>
-                        <span style={{
+                        {/* <span style={{
                             fontSize: 10,
                             fontWeight: 800,
                             letterSpacing: '0.8px',
@@ -251,7 +251,7 @@ export default function Header() {
                             textTransform: 'uppercase',
                         }}>
                             TRY & BUY
-                        </span>
+                        </span> */}
                     </div>
 
                     {/* Men / Women Switcher */}
