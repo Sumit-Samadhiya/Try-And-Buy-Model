@@ -2,6 +2,7 @@
 export function collectionUrl(state = {}) {
   const p = state.products || {};
   const query = new URLSearchParams();
+  if (state.searchQuery) query.set('search', state.searchQuery);
   if (state.pageView) query.set('view', state.pageView);
   if (p.id) query.set('id', p.id);
   if (p.maincategoryid) query.set('category', p.maincategoryid);
@@ -14,6 +15,15 @@ export function collectionUrl(state = {}) {
 
 export function collectionFromSearch(search) {
   const query = new URLSearchParams(search);
+  if (query.has('search') || query.has('q')) {
+    const q = query.get('search') || query.get('q');
+    return {
+      pageView: 'SearchComponent',
+      searchQuery: q,
+      dealTitle: `Search results for "${q}"`,
+      products: {},
+    };
+  }
   if (!query.has('view')) return null;
   return {
     pageView: query.get('view'),

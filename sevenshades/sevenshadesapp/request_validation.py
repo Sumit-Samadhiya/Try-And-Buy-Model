@@ -383,6 +383,10 @@ ENDPOINT_SCHEMAS = {
         'required': ['code', 'items'],
         'allowed': {'code', 'items', 'user_identifier', 'mobileno'}
     },
+    'user_search_products': {
+        'required': [],
+        'allowed': {'q', 'search', 'query'}
+    },
 }
 
 TEXT_LIMITS = {
@@ -397,7 +401,7 @@ TEXT_LIMITS = {
     'resolution': 2000, 'response': 2000, 'reason': 255, 'filter': 40,
     'area_name': 70, 'postcodes': 500, 'priority': 40, 'customer': 70, 'source': 40,
     'delivery_slot': 70,
-    'code': 50, 'search': 100, 'scope': 50, 'discount_type': 50, 'start_date': 60, 'end_date': 60,
+    'code': 50, 'search': 100, 'q': 100, 'query': 100, 'scope': 50, 'discount_type': 50, 'start_date': 60, 'end_date': 60,
 }
 
 ENUM_CHOICES = {
@@ -578,7 +582,7 @@ def validate_request(endpoint, data, files):
                 errors[key] = [f'Exceeds maximum length of {max_len} characters.']
             elif '\x00' in value or RE_CONTROL_CHARS.search(value):
                 errors[key] = ['Null bytes and invalid control characters are not permitted.']
-            elif not value.strip() and key not in ('review_text', 'bannerdescription', 'notes', 'resolution', 'landmark', 'reason', 'sku', 'description', 'search'):
+            elif not value.strip() and key not in ('review_text', 'bannerdescription', 'notes', 'resolution', 'landmark', 'reason', 'sku', 'description', 'search', 'q', 'query'):
                 errors[key] = [f'Enter valid text up to {max_len} characters.']
 
         # Mobile and Phone numbers

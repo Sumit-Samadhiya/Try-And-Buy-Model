@@ -13,7 +13,9 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { Divider, Grid } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
+import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import SearchBarComponent from './SearchBarComponent';
+import MobileSearchOverlay from './MobileSearchOverlay';
 import { useTheme } from '@mui/material/styles';
 import UseMediaQuery from '@mui/material/useMediaQuery';
 import DrawerComponent from './DrawerComponent';
@@ -35,6 +37,7 @@ export default function Header() {
     const md_matches = UseMediaQuery(theme.breakpoints.down('md'));
     const sm_matches = UseMediaQuery(theme.breakpoints.down('sm'));
     const [open, setOpen] = useState(false);
+    const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
     const [subCategoryList, setSubCategoryList] = useState([]);
     const [backgroundColor, setBgStatus] = useState(null);
     const [categories, setCategories] = useState([]);
@@ -307,13 +310,42 @@ export default function Header() {
                     {/* Search Bar */}
                     {md_matches ? <div style={{ flexGrow: 1 }} /> : <SearchBarComponent />}
 
-                    {/* Actions: Account & Try Bag */}
+                    {/* Actions: Search (Mobile), Account & Try Bag */}
                     <div style={{
                         marginLeft: 'auto',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 20,
+                        gap: md_matches ? 12 : 20,
                     }}>
+                        {/* Mobile Search Icon Button */}
+                        {md_matches && (
+                            <ButtonBase
+                                onClick={() => setMobileSearchOpen(true)}
+                                aria-label="Search products"
+                                data-testid="mobile-search-toggle"
+                                sx={{ '&.Mui-focusVisible': { outline: '2px solid white', outlineOffset: 3 } }}
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    cursor: 'pointer',
+                                    padding: '4px 8px',
+                                    borderRadius: '8px',
+                                    minWidth: 44,
+                                    minHeight: 44,
+                                    justifyContent: 'center',
+                                    transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                                <SearchOutlinedIcon style={{ fontSize: 24, color: '#ffffff' }} />
+                                <span style={{ fontSize: 11, fontWeight: 600, color: '#d1fae5' }}>
+                                    Search
+                                </span>
+                            </ButtonBase>
+                        )}
+
                         <ButtonBase
                             onClick={handleLoginPage}
                             sx={{ '&.Mui-focusVisible': { outline: '2px solid white', outlineOffset: 3 } }}
@@ -390,6 +422,7 @@ export default function Header() {
                 </div>
             )}
 
+            <MobileSearchOverlay open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} />
             <DrawerComponent open={open} setOpen={setOpen} />
             {statusSubMenu ? showSubMenu() : null}
         </Box>

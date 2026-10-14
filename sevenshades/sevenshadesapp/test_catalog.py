@@ -254,3 +254,23 @@ class CatalogTests(TestCase):
             self.assertEqual(row['avg_rating'], 4.5)
             self.assertEqual(row['min_price'], 1000)
             self.assertEqual(row['min_offerprice'], 700)
+
+    def test_user_search_products_endpoint(self):
+        # 1. Search with matching term 'Shirt'
+        res = self.client.get('/api/user_search_products?q=Shirt')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['status'])
+        self.assertGreater(data['count'], 0)
+        types = [item['type'] for item in data['data']]
+        self.assertIn('subcategory', types)
+
+        # 2. Empty query returns empty list with count 0
+        res_empty = self.client.get('/api/user_search_products?q=')
+        self.assertEqual(res_empty.status_code, 200)
+        self.assertEqual(res_empty.json()['count'], 0)
+
+        # 3. POST query with 'q' using self.post to provide CSRF token
+        res_post = self.post('user_search_products', {'q': 'Cotton'})
+        self.assertEqual(res_post.status_code, 200)
+        self.assertTrue(res_post.json()['status'])

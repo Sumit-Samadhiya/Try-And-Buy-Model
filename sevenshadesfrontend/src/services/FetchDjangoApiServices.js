@@ -52,7 +52,7 @@ const catalogCache = new Map();
 const catalogPending = new Map();
 export const clearCatalogCache = () => catalogCache.clear();
 const fetchCatalog = async (url, body) => {
-  if (!new Set(['user_banner_list', 'user_subcategory_list', 'user_maincategory_list', 'user_products_maincategory', 'user_budget_bazaar_list']).has(url)) throw new Error('Catalog endpoint required');
+  if (!new Set(['user_banner_list', 'user_subcategory_list', 'user_maincategory_list', 'user_products_maincategory', 'user_budget_bazaar_list', 'user_search_products']).has(url)) throw new Error('Catalog endpoint required');
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const result = body === undefined ? await getData(url) : await postData(url, body);
     if (result.status || (result.httpStatus && result.httpStatus < 500) || attempt === 1) return result;

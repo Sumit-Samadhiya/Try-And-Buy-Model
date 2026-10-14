@@ -1,63 +1,83 @@
 import imageUrl from '../../services/imageUrl';
 import { trackSearch } from '../../services/analytics';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getData } from '../../services/FetchDjangoApiServices';
+import { useDebounce } from '../../services/useDebounce';
 
 export default function SearchBarComponent(props) {
     const [productname, setProductName] = useState('');
+    const debouncedQuery = useDebounce(productname, 350);
+
     const [allProducts, setAllProducts] = useState([]);
     const [filteredList, setFilteredList] = useState([]);
     const [showDropdown, setShowDropdown] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
+        let isMounted = true;
         const fetchSearchableItems = async () => {
-            const [subCategoryRes, mainCategoryRes, productRes, brandRes] = await Promise.all([
-                getData('user_subcategory_list'),
-                getData('user_maincategory_list'),
-                getData('user_product_list'),
-                getData('user_brand_list'),
-            ]);
+            try {
+                const [subCategoryRes, mainCategoryRes, productRes, brandRes] = await Promise.all([
+                    getData('user_subcategory_list'),
+                    getData('user_maincategory_list'),
+                    getData('user_product_list'),
+                    getData('user_brand_list'),
+                ]);
 
-            let combinedList = [];
+                let combinedList = [];
 
-            if (subCategoryRes && subCategoryRes.status) {
-                combinedList = combinedList.concat(subCategoryRes.data.map(item => ({ ...item, type: 'subcategory' })));
+                if (subCategoryRes && subCategoryRes.status && Array.isArray(subCategoryRes.data)) {
+                    combinedList = combinedList.concat(subCategoryRes.data.map(item => ({ ...item, type: 'subcategory' })));
+                }
+                if (mainCategoryRes && mainCategoryRes.status && Array.isArray(mainCategoryRes.data)) {
+                    combinedList = combinedList.concat(mainCategoryRes.data.map(item => ({ ...item, type: 'maincategory' })));
+                }
+                if (productRes && productRes.status && Array.isArray(productRes.data)) {
+                    combinedList = combinedList.concat(productRes.data.map(item => ({ ...item, type: 'product' })));
+                }
+                if (brandRes && brandRes.status && Array.isArray(brandRes.data)) {
+                    combinedList = combinedList.concat(brandRes.data.map(item => ({ ...item, type: 'brand' })));
+                }
+
+                if (isMounted) {
+                    setAllProducts(combinedList);
+                }
+            } catch {
+                // Ignore prefetch error
             }
-            if (mainCategoryRes && mainCategoryRes.status) {
-                combinedList = combinedList.concat(mainCategoryRes.data.map(item => ({ ...item, type: 'maincategory' })));
-            }
-            if (productRes && productRes.status) {
-                combinedList = combinedList.concat(productRes.data.map(item => ({ ...item, type: 'product' })));
-            }
-            if (brandRes && brandRes.status) {
-                combinedList = combinedList.concat(brandRes.data.map(item => ({ ...item, type: 'brand' })));
-            }
-            setAllProducts(combinedList);
         };
         fetchSearchableItems();
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
-    const handleInputChange = (e) => {
-        const val = e.target.value;
-        setProductName(val);
-        if (val.trim().length > 0) {
-            const query = val.toLowerCase();
+    // Debounced search filtering
+    useEffect(() => {
+        const query = debouncedQuery.trim().toLowerCase();
+        if (query.length > 0) {
+            setIsLoading(true);
             const matches = allProducts.filter((item) => {
                 const name = (item.productname || item.subcategoryname || item.maincategoryname || item.brandname || '').toLowerCase();
                 const brand = (item.brandname || item.brandid?.brandname || '').toLowerCase();
-                return name.includes(query) || brand.includes(query);
+                const desc = (item.description || '').toLowerCase();
+                return name.includes(query) || brand.includes(query) || desc.includes(query);
             });
             setFilteredList(matches);
             setShowDropdown(true);
+            setIsLoading(false);
         } else {
             setFilteredList([]);
             setShowDropdown(false);
+            setIsLoading(false);
         }
-    };
+    }, [debouncedQuery, allProducts]);
 
     const handleSelectProduct = (item) => {
         setShowDropdown(false);
@@ -75,19 +95,26 @@ export default function SearchBarComponent(props) {
     };
 
     const handleSearchClick = () => {
-        const query = productname.trim().toLowerCase();
-        if (query) {
-            trackSearch(query, filteredList.length);
-        }
-        const menCategory = allProducts.find(item => item.type === 'maincategory' && item.maincategoryname.toLowerCase() === 'men');
-        const womenCategory = allProducts.find(item => item.type === 'maincategory' && item.maincategoryname.toLowerCase() === 'women');
+        const query = productname.trim();
+        if (!query) return;
 
-        if (query === 'men' && menCategory) {
+        trackSearch(query, filteredList.length);
+        setShowDropdown(false);
+
+        const lower = query.toLowerCase();
+        const menCategory = allProducts.find(item => item.type === 'maincategory' && (item.maincategoryname || '').toLowerCase() === 'men');
+        const womenCategory = allProducts.find(item => item.type === 'maincategory' && (item.maincategoryname || '').toLowerCase() === 'women');
+
+        if (lower === 'men' && menCategory) {
             navigate('/productpage', { state: { pageView: 'MainCategoryComponent', products: { id: menCategory.id } } });
-        } else if (query === 'women' && womenCategory) {
+        } else if (lower === 'women' && womenCategory) {
             navigate('/productpage', { state: { pageView: 'MainCategoryComponent', products: { id: womenCategory.id } } });
-        } else if (filteredList.length > 0) {
+        } else if (filteredList.length === 1) {
             handleSelectProduct(filteredList[0]);
+        } else {
+            navigate(`/productpage?search=${encodeURIComponent(query)}`, {
+                state: { pageView: 'SearchComponent', searchQuery: query }
+            });
         }
     };
 
@@ -109,14 +136,21 @@ export default function SearchBarComponent(props) {
             <SearchOutlinedIcon
                 onClick={handleSearchClick}
                 style={{ color: '#059669', cursor: 'pointer', marginRight: '8px', fontSize: '20px' }}
+                aria-label="Submit search"
             />
             <input
                 type="text"
                 value={productname}
                 placeholder="Search styles, categories, brands..."
-                onChange={handleInputChange}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+                onChange={(e) => setProductName(e.target.value)}
+                onFocus={() => {
+                    setIsFocused(true);
+                    if (filteredList.length > 0) setShowDropdown(true);
+                }}
+                onBlur={() => setTimeout(() => {
+                    setIsFocused(false);
+                    setShowDropdown(false);
+                }, 250)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleSearchClick(); }}
                 style={{
                     background: "transparent",
@@ -128,7 +162,18 @@ export default function SearchBarComponent(props) {
                     fontSize: "14px",
                     fontWeight: 500,
                 }}
+                aria-label="Search DoorDrape products"
             />
+
+            {isLoading ? (
+                <CircularProgress size={16} style={{ color: '#059669', marginLeft: '6px' }} />
+            ) : productname.length > 0 ? (
+                <CloseRoundedIcon
+                    onClick={() => { setProductName(''); setFilteredList([]); setShowDropdown(false); }}
+                    style={{ color: '#94a3b8', cursor: 'pointer', fontSize: '18px', marginLeft: '6px' }}
+                    aria-label="Clear search"
+                />
+            ) : null}
 
             {/* LIVE AUTO-COMPLETE DROPDOWN */}
             {showDropdown && filteredList.length > 0 && (
@@ -141,14 +186,14 @@ export default function SearchBarComponent(props) {
                     boxShadow: '0 12px 28px rgba(15, 23, 42, 0.15)',
                     borderRadius: '10px',
                     zIndex: 9999,
-                    maxHeight: '320px',
+                    maxHeight: '340px',
                     overflowY: 'auto',
                     border: '1px solid #e2e8f0',
                 }}>
-                    {filteredList.map((item) => (
+                    {filteredList.slice(0, 8).map((item) => (
                         <div
-                            key={item.id}
-                            onClick={() => handleSelectProduct(item)}
+                            key={`${item.type}-${item.id}`}
+                            onMouseDown={() => handleSelectProduct(item)}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -164,9 +209,17 @@ export default function SearchBarComponent(props) {
                                 src={imageUrl(item.icon)}
                                 alt=""
                                 style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 6, marginRight: 12, backgroundColor: '#f1f5f9' }}
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
                             />
-                            <div>
-                                <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
+                            <div style={{ flexGrow: 1, minWidth: 0 }}>
+                                <div style={{
+                                    fontSize: '14px',
+                                    fontWeight: 700,
+                                    color: '#0f172a',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                }}>
                                     {item.productname || item.subcategoryname || item.maincategoryname || item.brandname}
                                 </div>
                                 <div style={{ fontSize: '11px', color: '#64748b' }}>
@@ -177,8 +230,35 @@ export default function SearchBarComponent(props) {
                                         : 'Category Match'}
                                 </div>
                             </div>
+                            {item.min_offerprice || item.min_price ? (
+                                <div style={{ fontSize: '12px', fontWeight: 800, color: '#047857', marginLeft: 8 }}>
+                                    ₹{item.min_offerprice || item.min_price}
+                                </div>
+                            ) : null}
                         </div>
                     ))}
+
+                    {/* Footer Row: View all results */}
+                    <div
+                        onMouseDown={handleSearchClick}
+                        style={{
+                            padding: '10px 14px',
+                            backgroundColor: '#ecfdf5',
+                            color: '#047857',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            borderTop: '1px solid #d1fae5',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6,
+                        }}
+                    >
+                        <SearchOutlinedIcon style={{ fontSize: 16 }} />
+                        <span>View all {filteredList.length} results for &quot;{productname}&quot;</span>
+                    </div>
                 </div>
             )}
         </div>

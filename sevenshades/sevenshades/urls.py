@@ -123,6 +123,7 @@ urlpatterns = [
     path('api/user_products_maincategory', userinterface.User_Products_Maincategory),
     path('api/user_productsdetails_by_id', userinterface.User_ProductsDetails_By_Id),
     path('api/user_product_list', userinterface.User_Product_List),
+    path('api/user_search_products', userinterface.User_Search_Products),
     path('api/submit_product_review', order_views.SubmitProductReview),
     path('api/fetch_product_reviews', order_views.FetchProductReviews),
     path('api/banner_submit', banner_views.Banner_Submit),

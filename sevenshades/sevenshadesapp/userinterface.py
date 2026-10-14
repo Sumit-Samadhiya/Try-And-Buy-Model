@@ -317,3 +317,48 @@ def User_Budget_Bazaar_List(request):
     except Exception as e:
         logger.exception('Error in User_Budget_Bazaar_List: %s', e)
         return JsonResponse({'data': [], 'status': False}, safe=False)
+
+
+@api_view(['GET', 'POST'])
+def User_Search_Products(request):
+    """Public debounced catalog search across products, categories, subcategories, and brands."""
+    try:
+        q = request.GET.get('q', '') or request.GET.get('search', '') or request.GET.get('query', '')
+        if not q and request.method == 'POST':
+            data = request.data if isinstance(request.data, dict) else {}
+            q = data.get('q', '') or data.get('search', '') or data.get('query', '')
+        q = str(q or '').strip()
+
+        if not q:
+            return JsonResponse({'status': True, 'data': [], 'query': '', 'count': 0})
+
+        from django.db.models import Q
+        # 1. Search products (by product name, description, brand, category, subcategory)
+        products_qs = Product.objects.filter(
+            Q(productname__icontains=q) |
+            Q(description__icontains=q) |
+            Q(brandid__brandname__icontains=q) |
+            Q(subcategoryid__subcategoryname__icontains=q) |
+            Q(maincategoryid__maincategoryname__icontains=q)
+        ).distinct()[:25]
+        product_listings = serialize_flipkart_color_listings(products_qs)
+        for p in product_listings:
+            p['type'] = 'product'
+
+        # 2. Search subcategories
+        subcats = MySubCategory.objects.filter(subcategoryname__icontains=q)[:10]
+        subcat_data = [{**item, 'type': 'subcategory'} for item in MySubCategorySerializer(subcats, many=True).data]
+
+        # 3. Search main categories
+        maincats = MainCategory.objects.filter(maincategoryname__icontains=q)[:5]
+        maincat_data = [{**item, 'type': 'maincategory'} for item in MainCategorySerializer(maincats, many=True).data]
+
+        # 4. Search brands
+        brands = Brands.objects.filter(brandname__icontains=q)[:10]
+        brand_data = [{**item, 'type': 'brand'} for item in BrandsSerializer(brands, many=True).data]
+
+        combined = subcat_data + maincat_data + brand_data + product_listings
+        return JsonResponse({'status': True, 'data': combined, 'query': q, 'count': len(combined)})
+    except Exception as e:
+        logger.exception('Error in User_Search_Products: %s', e)
+        return JsonResponse({'status': False, 'data': [], 'message': str(e), 'query': q}, safe=False)

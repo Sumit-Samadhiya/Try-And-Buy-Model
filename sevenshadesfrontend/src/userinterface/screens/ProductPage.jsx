@@ -85,13 +85,18 @@ export default function ProductPage(props) {
                 });
             }
             setProductList(items);
+        } else if (pageView === "SearchComponent" || selection.searchQuery) {
+            const q = selection.searchQuery || '';
+            const res = await postData('user_search_products', { q });
+            const items = (res?.data || []).filter((item) => item.type === 'product');
+            setProductList(items);
         } else {
             throw new Error('This collection link is invalid. Please choose a collection from the shop.');
         }
 
         } catch (failure) { setError(failure.message); setProductList([]); }
         finally { setLoading(false); }
-    }, [pageView, products, maxPrice]);
+    }, [pageView, products, maxPrice, selection.searchQuery]);
 
     useEffect(() => {
         setPageView();
