@@ -3,7 +3,26 @@
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
   "outputDirectory": "build",
-  "headers": [{ "source": "/catalog/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] }],
+  "headers": [
+    {
+      "source": "/catalog/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/:path(adminlogin|admindashboard|delivery|deliverydashboard|signindisplay|signupdisplay|forgotpassword|mybagdisplay|displaycheckout|ordersuccess|profile|maincart|trial-selection)(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",

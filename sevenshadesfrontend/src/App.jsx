@@ -1,3 +1,4 @@
+import RouteSeo from './services/RouteSeo';
 import CustomerOrderNotifications from './services/CustomerOrderNotifications';
 import PageTracker from './services/PageTracker';
 import DoordrapeLoader from './userinterface/components/DoordrapeLoader';
@@ -57,10 +58,11 @@ function App() {
     <div>
       <CurtainIntro ready={introReady} />
       <BrowserRouter>
+      <RouteSeo />
       <PageTracker />
       <CustomerOrderNotifications />
       <Suspense fallback={<DoordrapeLoader fullPage text="Loading page..." role="status" />}><Routes>
-        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/" element={<Home/>} />
         <Route element={<AdminLogin/>} path="/adminlogin"/>
         <Route element={<RequireSession role="admin"><AdminDashboard/></RequireSession>} path="/admindashboard/*"/>
         <Route element={<Home/>} path="/home"></Route>
