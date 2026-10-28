@@ -89,9 +89,52 @@ export default function CurtainIntro({ ready = false, minDuration = 1800, maxDur
         setPhase('opening');
       }}
     >
-      {/* Heavy Velvet Curtain Panels with Gold Braid Trim */}
-      <div className="dd-intro__curtain dd-intro__curtain--left" aria-hidden="true" />
-      <div className="dd-intro__curtain dd-intro__curtain--right" aria-hidden="true" />
+      {/* Radiant Golden Light Flare Beam that bursts open from the center seam */}
+      <div className="dd-intro__light-burst" aria-hidden="true" />
+
+      {/* Royal Theatrical Top Pelmet / Valance Drape */}
+      <div className="dd-intro__pelmet" aria-hidden="true">
+        <div className="dd-intro__pelmet-curve" />
+        <div className="dd-intro__pelmet-fringe" />
+      </div>
+
+      {/* Left Velvet Curtain & Door Panel */}
+      <div className="dd-intro__curtain dd-intro__curtain--left" aria-hidden="true">
+        <div className="dd-intro__curtain-shadow" />
+        <div className="dd-intro__pleats">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={`left-pleat-${i}`} className="dd-intro__pleat" />
+          ))}
+        </div>
+        <div className="dd-intro__gold-seam dd-intro__gold-seam--left" />
+        <div className="dd-intro__medallion dd-intro__medallion--left">
+          <div className="dd-intro__medallion-inner">
+            <BrandMark size={34} />
+          </div>
+        </div>
+        <div className="dd-intro__tieback dd-intro__tieback--left">
+          <div className="dd-intro__tassel" />
+        </div>
+      </div>
+
+      {/* Right Velvet Curtain & Door Panel */}
+      <div className="dd-intro__curtain dd-intro__curtain--right" aria-hidden="true">
+        <div className="dd-intro__curtain-shadow" />
+        <div className="dd-intro__pleats">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={`right-pleat-${i}`} className="dd-intro__pleat" />
+          ))}
+        </div>
+        <div className="dd-intro__gold-seam dd-intro__gold-seam--right" />
+        <div className="dd-intro__medallion dd-intro__medallion--right">
+          <div className="dd-intro__medallion-inner">
+            <BrandMark size={34} />
+          </div>
+        </div>
+        <div className="dd-intro__tieback dd-intro__tieback--right">
+          <div className="dd-intro__tassel" />
+        </div>
+      </div>
 
       {/* Center Theatrical Stage */}
       <div className="dd-intro__brand">

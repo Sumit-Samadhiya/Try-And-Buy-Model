@@ -1,14 +1,14 @@
 /* ==========================================================================
-   DoorDrape Theatrical Curtain Reveal Design System
+   DoorDrape Royal Theatrical Door & Velvet Drape Reveal Design System
    ========================================================================== */
 
 .dd-intro {
   position: fixed;
   inset: 0;
-  width: 100%;
-  max-width: none;
-  height: 100%;
-  max-height: none;
+  width: 100vw;
+  max-width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
   margin: 0;
   padding: 0;
   border: 0;
@@ -17,67 +17,331 @@
   color: #f7ecd7;
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   z-index: 99999;
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+  pointer-events: auto;
 }
 
 .dd-intro::backdrop {
-  background: transparent;
+  background: rgba(1, 15, 12, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: opacity 800ms ease;
+}
+
+.dd-intro--opening::backdrop {
+  opacity: 0;
 }
 
 /* --------------------------------------------------------------------------
-   Velvet Curtains: Rich Pleats, Silk Ripples & Gold Trim
+   Center Golden Light Flare (Bursts through the parting door/curtain seam)
+   -------------------------------------------------------------------------- */
+.dd-intro__light-burst {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 120px;
+  transform: translateX(-50%) scaleX(0);
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 246, 214, 0.95) 20%,
+    rgba(230, 202, 145, 0.75) 45%,
+    rgba(16, 185, 129, 0.3) 70%,
+    transparent 100%
+  );
+  filter: drop-shadow(0 0 35px rgba(245, 215, 142, 0.9));
+  opacity: 0;
+  pointer-events: none;
+  z-index: 6;
+  transform-origin: center center;
+}
+
+.dd-intro--opening .dd-intro__light-burst {
+  animation: dd-light-beam-flare 920ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes dd-light-beam-flare {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scaleX(0.04);
+  }
+  25% {
+    opacity: 1;
+    transform: translateX(-50%) scaleX(2.2);
+  }
+  60% {
+    opacity: 0.85;
+    transform: translateX(-50%) scaleX(9);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scaleX(18);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Royal Top Pelmet / Valance Canopy
+   -------------------------------------------------------------------------- */
+.dd-intro__pelmet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  z-index: 25;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    #01140f 0%,
+    #03261d 55%,
+    #053d30 90%,
+    rgba(3, 38, 29, 0.95) 100%
+  );
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
+  border-bottom: 2px solid rgba(230, 202, 145, 0.65);
+  transform: translateY(0);
+  transition: transform 860ms cubic-bezier(0.2, 0.9, 0.3, 1);
+  will-change: transform;
+}
+
+.dd-intro__pelmet-curve {
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background-image: radial-gradient(
+    circle at 20px 0,
+    rgba(230, 202, 145, 0.45) 4px,
+    transparent 5px
+  );
+  background-size: 40px 10px;
+  background-repeat: repeat-x;
+}
+
+.dd-intro__pelmet-fringe {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    #eed7a6 0px,
+    #eed7a6 6px,
+    #a88434 6px,
+    #a88434 12px
+  );
+  box-shadow: 0 1px 6px rgba(238, 215, 166, 0.7);
+}
+
+.dd-intro--opening .dd-intro__pelmet {
+  transform: translateY(-110%);
+}
+
+/* --------------------------------------------------------------------------
+   Velvet Curtains & Boutique Doors: 3D Perspective & Rich Pleats
    -------------------------------------------------------------------------- */
 .dd-intro__curtain {
   position: absolute;
   top: 0;
   bottom: 0;
   width: 50.5%;
-  background: repeating-linear-gradient(
-    90deg,
-    #021612 0%,
-    #052c23 7%,
-    #0a3c30 14%,
-    #04221c 20%,
-    #0f483b 28%,
-    #031814 36%
+  z-index: 10;
+  background: linear-gradient(
+    135deg,
+    #011510 0%,
+    #032b21 25%,
+    #064233 55%,
+    #042a20 80%,
+    #011712 100%
   );
-  box-shadow: inset 0 0 120px rgba(0, 15, 12, 0.95);
-  transition: transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
+  box-shadow: inset 0 0 140px rgba(0, 10, 8, 0.95);
+  transform-style: preserve-3d;
+  will-change: transform, filter;
+  transition: transform 920ms cubic-bezier(0.18, 0.9, 0.28, 1), filter 920ms ease;
+  overflow: visible;
 }
 
 .dd-intro__curtain--left {
   left: 0;
-  border-right: 2px solid rgba(230, 202, 145, 0.45);
-  box-shadow: inset 0 0 120px rgba(0, 15, 12, 0.95), 4px 0 24px rgba(0, 0, 0, 0.5);
-  animation: dd-velvet-breathe 7s ease-in-out infinite alternate;
+  transform-origin: left center;
+  box-shadow: inset 0 0 140px rgba(0, 10, 8, 0.95), 8px 0 28px rgba(0, 0, 0, 0.6);
 }
 
 .dd-intro__curtain--right {
   right: 0;
-  transform: scaleX(-1);
-  border-right: 2px solid rgba(230, 202, 145, 0.45);
-  box-shadow: inset 0 0 120px rgba(0, 15, 12, 0.95), 4px 0 24px rgba(0, 0, 0, 0.5);
-  animation: dd-velvet-breathe 7s ease-in-out infinite alternate-reverse;
+  transform-origin: right center;
+  box-shadow: inset 0 0 140px rgba(0, 10, 8, 0.95), -8px 0 28px rgba(0, 0, 0, 0.6);
 }
 
-/* Opening action */
+/* Realistic Vertical Velvet Pleats */
+.dd-intro__pleats {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.dd-intro__pleat {
+  flex: 1;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.12) 22%,
+    rgba(255, 255, 255, 0.03) 45%,
+    rgba(0, 0, 0, 0.18) 70%,
+    rgba(0, 0, 0, 0.52) 92%,
+    rgba(0, 0, 0, 0.72) 100%
+  );
+  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.35);
+  transition: transform 920ms ease;
+}
+
+.dd-intro__curtain--right .dd-intro__pleats {
+  transform: scaleX(-1);
+}
+
+/* Vertical Gold Seam Braid */
+.dd-intro__gold-seam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(
+    180deg,
+    #a88434 0%,
+    #eed7a6 25%,
+    #ffffff 50%,
+    #d4af37 75%,
+    #a88434 100%
+  );
+  box-shadow: 0 0 12px rgba(238, 215, 166, 0.7);
+  z-index: 12;
+}
+
+.dd-intro__gold-seam--left {
+  right: 0;
+}
+
+.dd-intro__gold-seam--right {
+  left: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Center Door Crest Medallion (Splits when doors open)
+   -------------------------------------------------------------------------- */
+.dd-intro__medallion {
+  position: absolute;
+  top: 50%;
+  width: 48px;
+  height: 80px;
+  transform: translateY(-50%);
+  z-index: 15;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.dd-intro__medallion--left {
+  right: 0;
+}
+
+.dd-intro__medallion--right {
+  left: 0;
+}
+
+.dd-intro__medallion-inner {
+  position: absolute;
+  top: 50%;
+  width: 76px;
+  height: 76px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, #074e3b 0%, #032b21 65%, #011510 100%);
+  border: 2px solid #eed7a6;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7), 0 0 16px rgba(238, 215, 166, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #eed7a6;
+}
+
+.dd-intro__medallion--left .dd-intro__medallion-inner {
+  right: -38px;
+}
+
+.dd-intro__medallion--right .dd-intro__medallion-inner {
+  left: -38px;
+}
+
+/* --------------------------------------------------------------------------
+   Side Tieback Tassels (Cinches the gathered drape)
+   -------------------------------------------------------------------------- */
+.dd-intro__tieback {
+  position: absolute;
+  top: 55%;
+  width: 48px;
+  height: 72px;
+  z-index: 14;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 700ms ease, transform 920ms ease;
+}
+
+.dd-intro__tieback--left {
+  left: 12px;
+  transform: translateX(-16px);
+}
+
+.dd-intro__tieback--right {
+  right: 12px;
+  transform: translateX(16px);
+}
+
+.dd-intro__tassel {
+  width: 20px;
+  height: 38px;
+  margin: 10px auto 0;
+  background: linear-gradient(180deg, #d4af37 0%, #eed7a6 50%, #9c7827 100%);
+  border-radius: 4px 4px 10px 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* --------------------------------------------------------------------------
+   GRAND OPENING ACTION (3D Door Swing + Velvet Curtain Gathering)
+   -------------------------------------------------------------------------- */
 .dd-intro--opening .dd-intro__curtain--left {
-  transform: translateX(-102%) skewY(-0.8deg);
+  transform: perspective(1400px) rotateY(-74deg) scaleX(0.16) translateX(-32%);
+  filter: brightness(0.68) contrast(1.2);
 }
 
 .dd-intro--opening .dd-intro__curtain--right {
-  transform: translateX(102%) scaleX(-1) skewY(-0.8deg);
+  transform: perspective(1400px) rotateY(74deg) scaleX(0.16) translateX(32%);
+  filter: brightness(0.68) contrast(1.2);
 }
 
+.dd-intro--opening .dd-intro__tieback {
+  opacity: 0.9;
+  transform: translateX(0);
+}
+
+/* Center Stage Content Fades Into the Light Beam */
 .dd-intro--opening .dd-intro__brand {
   opacity: 0;
-  transform: translateY(-16px) scale(0.97);
-  transition: opacity 350ms ease, transform 500ms ease;
+  transform: scale(1.06) translateY(-22px);
+  filter: blur(6px);
+  transition: opacity 380ms cubic-bezier(0.4, 0, 0.2, 1),
+              transform 520ms cubic-bezier(0.2, 0.9, 0.3, 1),
+              filter 420ms ease;
 }
 
 .dd-intro--opening .dd-intro__skip {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(12px) scale(0.95);
   transition: opacity 250ms ease, transform 300ms ease;
 }
 
@@ -94,6 +358,7 @@
   padding: 24px 20px;
   box-sizing: border-box;
   text-align: center;
+  z-index: 18;
   transition: opacity 350ms, transform 600ms;
 }
 
@@ -102,8 +367,8 @@
   inset: 0;
   pointer-events: none;
   background: radial-gradient(
-    ellipse at 50% 38%,
-    rgba(245, 215, 142, 0.22) 0%,
+    ellipse at 50% 40%,
+    rgba(245, 215, 142, 0.24) 0%,
     rgba(201, 162, 79, 0.08) 45%,
     transparent 72%
   );
@@ -181,7 +446,7 @@
 }
 
 .dd-intro__brand > .dd-intro__logo-wrapper .dd-brand-mark {
-  filter: drop-shadow(0 6px 24px rgba(238, 215, 166, 0.35));
+  filter: drop-shadow(0 6px 24px rgba(238, 215, 166, 0.45));
 }
 
 /* --------------------------------------------------------------------------
@@ -228,24 +493,24 @@
    -------------------------------------------------------------------------- */
 .dd-intro__story-card {
   position: relative;
-  margin-top: 26px;
+  margin-top: 24px;
   width: 100%;
   max-width: 440px;
-  background: rgba(4, 34, 27, 0.65);
-  border: 1px solid rgba(230, 202, 145, 0.25);
+  background: rgba(4, 34, 27, 0.72);
+  border: 1px solid rgba(230, 202, 145, 0.32);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-radius: 18px;
   padding: 18px 24px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   box-sizing: border-box;
   animation: dd-card-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .dd-intro__story-pill {
   display: inline-block;
-  background: rgba(230, 202, 145, 0.16);
-  border: 1px solid rgba(230, 202, 145, 0.35);
+  background: rgba(230, 202, 145, 0.18);
+  border: 1px solid rgba(230, 202, 145, 0.4);
   color: #f7ecd7;
   font-size: 10px;
   font-weight: 800;
@@ -277,7 +542,7 @@
 .dd-intro__thread-container {
   width: 100%;
   max-width: 320px;
-  margin-top: 22px;
+  margin-top: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -287,7 +552,7 @@
 .dd-intro__thread-bar {
   width: 100%;
   height: 2px;
-  background: rgba(230, 202, 145, 0.2);
+  background: rgba(230, 202, 145, 0.22);
   border-radius: 2px;
   overflow: hidden;
   position: relative;
@@ -330,29 +595,30 @@
 }
 
 /* --------------------------------------------------------------------------
-   Luxury Skip Button
+   Luxury Brass Skip Button
    -------------------------------------------------------------------------- */
 .dd-intro__skip {
   position: absolute;
   right: max(24px, env(safe-area-inset-right));
   bottom: max(24px, env(safe-area-inset-bottom));
   min-height: 44px;
-  padding: 10px 20px;
+  padding: 10px 22px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid rgba(234, 219, 193, 0.35);
+  border: 1px solid rgba(234, 219, 193, 0.4);
   border-radius: 999px;
-  background: rgba(3, 25, 20, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(3, 25, 20, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   color: #f7ecd7;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.3px;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  z-index: 30;
 }
 
 .dd-intro__skip-arrow {
@@ -361,10 +627,10 @@
 }
 
 .dd-intro__skip:hover {
-  background: rgba(6, 44, 35, 0.9);
+  background: rgba(6, 44, 35, 0.94);
   border-color: #eed7a6;
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55), 0 0 16px rgba(238, 215, 166, 0.35);
 }
 
 .dd-intro__skip:hover .dd-intro__skip-arrow {
@@ -379,11 +645,6 @@
 /* --------------------------------------------------------------------------
    Keyframe Animations
    -------------------------------------------------------------------------- */
-@keyframes dd-velvet-breathe {
-  0% { transform: scaleX(1); }
-  100% { transform: scaleX(1.015); }
-}
-
 @keyframes dd-spotlight {
   0% { opacity: 0.8; transform: scale(1); }
   100% { opacity: 1; transform: scale(1.15); }
@@ -426,22 +687,27 @@
   .dd-intro__story-card {
     padding: 16px 18px;
     max-width: 320px;
-    margin-top: 20px;
+    margin-top: 18px;
   }
   .dd-intro__sparkle--1 { left: 8%; top: 16%; }
   .dd-intro__sparkle--2 { right: 8%; top: 22%; }
   .dd-intro__sparkle--3 { left: 10%; top: 74%; }
   .dd-intro__sparkle--4 { right: 10%; top: 76%; }
   .dd-intro__hanger { display: none; }
+  .dd-intro__pelmet { height: 42px; }
+  .dd-intro__medallion { width: 36px; height: 60px; }
+  .dd-intro__medallion-inner { width: 56px; height: 56px; }
+  .dd-intro__medallion--left .dd-intro__medallion-inner { right: -28px; }
+  .dd-intro__medallion--right .dd-intro__medallion-inner { left: -28px; }
 }
 
 @media (max-height: 660px) {
   .dd-intro__story-card {
-    margin-top: 14px;
+    margin-top: 12px;
     padding: 12px 18px;
   }
   .dd-intro__thread-container {
-    margin-top: 14px;
+    margin-top: 12px;
   }
 }
 
