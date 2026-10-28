@@ -23,10 +23,10 @@
 }
 
 .dd-intro::backdrop {
-  background: rgba(1, 15, 12, 0.55);
+  background: rgba(1, 15, 12, 0.6);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  transition: opacity 800ms ease;
+  transition: opacity 880ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .dd-intro--opening::backdrop {
@@ -41,17 +41,17 @@
   top: 0;
   bottom: 0;
   left: 50%;
-  width: 120px;
+  width: 140px;
   transform: translateX(-50%) scaleX(0);
   background: radial-gradient(
     ellipse at 50% 50%,
     rgba(255, 255, 255, 1) 0%,
     rgba(255, 246, 214, 0.95) 20%,
-    rgba(230, 202, 145, 0.75) 45%,
-    rgba(16, 185, 129, 0.3) 70%,
+    rgba(230, 202, 145, 0.7) 45%,
+    rgba(16, 185, 129, 0.25) 70%,
     transparent 100%
   );
-  filter: drop-shadow(0 0 35px rgba(245, 215, 142, 0.9));
+  filter: drop-shadow(0 0 35px rgba(245, 215, 142, 0.85));
   opacity: 0;
   pointer-events: none;
   z-index: 6;
@@ -59,7 +59,7 @@
 }
 
 .dd-intro--opening .dd-intro__light-burst {
-  animation: dd-light-beam-flare 920ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: dd-light-beam-flare 880ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes dd-light-beam-flare {
@@ -68,16 +68,16 @@
     transform: translateX(-50%) scaleX(0.04);
   }
   25% {
-    opacity: 1;
-    transform: translateX(-50%) scaleX(2.2);
+    opacity: 0.95;
+    transform: translateX(-50%) scaleX(2.5);
   }
-  60% {
-    opacity: 0.85;
-    transform: translateX(-50%) scaleX(9);
+  65% {
+    opacity: 0.8;
+    transform: translateX(-50%) scaleX(10);
   }
   100% {
     opacity: 0;
-    transform: translateX(-50%) scaleX(18);
+    transform: translateX(-50%) scaleX(20);
   }
 }
 
@@ -102,7 +102,7 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
   border-bottom: 2px solid rgba(230, 202, 145, 0.65);
   transform: translateY(0);
-  transition: transform 860ms cubic-bezier(0.2, 0.9, 0.3, 1);
+  transition: transform 840ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
 }
 
@@ -160,8 +160,10 @@
   );
   box-shadow: inset 0 0 140px rgba(0, 10, 8, 0.95);
   transform-style: preserve-3d;
+  backface-visibility: hidden;
   will-change: transform, filter;
-  transition: transform 920ms cubic-bezier(0.18, 0.9, 0.28, 1), filter 920ms ease;
+  transition: transform 880ms cubic-bezier(0.22, 1, 0.36, 1),
+              filter 880ms cubic-bezier(0.22, 1, 0.36, 1);
   overflow: visible;
 }
 
@@ -199,29 +201,35 @@
     rgba(0, 0, 0, 0.72) 100%
   );
   box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.35);
-  transition: transform 920ms ease;
+  transition: transform 880ms ease;
 }
 
 .dd-intro__curtain--right .dd-intro__pleats {
   transform: scaleX(-1);
 }
 
-/* Vertical Gold Seam Braid */
+/* --------------------------------------------------------------------------
+   Vertical Gold Seam Braid (Masked to protect text legibility)
+   The seam line is clearly defined at the top and bottom, but gracefully
+   fades to transparent in the middle (20% - 82%) where the text & story card live!
+   -------------------------------------------------------------------------- */
 .dd-intro__gold-seam {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 3px;
+  width: 2.5px;
   background: linear-gradient(
     180deg,
-    #a88434 0%,
-    #eed7a6 25%,
-    #ffffff 50%,
-    #d4af37 75%,
-    #a88434 100%
+    #eed7a6 0%,
+    #d4af37 14%,
+    transparent 22%,
+    transparent 80%,
+    #d4af37 86%,
+    #eed7a6 100%
   );
-  box-shadow: 0 0 12px rgba(238, 215, 166, 0.7);
+  box-shadow: 0 0 10px rgba(238, 215, 166, 0.5);
   z-index: 12;
+  pointer-events: none;
 }
 
 .dd-intro__gold-seam--left {
@@ -230,52 +238,6 @@
 
 .dd-intro__gold-seam--right {
   left: 0;
-}
-
-/* --------------------------------------------------------------------------
-   Center Door Crest Medallion (Splits when doors open)
-   -------------------------------------------------------------------------- */
-.dd-intro__medallion {
-  position: absolute;
-  top: 50%;
-  width: 48px;
-  height: 80px;
-  transform: translateY(-50%);
-  z-index: 15;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.dd-intro__medallion--left {
-  right: 0;
-}
-
-.dd-intro__medallion--right {
-  left: 0;
-}
-
-.dd-intro__medallion-inner {
-  position: absolute;
-  top: 50%;
-  width: 76px;
-  height: 76px;
-  transform: translateY(-50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, #074e3b 0%, #032b21 65%, #011510 100%);
-  border: 2px solid #eed7a6;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7), 0 0 16px rgba(238, 215, 166, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #eed7a6;
-}
-
-.dd-intro__medallion--left .dd-intro__medallion-inner {
-  right: -38px;
-}
-
-.dd-intro__medallion--right .dd-intro__medallion-inner {
-  left: -38px;
 }
 
 /* --------------------------------------------------------------------------
@@ -289,7 +251,7 @@
   z-index: 14;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 700ms ease, transform 920ms ease;
+  transition: opacity 650ms ease, transform 880ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .dd-intro__tieback--left {
@@ -313,15 +275,16 @@
 
 /* --------------------------------------------------------------------------
    GRAND OPENING ACTION (3D Door Swing + Velvet Curtain Gathering)
+   Tuned for silky smooth, cinematic weighted opening
    -------------------------------------------------------------------------- */
 .dd-intro--opening .dd-intro__curtain--left {
-  transform: perspective(1400px) rotateY(-74deg) scaleX(0.16) translateX(-32%);
-  filter: brightness(0.68) contrast(1.2);
+  transform: perspective(1400px) rotateY(-68deg) scaleX(0.15) translateX(-28%);
+  filter: brightness(0.68) contrast(1.15);
 }
 
 .dd-intro--opening .dd-intro__curtain--right {
-  transform: perspective(1400px) rotateY(74deg) scaleX(0.16) translateX(32%);
-  filter: brightness(0.68) contrast(1.2);
+  transform: perspective(1400px) rotateY(68deg) scaleX(0.15) translateX(28%);
+  filter: brightness(0.68) contrast(1.15);
 }
 
 .dd-intro--opening .dd-intro__tieback {
@@ -329,14 +292,14 @@
   transform: translateX(0);
 }
 
-/* Center Stage Content Fades Into the Light Beam */
+/* Center Stage Content Fades Elegantly Into the Light Beam */
 .dd-intro--opening .dd-intro__brand {
   opacity: 0;
-  transform: scale(1.06) translateY(-22px);
-  filter: blur(6px);
-  transition: opacity 380ms cubic-bezier(0.4, 0, 0.2, 1),
-              transform 520ms cubic-bezier(0.2, 0.9, 0.3, 1),
-              filter 420ms ease;
+  transform: scale(0.96) translateY(-14px);
+  filter: blur(4px);
+  transition: opacity 400ms cubic-bezier(0.25, 1, 0.5, 1),
+              transform 600ms cubic-bezier(0.22, 1, 0.36, 1),
+              filter 400ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .dd-intro--opening .dd-intro__skip {
@@ -359,6 +322,13 @@
   box-sizing: border-box;
   text-align: center;
   z-index: 18;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(3, 30, 24, 0.82) 0%,
+    rgba(3, 30, 24, 0.45) 50%,
+    transparent 80%
+  );
   transition: opacity 350ms, transform 600ms;
 }
 
@@ -367,9 +337,9 @@
   inset: 0;
   pointer-events: none;
   background: radial-gradient(
-    ellipse at 50% 40%,
-    rgba(245, 215, 142, 0.24) 0%,
-    rgba(201, 162, 79, 0.08) 45%,
+    ellipse at 50% 38%,
+    rgba(245, 215, 142, 0.22) 0%,
+    rgba(201, 162, 79, 0.06) 45%,
     transparent 72%
   );
   animation: dd-spotlight 5s ease-in-out infinite alternate;
@@ -450,7 +420,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   Luxury Typography
+   Luxury Typography (Guaranteed crisp and unaffected by door seam)
    -------------------------------------------------------------------------- */
 .dd-intro__wordmark {
   font-family: 'Plus Jakarta Sans', Georgia, 'Times New Roman', serif;
@@ -470,6 +440,7 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: dd-shimmer-sweep 5s linear infinite;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
 }
 
 .dd-intro__wordmark span {
@@ -486,23 +457,23 @@
   color: #eed7a6;
   text-transform: uppercase;
   opacity: 0.95;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
 /* --------------------------------------------------------------------------
    Dynamic Story Card (Fashion Vignette)
+   Solid luxury emerald base prevents any lines/cuts from showing through!
    -------------------------------------------------------------------------- */
 .dd-intro__story-card {
   position: relative;
   margin-top: 24px;
   width: 100%;
   max-width: 440px;
-  background: rgba(4, 34, 27, 0.72);
-  border: 1px solid rgba(230, 202, 145, 0.32);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: linear-gradient(145deg, #053328 0%, #03211a 100%);
+  border: 1px solid rgba(230, 202, 145, 0.42);
   border-radius: 18px;
   padding: 18px 24px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 24px rgba(6, 78, 59, 0.3);
   box-sizing: border-box;
   animation: dd-card-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -510,7 +481,7 @@
 .dd-intro__story-pill {
   display: inline-block;
   background: rgba(230, 202, 145, 0.18);
-  border: 1px solid rgba(230, 202, 145, 0.4);
+  border: 1px solid rgba(230, 202, 145, 0.45);
   color: #f7ecd7;
   font-size: 10px;
   font-weight: 800;
@@ -608,7 +579,7 @@
   gap: 8px;
   border: 1px solid rgba(234, 219, 193, 0.4);
   border-radius: 999px;
-  background: rgba(3, 25, 20, 0.78);
+  background: rgba(3, 25, 20, 0.85);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   color: #f7ecd7;
@@ -619,6 +590,7 @@
   transition: all 0.25s ease;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
   z-index: 30;
+  pointer-events: auto;
 }
 
 .dd-intro__skip-arrow {
@@ -695,10 +667,6 @@
   .dd-intro__sparkle--4 { right: 10%; top: 76%; }
   .dd-intro__hanger { display: none; }
   .dd-intro__pelmet { height: 42px; }
-  .dd-intro__medallion { width: 36px; height: 60px; }
-  .dd-intro__medallion-inner { width: 56px; height: 56px; }
-  .dd-intro__medallion--left .dd-intro__medallion-inner { right: -28px; }
-  .dd-intro__medallion--right .dd-intro__medallion-inner { left: -28px; }
 }
 
 @media (max-height: 660px) {

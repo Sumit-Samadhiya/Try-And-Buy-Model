@@ -107,11 +107,6 @@ export default function CurtainIntro({ ready = false, minDuration = 1800, maxDur
           ))}
         </div>
         <div className="dd-intro__gold-seam dd-intro__gold-seam--left" />
-        <div className="dd-intro__medallion dd-intro__medallion--left">
-          <div className="dd-intro__medallion-inner">
-            <BrandMark size={34} />
-          </div>
-        </div>
         <div className="dd-intro__tieback dd-intro__tieback--left">
           <div className="dd-intro__tassel" />
         </div>
@@ -126,11 +121,6 @@ export default function CurtainIntro({ ready = false, minDuration = 1800, maxDur
           ))}
         </div>
         <div className="dd-intro__gold-seam dd-intro__gold-seam--right" />
-        <div className="dd-intro__medallion dd-intro__medallion--right">
-          <div className="dd-intro__medallion-inner">
-            <BrandMark size={34} />
-          </div>
-        </div>
         <div className="dd-intro__tieback dd-intro__tieback--right">
           <div className="dd-intro__tassel" />
         </div>
