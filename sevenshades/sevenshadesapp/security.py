@@ -25,7 +25,7 @@ CUSTOMER_FIELDS = {'customer_tickets': 'mobileno', 'create_ticket': 'mobileno',
     'fetch_user_address': 'mobile', 'address_submit': 'mobileno',
     'address_update': 'mobile', 'address_delete': 'mobile',
     'try_order_create': 'mobileno', 'user_order_lifecycle_list': 'mobileno',
-    'submit_product_review': 'user_mobile',
+    'submit_product_review': 'user_mobile', 'product_review_eligibility': 'user_mobile',
     'address_location': 'mobileno', 'customer_approve_bill': 'mobileno', 'payment_create': 'mobileno', 'payment_verify': 'mobileno', 'payment_reconcile': 'mobileno',
 }
 ORDER_OPERATIONS = {'delivery_selection_update', 'submit_final_selection', 'final_payment_update', 'trial_return_items'}

@@ -176,6 +176,32 @@ def SubmitFinalSelection(request):
         request.data.get('order_id'), request.data.get('selected_items'))).data)
 
 
+def purchased_review_items(mobile, variant_id):
+    return FinalOrderItem.objects.filter(
+        final_order__try_order__mobileno=mobile,
+        final_order__try_order__status='DELIVERED',
+        final_order__status='completed',
+        final_order__payment_status='paid',
+        try_order_item__product_details_id=variant_id,
+        try_order_item__status='PURCHASED',
+        qty__gt=0,
+    )
+
+
+@api_view(['POST'])
+def ProductReviewEligibility(request):
+    variant_id = request.data.get('product_details_id')
+    if not str(variant_id or '').isdigit():
+        return failure('Please select a valid product.', 400)
+    if not ProductDetails.objects.filter(pk=variant_id).exists():
+        return failure('Product not found.', 404)
+    eligible = purchased_review_items(request.account.mobileno, variant_id).exists()
+    review = ProductReview.objects.filter(product_details_id=variant_id, user_mobile=request.account.mobileno).first()
+    return JsonResponse({'status': True, 'eligible': eligible,
+        'message': 'Share your experience with this purchase.' if eligible else 'Reviews open after your order is delivered and payment is complete. Only items you purchased can be reviewed.',
+        'review': ProductReviewSerializer(review).data if eligible and review else None})
+
+
 @api_view(['POST'])
 def SubmitProductReview(request):
     from django.db import transaction, OperationalError
@@ -193,11 +219,7 @@ def SubmitProductReview(request):
             rating = int(request.data.get('rating', 5))
             if not 1 <= rating <= 5:
                 return failure('Rating must be between 1 and 5.', 400)
-            has_purchased = FinalOrderItem.objects.filter(
-                final_order__try_order__mobileno=user_mobile,
-                final_order__status='completed',
-                try_order_item__product_details=product_details,
-            ).exists()
+            has_purchased = purchased_review_items(user_mobile, product_details.pk).exists()
             if not has_purchased:
                 return failure('You can only review products you have successfully purchased.', 403)
             review = ProductReview.objects.filter(

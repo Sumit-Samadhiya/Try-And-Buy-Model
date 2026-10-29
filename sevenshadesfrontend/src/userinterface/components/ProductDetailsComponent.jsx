@@ -1,3 +1,4 @@
+import { Alert, Snackbar, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
 import { drapeyFeedback } from '../../services/drapeyFeedback';
 import imageUrl from '../../services/imageUrl';
 import { trackAddToCart, trackRemoveFromCart } from '../../services/analytics';
@@ -56,6 +57,11 @@ export default function ProductDetailsComponent(props) {
         setActiveImgIndex(0);
     }, [initialIndex]);
 
+    const reviewRequest = React.useRef(0);
+    const postingReview = React.useRef(false);
+    const [reviewBusy, setReviewBusy] = useState(false);
+    const [reviewNotice, setReviewNotice] = useState(null);
+    const [reviewEligibility, setReviewEligibility] = useState(null);
     const [reviewsList, setReviewsList] = useState([]);
     const [reviewModalOpen, setReviewModalOpen] = useState(false);
     const [userRating, setUserRating] = useState(5);
@@ -72,6 +78,41 @@ export default function ProductDetailsComponent(props) {
         items = [""];
         product = {};
     }
+
+    React.useEffect(() => {
+        reviewRequest.current += 1;
+        setReviewModalOpen(false);
+        setReviewEligibility(null);
+        setUserComment('');
+        setUserRating(5);
+    }, [product?.id, currentUser?.mobileno]);
+
+    const notifyReview = (text, severity = 'error') => {
+        setReviewNotice({ text, severity });
+        drapeyFeedback(text, severity);
+    };
+    const openReview = async () => {
+        if (!currentUser?.mobileno) {
+            notifyReview('Please sign in to review a product you purchased.', 'info');
+            return;
+        }
+        const ticket = ++reviewRequest.current;
+        setReviewBusy(true);
+        try {
+            const result = await postData('product_review_eligibility', { product_details_id: product.id });
+            if (ticket !== reviewRequest.current) return;
+            if (!result?.status || !result.eligible) {
+                notifyReview(result?.message || 'Unable to check your purchase. Please try again.', 'info');
+                return;
+            }
+            setReviewEligibility(result);
+            setUserComment(result.review?.review_text || '');
+            setUserRating(result.review?.rating || 5);
+            setReviewModalOpen(true);
+        } catch {
+            notifyReview('Unable to check your purchase. Please try again.');
+        } finally { setReviewBusy(false); }
+    };
 
     const loadReviews = React.useCallback(async () => {
         if (product?.id) {
@@ -229,27 +270,27 @@ export default function ProductDetailsComponent(props) {
     };
 
     const handlePostReview = async () => {
-        if (!userComment) {
-            alert('Please write your review comment.');
+        if (postingReview.current) return;
+        if (!userComment.trim() || userComment.trim().length > 2000) {
+            notifyReview('Please write a review between 1 and 2,000 characters.');
             return;
         }
-
-        const res = await postData('submit_product_review', {
-            product_details_id: product.id,
-            user_mobile: currentUser?.mobileno || 'Guest',
-            user_name: currentUser?.fname ? `${currentUser.fname} ${currentUser.lname}` : 'Customer',
-            rating: userRating,
-            review_text: userComment,
-        });
-
-        if (res && res.status) {
-            alert('Review posted successfully!');
-            setUserComment('');
+        postingReview.current = true;
+        setReviewBusy(true);
+        try {
+            const res = await postData('submit_product_review', {
+                product_details_id: product.id, rating: userRating, review_text: userComment.trim(),
+            });
+            if (!res?.status) {
+                notifyReview(res?.message || 'Unable to save your review. Please try again.');
+                return;
+            }
             setReviewModalOpen(false);
+            notifyReview('Thank you! Your verified purchase review has been saved.', 'success');
             loadReviews();
-        } else {
-            alert(res?.message || 'Unable to post review right now. (Only verified buyers who completed a trial purchase can review)');
-        }
+        } catch {
+            notifyReview('Unable to save your review. Your draft is still here—please try again.');
+        } finally { postingReview.current = false; setReviewBusy(false); }
     };
 
     const effectivePrice = product.offerprice > 0 && product.offerprice <= product.price ? product.offerprice : product.price;
@@ -278,7 +319,7 @@ export default function ProductDetailsComponent(props) {
                                     {(product.avg_rating || 0).toFixed(1)}
                                 </span>
                                 <span style={{ fontSize: '13px', color: '#6b7280' }}>
-                                    ({product.total_reviews || reviewsList.length} Verified Customer Reviews)
+                                    ({product.total_reviews || reviewsList.length} Customer Reviews)
                                 </span>
                             </>
                         ) : (
@@ -501,7 +542,8 @@ export default function ProductDetailsComponent(props) {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                             <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>Customer Reviews & Ratings</h3>
                             <button
-                                onClick={() => setReviewModalOpen(!reviewModalOpen)}
+                                onClick={openReview}
+                                disabled={reviewBusy}
                                 style={{
                                     padding: '8px 16px',
                                     backgroundColor: '#111827',
@@ -516,47 +558,26 @@ export default function ProductDetailsComponent(props) {
                             </button>
                         </div>
 
-                        {reviewModalOpen && (
-                            <div style={{ backgroundColor: '#f9fafb', padding: '15px', borderRadius: '8px', border: '1px solid #e5e7eb', marginBottom: '20px' }}>
-                                <h4 style={{ margin: '0 0 10px 0' }}>Write Your Review</h4>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                                    <label style={{ fontWeight: 'bold' }}>Rating: </label>
-                                    <Rating
-                                        name="user-review-rating"
-                                        value={userRating}
-                                        onChange={(e, val) => {
-                                            if (val) setUserRating(val);
-                                        }}
-                                        size="medium"
-                                    />
-                                </div>
-                                <textarea
-                                    rows={3}
-                                    placeholder="Tell us about fabric, fitting, and trial experience..."
-                                    value={userComment}
-                                    onChange={(e) => setUserComment(e.target.value)}
-                                    style={{ width: '96%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db', marginBottom: '10px' }}
-                                />
-                                <div>
-                                    <button
-                                        onClick={handlePostReview}
-                                        style={{ padding: '8px 16px', backgroundColor: '#16a34a', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', marginRight: '8px' }}
-                                    >
-                                        Post Review
-                                    </button>
-                                    <button
-                                        onClick={() => setReviewModalOpen(false)}
-                                        style={{ padding: '8px 16px', backgroundColor: '#9ca3af', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                        <p style={{ color: '#64748b', fontSize: 14 }}>Reviews are available for purchased items after successful delivery and payment. Trial-only or returned items are not eligible.</p>
+                        <Dialog open={reviewModalOpen} onClose={() => !reviewBusy && setReviewModalOpen(false)} fullWidth maxWidth="sm" aria-labelledby="review-dialog-title">
+                            <DialogTitle id="review-dialog-title">{reviewEligibility?.review ? 'Edit your review' : 'How was your purchase?'}</DialogTitle>
+                            <DialogContent>
+                                <Alert severity="success" sx={{ mb: 2 }}>Verified purchase · Share your honest experience.</Alert>
+                                <Rating name="purchase-rating" value={userRating} onChange={(_, value) => value && setUserRating(value)} disabled={reviewBusy} />
+                                <TextField label="Your review" multiline minRows={4} fullWidth margin="normal" value={userComment} onChange={e => setUserComment(e.target.value)} disabled={reviewBusy} inputProps={{ maxLength: 2000 }} helperText={`${userComment.length}/2000 · Tell us about the fit, fabric and quality.`} />
+                            </DialogContent>
+                            <DialogActions>
+                                <Button disabled={reviewBusy} onClick={() => setReviewModalOpen(false)}>Cancel</Button>
+                                <Button variant="contained" disabled={reviewBusy} onClick={handlePostReview}>{reviewBusy ? 'Saving…' : 'Save review'}</Button>
+                            </DialogActions>
+                        </Dialog>
+                        <Snackbar open={!!reviewNotice} autoHideDuration={7000} onClose={() => setReviewNotice(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+                            <Alert severity={reviewNotice?.severity || 'info'} onClose={() => setReviewNotice(null)} variant="filled">{reviewNotice?.text}</Alert>
+                        </Snackbar>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {reviewsList.length === 0 ? (
-                                <p style={{ color: '#6b7280', fontSize: '14px' }}>No reviews posted yet. Be the first to review after trying!</p>
+                                <p style={{ color: '#6b7280', fontSize: '14px' }}>No reviews posted yet. Share your experience after a completed purchase.</p>
                             ) : (
                                 reviewsList.map((rev) => (
                                     <div key={rev.id} style={{ padding: '12px', backgroundColor: '#f8fafc', borderRadius: '6px', border: '1px solid #f1f5f9' }}>

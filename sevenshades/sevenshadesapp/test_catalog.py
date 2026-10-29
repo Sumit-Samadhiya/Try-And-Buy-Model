@@ -117,6 +117,30 @@ class CatalogTests(TestCase):
         FinalOrderItem.objects.create(final_order=final,try_order_item=item)
         self.post('check_costumer_login',{'mobileno':user.pk,'password':'Catalog-test-872!'})
         return variant
+    def test_review_requires_delivered_paid_purchased_item(self):
+        from .models import FinalOrder, ProductReview
+        variant = self.setup_purchased_review()
+        payload = {'product_details_id': variant.pk, 'rating': 4, 'review_text': 'Fits well'}
+        self.assertTrue(self.post('product_review_eligibility', payload).json()['eligible'])
+        for model, field, invalid, valid in [
+            (TryOrder, 'status', 'CANCELLED', 'DELIVERED'),
+            (FinalOrder, 'status', 'ready_for_payment', 'completed'),
+            (FinalOrder, 'payment_status', 'pending', 'paid'),
+            (TryOrderItem, 'status', 'RETURNED', 'PURCHASED'),
+            (TryOrder, 'mobileno', '9000000099', '9000000056'),
+        ]:
+            with self.subTest(field=field, invalid=invalid):
+                model.objects.all().update(**{field: invalid})
+                self.assertFalse(self.post('product_review_eligibility', payload).json()['eligible'])
+                self.assertEqual(self.post('submit_product_review', payload).status_code, 403)
+                self.assertFalse(ProductReview.objects.exists())
+                model.objects.all().update(**{field: valid})
+        self.assertTrue(self.post('submit_product_review', payload).json()['status'])
+        payload['rating'] = 5
+        self.assertTrue(self.post('submit_product_review', payload).json()['status'])
+        self.assertEqual(ProductReview.objects.count(), 1)
+        self.assertEqual(self.post('product_review_eligibility', payload).json()['review']['rating'], 5)
+
     def test_review_does_not_overwrite_stock_or_catalog(self):
         from unittest.mock import patch
         from .models import ProductReview
