@@ -1,3 +1,4 @@
+import { drapeyFeedback } from '../../services/drapeyFeedback';
 import imageUrl from '../../services/imageUrl';
 import { trackAddToCart, trackRemoveFromCart, trackCheckoutStep } from '../../services/analytics';
 import { postData } from "../../services/FetchDjangoApiServices";
@@ -71,6 +72,7 @@ export default function MyBag(props) {
 
     const handleScheduleTry = () => {
         if (!billingItems.length || billingItems.some(item => !item.size)) {
+            drapeyFeedback("Please select a size for each product before checkout.", "error");
             alert("Please select a size for each product before checkout.");
             return;
         }

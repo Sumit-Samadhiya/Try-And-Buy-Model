@@ -1,3 +1,4 @@
+import { drapeyFeedback } from '../../services/drapeyFeedback';
 import imageUrl from '../../services/imageUrl';
 import { trackAddToCart, trackRemoveFromCart } from '../../services/analytics';
 import React, { useState, createRef } from 'react';
@@ -152,9 +153,11 @@ export default function ProductDetailsComponent(props) {
         const payload = { ...product, qty: v, selectedSize: product.size };
         if (v >= 1) {
             dispatch({ type: 'ADD_PRODUCT', payLoad: [product.id, payload] });
+            drapeyFeedback('Your trial bag has been updated! Review it whenever you’re ready.', 'success');
             trackAddToCart(payload);
         } else {
             dispatch({ type: 'DELETE_PRODUCT', payLoad: [product.id] });
+            drapeyFeedback('Item removed from your bag. Keep exploring your favourites.');
             trackRemoveFromCart(product);
         }
         props.setPageRefresh(!props.pageRefresh);

@@ -1,22 +1,37 @@
 import { useEffect, useRef, useState } from 'react';
+import DrapeyAvatar from './DrapeyAvatar';
 import './DrapeyMascot.css';
 
-const tips = [
-  'Your next favourite outfit starts with a little try-on.',
-  'Pick your favourites, then try them in the comfort of home.',
-  'Keep what you love. Hand back the rest after your trial.',
-];
+const greeting = 'Hey! I’m Drapey. Let’s find something you’ll love 😊';
+const clamp = (value, low, high) => Math.max(low, Math.min(Math.max(low, high), value));
 
-// Original SVG artwork and CSS motion; no external avatar runtime or requests.
-export default function DrapeyMascot() {
-  const [dismissed, setDismissed] = useState(() => {
-    try { return sessionStorage.getItem('doordrape-mascot-hidden') === '1'; } catch { return false; }
-  });
-  const [mood, setMood] = useState('waking');
-  const [tip, setTip] = useState(0);
-  const [paused, setPaused] = useState(false);
+export function guidePosition(scroll, width, height, bubbleHeight = 98) {
+  const mobile = width <= 600;
+  const size = mobile ? 54 : 64;
+  const bubbleWidth = Math.min(mobile ? 230 : 270, width - 24);
+  const bottom = height - (mobile ? 100 : 24);
+  // A continuous curved travel path, independent of heading/section heights.
+  const x = clamp(width * (.79 + .12 * Math.sin(scroll / 390)), 12, width - size - 16);
+  const y = clamp(height * (.47 + .26 * Math.sin(scroll / 310 + .8)), 118, bottom - size);
+  const below = y - bubbleHeight - 25 < 112 && y + size + bubbleHeight + 25 < bottom;
+  const safeY = below ? y : Math.max(Math.min(bottom - size, bubbleHeight + 128), y);
+  const left = clamp(x + size - bubbleWidth, 12, width - bubbleWidth - 12);
+  return { x, y:safeY, below, offset:left - x, tail:clamp(x + size / 2 - left, 18, bubbleWidth - 18) };
+}
+
+export default function DrapeyMascot({ routeKey = 'home', greetingMessage = greeting }) {
   const [reduced, setReduced] = useState(false);
-  const reaction = useRef();
+  const [message, setMessage] = useState(greetingMessage);
+  const [typed, setTyped] = useState('');
+  const [phase, setPhase] = useState('thinking');
+  const [replay, setReplay] = useState(0);
+  const [sleepy, setSleepy] = useState(false);
+  const [position, setPosition] = useState(() => guidePosition(0, window.innerWidth, window.innerHeight));
+  const bubble = useRef(null);
+  const dismissed = useRef(false);
+  const feedbackUntil = useRef(0);
+  const [tone, setTone] = useState('info');
+  const mood = reduced ? 'idle' : sleepy ? 'sleeping' : phase === 'thinking' ? 'thinking' : phase === 'typing' ? 'speaking' : phase === 'speaking' ? (tone === 'error' ? 'thinking' : 'happy') : 'idle';
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -27,63 +42,102 @@ export default function DrapeyMascot() {
   }, []);
 
   useEffect(() => {
-    if (dismissed || paused || reduced) return undefined;
-    let sleep;
-    const wake = () => {
-      setMood(current => current === 'sleeping' ? 'idle' : current);
-      clearTimeout(sleep);
-      sleep = setTimeout(() => setMood('sleeping'), 30000);
+    let frame;
+    const update = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        const sections = ['home', '/', '/home'].includes(routeKey) ? [...document.querySelectorAll('[data-drapey-message]')] : [];
+        const active = sections.filter(section => section.getBoundingClientRect().top <= window.innerHeight * .5).pop();
+        if (Date.now() >= feedbackUntil.current) {
+          setTone('info');
+          setMessage(active?.dataset.drapeyMessage || greetingMessage);
+        }
+        const next = guidePosition(window.scrollY, window.innerWidth, window.innerHeight, bubble.current?.offsetHeight || 98);
+        if (!['home', '/', '/home'].includes(routeKey)) {
+          const mobile = window.innerWidth <= 600;
+          next.x = mobile ? window.innerWidth - 70 : 24;
+          next.y = Math.max(150, window.innerHeight - (mobile ? 170 : 100));
+          next.below = false;
+          next.offset = mobile ? -176 : 0;
+          next.tail = mobile ? 200 : 32;
+        }
+        setPosition(old => Object.keys(next).every(key => old[key] === next[key]) ? old : next);
+      });
     };
-    reaction.current = setTimeout(() => setMood('idle'), 1800);
-    const events = ['pointerdown', 'keydown', 'scroll'];
-    events.forEach(event => window.addEventListener(event, wake, { passive: true }));
+    update();
+    window.addEventListener('scroll', update, { passive:true });
+    window.addEventListener('resize', update);
+    const resize = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
+    if (bubble.current) resize?.observe(bubble.current);
+    const main = document.querySelector('main');
+    if (main) resize?.observe(main);
+    return () => { cancelAnimationFrame(frame); resize?.disconnect(); window.removeEventListener('scroll', update); window.removeEventListener('resize', update); };
+  }, [routeKey, greetingMessage]);
+
+  useEffect(() => {
+    const feedback = event => {
+      const detail = event.detail;
+      if (!detail || typeof detail.message !== 'string' || !detail.message.trim()) return;
+      feedbackUntil.current = Date.now() + 14000;
+      setTone(detail.tone || 'info');
+      setMessage(detail.message.slice(0, 220));
+      setSleepy(false);
+      setReplay(value => value + 1);
+    };
+    const invalid = () => feedback({ detail: { message: 'Please check the highlighted field before continuing.', tone: 'error' } });
+    window.addEventListener('drapey-feedback', feedback);
+    document.addEventListener('invalid', invalid, true);
+    return () => { window.removeEventListener('drapey-feedback', feedback); document.removeEventListener('invalid', invalid, true); };
+  }, []);
+
+  useEffect(() => {
+    let typing;
+    let hide;
+    dismissed.current = false;
+    setTyped(reduced ? message : '');
+    setPhase(reduced ? 'speaking' : 'thinking');
+    const start = setTimeout(() => {
+      if (reduced || dismissed.current) return;
+      setPhase('typing');
+      let index = 0;
+      const letters = Array.from(message);
+      typing = setInterval(() => {
+        if (dismissed.current) { clearInterval(typing); return; }
+        index += 1;
+        setTyped(letters.slice(0, index).join(''));
+        if (index >= letters.length) {
+          clearInterval(typing);
+          setPhase('speaking');
+          hide = setTimeout(() => setPhase('quiet'), 6500);
+        }
+      }, 30);
+    }, 700);
+    return () => { clearTimeout(start); clearTimeout(hide); clearInterval(typing); };
+  }, [message, replay, reduced]);
+
+  useEffect(() => {
+    let timer;
+    const wake = () => { setSleepy(false); clearTimeout(timer); timer = setTimeout(() => setSleepy(true), 30000); };
+    const key = event => { if (event.key === 'Escape') { dismissed.current = true; setPhase('quiet'); } wake(); };
+    const visibility = () => setSleepy(document.hidden);
+    window.addEventListener('scroll', wake, { passive:true });
+    window.addEventListener('pointerdown', wake);
+    window.addEventListener('keydown', key);
+    document.addEventListener('visibilitychange', visibility);
     wake();
-    return () => {
-      clearTimeout(sleep);
-      clearTimeout(reaction.current);
-      events.forEach(event => window.removeEventListener(event, wake));
-    };
-  }, [dismissed, paused, reduced]);
+    return () => { clearTimeout(timer); window.removeEventListener('scroll', wake); window.removeEventListener('pointerdown', wake); window.removeEventListener('keydown', key); document.removeEventListener('visibilitychange', visibility); };
+  }, []);
 
-  if (dismissed) return null;
-  const greet = () => {
-    setTip(value => (value + 1) % tips.length);
-    if (paused || reduced) return;
-    clearTimeout(reaction.current);
-    setMood('happy');
-    reaction.current = setTimeout(() => setMood('idle'), 1800);
-  };
-  const dismiss = () => {
-    try { sessionStorage.setItem('doordrape-mascot-hidden', '1'); } catch { /* Optional preference. */ }
-    setDismissed(true);
-  };
-
-  return <aside className={`drapey ${paused || reduced ? 'drapey--still' : ''}`} aria-label="Meet Drapey, your style companion">
-    <button className={`drapey-character drapey--${mood}`} onClick={greet} aria-label="Say hello to Drapey and show another shopping tip">
-      <svg viewBox="0 0 140 150" width="112" height="120" aria-hidden="true">
-        <ellipse className="drapey-shadow" cx="70" cy="137" rx="36" ry="5" fill="#0b493b" opacity=".12" />
-        <g className="drapey-body">
-          <path d="M49 45V32a21 21 0 0 1 42 0v13" fill="none" stroke="#b88d47" strokeWidth="7" strokeLinecap="round" />
-          <path d="M32 42Q70 32 108 42l9 73q1 17-18 18H41q-19-1-18-18Z" fill="#07513f" />
-          <path d="M35 48q31-8 64-1" fill="none" stroke="#508674" strokeWidth="3" strokeLinecap="round" />
-          <g className="drapey-eyes" fill="#fff0cf">
-            <rect x="47" y="65" width="11" height="19" rx="5.5" />
-            <rect x="82" y="65" width="11" height="19" rx="5.5" />
-          </g>
-          <path d="M62 94q8 7 16 0" fill="none" stroke="#fff0cf" strokeWidth="3" strokeLinecap="round" />
-          <path d="M65 112v10h5a5 5 0 0 0 0-10Z" fill="none" stroke="#d9bb7f" strokeWidth="2" />
-        </g>
-      </svg>
+  return <aside className={`drapey ${position.below ? 'drapey--bubble-below' : 'drapey--bubble-above'} ${reduced ? 'drapey--still' : ''} drapey--${phase}`} aria-label="Drapey style guide"
+    style={{ transform:`translate3d(${position.x}px, ${position.y}px, 0)`, '--bubble-offset':`${position.offset}px`, '--tail':`${position.tail}px` }}>
+    <button className={`drapey-character drapey--${mood}`} onClick={() => { setSleepy(false); setReplay(value => value + 1); }} aria-label="Talk to Drapey" onKeyDown={event => { if (event.key === 'Escape') setPhase('quiet'); }}>
+      <DrapeyAvatar mood={mood} reduced={reduced} />
+      <span className="drapey-ground" aria-hidden="true" />
     </button>
-    <div className="drapey-copy">
-      <span className="drapey-eyebrow">A LITTLE STYLE COMPANY</span>
-      <h2>Meet Drapey.</h2>
-      <p aria-live="polite">{tips[tip]}</p>
-      <button className="drapey-tip" onClick={greet}>Next style tip <span aria-hidden="true">↗</span></button>
-    </div>
-    <div className="drapey-controls">
-      {!reduced && <button onClick={() => setPaused(value => !value)} aria-label={paused ? 'Play mascot animation' : 'Pause mascot animation'} aria-pressed={paused}>{paused ? '▷' : 'Ⅱ'}</button>}
-      <button onClick={dismiss} aria-label="Hide Drapey for this session">×</button>
+    <div ref={bubble} className="drapey-copy" aria-hidden={phase === 'quiet'}>
+      <span className="sr-only">{message}</span>
+      <span aria-hidden="true" className="drapey-speech">{phase === 'thinking' ? <span className="drapey-dots"><i/><i/><i/></span> : typed}</span>
     </div>
   </aside>;
 }

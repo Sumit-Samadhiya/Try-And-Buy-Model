@@ -1,3 +1,4 @@
+import DrapeyGuide from './userinterface/components/DrapeyGuide';
 import RouteSeo from './services/RouteSeo';
 import CustomerOrderNotifications from './services/CustomerOrderNotifications';
 import PageTracker from './services/PageTracker';
@@ -87,6 +88,7 @@ function App() {
         <Route element={<TermsAndConditions />} path="/terms-and-conditions" />
         <Route path="*" element={<NotFound />} />
       </Routes></Suspense>
+      <DrapeyGuide />
       <CookieConsent />
       </BrowserRouter>
     </div>

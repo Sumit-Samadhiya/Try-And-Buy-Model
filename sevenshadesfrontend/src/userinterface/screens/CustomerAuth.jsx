@@ -1,3 +1,4 @@
+import { drapeyFeedback } from '../../services/drapeyFeedback';
 import BrandLogo from '../../userinterface/components/BrandLogo';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -31,6 +32,14 @@ export default function CustomerAuth({ kind = 'login' }) {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const first = Object.values(errors).find(Boolean);
+    if (first) drapeyFeedback(String(first), 'error');
+  }, [errors]);
+  useEffect(() => {
+    if (message) drapeyFeedback(severity === 'success' ? 'Your verification code was sent. Check WhatsApp and enter it here.' : 'We couldn’t complete that step. Check the message in the form and try again.', severity);
+  }, [message, severity]);
 
   const change = field => event => {
     setForm(old => ({ ...old, [field]: event.target.value }));
@@ -197,6 +206,7 @@ export default function CustomerAuth({ kind = 'login' }) {
         return;
       }
 
+      drapeyFeedback('You’re signed in! Let’s find your next favourite outfit.', 'success');
       clearCachedAccounts();
       if (res.token) {
         localStorage.setItem('sevenshades_token', res.token);
@@ -248,6 +258,7 @@ export default function CustomerAuth({ kind = 'login' }) {
       }
 
       const user = result.data[0];
+      drapeyFeedback('You’re signed in! Let’s find your next favourite outfit.', 'success');
       clearCachedAccounts();
       if (result.token) {
         localStorage.setItem('sevenshades_token', result.token);

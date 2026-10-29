@@ -1,3 +1,4 @@
+import { drapeyFeedback } from '../../services/drapeyFeedback';
 import { validateFields } from '../../services/validation';
 import { trackOrderPlaced } from '../../services/analytics';
 import { deliverySlots, indiaDate, slotAvailable } from '../../services/deliverySchedule';
@@ -38,6 +39,8 @@ export default function UserAddressForm() {
 
   const submittingRef = useRef(false);
   const [submitting, setSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const notify = (text, tone = 'error') => { setFeedback(text); drapeyFeedback(text, tone); };
   const [country, setCountry] = useState('India');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
@@ -89,6 +92,7 @@ export default function UserAddressForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    setFormError({});
     let err = false;
     if (!fname) { handleError('Required', 'fname'); err = true; }
     if (!lname) { handleError('Required', 'lname'); err = true; }
@@ -100,7 +104,10 @@ export default function UserAddressForm() {
 
     const validation = validateFields(editingAddress ? 'address_update' : 'address_submit', { address, city, country, postcode, address_type: addressType, mobileno });
     Object.entries(validation).forEach(([field, message]) => handleError(message, field));
-    if (err || Object.keys(validation).length) return;
+    if (err || Object.keys(validation).length) {
+      notify(Object.values(validation)[0] || 'Please fill in your name, mobile number and complete delivery address.', 'error');
+      return;
+    }
 
     let result;
     if (editingAddress) {
@@ -130,7 +137,7 @@ export default function UserAddressForm() {
     }
 
     if (result && result.status) {
-      alert(result.message || (editingAddress ? 'Address updated' : 'Address saved'));
+      notify(editingAddress ? 'Your address has been updated!' : 'Address saved! Choose your delivery slot when you’re ready.', 'success');
       setAddress('');
       setCity('');
       setPostCode('');
@@ -138,7 +145,7 @@ export default function UserAddressForm() {
       setEditingAddress(null);
       fetchUserAddress();
     } else {
-      alert(result?.message || (editingAddress ? 'Unable to update address' : 'Unable to save address'));
+      notify(result?.message || (editingAddress ? 'Unable to update address' : 'Unable to save address'));
     }
   };
 
@@ -168,7 +175,7 @@ export default function UserAddressForm() {
     });
 
     if (result && result.status) {
-      alert(result.message || 'Address deleted');
+      notify(result.message || 'Address deleted');
       fetchUserAddress();
       if (editingAddress && editingAddress.address === addressItem.address && editingAddress.postcode === addressItem.postcode) {
         setEditingAddress(null);
@@ -179,29 +186,29 @@ export default function UserAddressForm() {
         setAddressType('Residential');
       }
     } else {
-      alert(result?.message || 'Unable to delete address');
+      notify(result?.message || 'Unable to delete address');
     }
   };
 
   const handlePlaceOrder = () => {
     if (submittingRef.current) return;
     if (deliveryMode === 'standard' && !slotAvailable(deliveryDate, deliverySlot)) {
-      alert('Choose an available delivery slot and date.');
+      notify('Choose an available delivery slot and date.');
       return;
     }
     if (!billingItems.length || billingItems.some(item => !item.size)) {
-      alert("Please return to your bag and select a size for each product.");
+      notify("Please return to your bag and select a size for each product.");
       return;
     }
     const selectedAddress = selectedAddressIndex >= 0 ? addressList[selectedAddressIndex] : null;
 
     if (!selectedAddress) {
-      alert('Please select a saved address or add a new address first.');
+      notify('Please select a saved address or add a new address first.');
       return;
     }
 
     if (selectedAddress.address_type === 'Hostel/Commercial') {
-      alert('⚠️ Try & Buy Service is restricted at Hostel & Restricted Commercial locations (trial room access constraint). Please select a Residential or Gated Society address.');
+      notify('⚠️ Try & Buy Service is restricted at Hostel & Restricted Commercial locations (trial room access constraint). Please select a Residential or Gated Society address.');
       return;
     }
 
@@ -234,6 +241,7 @@ export default function UserAddressForm() {
 
       const result = await postData('try_order_create', payload);
       if (result?.status && result?.data?.order_id) {
+        notify('Your home trial is booked! Check the confirmation for your delivery details.', 'success');
         trackOrderPlaced(result.data.order_id, result.data.try_fee, result.data.total_try_items);
         billingItems.forEach((item) => {
           dispatch({ type: 'DELETE_PRODUCT', payLoad: [item.id] });
@@ -250,10 +258,10 @@ export default function UserAddressForm() {
           },
         });
       } else {
-        alert(result?.message || 'Unable to place try order right now.');
+        notify(result?.message || 'Unable to place try order right now.');
       }
       } catch (error) {
-        alert('Unable to confirm the order. Please check your orders before retrying.');
+        notify('Unable to confirm the order. Please check your orders before retrying.');
       } finally {
         submittingRef.current = false;
         setSubmitting(false);
@@ -267,6 +275,7 @@ export default function UserAddressForm() {
     <ThemeProvider theme={defaultTheme}>
       <Container component="main" maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}>
         <CssBaseline />
+        {feedback && <Typography role="status" sx={{ my: 2 }}>{feedback}</Typography>}
         {selectedAddress && <LocationButton addressId={selectedAddress.id} />}
         <Typography sx={{ my: 2 }}>Try items at home before deciding. Once your purchase is finalized, returns and refunds are not available.</Typography>
         <Box sx={{ mb: 3 }}>
