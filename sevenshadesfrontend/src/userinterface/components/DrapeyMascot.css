@@ -1,0 +1,22 @@
+.drapey { box-sizing:border-box; width:calc(100% - 32px); max-width:1328px; margin:24px 16px 8px; padding:20px 24px; display:flex; align-items:center; gap:22px; position:relative; border:1px solid #e6dec9; border-radius:20px; background:linear-gradient(110deg,#faf4e6,#fffdf8); color:#123d32; }
+.drapey button { font:inherit; cursor:pointer; color:inherit; }
+.drapey button:focus-visible { outline:3px solid #996c21; outline-offset:3px; }
+.drapey-character { flex:none; border:0; background:transparent; padding:0; width:112px; height:120px; }
+.drapey-body { transform-origin:70px 130px; animation:drapey-breathe 4s ease-in-out infinite; }
+.drapey-eyes { transform-box:fill-box; transform-origin:center; animation:drapey-blink 6s infinite; }
+.drapey--happy .drapey-body,.drapey--waking .drapey-body { animation:drapey-wave .6s ease-in-out 3; }
+.drapey--sleeping .drapey-eyes { transform:scaleY(.15); animation:none; }
+.drapey-copy { flex:1; min-width:0; padding-right:72px; }
+.drapey-eyebrow { font-size:10px; letter-spacing:1.7px; font-weight:700; color:#795923; }
+.drapey-copy h2 { font-family:Georgia,serif; font-size:28px; margin:5px 0; }
+.drapey-copy p { font-size:14px; line-height:1.6; margin:0; min-height:45px; max-width:460px; }
+.drapey-tip { min-height:44px; padding:8px 0; border:0; background:none; font-size:12px!important; font-weight:700!important; text-decoration:underline; text-underline-offset:4px; }
+.drapey-controls { position:absolute; right:12px; top:12px; display:flex; }
+.drapey-controls button { width:44px; height:44px; border:0; border-radius:50%; background:transparent; font-size:22px; }
+.drapey-controls button:hover { background:#eee5d4; }
+.drapey--still * { animation:none!important; }
+@keyframes drapey-breathe { 50% { transform:translateY(-4px) rotate(2deg); } }
+@keyframes drapey-blink { 0%,43%,47%,100% { transform:scaleY(1); } 45% { transform:scaleY(.1); } }
+@keyframes drapey-wave { 25% { transform:translateY(-7px) rotate(-7deg); } 75% { transform:translateY(-5px) rotate(7deg); } }
+@media(max-width:600px) { .drapey { padding:48px 14px 14px; gap:12px; } .drapey-copy { padding-right:0; } .drapey-copy h2 { font-size:24px; } .drapey-character { width:80px; height:100px; } .drapey-character svg { width:80px; height:100px; } .drapey-copy p { min-height:88px; } .drapey-eyebrow { letter-spacing:1px; font-size:9px; } }
+@media(prefers-reduced-motion:reduce) { .drapey * { animation:none!important; } }

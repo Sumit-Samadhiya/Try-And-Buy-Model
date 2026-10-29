@@ -1,4 +1,5 @@
 import Header from "../components/Header";
+import DrapeyMascot from "../components/DrapeyMascot";
 import DoordrapeLoader from "../components/DoordrapeLoader";
 import SubcategoryComponent from "../components/SubcategoryComponent";
 import SliderComponent from "../components/SliderComponent";
@@ -173,6 +174,7 @@ export default function Home(props) {
                     <SliderComponent data={listBanner} onBannerClick={handleBannerClick} />
                 </section>
 
+                <DrapeyMascot />
                 {/* Trust & Value Proposition Strip */}
                 <section style={{ width: '100%', maxWidth: 1360, padding: sm_matches ? '12px 16px 0' : '20px 16px 0', boxSizing: 'border-box' }}>
                     <div style={{
