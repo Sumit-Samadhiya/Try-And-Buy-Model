@@ -1,3 +1,4 @@
+import TryBuyScene from '../components/TryBuyScene';
 import Header from "../components/Header";
 
 import DoordrapeLoader from "../components/DoordrapeLoader";
@@ -284,6 +285,8 @@ export default function Home(props) {
                     </section>
                 )}
 
+
+                <TryBuyScene />
 
                 {/* FAQ Section matching JSON-LD Schema */}
                 <div style={{ width: "100%" }} data-drapey-message="Questions about your trial? Find the answers right here."><HomeFaqSection /></div>

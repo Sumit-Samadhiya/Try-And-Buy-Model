@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 90" fill="none">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700&amp;display=swap');
+      .brand-title {
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 42px;
+        font-weight: 600;
+        letter-spacing: -1px;
+      }
+      .brand-title-italic {
+        font-style: italic;
+        fill: #10b981;
+      }
+      .brand-subtitle {
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        fill: #059669;
+      }
+    </style>
+  </defs>
+
+  <!-- DoorDrape Iconic Arch & Drape Mark -->
+  <g transform="translate(10, 6) scale(0.68)" color="#064e3b">
+    <!-- Outer Arch Doorway -->
+    <path d="M14 100V47a36 36 0 0 1 72 0v53H14Z" stroke="#064e3b" stroke-width="5" stroke-linejoin="round" />
+    
+    <!-- Left Velvet Curtain Drape -->
+    <path d="M23 47a27 27 0 0 1 23-27c-1 26-8 40-23 51V47Z" fill="#047857" />
+    
+    <!-- Right Velvet Curtain Drape -->
+    <path d="M77 47a27 27 0 0 0-23-27c1 26 8 40 23 51V47Z" fill="#10b981" />
+    
+    <!-- Monogram 'D' Inner Arch -->
+    <path d="M39 88V61h10c18 0 18 27 0 27H39Z" stroke="#064e3b" stroke-width="5" stroke-linejoin="round" />
+    
+    <!-- Threshold Line -->
+    <path d="M10 100h80" stroke="#064e3b" stroke-width="5" stroke-linecap="round" />
+  </g>
+
+  <!-- Typography -->
+  <text x="90" y="52" class="brand-title" fill="#064e3b">
+    Door<tspan class="brand-title-italic">Drape</tspan>
+  </text>
+  <text x="92" y="70" class="brand-subtitle">
+    TRY &amp; BUY FASHION
+  </text>
+</svg>

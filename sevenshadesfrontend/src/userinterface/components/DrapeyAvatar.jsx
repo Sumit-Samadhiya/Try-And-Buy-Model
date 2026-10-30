@@ -26,6 +26,8 @@ export default function DrapeyAvatar({ mood, reduced }) {
       svg.querySelector('defs').append(gradient);
       [...svg.children].filter(element => element.tagName.toLowerCase() === 'path').forEach(path => { path.style.fill = `url(#${id})`; });
       if (!state.current.reduced) controller.current.play(state.current.mood === 'speaking' ? 'happy' : state.current.mood);
+    }).catch(() => {
+      // Graceful fallback to inline SVG avatar if dynamic import fails
     });
     return () => { cancelled = true; controller.current?.destroy(); controller.current = null; };
   }, []);
