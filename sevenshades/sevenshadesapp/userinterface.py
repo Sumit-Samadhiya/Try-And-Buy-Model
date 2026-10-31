@@ -271,9 +271,33 @@ def User_ProductsDetails_By_Id(request):
 @api_view(['GET'])
 def User_Product_List(request):
      try:
-          product_list = Product.objects.all()
+          from time import perf_counter
+          started = perf_counter()
+          product_list = Product.objects.order_by('pk')
+          for field in ('maincategoryid', 'subcategoryid', 'brandid'):
+               value = request.query_params.get(field)
+               if value:
+                    if not value.isdigit() or int(value) < 1:
+                         return JsonResponse({'status': False, 'message': 'Invalid collection filter.'}, status=400)
+                    product_list = product_list.filter(**{field: int(value)})
+          pagination = {}
+          if 'page' in request.query_params:
+               try:
+                    page = int(request.query_params['page'])
+                    size = int(request.query_params.get('page_size', 12))
+                    if page < 1 or size < 1 or size > 24:
+                         raise ValueError()
+               except (ValueError, TypeError):
+                    return JsonResponse({'status': False, 'message': 'Invalid page or page size (1-24).'}, status=400)
+               # Fetch one extra ID to determine continuation without COUNT or loading all variants.
+               offset = (page - 1) * size
+               ids = list(product_list.values_list('pk', flat=True)[offset:offset + size + 1])
+               pagination = {'next_page': page + 1 if len(ids) > size else None, 'page': page}
+               product_list = product_list.filter(pk__in=ids[:size])
           data = serialize_flipkart_color_listings(product_list)
-          return JsonResponse({"data": data, "status": True})
+          response = JsonResponse({'data': data, 'status': True, **pagination})
+          response['Server-Timing'] = f'catalog;dur={(perf_counter() - started) * 1000:.1f}'
+          return response
      except Exception as e:
           logger.exception('Error in User_Product_List: %s', e)
           return JsonResponse({"data": [], "status": False}, safe=False)

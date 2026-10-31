@@ -5,6 +5,7 @@ const serverURL = process.env.REACT_APP_API_URL || `${window.location.protocol}/
 const api = axios.create({ baseURL: `${serverURL}/api/`, withCredentials: true, timeout: 20000 });
 
 export const clearCachedAccounts = (keepToken = false) => {
+  clearCsrfToken();
   if (!keepToken) localStorage.removeItem('sevenshades_token');
   ['sevenshades_user', 'ADMIN', 'delivery_boy_auth_v1', 'delivery_tasks_live_v1'].forEach(key => localStorage.removeItem(key));
 };
@@ -52,7 +53,7 @@ const catalogCache = new Map();
 const catalogPending = new Map();
 export const clearCatalogCache = () => catalogCache.clear();
 const fetchCatalog = async (url, body) => {
-  if (!new Set(['user_banner_list', 'user_subcategory_list', 'user_maincategory_list', 'user_products_maincategory', 'user_budget_bazaar_list', 'user_search_products']).has(url)) throw new Error('Catalog endpoint required');
+  if (!new Set(['user_product_list', 'user_banner_list', 'user_subcategory_list', 'user_maincategory_list', 'user_products_maincategory', 'user_budget_bazaar_list', 'user_search_products']).has(url.split('?')[0])) throw new Error('Catalog endpoint required');
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const result = body === undefined ? await getData(url) : await postData(url, body);
     if (result.status || (result.httpStatus && result.httpStatus < 500) || attempt === 1) return result;
@@ -78,8 +79,24 @@ export const catalogData = (url, body) => {
 };
 
 let csrfRequest;
-const csrf = () => {
-  if (!csrfRequest) csrfRequest = api.get('auth_csrf').then(response => response.data.csrfToken).finally(() => { csrfRequest = null; });
+let csrfToken;
+let csrfGeneration = 0;
+export const clearCsrfToken = () => {
+  csrfGeneration += 1;
+  csrfToken = undefined;
+  csrfRequest = undefined;
+};
+// Memory only: reuse within this session, discard after auth rotation or rejection.
+export const prepareSession = () => {
+  if (csrfToken) return Promise.resolve(csrfToken);
+  if (!csrfRequest) {
+    const generation = csrfGeneration;
+    csrfRequest = api.get('auth_csrf').then(response => {
+      const token = response.data.csrfToken;
+      if (generation === csrfGeneration) csrfToken = token;
+      return token;
+    }).finally(() => { if (generation === csrfGeneration) csrfRequest = undefined; });
+  }
   return csrfRequest;
 };
 
@@ -88,11 +105,15 @@ const postData = async (url, body) => {
   if (Object.keys(errors).length) return { status: false, errors, message: Object.values(errors).join(' '), httpStatus: 400 };
   try {
     const headers = tokenHeaders(url);
-    if (!headers.Authorization) headers['X-CSRFToken'] = await csrf();
+    if (!headers.Authorization) headers['X-CSRFToken'] = await prepareSession();
     const result = (await api.post(url, body, { headers })).data;
+    if (result.status && (loginEndpoints.has(url.replace(/\/$/, '')) || ['otp_login', 'signup_submit', 'auth/verify-otp', 'auth_logout'].includes(url.replace(/\/$/, '')))) clearCsrfToken();
     if (result.status && loginEndpoints.has(url.replace(/\/$/, ''))) localStorage.removeItem('sevenshades_token');
     return result;
-  } catch (error) { return apiError(error); }
+  } catch (error) {
+    if (error.response?.status === 403) clearCsrfToken();
+    return apiError(error);
+  }
 };
 
 export const logout = async () => {

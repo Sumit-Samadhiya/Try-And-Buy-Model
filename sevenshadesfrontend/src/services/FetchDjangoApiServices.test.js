@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { postData, logout, catalogData, clearCatalogCache } from './FetchDjangoApiServices';
+import { postData, logout, catalogData, clearCatalogCache, clearCsrfToken } from './FetchDjangoApiServices';
 
 jest.mock('axios', () => ({ create: jest.fn(options => ({ defaults: options, get: jest.fn(), post: jest.fn() })) }));
 const api = axios.create.mock.results[0].value;
@@ -11,7 +11,7 @@ test('catalog retry recovers a transient error without permitting mutation retri
   await expect(catalogData('try_order_create', {})).rejects.toThrow('Catalog endpoint required');
 });
 
-beforeEach(() => { clearCatalogCache(); localStorage.clear(); api.get.mockReset(); api.post.mockReset(); });
+beforeEach(() => { clearCsrfToken(); clearCatalogCache(); localStorage.clear(); api.get.mockReset(); api.post.mockReset(); });
 
 test('catalog shares concurrent requests, caches success briefly, and refreshes expired data', async () => {
   const now = jest.spyOn(Date, 'now').mockReturnValue(1000);
@@ -67,3 +67,22 @@ test('stored application JWT is used and removed after logout', async () => {
   expect(api.get).not.toHaveBeenCalled();
   expect(localStorage.getItem('sevenshades_token')).toBeNull();
 });
+
+ test('sequential session requests reuse CSRF but logout invalidates it', async () => {
+  api.get.mockResolvedValue({data:{csrfToken:'fresh'}});
+  api.post.mockResolvedValue({data:{status:true}});
+  await postData('fetch_user_address', {});
+  await postData('fetch_user_address', {});
+  expect(api.get).toHaveBeenCalledTimes(1);
+  await logout();
+  await postData('fetch_user_address', {});
+  expect(api.get).toHaveBeenCalledTimes(2);
+ });
+ test('CSRF rejection invalidates token without replaying a mutation', async () => {
+  api.get.mockResolvedValue({data:{csrfToken:'fresh'}});
+  api.post.mockRejectedValueOnce({response:{status:403}}).mockResolvedValue({data:{status:true}});
+  await postData('fetch_user_address', {});
+  expect(api.post).toHaveBeenCalledTimes(1);
+  await postData('fetch_user_address', {});
+  expect(api.get).toHaveBeenCalledTimes(2);
+ });

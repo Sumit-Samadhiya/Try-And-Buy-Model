@@ -8,7 +8,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import WhatsApp from '@mui/icons-material/WhatsApp';
-import { postData, clearCachedAccounts } from '../../services/FetchDjangoApiServices';
+import { postData, clearCachedAccounts, prepareSession } from '../../services/FetchDjangoApiServices';
 import { validateFields } from '../../services/validation';
 import { trackAuthEvent } from '../../services/analytics';
 import DoordrapeLoader from '../../userinterface/components/DoordrapeLoader';
@@ -24,6 +24,7 @@ export default function CustomerAuth({ kind = 'login' }) {
   const [challenge, setChallenge] = useState(null);
   const [busy, setBusy] = useState(false), [showPassword, setShowPassword] = useState(false), [now, setNow] = useState(Date.now());
   const pending = useRef(false);
+  useEffect(() => { prepareSession()?.catch(() => {}); }, []);
   const isWhatsApp = signup || reset || method === 'whatsapp';
   const cooldown = Math.max(0, Math.ceil(((challenge?.resendAt || 0) - now) / 1000));
   const expired = challenge && now >= challenge.expiresAt;

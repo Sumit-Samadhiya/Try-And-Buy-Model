@@ -8,7 +8,7 @@ import { postData } from '../../services/FetchDjangoApiServices';
 
 jest.mock('../../services/FetchDjangoApiServices', () => ({
   getData: jest.fn(),
-  postData: jest.fn(),
+  prepareSession: jest.fn(() => Promise.resolve()), postData: jest.fn(),
   clearCachedAccounts: jest.fn()
 }));
 
