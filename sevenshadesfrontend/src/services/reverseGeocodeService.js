@@ -1,88 +1,25 @@
-/**
- * Zero-Cost Reverse Geocoding Service for DoorDrape
- * Multi-Tier Fail-Safe Architecture:
- * 1. Device Hardware GPS (for mobile phones with GPS enabled)
- * 2. Standard Wi-Fi / Cell tower triangulation
- * 3. Automatic IP-based Geolocation Fallback (with isIpFallback flag)
- * 4. OpenStreetMap Nominatim enrichment for PIN code & street precision
- * 100% Free, Zero API Keys, Zero Timeouts.
- */
-
+/** Device location only: never substitute an ISP gateway for a doorstep. */
 export async function detectUserCoordinates() {
-  // Tier 1: Try real device GPS first (high accuracy)
-  if (typeof window !== 'undefined' && navigator.geolocation) {
-    try {
-      const coords = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          (pos) =>
-            resolve({
-              latitude: pos.coords.latitude,
-              longitude: pos.coords.longitude,
-              accuracy: pos.coords.accuracy,
-              source: 'device_gps',
-              isIpFallback: false,
-            }),
-          (err) => reject(err),
-          {
-            enableHighAccuracy: true,
-            timeout: 6000,
-            maximumAge: 60000,
-          }
-        );
-      });
-      return coords;
-    } catch (highErr) {
-      // Tier 2: Standard Wi-Fi / Cell positioning fallback
-      try {
-        const coords = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(
-            (pos) =>
-              resolve({
-                latitude: pos.coords.latitude,
-                longitude: pos.coords.longitude,
-                accuracy: pos.coords.accuracy,
-                source: 'browser_standard',
-                isIpFallback: false,
-              }),
-            (err) => reject(err),
-            {
-              enableHighAccuracy: false,
-              timeout: 4000,
-              maximumAge: 300000,
-            }
-          );
-        });
-        return coords;
-      } catch (stdErr) {
-        console.warn('Browser GPS unavailable on this device, using IP fallback:', stdErr?.message);
-      }
-    }
+  if (typeof navigator === 'undefined' || !navigator.geolocation) {
+    throw new Error('Device location is unavailable. Please select your entrance on the map or enter your address manually.');
   }
-
-  // Tier 3: IP-Based Geolocation via BigDataCloud Client API
-  // Note: On desktop / broadband Wi-Fi, this detects the ISP's regional routing gateway (e.g. Kanpur for UP)
-  try {
-    const bdcRes = await fetch(
-      'https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=en'
-    );
-    if (bdcRes.ok) {
-      const bdc = await bdcRes.json();
-      if (bdc && (bdc.latitude || bdc.longitude)) {
-        return {
-          latitude: Number(bdc.latitude),
-          longitude: Number(bdc.longitude),
-          accuracy: 5000,
-          source: 'ip_geolocation',
-          isIpFallback: true,
-          ipData: bdc,
-        };
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(position => {
+      const { latitude, longitude, accuracy } = position.coords;
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude) ||
+          Math.abs(latitude) > 90 || Math.abs(longitude) > 180 ||
+          !Number.isFinite(accuracy) || accuracy < 0 || accuracy > 100) {
+        reject(new Error('Device location is too approximate for delivery. Enable precise location on your phone, retry near a window, or select your entrance on the map.'));
+        return;
       }
-    }
-  } catch (ipErr) {
-    console.warn('IP geolocation fallback note:', ipErr);
-  }
-
-  throw new Error('Unable to detect location automatically. Please enter your PIN code manually.');
+      // Browsers do not reveal whether GPS, Wi-Fi or another source was used.
+      resolve({ latitude, longitude, accuracy, source: 'device_location', isIpFallback: false });
+    }, error => {
+      reject(new Error(error.code === 1
+        ? 'Location permission denied. Allow precise location in browser settings, or enter your address manually.'
+        : 'Could not get a fresh device location. Retry with phone location enabled, or select your entrance on the map.'));
+    }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+  });
 }
 
 export async function reverseGeocode(latitude, longitude) {
@@ -161,49 +98,5 @@ export async function reverseGeocode(latitude, longitude) {
 
 export async function detectAndReverseGeocode() {
   const coords = await detectUserCoordinates();
-
-  let addressDetails;
-  if (coords.ipData) {
-    const ip = coords.ipData;
-    addressDetails = {
-      latitude: coords.latitude,
-      longitude: coords.longitude,
-      city: ip.city || ip.locality || ip.principalSubdivision || '',
-      state: ip.principalSubdivision || '',
-      postcode: (ip.postcode || '').replace(/\D/g, '').slice(0, 6),
-      country: ip.countryName || 'India',
-      street: ip.locality || ip.city || '',
-      formattedAddress: [ip.locality, ip.city, ip.principalSubdivision].filter(Boolean).join(', '),
-    };
-
-    if (!addressDetails.postcode && coords.latitude && coords.longitude) {
-      try {
-        const nomRes = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${coords.latitude}&lon=${coords.longitude}&format=json`,
-          { headers: { 'User-Agent': 'DoorDrapeApp/1.0 (customer-location)' } }
-        );
-        if (nomRes.ok) {
-          const nom = await nomRes.json();
-          const addr = nom?.address || {};
-          if (addr.postcode) {
-            addressDetails.postcode = String(addr.postcode).replace(/\D/g, '').slice(0, 6);
-          }
-          if (!addressDetails.city) {
-            addressDetails.city = addr.city || addr.town || addr.village || '';
-          }
-          if (addr.road || addr.suburb) {
-            addressDetails.street = [addr.road, addr.suburb].filter(Boolean).join(', ');
-          }
-        }
-      } catch (_) {}
-    }
-  } else {
-    addressDetails = await reverseGeocode(coords.latitude, coords.longitude);
-  }
-
-  return {
-    ...coords,
-    ...addressDetails,
-    isIpFallback: coords.isIpFallback,
-  };
+  return { ...await reverseGeocode(coords.latitude, coords.longitude), ...coords };
 }

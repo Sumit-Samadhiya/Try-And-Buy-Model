@@ -116,24 +116,14 @@ export default function ProfilePage() {
   const [trackingOrderId, setTrackingOrderId] = useState(null);
   const [detectingProfileLocation, setDetectingProfileLocation] = useState(false);
   const [profilePickerOpen, setProfilePickerOpen] = useState(false);
+  const [profileLocationCandidate, setProfileLocationCandidate] = useState(null);
 
   const handleDetectProfileLocation = async () => {
     try {
       setDetectingProfileLocation(true);
       const info = await detectAndReverseGeocode();
-      if (info) {
-        setAddressForm((prev) => ({
-          ...prev,
-          city: info.city || prev.city,
-          country: info.country || prev.country || 'India',
-          address: prev.address ? `${prev.address}, ${info.street}` : (info.street || prev.address),
-          latitude: info.latitude || null,
-          longitude: info.longitude || null,
-        }));
-        if (info.postcode && String(info.postcode).length === 6) {
-          handleProfilePostcodeChange(info.postcode);
-        }
-      }
+      setProfileLocationCandidate(info);
+      setProfilePickerOpen(true);
     } catch (err) {
       alert(err.message || 'Unable to detect location.');
     } finally {
@@ -161,8 +151,6 @@ export default function ProfilePage() {
           ...prev,
           city: result.city || prev.city,
           country: result.country || prev.country || 'India',
-          latitude: result.latitude || prev.latitude,
-          longitude: result.longitude || prev.longitude,
         }));
         setAddressPinLookup({
           loading: false,
@@ -1874,7 +1862,7 @@ export default function ProfilePage() {
                     {addressForm.latitude && (
                       <Chip
                         size="small"
-                        label={`📍 GPS Coordinates Captured (${Number(addressForm.latitude).toFixed(4)}, ${Number(addressForm.longitude).toFixed(4)})`}
+                        label={`📍 Confirmed delivery pin (${Number(addressForm.latitude).toFixed(4)}, ${Number(addressForm.longitude).toFixed(4)})`}
                         sx={{ mb: 1.5, bgcolor: '#f0fdf4', color: '#166534', fontWeight: 700, border: '1px solid #86efac' }}
                       />
                     )}
@@ -2340,10 +2328,11 @@ export default function ProfilePage() {
       )}
       <LocationPickerModal
         open={profilePickerOpen}
-        onClose={() => setProfilePickerOpen(false)}
-        initialLat={addressForm.latitude || 25.5184}
-        initialLng={addressForm.longitude || 78.6821}
-        initialCity={addressForm.city || 'Jhansi'}
+        onClose={() => { setProfilePickerOpen(false); setProfileLocationCandidate(null); }}
+        initialLat={profileLocationCandidate?.latitude ?? addressForm.latitude}
+        initialLng={profileLocationCandidate?.longitude ?? addressForm.longitude}
+        initialCity={addressForm.city}
+        accuracy={profileLocationCandidate?.accuracy}
         onConfirmLocation={(loc) => {
           setAddressForm((prev) => ({
             ...prev,

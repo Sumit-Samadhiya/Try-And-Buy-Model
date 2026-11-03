@@ -54,6 +54,9 @@ describe('LocationPickerModal', () => {
     expect(screen.getByText(/Sipri Bazar \(284002\)/i)).toBeInTheDocument();
 
     const confirmBtn = screen.getByRole('button', { name: /Confirm & Use This Location/i });
+    expect(confirmBtn).toBeDisabled();
+    await waitFor(() => expect(screen.queryByText('Resolving address from map pin...')).not.toBeInTheDocument());
+    fireEvent.click(screen.getByRole('checkbox'));
     fireEvent.click(confirmBtn);
 
     expect(onConfirmLocation).toHaveBeenCalled();

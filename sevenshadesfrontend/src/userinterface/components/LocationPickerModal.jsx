@@ -80,11 +80,15 @@ export default function LocationPickerModal({
   initialLat,
   initialLng,
   initialCity,
+  accuracy,
   onConfirmLocation,
 }) {
   const mapContainerRef = useRef(null);
+  const [mapReady, setMapReady] = useState(false);
   const mapInstanceRef = useRef(null);
   const markerRef = useRef(null);
+  const requestRef = useRef(0);
+  const [confirmedEntrance, setConfirmedEntrance] = useState(false);
 
   // Default to Jhansi Baragaon if coords are missing or default
   const defaultLat = initialLat && !isNaN(initialLat) ? Number(initialLat) : 25.5184;
@@ -96,20 +100,22 @@ export default function LocationPickerModal({
 
   // Reverse geocode when coords change
   const resolveLocationDetails = useCallback(async (lat, lng) => {
+    const request = ++requestRef.current;
     try {
       setResolving(true);
+      setResolvedAddress(null);
       const res = await reverseGeocode(lat, lng);
-      setResolvedAddress(res);
+      if (request === requestRef.current) { setResolvedAddress(res); setResolving(false); }
     } catch (err) {
+      if (request === requestRef.current) setResolving(false);
       console.warn('Map reverse geocode notice:', err);
-    } finally {
-      setResolving(false);
     }
   }, []);
 
   // Update marker position and reverse geocode
   const setPinPosition = useCallback(
     (lat, lng, panMap = true) => {
+      setConfirmedEntrance(false);
       setCurrentCoords({ lat, lng });
       if (markerRef.current) {
         markerRef.current.setLatLng([lat, lng]);
@@ -158,6 +164,8 @@ export default function LocationPickerModal({
         mapInstanceRef.current = map;
         markerRef.current = marker;
 
+        setCurrentCoords({ lat: defaultLat, lng: defaultLng });
+        setConfirmedEntrance(false);
         // Resolve initial position
         resolveLocationDetails(defaultLat, defaultLng);
       } catch (err) {
@@ -170,7 +178,7 @@ export default function LocationPickerModal({
         mapInstanceRef.current?.invalidateSize();
       } catch (_) {}
     }, 200);
-  }, [open, defaultLat, defaultLng, setPinPosition, resolveLocationDetails]);
+  }, [open, mapReady, defaultLat, defaultLng, setPinPosition, resolveLocationDetails]);
 
   // Teardown map on modal close
   useEffect(() => {
@@ -184,11 +192,12 @@ export default function LocationPickerModal({
   }, [open]);
 
   const handleConfirm = () => {
+    if (!confirmedEntrance || resolving) return;
     onConfirmLocation({
       latitude: currentCoords.lat,
       longitude: currentCoords.lng,
-      city: resolvedAddress?.city || initialCity || 'Jhansi',
-      state: resolvedAddress?.state || 'Uttar Pradesh',
+      city: resolvedAddress?.city || initialCity || '',
+      state: resolvedAddress?.state || '',
       postcode: resolvedAddress?.postcode || '',
       street: resolvedAddress?.street || '',
       formattedAddress: resolvedAddress?.formattedAddress || '',
@@ -199,6 +208,7 @@ export default function LocationPickerModal({
   return (
     <Dialog
       open={open}
+      TransitionProps={{ onEntered: () => setMapReady(true), onExited: () => setMapReady(false) }}
       onClose={onClose}
       maxWidth="sm"
       fullWidth
@@ -226,7 +236,7 @@ export default function LocationPickerModal({
         {/* Quick Location Shortcuts */}
         <Box sx={{ p: 1.5, bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
           <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b', display: 'block', mb: 0.8 }}>
-            Quick Jump to Hub / Locality (Click to snap):
+            Browse an area (not your detected location):
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
             {JHANSI_HUBS.map((hub) => (
@@ -249,6 +259,10 @@ export default function LocationPickerModal({
           </Box>
         </Box>
 
+        <Typography role="status" sx={{ p: 1.5, fontSize: 13 }}>
+          {Number.isFinite(accuracy) ? `Device reports approximately ${Math.ceil(accuracy)} metres accuracy. ` : 'Map starts in our service area; this is not your detected location. '}
+          Move the pin to your building entrance. Add house/flat number and landmark in the address form.
+        </Typography>
         {/* Map Container */}
         <Box sx={{ position: 'relative', width: '100%', height: 320, bgcolor: '#e2e8f0' }}>
           <div ref={mapContainerRef} style={{ width: '100%', height: '100%', outline: 'none' }} />
@@ -287,7 +301,7 @@ export default function LocationPickerModal({
           ) : (
             <Box sx={{ mt: 0.5 }}>
               <Typography variant="body1" sx={{ fontWeight: 800, color: '#0f172a' }}>
-                {resolvedAddress?.city || 'Jhansi'}{' '}
+                {resolvedAddress?.city || 'Address unavailable — enter manually'}{' '}
                 {resolvedAddress?.postcode ? `• PIN ${resolvedAddress.postcode}` : ''}
               </Typography>
               <Typography variant="body2" sx={{ color: '#475569', mt: 0.3 }}>
@@ -299,7 +313,12 @@ export default function LocationPickerModal({
             </Box>
           )}
 
+          <label style={{ display: 'block', marginTop: 12 }}>
+            <input type="checkbox" checked={confirmedEntrance} onChange={event => setConfirmedEntrance(event.target.checked)} />
+            I checked the pin is at my delivery entrance
+          </label>
           <Button
+            disabled={!confirmedEntrance || resolving}
             variant="contained"
             fullWidth
             onClick={handleConfirm}

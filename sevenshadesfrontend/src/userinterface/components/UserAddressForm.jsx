@@ -67,6 +67,7 @@ export default function UserAddressForm() {
   const [editingAddress, setEditingAddress] = useState(null);
   const [detectingLocation, setDetectingLocation] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [locationCandidate, setLocationCandidate] = useState(null);
   const [detectedCoords, setDetectedCoords] = useState({ latitude: null, longitude: null });
   const [pinLookup, setPinLookup] = useState({
     loading: false,
@@ -87,9 +88,6 @@ export default function UserAddressForm() {
       if (result && result.status) {
         if (result.city) setCity(result.city);
         if (result.country) setCountry(result.country);
-        if (result.latitude && result.longitude) {
-          setDetectedCoords({ latitude: result.latitude, longitude: result.longitude });
-        }
         setPinLookup({
           loading: false,
           checked: true,
@@ -132,26 +130,11 @@ export default function UserAddressForm() {
   const handleDetectLocation = async () => {
     try {
       setDetectingLocation(true);
-      notify('Detecting your GPS location...', 'info');
+      notify('Requesting a fresh device location...', 'info');
       const info = await detectAndReverseGeocode();
-      if (info) {
-        if (info.city) setCity(info.city);
-        if (info.country) setCountry(info.country);
-        if (info.street) {
-          setAddress((prev) => (prev ? `${prev}, ${info.street}` : info.street));
-        }
-        if (info.latitude && info.longitude) {
-          setDetectedCoords({ latitude: info.latitude, longitude: info.longitude });
-        }
-        if (info.postcode && String(info.postcode).length === 6) {
-          handlePostcodeChange(info.postcode);
-        }
-        if (info.isIpFallback) {
-          notify(`⚠️ ISP Network Gateway detected (${info.city}). For Jhansi doorstep trial, type PIN 284121 or click 'Pin on Map'.`, 'info');
-        } else {
-          notify(`📍 Precise device location: ${info.city || info.state || 'Detected'}`, 'success');
-        }
-      }
+      setLocationCandidate(info);
+      setPickerOpen(true);
+      notify(`Device accuracy: approximately ${Math.ceil(info.accuracy)} metres. Confirm your entrance on the map.`, 'info');
     } catch (err) {
       notify(err.message || 'Unable to detect location. Please type manually.', 'error');
     } finally {
@@ -562,7 +545,7 @@ export default function UserAddressForm() {
                 {detectedCoords.latitude !== null && (
                   <Chip
                     size="small"
-                    label={`📍 Precise GPS Coordinates captured (${Number(detectedCoords.latitude).toFixed(4)}, ${Number(detectedCoords.longitude).toFixed(4)})`}
+                    label={`📍 Confirmed delivery pin (${Number(detectedCoords.latitude).toFixed(4)}, ${Number(detectedCoords.longitude).toFixed(4)})`}
                     sx={{ mb: 2, bgcolor: '#f0fdf4', color: '#166534', fontWeight: 700, border: '1px solid #86efac' }}
                   />
                 )}
@@ -919,10 +902,11 @@ export default function UserAddressForm() {
         </Grid>
       <LocationPickerModal
         open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        initialLat={detectedCoords.latitude || 25.5184}
-        initialLng={detectedCoords.longitude || 78.6821}
-        initialCity={city || 'Jhansi'}
+        onClose={() => { setPickerOpen(false); setLocationCandidate(null); }}
+        initialLat={locationCandidate?.latitude ?? detectedCoords.latitude}
+        initialLng={locationCandidate?.longitude ?? detectedCoords.longitude}
+        initialCity={city}
+        accuracy={locationCandidate?.accuracy}
         onConfirmLocation={(loc) => {
           if (loc.city) setCity(loc.city);
           if (loc.postcode) handlePostcodeChange(loc.postcode);
@@ -930,7 +914,7 @@ export default function UserAddressForm() {
             setAddress((prev) => (prev ? `${prev}, ${loc.street}` : loc.street));
           }
           setDetectedCoords({ latitude: loc.latitude, longitude: loc.longitude });
-          notify(`📍 Exact location confirmed: ${loc.city || 'Jhansi'} (${loc.postcode || '284121'})`, 'success');
+          notify('Delivery pin confirmed. Please add your house/flat number and landmark.', 'success');
         }}
       />
       </Container>

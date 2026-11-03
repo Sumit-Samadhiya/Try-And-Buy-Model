@@ -78,35 +78,23 @@ describe('reverseGeocodeService', () => {
     expect(coords.latitude).toBe(28.6139);
     expect(coords.longitude).toBe(77.209);
     expect(coords.accuracy).toBe(10);
-    expect(coords.source).toBe('device_gps');
+    expect(coords.source).toBe('device_location');
   });
 
-  test('detectUserCoordinates falls back to IP geolocation when browser GPS times out', async () => {
-    // Browser geolocation times out (error code 3)
-    const mockGeolocation = {
-      getCurrentPosition: jest.fn().mockImplementation((_, error) =>
-        error({ code: 3, message: 'Location request timed out.' })
-      ),
-    };
-    global.navigator.geolocation = mockGeolocation;
-
-    // IP geolocation fetch mock
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        latitude: 26.45,
-        longitude: 80.32,
-        city: 'Kanpur',
-        principalSubdivision: 'Uttar Pradesh',
-        countryName: 'India',
-        locality: 'Kanpur',
-        postcode: '208001',
-      }),
-    });
-
-    const coords = await detectUserCoordinates();
-    expect(coords.latitude).toBe(26.45);
-    expect(coords.longitude).toBe(80.32);
-    expect(coords.source).toBe('ip_geolocation');
+  test.each([1, 2, 3])('does not use IP fallback for device error %s', async code => {
+    navigator.geolocation = { getCurrentPosition: jest.fn((success, error) => error({ code })) };
+    await expect(detectUserCoordinates()).rejects.toThrow();
+    expect(fetch).not.toHaveBeenCalled();
+    expect(navigator.geolocation.getCurrentPosition).toHaveBeenCalledTimes(1);
+  });
+  test('rejects inaccurate network positions before address lookup', async () => {
+    navigator.geolocation = { getCurrentPosition: jest.fn(success => success({ coords: { latitude: 26.45, longitude: 80.32, accuracy: 5000 } })) };
+    await expect(detectAndReverseGeocode()).rejects.toThrow('too approximate');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  test('requests a fresh high accuracy fix', async () => {
+    navigator.geolocation = { getCurrentPosition: jest.fn(success => success({ coords: { latitude: 25.4, longitude: 78.5, accuracy: 20 } })) };
+    await detectUserCoordinates();
+    expect(navigator.geolocation.getCurrentPosition).toHaveBeenCalledWith(expect.any(Function), expect.any(Function), { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
   });
 });
