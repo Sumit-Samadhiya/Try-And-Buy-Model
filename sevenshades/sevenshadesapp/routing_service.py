@@ -120,7 +120,7 @@ def get_road_route(start_lat, start_lng, dest_lat, dest_lng, timeout=3.5):
         geo_url = (
             f"https://api.geoapify.com/v1/routing"
             f"?waypoints={start_lat:.6f},{start_lng:.6f}|{dest_lat:.6f},{dest_lng:.6f}"
-            f"&mode=scooter&apiKey={geo_key}"
+            f"&mode=drive&apiKey={geo_key}"
         )
         try:
             req = urllib.request.Request(geo_url, headers={'User-Agent': 'DoorDrape-Routing/1.0', 'Accept': 'application/json'})
