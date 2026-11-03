@@ -71,11 +71,11 @@ def approve_bill(account, order_id, revision, mode):
         raise InventoryError('The bill has changed. Refresh and review the latest bill.')
     if final.payment_status == 'paid':
         return final
-    if order.status not in ('AWAITING_SELECTION_APPROVAL', 'SELECTION_SUBMITTED', 'PAYMENT_PENDING') or mode not in (None, 'cash'):
+    if order.status not in ('AWAITING_SELECTION_APPROVAL', 'SELECTION_SUBMITTED', 'PAYMENT_PENDING') or mode not in (None, 'cash', 'upi'):
         raise InventoryError('This bill cannot be approved with those payment details.')
     if mode is None and approved(final):
         return final
-    if mode == 'cash' and GatewayPayment.objects.filter(
+    if mode in ('cash', 'upi') and GatewayPayment.objects.filter(
         try_order=order, purpose='final', revision=revision
     ).exists():
         raise InventoryError('An online payment attempt exists for this bill. Reconcile it before choosing cash.')

@@ -6,6 +6,7 @@ from sevenshadesapp.models import ReturnedItem, TamperProofTag, FinalOrderItem
 from sevenshadesapp.serializer import ReturnedItemSerializer, TamperProofTagSerializer
 from .models import TryOrderItem, TrialReturn, FinalOrderItem
 from .inventory_workflow import InventoryError, collect_return, cancel_trial
+from .qr_service import generate_tag_qr
 from .security import failure
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,7 @@ def return_data(result):
         'product_name': item.product_name, 'size': item.size, 'color': item.color,
         'condition': result.condition, 'status': result.status, 'tag_intact': result.tag_intact,
         'tag_verified': result.tag_verified, 'scanned_tag': result.scanned_tag,
+        'tag_qr_url': generate_tag_qr(item.security_tag, item.try_order.order_id, item.product_name)['qr_image_url'] if item.security_tag else None,
         'steam_pressed_at': result.steam_pressed_at.isoformat() if result.steam_pressed_at else None}
 
 
@@ -39,6 +41,7 @@ def item_data(item):
     return {'id': item.pk, 'order_id': item.try_order.order_id, 'product_name': item.product_name,
         'size': item.size, 'color': item.color, 'security_tag': item.security_tag,
         'selected': selected, 'stock_reserved': item.stock_reserved,
+        'tag_qr_url': generate_tag_qr(item.security_tag, item.try_order.order_id, item.product_name)['qr_image_url'] if item.security_tag else None,
         'return_status': result.status if result else None}
 
 

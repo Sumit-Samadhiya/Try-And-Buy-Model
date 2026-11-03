@@ -12,6 +12,7 @@ from sevenshadesapp.inventory_workflow import InventoryError
 from sevenshadesapp.settlement import approve_bill, approved
 from sevenshadesapp.payments import gateway_configured, create_payment, verify_checkout, verify_webhook, verified_entity, apply_capture, reconcile_payment
 from sevenshadesapp.receipts import receipt_html
+from sevenshadesapp.qr_service import generate_payment_qr, generate_tag_qr, generate_qr_image_url
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ def SettlementDetail(request):
     assignment = DeliveryAssignment.objects.filter(try_order=order).first()
     receipt = OrderReceipt.objects.filter(final_order=final).first() if final else None
     start = assignment.trial_start_time if assignment else None
+    payment_qr = generate_payment_qr(order.order_id, final.final_payable) if (final and final.final_payable > 0) else None
     return JsonResponse({'status': True, 'data': {
         'try_order': TryOrderWithItemsSerializer(order).data,
         'final_order': FinalOrderWithItemsSerializer(final).data if final else None,
@@ -55,6 +57,7 @@ def SettlementDetail(request):
         'trial_ends_at': (start + timedelta(minutes=15)).isoformat() if start else None,
         'server_time': timezone.now().isoformat(), 'online_available': False,
         'receipt_number': receipt.number if receipt else None,
+        'payment_qr': payment_qr,
     }})
 
 
@@ -120,3 +123,66 @@ def ReceiptDownload(request):
     response['Cache-Control'] = 'private, no-store'
     response['X-Content-Type-Options'] = 'nosniff'
     return response
+
+
+@api_view(['GET', 'POST'])
+def GenerateQrCode(request):
+    """
+    Public API integration with qrserver (api.qrserver.com).
+    Generates dynamic QR codes for:
+    - UPI Payment ('payment' or 'upi'): with exact amount, payee VPA, and order reference.
+    - Garment Tag ('tag'): with security tag code for instant rider verification.
+    - Custom ('custom'): arbitrary URL / payload.
+    """
+    data = request.data if request.method == 'POST' else request.query_params
+    qr_type = str(data.get('type') or 'upi').lower().strip()
+    size = str(data.get('size') or '260x260').strip()
+
+    if qr_type in ('upi', 'payment'):
+        order_id = str(data.get('order_id') or '').strip()
+        amount = data.get('amount')
+
+        if order_id and amount is None:
+            order = TryOrder.objects.filter(order_id=order_id).first()
+            if order:
+                final = FinalOrder.objects.filter(try_order=order).first()
+                amount = final.final_payable if final else order.try_fee
+
+        try:
+            amt_val = float(amount or 0)
+        except (ValueError, TypeError):
+            amt_val = 0.0
+
+        qr_info = generate_payment_qr(order_id=order_id, amount=amt_val, size=size)
+        return JsonResponse({'status': True, 'data': qr_info})
+
+    elif qr_type == 'tag':
+        tag_code = str(data.get('tag_code') or data.get('tag_id') or '').strip()
+        item_id = data.get('item_id')
+        product_name = str(data.get('product_name') or '').strip()
+        order_id = str(data.get('order_id') or '').strip()
+
+        if item_id and not tag_code:
+            from .models import TryOrderItem
+            item = TryOrderItem.objects.filter(pk=item_id).first()
+            if item:
+                tag_code = item.security_tag
+                product_name = item.product_name
+                order_id = item.try_order.order_id
+
+        if not tag_code:
+            return failure('Tag code or item_id is required for tag QR generation.', 400)
+
+        qr_info = generate_tag_qr(tag_code=tag_code, order_id=order_id, product_name=product_name, size=size)
+        return JsonResponse({'status': True, 'data': qr_info})
+
+    elif qr_type == 'custom':
+        payload = str(data.get('payload') or data.get('data') or '').strip()
+        if not payload:
+            return failure('Payload or data is required for custom QR generation.', 400)
+        color = str(data.get('color') or '064e3b').strip()
+        qr_url = generate_qr_image_url(payload, size=size, color=color)
+        return JsonResponse({'status': True, 'data': {'payload': payload, 'qr_image_url': qr_url}})
+
+    return failure(f"Unsupported QR type '{qr_type}'. Use 'payment', 'tag', or 'custom'.", 400)
+

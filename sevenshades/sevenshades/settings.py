@@ -273,6 +273,8 @@ RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', '')
 RAZORPAY_WEBHOOK_SECRET = os.environ.get('RAZORPAY_WEBHOOK_SECRET', '')
 RECEIPT_SELLER_NAME = os.environ.get('RECEIPT_SELLER_NAME', 'Doordrape')
 RECEIPT_SELLER_ADDRESS = os.environ.get('RECEIPT_SELLER_ADDRESS', '')
+DOORDRAPE_UPI_VPA = os.environ.get('DOORDRAPE_UPI_VPA', 'doordrape@upi')
+DOORDRAPE_UPI_NAME = os.environ.get('DOORDRAPE_UPI_NAME', 'DoorDrape Fashion')
 
 # Fixed OTP is explicitly limited to local debug mode. SMS integration is pending.
 OTP_TEST_MODE = DEBUG and os.environ.get('OTP_TEST_MODE', '1') == '1'

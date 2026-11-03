@@ -81,6 +81,8 @@ urlpatterns = [
     path('api/payment_reconcile', settlement_views.PaymentReconcile),
     path('api/payment_verify', settlement_views.PaymentVerify),
     path('api/receipt_download', settlement_views.ReceiptDownload),
+    path('api/generate_qr', settlement_views.GenerateQrCode),
+    path('api/generate_qr/', settlement_views.GenerateQrCode),
     path('admin/', admin.site.urls),
     path('api/auth_csrf', auth_views.CsrfToken),
     path('api/auth_session', auth_views.CurrentSession),
