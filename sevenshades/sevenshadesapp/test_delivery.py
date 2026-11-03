@@ -258,6 +258,45 @@ class DeliveryTests(TestCase):
         self.assertEqual(unauth_response.status_code, 403)
         self.assertFalse(unauth_response.json()['status'])
 
+    def test_pincode_lookup_invalid_format(self):
+        client = APIClient()
+        response = client.get('/api/pincode_lookup?pincode=123')
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json()['status'])
+
+        response_post = client.post('/api/pincode_lookup', {'pincode': 'ABCDEF'}, format='json')
+        self.assertEqual(response_post.status_code, 400)
+        self.assertFalse(response_post.json()['status'])
+
+    def test_pincode_lookup_serviceable_and_excluded(self):
+        from .models import DeliveryZone, ExcludedArea
+        DeliveryZone.objects.create(zone_name='Central Hub', postcodes='110001, 110002')
+        client = APIClient()
+        
+        # Test 110001 (serviceable)
+        response = client.get('/api/pincode_lookup?pincode=110001')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['status'])
+        self.assertTrue(data['serviceable'])
+        self.assertEqual(data['zone_name'], 'Central Hub')
+
+        # Test non-serviceable pincode
+        response_unserv = client.get('/api/pincode_lookup?pincode=560001')
+        self.assertEqual(response_unserv.status_code, 200)
+        data_unserv = response_unserv.json()
+        self.assertTrue(data_unserv['status'])
+        self.assertFalse(data_unserv['serviceable'])
+
+        # Now exclude 110001
+        ExcludedArea.objects.create(area_name='Red Zone', postcode='110001')
+        response_excl = client.get('/api/pincode_lookup?pincode=110001')
+        self.assertEqual(response_excl.status_code, 200)
+        data_excl = response_excl.json()
+        self.assertTrue(data_excl['status'])
+        self.assertFalse(data_excl['serviceable'])
+        self.assertTrue(data_excl['is_excluded'])
+
 
 
 

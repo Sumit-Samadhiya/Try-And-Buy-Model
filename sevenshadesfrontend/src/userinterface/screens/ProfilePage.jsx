@@ -10,7 +10,9 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Container,
+  InputAdornment,
   Divider,
   FormControlLabel,
   Grid,
@@ -107,6 +109,65 @@ export default function ProfilePage() {
   const [addressList, setAddressList] = useState([]);
   const [addressForm, setAddressForm] = useState({ country: 'India', address: '', city: '', postcode: '', address_type: 'Residential' });
   const [editingAddress, setEditingAddress] = useState(null);
+  const [addressPinLookup, setAddressPinLookup] = useState({
+    loading: false,
+    checked: false,
+    serviceable: null,
+    message: '',
+    areas: [],
+    zoneName: '',
+  });
+
+  const handleProfilePostcodeChange = useCallback(async (val) => {
+    const cleanPin = String(val || '').replace(/\D/g, '').slice(0, 6);
+    setAddressForm(prev => ({ ...prev, postcode: cleanPin }));
+
+    if (cleanPin.length === 6) {
+      setAddressPinLookup(prev => ({ ...prev, loading: true, message: 'Checking PIN code...' }));
+      const result = await postData('pincode_lookup', { pincode: cleanPin });
+      if (result && result.status) {
+        setAddressForm(prev => ({
+          ...prev,
+          city: result.city || prev.city,
+          country: result.country || prev.country || 'India',
+        }));
+        setAddressPinLookup({
+          loading: false,
+          checked: true,
+          serviceable: result.serviceable,
+          message: result.message,
+          areas: result.areas || [],
+          zoneName: result.zone_name || '',
+        });
+      } else {
+        setAddressPinLookup({
+          loading: false,
+          checked: true,
+          serviceable: false,
+          message: result?.message || 'Invalid PIN code.',
+          areas: [],
+          zoneName: '',
+        });
+      }
+    } else {
+      setAddressPinLookup({
+        loading: false,
+        checked: false,
+        serviceable: null,
+        message: '',
+        areas: [],
+        zoneName: '',
+      });
+    }
+  }, []);
+
+  const handleSelectProfileArea = (areaName) => {
+    if (!areaName) return;
+    setAddressForm(prev => ({
+      ...prev,
+      address: prev.address ? (prev.address.toLowerCase().includes(areaName.toLowerCase()) ? prev.address : `${prev.address}, ${areaName}`) : areaName
+    }));
+  };
 
   const [reviewForm, setReviewForm] = useState({ product_details_id: '', product: '', rating: '', review: '' });
   const [helpForm, setHelpForm] = useState({ subject: '', message: '' });
@@ -593,6 +654,12 @@ export default function ProfilePage() {
       return;
     }
 
+    if (addressPinLookup.checked && addressPinLookup.serviceable === false) {
+      alert(`Doorstep trial is not currently serviceable in PIN code ${addressForm.postcode}. Please enter a supported address.`);
+      return;
+      return;
+    }
+
     let result;
     if (editingAddress) {
       result = await postData('address_update', {
@@ -624,6 +691,7 @@ export default function ProfilePage() {
       alert(result.message || 'Address saved successfully');
       setAddressForm({ country: 'India', address: '', city: '', postcode: '', address_type: 'Residential' });
       setEditingAddress(null);
+      setAddressPinLookup({ loading: false, checked: false, serviceable: null, message: '', areas: [], zoneName: '' });
       fetchUserAddress();
     } else {
       alert(result?.message || 'Unable to save address');
@@ -1686,6 +1754,11 @@ export default function ProfilePage() {
                                 postcode: item.postcode,
                                 address_type: item.address_type || 'Residential',
                               });
+
+                              if (item.postcode && String(item.postcode).length === 6) {
+                                handleProfilePostcodeChange(item.postcode);
+                              }
+
                             }}
                           >
                             <EditRoundedIcon fontSize="small" />
@@ -1703,42 +1776,99 @@ export default function ProfilePage() {
                       {editingAddress ? 'Edit Delivery Address' : 'Add New Address'}
                     </Typography>
                     <Grid container spacing={1.5}>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Country"
-                          value={addressForm.country}
-                          onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="City"
-                          value={addressForm.city}
-                          onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
-                        />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Street Address / Flat / Floor"
-                          value={addressForm.address}
-                          onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })}
-                        />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Postal Code (PIN)"
-                          value={addressForm.postcode}
-                          onChange={(e) => setAddressForm({ ...addressForm, postcode: e.target.value })}
-                        />
-                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="Postal Code (PIN)"
+                          placeholder="e.g. 110001"
+                          value={addressForm.postcode}
+                          onChange={(e) => handleProfilePostcodeChange(e.target.value)}
+                          error={addressPinLookup.checked && addressPinLookup.serviceable === false}
+                          helperText={addressPinLookup.checked && !addressPinLookup.serviceable ? 'Doorstep trial not yet active here' : 'Enter 6-digit PIN for auto-fill'}
+                          InputProps={{
+                            endAdornment: addressPinLookup.loading ? (
+                              <InputAdornment position="end">
+                                <CircularProgress size={16} sx={{ color: '#064e3b' }} />
+                              </InputAdornment>
+                            ) : addressPinLookup.checked && addressPinLookup.serviceable ? (
+                              <InputAdornment position="end">
+                                <CheckCircleOutlineIcon sx={{ color: '#16a34a', fontSize: 18 }} />
+                              </InputAdornment>
+                            ) : null,
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="City / District"
+                          value={addressForm.city}
+                          onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+                          helperText={addressPinLookup.checked && addressPinLookup.district ? `Auto-detected: ${addressPinLookup.district}` : ''}
+                        />
+                      </Grid>
+
+                      {addressPinLookup.checked && (
+                        <Grid item xs={12}>
+                          <Paper
+                            elevation={0}
+                            sx={{
+                              p: 1.2,
+                              borderRadius: 2,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              bgcolor: addressPinLookup.serviceable ? '#f0fdf4' : '#fef2f2',
+                              border: addressPinLookup.serviceable ? '1px solid #86efac' : '1px solid #fca5a5',
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ fontWeight: 700, fontSize: 13, color: addressPinLookup.serviceable ? '#166534' : '#991b1b' }}>
+                              {addressPinLookup.serviceable ? `✅ ${addressPinLookup.message}` : `⚠️ ${addressPinLookup.message}`}
+                            </Typography>
+                          </Paper>
+                        </Grid>
+                      )}
+
+                      {addressPinLookup.areas && addressPinLookup.areas.length > 0 && (
+                        <Grid item xs={12}>
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', display: 'block', mb: 0.5 }}>
+                            Select Locality / Colony:
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
+                            {addressPinLookup.areas.slice(0, 6).map((area) => (
+                              <Chip
+                                key={area}
+                                label={area}
+                                size="small"
+                                onClick={() => handleSelectProfileArea(area)}
+                                sx={{ bgcolor: '#e2e8f0', color: '#1e293b', fontWeight: 600, fontSize: 11, cursor: 'pointer' }}
+                              />
+                            ))}
+                          </Box>
+                        </Grid>
+                      )}
+
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="Street Address / Flat / Floor"
+                          value={addressForm.address}
+                          onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="Country"
+                          value={addressForm.country}
+                          onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
+                        />
+                      </Grid>
+
                       <Grid item xs={12}>
                         <Typography variant="caption" sx={{ fontWeight: 700, color: '#374151', display: 'block', mb: 0.5 }}>
                           Address Type
@@ -1777,6 +1907,7 @@ export default function ProfilePage() {
                           sx={{ borderRadius: 2, fontWeight: 700 }}
                           onClick={() => {
                             setEditingAddress(null);
+      setAddressPinLookup({ loading: false, checked: false, serviceable: null, message: '', areas: [], zoneName: '' });
                             setAddressForm({ country: 'India', address: '', city: '', postcode: '', address_type: 'Residential' });
                           }}
                         >

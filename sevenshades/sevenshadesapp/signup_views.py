@@ -50,6 +50,11 @@ def Address_Submit(request):
     try:
         payload = request.data.copy()
         payload['mobileno'] = request.account.mobileno
+        for field in ('address', 'city', 'postcode', 'country'):
+            if field in payload and isinstance(payload[field], str):
+                payload[field] = payload[field].strip()
+        if not payload.get('country'):
+            payload['country'] = 'India'
         address_serializer = UserAddressSerializer(data=payload)
         if address_serializer.is_valid():
             address_serializer.save()
@@ -86,12 +91,23 @@ def Address_Update(request):
         if not address_obj:
             return JsonResponse({"message": 'Address not found', "status": False}, safe=False)
 
-        if any(request.data.get(field, getattr(address_obj, field)) != getattr(address_obj, field) for field in ('address', 'city', 'postcode', 'country')):
+        new_address = request.data.get('address')
+        new_city = request.data.get('city')
+        new_postcode = request.data.get('postcode')
+        new_country = request.data.get('country')
+        if isinstance(new_address, str): new_address = new_address.strip()
+        if isinstance(new_city, str): new_city = new_city.strip()
+        if isinstance(new_postcode, str): new_postcode = new_postcode.strip()
+        if isinstance(new_country, str): new_country = new_country.strip() or 'India'
+
+        if any((val is not None and val != getattr(address_obj, field)) for field, val in [
+            ('address', new_address), ('city', new_city), ('postcode', new_postcode), ('country', new_country)
+        ]):
             address_obj.latitude = address_obj.longitude = None
-        address_obj.address = request.data.get('address', address_obj.address)
-        address_obj.city = request.data.get('city', address_obj.city)
-        address_obj.postcode = request.data.get('postcode', address_obj.postcode)
-        address_obj.country = request.data.get('country', address_obj.country)
+        if new_address is not None: address_obj.address = new_address
+        if new_city is not None: address_obj.city = new_city
+        if new_postcode is not None: address_obj.postcode = new_postcode
+        if new_country is not None: address_obj.country = new_country
         address_obj.address_type = request.data.get('address_type', address_obj.address_type)
         address_obj.save()
 

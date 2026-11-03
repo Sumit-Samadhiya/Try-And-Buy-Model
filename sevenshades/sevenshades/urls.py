@@ -68,6 +68,8 @@ urlpatterns = [
     path('api/otp_request', firebase_views.legacy_otp_disabled),
     path('api/otp_login', firebase_views.legacy_otp_disabled),
     path('api/reset_password', firebase_views.legacy_otp_disabled),
+    path('api/pincode_lookup', location_views.PincodeLookup),
+    path('api/pincode_lookup/', location_views.PincodeLookup),
     path('api/address_location', location_views.AddressLocation),
     path('api/rider_location', location_views.RiderLocation),
     path('api/rider_suggestions', location_views.RiderSuggestions),

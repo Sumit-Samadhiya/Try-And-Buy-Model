@@ -9,6 +9,8 @@ import Chip from '@mui/material/Chip';
 import CssBaseline from '@mui/material/CssBaseline';
 import IconButton from '@mui/material/IconButton';
 import TextField from '@mui/material/TextField';
+import CircularProgress from '@mui/material/CircularProgress';
+import InputAdornment from '@mui/material/InputAdornment';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
@@ -61,6 +63,63 @@ export default function UserAddressForm() {
     if (!slotAvailable(deliveryDate, deliverySlot, clock)) setDeliverySlot(deliverySlots.find(slot => slotAvailable(deliveryDate, slot, clock)) || '');
   }, [deliveryDate, deliverySlot, clock]);
   const [editingAddress, setEditingAddress] = useState(null);
+  const [pinLookup, setPinLookup] = useState({
+    loading: false,
+    checked: false,
+    serviceable: null,
+    message: '',
+    areas: [],
+    zoneName: '',
+  });
+
+  const handlePostcodeChange = useCallback(async (val) => {
+    const cleanPin = String(val || '').replace(/\D/g, '').slice(0, 6);
+    setPostCode(cleanPin);
+
+    if (cleanPin.length === 6) {
+      setPinLookup(prev => ({ ...prev, loading: true, message: 'Checking delivery serviceability...' }));
+      const result = await postData('pincode_lookup', { pincode: cleanPin });
+      if (result && result.status) {
+        if (result.city) setCity(result.city);
+        if (result.country) setCountry(result.country);
+        setPinLookup({
+          loading: false,
+          checked: true,
+          serviceable: result.serviceable,
+          message: result.message,
+          areas: result.areas || [],
+          zoneName: result.zone_name || '',
+        });
+      } else {
+        setPinLookup({
+          loading: false,
+          checked: true,
+          serviceable: false,
+          message: result?.message || 'Invalid PIN code.',
+          areas: [],
+          zoneName: '',
+        });
+      }
+    } else {
+      setPinLookup({
+        loading: false,
+        checked: false,
+        serviceable: null,
+        message: '',
+        areas: [],
+        zoneName: '',
+      });
+    }
+  }, []);
+
+  const handleSelectArea = (areaName) => {
+    if (!areaName) return;
+    if (!address) {
+      setAddress(areaName);
+    } else if (!address.toLowerCase().includes(areaName.toLowerCase())) {
+      setAddress(`${address}, ${areaName}`);
+    }
+  };
 
   const billingItems = trialDetails.billingItems || [];
   const isFirstOrder = trialDetails.isFirstOrder !== false;
@@ -108,6 +167,11 @@ export default function UserAddressForm() {
       notify(Object.values(validation)[0] || 'Please fill in your name, mobile number and complete delivery address.', 'error');
       return;
     }
+    if (pinLookup.checked && pinLookup.serviceable === false) {
+      notify(`Doorstep trial is not currently serviceable in PIN code ${postcode}. Please enter a supported address.`, 'error');
+      return;
+      return;
+    }
 
     let result;
     if (editingAddress) {
@@ -143,6 +207,7 @@ export default function UserAddressForm() {
       setPostCode('');
       setAddressType('Residential');
       setEditingAddress(null);
+      setPinLookup({ loading: false, checked: false, serviceable: null, message: '', areas: [], zoneName: '' });
       fetchUserAddress();
     } else {
       notify(result?.message || (editingAddress ? 'Unable to update address' : 'Unable to save address'));
@@ -157,6 +222,9 @@ export default function UserAddressForm() {
     setPostCode(addressItem.postcode || '');
     setCountry(addressItem.country || 'India');
     setAddressType(addressItem.address_type || 'Residential');
+    if (addressItem.postcode && String(addressItem.postcode).length === 6) {
+      handlePostcodeChange(addressItem.postcode);
+    }
   };
 
   const handleDeleteAddress = async (event, addressItem) => {
@@ -179,6 +247,7 @@ export default function UserAddressForm() {
       fetchUserAddress();
       if (editingAddress && editingAddress.address === addressItem.address && editingAddress.postcode === addressItem.postcode) {
         setEditingAddress(null);
+      setPinLookup({ loading: false, checked: false, serviceable: null, message: '', areas: [], zoneName: '' });
         setAddress('');
         setCity('');
         setPostCode('');
@@ -434,16 +503,114 @@ export default function UserAddressForm() {
                     </Stack>
                   </Grid>
                   <Grid item xs={12}>
-                    <TextField fullWidth label="Country" value={country} onChange={(e) => setCountry(e.target.value)} error={!!formError.country} helperText={formError.country} />
+                    {/* Automated PIN Code & Address fields */}
+                    <TextField
+                      fullWidth
+                      label="PIN Code"
+                      placeholder="e.g. 110001"
+                      value={postcode}
+                      onChange={(e) => handlePostcodeChange(e.target.value)}
+                      error={!!formError.postcode || (pinLookup.checked && pinLookup.serviceable === false)}
+                      helperText={
+                        formError.postcode || (pinLookup.checked && !pinLookup.serviceable ? 'Doorstep trial not yet active here' : 'Enter 6-digit PIN for auto-fill & hub check')
+                      }
+                      InputProps={{
+                        endAdornment: pinLookup.loading ? (
+                          <InputAdornment position="end">
+                            <CircularProgress size={20} sx={{ color: '#111827' }} />
+                          </InputAdornment>
+                        ) : pinLookup.checked && pinLookup.serviceable ? (
+                          <InputAdornment position="end">
+                            <CheckCircleRoundedIcon sx={{ color: '#16a34a' }} />
+                          </InputAdornment>
+                        ) : null,
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="City / District"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      error={!!formError.city}
+                      helperText={formError.city || (pinLookup.checked && pinLookup.district ? `Auto-detected: ${pinLookup.district}` : '')}
+                    />
+                  </Grid>
+
+                  {/* Real-time Serviceability Status Banner */}
+                  {pinLookup.checked && (
+                    <Grid item xs={12}>
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 2,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1.5,
+                          bgcolor: pinLookup.serviceable ? '#f0fdf4' : '#fef2f2',
+                          border: pinLookup.serviceable ? '1px solid #86efac' : '1px solid #fca5a5',
+                        }}
+                      >
+                        {pinLookup.serviceable ? (
+                          <CheckCircleRoundedIcon sx={{ color: '#16a34a', fontSize: 22 }} />
+                        ) : (
+                          <Typography sx={{ fontSize: 18 }}>⚠️</Typography>
+                        )}
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: pinLookup.serviceable ? '#166534' : '#991b1b' }}>
+                            {pinLookup.message}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: pinLookup.serviceable ? '#15803d' : '#b91c1c' }}>
+                            {pinLookup.serviceable ? 'Zero RTO Guarantee: Address verified with India Post network.' : 'Please enter an address inside active DoorDrape delivery hubs.'}
+                          </Typography>
+                        </Box>
+                      </Paper>
+                    </Grid>
+                  )}
+
+                  {/* Quick Area / Locality Suggestions */}
+                  {pinLookup.areas && pinLookup.areas.length > 0 && (
+                    <Grid item xs={12}>
+                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#4b5563', display: 'block', mb: 0.5 }}>
+                        Select Your Locality / Colony (Click to add):
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
+                        {pinLookup.areas.slice(0, 8).map((area) => (
+                          <Chip
+                            key={area}
+                            label={area}
+                            size="small"
+                            onClick={() => handleSelectArea(area)}
+                            sx={{
+                              bgcolor: '#f1f5f9',
+                              color: '#1e293b',
+                              fontWeight: 600,
+                              fontSize: 12,
+                              cursor: 'pointer',
+                              '&:hover': { bgcolor: '#e2e8f0' }
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    </Grid>
+                  )}
+
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Flat, Floor, House No., Building & Street"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      error={!!formError.address}
+                      helperText={formError.address}
+                      multiline
+                      minRows={2}
+                    />
                   </Grid>
                   <Grid item xs={12}>
-                    <TextField fullWidth label="Full Address" value={address} onChange={(e) => setAddress(e.target.value)} error={!!formError.address} helperText={formError.address} multiline minRows={3} />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="City" value={city} onChange={(e) => setCity(e.target.value)} error={!!formError.city} helperText={formError.city} />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="Postcode" value={postcode} onChange={(e) => setPostCode(e.target.value)} error={!!formError.postcode} helperText={formError.postcode} />
+                    <TextField fullWidth label="Country" value={country} onChange={(e) => setCountry(e.target.value)} error={!!formError.country} helperText={formError.country} />
                   </Grid>
                 </Grid>
 
@@ -458,6 +625,7 @@ export default function UserAddressForm() {
                     sx={{ mt: 1, py: 1.2, fontWeight: 700 }}
                     onClick={() => {
                       setEditingAddress(null);
+      setPinLookup({ loading: false, checked: false, serviceable: null, message: '', areas: [], zoneName: '' });
                       setAddress('');
                       setCity('');
                       setPostCode('');

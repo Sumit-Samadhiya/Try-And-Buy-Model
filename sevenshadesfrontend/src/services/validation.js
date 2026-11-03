@@ -3,6 +3,7 @@ const required = {
   check_costumer_login: ['mobileno','password'], check_admin_login: ['emailid','password'], delivery_rider_login: ['phone','password'],
   otp_request: ['mobileno','purpose'], otp_login: ['mobileno','otp','challenge_id'], reset_password: ['mobileno','otp','challenge_id','password','confirm_password'],
   address_submit: ['address','city','country','postcode','address_type'], address_update: ['address','city','country','postcode','address_type'],
+  pincode_lookup: ['pincode'],
   delivery_rider_create: ['name','phone','password','bike_number','zone'],
   maincategory_submit: ['maincategoryname'], editmaincategory_data: ['id','maincategoryname'],
   mysubcategory_submit: ['maincategoryid','subcategoryname'], editmysubcategory_data: ['id','maincategoryid','subcategoryname'],
@@ -12,7 +13,7 @@ const required = {
   editproductdetails_data: ['id','maincategoryid','subcategoryid','brandid','productid','productsubname','description','qty','price','offerprice','color','size','offertype'],
   productdetails_batch_submit: ['maincategoryid','subcategoryid','brandid','productid','productsubname','description','color','offertype','variants'],
 };
-const limits = { fname:70, lname:70, name:120, maincategoryname:70, subcategoryname:70, brandname:70, productname:70, productsubname:70, description:150, color:70, size:70, offertype:70, sku:60, bannerdescription:70, address:70, city:70, country:70, zone:70, bike_number:40, review_text:2000 };
+const limits = { fname:70, lname:70, name:120, maincategoryname:70, subcategoryname:70, brandname:70, productname:70, productsubname:70, description:150, color:70, size:70, offertype:70, sku:60, bannerdescription:70, address:70, city:70, country:70, zone:70, bike_number:40, review_text:2000, pincode:10 };
 
 // One size row of a productdetails_batch_submit variants array.
 export function validateVariantRow(row) {
@@ -57,7 +58,7 @@ export function validateFields(endpoint, body) {
     if (limits[key] && !(key === 'address' && endpoint === 'try_order_create') && (typeof value !== 'string' || value.length > limits[key] || (!value.trim() && !['review_text','bannerdescription','sku'].includes(key)))) errors[key] = 'Enter valid text up to ' + limits[key] + ' characters.';
     if (['mobileno','mobile','phone','user_mobile'].includes(key) && !/^[6-9][0-9]{9}$/.test(String(value))) errors[key] = 'Enter a 10-digit mobile number starting with 6–9.';
     if (key === 'emailid' && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || value.length > 70)) errors[key] = 'Enter a valid email address.';
-    if (key === 'postcode' && !/^[1-9][0-9]{5}$/.test(value)) errors[key] = 'Enter a valid 6-digit PIN code.';
+    if (['postcode', 'pincode'].includes(key) && !/^[1-9][0-9]{5}$/.test(value)) errors[key] = 'Enter a valid 6-digit PIN code.';
     if (['password','confirm_password'].includes(key) && (typeof value !== 'string' || !value.trim() || value.length > 128)) errors[key] = 'Enter a password up to 128 characters.';
     if (key === 'otp' && !/^[0-9]{6}$/.test(value)) errors[key] = 'Enter the 6-digit OTP.';
     if (['qty','price','offerprice','rating','id','maincategoryid','subcategoryid','brandid','productid','product_details_id','try_order_item_id','return_id','address_id','bill_revision'].includes(key)) {

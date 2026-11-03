@@ -1,10 +1,17 @@
+import re
+import urllib.request
+import json
+import logging
 from math import radians, sin, cos, sqrt, atan2, isfinite
 from datetime import timedelta
+from django.core.cache import cache
 from django.http import JsonResponse
 from django.utils import timezone
 from rest_framework.decorators import api_view
-from .models import UserAddress, TryOrder, DeliveryRider, DeliveryZone
+from .models import UserAddress, TryOrder, DeliveryRider, DeliveryZone, ExcludedArea
 from .security import failure
+
+logger = logging.getLogger(__name__)
 
 
 def coordinates(data):
@@ -66,3 +73,101 @@ def RiderSuggestions(request):
         values.append({'rider_id': rider.rider_id, 'name': rider.name, 'zone': rider.zone, 'distance_km': round(distance, 2) if distance is not None else None, 'zone_match': zone_match, 'active_orders': workload})
     values.sort(key=lambda row: (row['distance_km'] is None, row['distance_km'] if row['distance_km'] is not None else 0, not row['zone_match'], row['active_orders'], row['name']))
     return JsonResponse({'status': True, 'data': values})
+
+
+@api_view(['GET', 'POST'])
+def PincodeLookup(request):
+    """
+    Public API integration with India Postal PIN Code API (https://api.postalpincode.in)
+    Automates address entry, auto-populates City/District/State, suggests localities,
+    and performs instant doorstep trial serviceability checks against DoorDrape's DeliveryZones.
+    """
+    pin = request.query_params.get('pincode') if hasattr(request, 'query_params') else None
+    if not pin and hasattr(request, 'data'):
+        pin = request.data.get('pincode') or request.data.get('postcode')
+    if not pin and hasattr(request, 'GET'):
+        pin = request.GET.get('pincode') or request.GET.get('postcode')
+    pin = str(pin or '').strip()
+
+    if not re.fullmatch(r'[1-9][0-9]{5}', pin):
+        return JsonResponse({
+            'status': False,
+            'message': 'Please enter a valid 6-digit Indian PIN code.'
+        }, status=400)
+
+    # 1. DoorDrape DeliveryZone and ExcludedArea serviceability evaluation
+    all_zones = DeliveryZone.objects.all()
+    matching_zones = []
+    for zone in all_zones:
+        codes = [c.strip() for c in (zone.postcodes or '').split(',') if c.strip()]
+        if pin in codes:
+            matching_zones.append(zone.zone_name)
+
+    is_excluded = ExcludedArea.objects.filter(postcode=pin).exists()
+    is_serviceable = bool(matching_zones) and not is_excluded
+    primary_zone = matching_zones[0] if matching_zones else None
+
+    # 2. Check cached postal details
+    cache_key = f"doordrape_pin_{pin}"
+    postal_data = cache.get(cache_key)
+
+    if not postal_data:
+        try:
+            req = urllib.request.Request(
+                f"https://api.postalpincode.in/pincode/{pin}",
+                headers={'User-Agent': 'DoorDrape/1.0'}
+            )
+            with urllib.request.urlopen(req, timeout=4) as response:
+                payload = json.loads(response.read().decode('utf-8'))
+                if payload and isinstance(payload, list) and payload[0].get('Status') == 'Success':
+                    offices = payload[0].get('PostOffice', [])
+                    if offices:
+                        first = offices[0]
+                        district = first.get('District') or ''
+                        state = first.get('State') or ''
+                        block = first.get('Block') or ''
+                        city = district if district and district.lower() != 'na' else (block or state)
+                        areas = sorted({po.get('Name') for po in offices if po.get('Name')})
+                        postal_data = {
+                            'district': district,
+                            'state': state,
+                            'city': city,
+                            'country': 'India',
+                            'areas': areas[:15],
+                        }
+                        # Cache for 7 days
+                        cache.set(cache_key, postal_data, 7 * 24 * 60 * 60)
+        except Exception as e:
+            logger.warning(f"Postal PIN Code lookup failed for {pin}: {e}")
+
+    if not postal_data:
+        postal_data = {
+            'district': '',
+            'state': '',
+            'city': '',
+            'country': 'India',
+            'areas': []
+        }
+
+    if is_serviceable:
+        service_message = f"Doorstep trial available in {primary_zone}! (Standard & SOS 90-Min)"
+    elif is_excluded:
+        service_message = f"PIN {pin} is currently marked as an excluded delivery zone."
+    else:
+        service_message = f"DoorDrape trial service is not yet available in PIN {pin}."
+
+    return JsonResponse({
+        'status': True,
+        'pincode': pin,
+        'district': postal_data.get('district', ''),
+        'state': postal_data.get('state', ''),
+        'city': postal_data.get('city', ''),
+        'country': postal_data.get('country', 'India'),
+        'areas': postal_data.get('areas', []),
+        'serviceable': is_serviceable,
+        'zone_name': primary_zone,
+        'matching_zones': matching_zones,
+        'is_excluded': is_excluded,
+        'message': service_message
+    })
+
