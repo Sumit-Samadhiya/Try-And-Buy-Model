@@ -68,3 +68,4 @@ class QrApiEndpointTests(TestCase):
         response = self.client.get('/api/generate_qr?type=unknown')
         self.assertEqual(response.status_code, 400)
         self.assertFalse(response.json()['status'])
+

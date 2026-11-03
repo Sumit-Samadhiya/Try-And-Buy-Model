@@ -150,6 +150,8 @@ urlpatterns = [
 
     path('api/delivery_rider_create', delivery_ops_views.DeliveryRiderCreate),
     path('api/delivery_rider_update', delivery_ops_views.DeliveryRiderUpdate),
+    path('api/delivery_rider_reset_password', delivery_ops_views.DeliveryRiderResetPassword),
+    path('api/delivery_rider_reset_password/', delivery_ops_views.DeliveryRiderResetPassword),
     path('api/delivery_rider_list', delivery_ops_views.DeliveryRiderList),
     path('api/delivery_rider_login', delivery_ops_views.DeliveryRiderLogin),
     path('api/delivery_assign_order', delivery_ops_views.DeliveryAssignOrder),

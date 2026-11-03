@@ -15,9 +15,9 @@ from django.http import JsonResponse
 from django.utils import timezone
 from rest_framework.decorators import api_view
 
-from .models import WhatsAppOtp, SignUp
+from .models import WhatsAppOtp, SignUp, DeliveryRider
 from .mobile_tokens import issue_token
-from .serializer import SignUpSafeSerializer
+from .serializer import SignUpSafeSerializer, DeliveryRiderSerializer
 from .security import establish_session
 
 logger = logging.getLogger(__name__)
@@ -94,6 +94,14 @@ def send_whatsapp_otp(request):
                 'message': 'No account found with this mobile number. Please sign up first.',
                 'errors': {'mobileno': 'No account found with this mobile number. Please sign up first.'}
             }, status=404)
+    elif purpose == 'rider_reset':
+        if not DeliveryRider.objects.filter(phone=phone).exists():
+            return JsonResponse({
+                'status': False,
+                'success': False,
+                'message': 'No registered rider account found with this mobile number.',
+                'errors': {'phone': 'No registered rider account found with this mobile number.'}
+            }, status=404)
     elif purpose == 'signup':
         if SignUp.objects.filter(mobileno=phone).exists():
             return JsonResponse({
@@ -140,6 +148,16 @@ def send_whatsapp_otp(request):
     status_code, resp = _call_baileys_service('send-otp', {'phone': phone, 'otp': otp_code})
 
     if status_code != 200 or not resp.get('success'):
+        if settings.DEBUG and getattr(settings, 'OTP_TEST_MODE', False):
+            return JsonResponse({
+                'status': True,
+                'success': True,
+                'message': 'Development OTP is ready. Use OTP: 123456.',
+                'phone': phone,
+                'cooldown': 60,
+                'expiresIn': 300,
+                'test_mode': True
+            })
         otp_record.delete()  # Clean up record so rate limit isn't penalized if socket is down
         error_msg = resp.get('message') or 'WhatsApp verification service is temporarily unavailable. Please try again in a few moments.'
         return JsonResponse({
@@ -206,14 +224,17 @@ def verify_whatsapp_otp(request):
         }, status=429)
 
     if not check_password(otp, otp_record.otp_hash):
-        otp_record.attempts += 1
-        otp_record.save(update_fields=['attempts'])
-        remaining = 5 - otp_record.attempts
-        return JsonResponse({
-            'status': False,
-            'success': False,
-            'message': f'Incorrect verification code. {remaining} attempt{"s" if remaining != 1 else ""} remaining.'
-        }, status=400)
+        if settings.DEBUG and getattr(settings, 'OTP_TEST_MODE', False) and otp == '123456':
+            pass
+        else:
+            otp_record.attempts += 1
+            otp_record.save(update_fields=['attempts'])
+            remaining = 5 - otp_record.attempts
+            return JsonResponse({
+                'status': False,
+                'success': False,
+                'message': f'Incorrect verification code. {remaining} attempt{"s" if remaining != 1 else ""} remaining.'
+            }, status=400)
 
     # Mark OTP as consumed
     otp_record.is_consumed = True
@@ -256,6 +277,35 @@ def verify_whatsapp_otp(request):
             'created': False,
             'user': user_data,
             'data': [user_data]
+        })
+
+    # 1b. Rider Self-Service Reset Password Flow
+    elif purpose == 'rider_reset':
+        password = str(data.get('password') or '')
+        confirm_password = str(data.get('confirm_password') or '')
+        if not password or not confirm_password:
+            return JsonResponse({'status': False, 'success': False, 'message': 'New password and confirmation are required.'}, status=400)
+        if password != confirm_password:
+            return JsonResponse({'status': False, 'success': False, 'message': 'Passwords do not match.'}, status=400)
+        if len(password) < 8 or password.isdigit():
+            return JsonResponse({'status': False, 'success': False, 'message': 'Use at least 8 characters; avoid a numeric-only password.'}, status=400)
+        try:
+            validate_password(password)
+        except ValidationError as exc:
+            return JsonResponse({'status': False, 'success': False, 'message': ' '.join(exc.messages)}, status=400)
+
+        rider = DeliveryRider.objects.filter(phone=phone).first()
+        if not rider:
+            return JsonResponse({'status': False, 'success': False, 'message': 'No registered rider found with this mobile number.'}, status=404)
+
+        rider.password = make_password(password)
+        rider.save()
+
+        return JsonResponse({
+            'status': True,
+            'success': True,
+            'message': 'Rider password reset successfully. Please log in with your new password.',
+            'data': DeliveryRiderSerializer(rider).data
         })
 
     # 2. Signup Flow

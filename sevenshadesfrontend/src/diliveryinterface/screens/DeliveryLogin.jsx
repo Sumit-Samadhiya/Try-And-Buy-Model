@@ -14,7 +14,11 @@ import {
   Typography,
   Alert,
   CircularProgress,
-  Chip
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import TwoWheelerRoundedIcon from '@mui/icons-material/TwoWheelerRounded';
 import PhoneAndroidRoundedIcon from '@mui/icons-material/PhoneAndroidRounded';
@@ -36,7 +40,104 @@ export default function DeliveryLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const navigate = useNavigate();
+
+  // Rider Self-Service Forgot Password States
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1);
+  const [forgotPhone, setForgotPhone] = useState('');
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState('');
+  const [showForgotPass, setShowForgotPass] = useState(false);
+
+  const handleSendForgotOtp = async () => {
+    setForgotError('');
+    setForgotSuccess('');
+    const cleanPhone = forgotPhone.trim();
+    if (!cleanPhone || !/^[6-9][0-9]{9}$/.test(cleanPhone)) {
+      setForgotError('Enter a valid 10-digit registered Indian mobile number.');
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const res = await postData('auth/send-whatsapp-otp', {
+        phone: cleanPhone,
+        purpose: 'rider_reset'
+      });
+      setForgotLoading(false);
+      if (res?.status || res?.success) {
+        setForgotStep(2);
+        setForgotSuccess(res?.message || 'Verification code sent to your registered phone.');
+      } else {
+        setForgotError(res?.message || 'Unable to send OTP. Please contact Store Dispatch Admin.');
+      }
+    } catch {
+      setForgotLoading(false);
+      setForgotError('Network error. Unable to reach verification server.');
+    }
+  };
+
+  const handleResetRiderPassword = async () => {
+    setForgotError('');
+    setForgotSuccess('');
+    const cleanPhone = forgotPhone.trim();
+    const cleanOtp = forgotOtp.trim();
+
+    if (!cleanOtp || cleanOtp.length !== 6) {
+      setForgotError('Enter the 6-digit OTP verification code.');
+      return;
+    }
+    if (!forgotNewPassword || forgotNewPassword.length < 8 || /^[0-9]+$/.test(forgotNewPassword)) {
+      setForgotError('Password must be at least 8 characters and not numeric-only.');
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setForgotError('New password and confirm password do not match.');
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      // First try WhatsApp verification
+      let res = await postData('auth/verify-whatsapp-otp', {
+        phone: cleanPhone,
+        otp: cleanOtp,
+        password: forgotNewPassword,
+        confirm_password: forgotConfirmPassword,
+        purpose: 'rider_reset'
+      });
+
+      // If needed, fallback to dedicated rider reset endpoint
+      if (!res?.status && !res?.success) {
+        res = await postData('delivery_rider_reset_password', {
+          phone: cleanPhone,
+          otp: cleanOtp,
+          password: forgotNewPassword,
+          confirm_password: forgotConfirmPassword
+        });
+      }
+
+      setForgotLoading(false);
+      if (res?.status || res?.success) {
+        setForgotOpen(false);
+        setIdentifier(cleanPhone);
+        setPassword(forgotNewPassword);
+        setSuccessMsg('Password reset successfully! You can now start your shift with your new password.');
+        setErrorMsg('');
+      } else {
+        setForgotError(res?.message || 'Verification failed. Please check OTP and retry.');
+      }
+    } catch {
+      setForgotLoading(false);
+      setForgotError('Network error. Unable to complete password reset.');
+    }
+  };
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
@@ -175,6 +276,12 @@ export default function DeliveryLogin() {
               </Typography>
             </Stack>
 
+            {successMsg && (
+              <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setSuccessMsg('')}>
+                {successMsg}
+              </Alert>
+            )}
+
             {errorMsg && (
               <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setErrorMsg('')}>
                 {errorMsg}
@@ -255,6 +362,32 @@ export default function DeliveryLogin() {
                   }}
                 />
 
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: -1 }}>
+                  <Button
+                    type="button"
+                    size="small"
+                    onClick={() => {
+                      setForgotOpen(true);
+                      setForgotStep(1);
+                      setForgotPhone(identifier.replace(/\D/g, '').slice(-10) || '');
+                      setForgotError('');
+                      setForgotSuccess('');
+                      setForgotOtp('');
+                      setForgotNewPassword('');
+                      setForgotConfirmPassword('');
+                    }}
+                    sx={{
+                      color: '#34d399',
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      '&:hover': { color: '#6ee7b7' },
+                    }}
+                  >
+                    Forgot / Reset Password?
+                  </Button>
+                </Box>
+
                 <Button
                   type="submit"
                   variant="contained"
@@ -314,6 +447,197 @@ export default function DeliveryLogin() {
           </CardContent>
         </Card>
       </Container>
+
+      {/* Rider Self-Service Forgot Password Dialog */}
+      <Dialog
+        open={forgotOpen}
+        onClose={() => !forgotLoading && setForgotOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: 'rgba(2, 44, 34, 0.98)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: 3.5,
+            border: '1px solid rgba(52, 211, 153, 0.3)',
+            color: '#ffffff',
+            p: 1
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 800, color: '#34d399', pb: 1 }}>
+          🔑 Rider Password Reset
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: '#94a3b8', mb: 2 }}>
+            {forgotStep === 1
+              ? 'Enter your 10-digit mobile number registered with DoorDrape Dispatch.'
+              : `Enter the 6-digit OTP sent to +91 ${forgotPhone} and choose a new password.`}
+          </Typography>
+
+          {forgotSuccess && (
+            <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>
+              {forgotSuccess}
+            </Alert>
+          )}
+
+          {forgotError && (
+            <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} onClose={() => setForgotError('')}>
+              {forgotError}
+            </Alert>
+          )}
+
+          {forgotStep === 1 ? (
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <TextField
+                fullWidth
+                label="Registered Mobile Number"
+                placeholder="e.g. 9876543210"
+                value={forgotPhone}
+                onChange={(e) => setForgotPhone(e.target.value)}
+                disabled={forgotLoading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PhoneAndroidRoundedIcon sx={{ color: '#64748b' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: 'rgba(15, 23, 42, 0.6)',
+                    color: '#ffffff',
+                    borderRadius: 2,
+                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.15)' },
+                    '&:hover fieldset': { borderColor: '#10b981' },
+                    '&.Mui-focused fieldset': { borderColor: '#10b981' },
+                  },
+                  '& .MuiInputLabel-root': { color: '#94a3b8' },
+                  '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' },
+                }}
+              />
+            </Stack>
+          ) : (
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <TextField
+                fullWidth
+                label="6-Digit OTP Code"
+                placeholder="123456"
+                value={forgotOtp}
+                onChange={(e) => setForgotOtp(e.target.value)}
+                disabled={forgotLoading}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: 'rgba(15, 23, 42, 0.6)',
+                    color: '#ffffff',
+                    borderRadius: 2,
+                    letterSpacing: '4px',
+                    fontWeight: 700,
+                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.15)' },
+                    '&:hover fieldset': { borderColor: '#10b981' },
+                    '&.Mui-focused fieldset': { borderColor: '#10b981' },
+                  },
+                  '& .MuiInputLabel-root': { color: '#94a3b8' },
+                  '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' },
+                }}
+              />
+
+              <TextField
+                fullWidth
+                label="New Password"
+                type={showForgotPass ? 'text' : 'password'}
+                placeholder="Min 8 characters"
+                value={forgotNewPassword}
+                onChange={(e) => setForgotNewPassword(e.target.value)}
+                disabled={forgotLoading}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={() => setShowForgotPass(!showForgotPass)} sx={{ color: '#94a3b8' }}>
+                        {showForgotPass ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: 'rgba(15, 23, 42, 0.6)',
+                    color: '#ffffff',
+                    borderRadius: 2,
+                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.15)' },
+                    '&:hover fieldset': { borderColor: '#10b981' },
+                    '&.Mui-focused fieldset': { borderColor: '#10b981' },
+                  },
+                  '& .MuiInputLabel-root': { color: '#94a3b8' },
+                  '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' },
+                }}
+              />
+
+              <TextField
+                fullWidth
+                label="Confirm New Password"
+                type={showForgotPass ? 'text' : 'password'}
+                placeholder="Repeat new password"
+                value={forgotConfirmPassword}
+                onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                disabled={forgotLoading}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: 'rgba(15, 23, 42, 0.6)',
+                    color: '#ffffff',
+                    borderRadius: 2,
+                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.15)' },
+                    '&:hover fieldset': { borderColor: '#10b981' },
+                    '&.Mui-focused fieldset': { borderColor: '#10b981' },
+                  },
+                  '& .MuiInputLabel-root': { color: '#94a3b8' },
+                  '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' },
+                }}
+              />
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          {forgotStep === 2 && (
+            <Button
+              size="small"
+              onClick={() => { setForgotStep(1); setForgotError(''); }}
+              disabled={forgotLoading}
+              sx={{ color: '#94a3b8', textTransform: 'none' }}
+            >
+              Change Mobile
+            </Button>
+          )}
+          <Button
+            size="small"
+            onClick={() => setForgotOpen(false)}
+            disabled={forgotLoading}
+            sx={{ color: '#94a3b8', textTransform: 'none' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={forgotStep === 1 ? handleSendForgotOtp : handleResetRiderPassword}
+            disabled={forgotLoading}
+            sx={{
+              bgcolor: '#10b981',
+              color: '#ffffff',
+              fontWeight: 700,
+              textTransform: 'none',
+              px: 2.5,
+              '&:hover': { bgcolor: '#059669' },
+            }}
+          >
+            {forgotLoading
+              ? 'Please wait…'
+              : forgotStep === 1
+              ? 'Send Verification Code'
+              : 'Reset Password & Finish'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -301,6 +301,94 @@ class DeliveryTests(TestCase):
 
 
 
+    def test_admin_update_rider_details_and_reset_password(self):
+        client = APIClient(enforce_csrf_checks=False)
+        client.post('/api/check_admin_login', {'emailid': self.admin.emailid, 'password': 'Delivery-test-472!'}, format='json')
+
+        update_payload = {
+            'rider_id': self.rider.rider_id,
+            'name': 'Updated Rider Name',
+            'phone': '9876543210',
+            'bike_number': 'DL01AB9999',
+            'zone': 'South Delhi',
+            'status': 'Active',
+            'password': 'BrandNewRiderPass123!',
+            'confirm_password': 'BrandNewRiderPass123!'
+        }
+        res = client.post('/api/delivery_rider_update', update_payload, format='json')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['status'])
+        self.assertEqual(data['data']['name'], 'Updated Rider Name')
+        self.assertEqual(data['data']['phone'], '9876543210')
+
+        # Verify DB updated
+        self.rider.refresh_from_db()
+        self.assertEqual(self.rider.name, 'Updated Rider Name')
+        self.assertEqual(self.rider.phone, '9876543210')
+        self.assertEqual(self.rider.bike_number, 'DL01AB9999')
+        self.assertEqual(self.rider.zone, 'South Delhi')
+
+        # Verify old password no longer works for login
+        old_login = client.post('/api/delivery_rider_login', {'phone': '9876543210', 'password': 'Delivery-test-472!'}, format='json')
+        self.assertEqual(old_login.status_code, 401)
+
+        # Verify new password works
+        new_login = client.post('/api/delivery_rider_login', {'phone': '9876543210', 'password': 'BrandNewRiderPass123!'}, format='json')
+        self.assertEqual(new_login.status_code, 200)
+        self.assertTrue(new_login.json()['status'])
+
+    def test_admin_update_rider_invalid_password_rejected(self):
+        client = APIClient(enforce_csrf_checks=False)
+        client.post('/api/check_admin_login', {'emailid': self.admin.emailid, 'password': 'Delivery-test-472!'}, format='json')
+
+        res = client.post('/api/delivery_rider_update', {
+            'rider_id': self.rider.rider_id,
+            'password': 'short'
+        }, format='json')
+        self.assertEqual(res.status_code, 400)
+
+    def test_admin_update_rider_duplicate_phone_rejected(self):
+        client = APIClient(enforce_csrf_checks=False)
+        client.post('/api/check_admin_login', {'emailid': self.admin.emailid, 'password': 'Delivery-test-472!'}, format='json')
+
+        res = client.post('/api/delivery_rider_update', {
+            'rider_id': self.rider.rider_id,
+            'phone': self.other.phone
+        }, format='json')
+        self.assertEqual(res.status_code, 400)
+        self.assertIn('already exists', res.json()['message'])
+
+    def test_rider_self_service_reset_password_with_otp(self):
+        client = APIClient(enforce_csrf_checks=False)
+        res = client.post('/api/delivery_rider_reset_password', {
+            'phone': self.other.phone,
+            'otp': '123456',
+            'password': 'NewSelfResetPass789!',
+            'confirm_password': 'NewSelfResetPass789!'
+        }, format='json')
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(res.json()['status'])
+
+        # Verify login with new password
+        login_res = client.post('/api/delivery_rider_login', {
+            'phone': self.other.phone,
+            'password': 'NewSelfResetPass789!'
+        }, format='json')
+        self.assertEqual(login_res.status_code, 200)
+        self.assertTrue(login_res.json()['status'])
+
+    def test_rider_self_service_reset_password_invalid_otp(self):
+        client = APIClient(enforce_csrf_checks=False)
+        res = client.post('/api/delivery_rider_reset_password', {
+            'phone': self.other.phone,
+            'otp': '999999',
+            'password': 'NewSelfResetPass789!',
+            'confirm_password': 'NewSelfResetPass789!'
+        }, format='json')
+        self.assertEqual(res.status_code, 401)
+
+
 class DeliveryConcurrencyTests(TransactionTestCase):
     def setUp(self):
         DeliveryTests.setUpTestData.__func__(type(self))

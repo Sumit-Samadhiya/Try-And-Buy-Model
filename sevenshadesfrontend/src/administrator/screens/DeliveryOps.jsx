@@ -25,8 +25,13 @@ import {
   Tabs,
   TextField,
   Typography,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
 import { getData, postData } from '../../services/FetchDjangoApiServices';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 export default function DeliveryOps() {
   const [settlementOrder, setSettlementOrder] = useState(null);
@@ -57,6 +62,87 @@ export default function DeliveryOps() {
   const [filterRider, setFilterRider] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [filterDate, setFilterDate] = useState('');
+
+  const [editRiderTarget, setEditRiderTarget] = useState(null);
+  const [editRiderForm, setEditRiderForm] = useState({
+    name: '',
+    phone: '',
+    bikeNumber: '',
+    zone: '',
+    status: 'Active',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [showEditPassword, setShowEditPassword] = useState(false);
+
+  const openEditRider = (rider) => {
+    setEditRiderTarget(rider);
+    setEditRiderForm({
+      name: rider.name || '',
+      phone: rider.phone || '',
+      bikeNumber: rider.bike_number || '',
+      zone: rider.zone || '',
+      status: rider.status || 'Active',
+      newPassword: '',
+      confirmPassword: '',
+    });
+    setEditError('');
+    setShowEditPassword(false);
+  };
+
+  const handleSaveRiderEdit = async () => {
+    if (!editRiderTarget) return;
+    setEditError('');
+
+    if (!editRiderForm.name.trim() || !editRiderForm.phone.trim() || !editRiderForm.bikeNumber.trim() || !editRiderForm.zone.trim()) {
+      setEditError('Please fill all profile fields (Name, Phone, Bike Number, Zone).');
+      return;
+    }
+
+    if (!/^[6-9][0-9]{9}$/.test(editRiderForm.phone.trim())) {
+      setEditError('Enter a valid 10-digit Indian mobile number starting with 6–9.');
+      return;
+    }
+
+    if (editRiderForm.newPassword) {
+      if (editRiderForm.newPassword.length < 8 || /^[0-9]+$/.test(editRiderForm.newPassword)) {
+        setEditError('Password must be at least 8 characters and not numeric-only.');
+        return;
+      }
+      if (editRiderForm.newPassword !== editRiderForm.confirmPassword) {
+        setEditError('New password and confirm password do not match.');
+        return;
+      }
+    }
+
+    setEditSaving(true);
+    const payload = {
+      rider_id: editRiderTarget.rider_id,
+      name: editRiderForm.name.trim(),
+      phone: editRiderForm.phone.trim(),
+      bike_number: editRiderForm.bikeNumber.trim(),
+      zone: editRiderForm.zone.trim(),
+      status: editRiderForm.status,
+    };
+
+    if (editRiderForm.newPassword) {
+      payload.password = editRiderForm.newPassword;
+      payload.confirm_password = editRiderForm.confirmPassword;
+    }
+
+    const result = await postData('delivery_rider_update', payload);
+    setEditSaving(false);
+
+    if (!result?.status) {
+      setEditError(result?.message || 'Unable to update rider.');
+      return;
+    }
+
+    setEditRiderTarget(null);
+    loadAll();
+  };
 
   const loadAll = async () => {
     setLoading(true);
@@ -248,6 +334,133 @@ export default function DeliveryOps() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Edit Rider & Reset Password Dialog */}
+      <Dialog open={!!editRiderTarget} onClose={() => !editSaving && setEditRiderTarget(null)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>
+          Edit Rider Details & Password
+        </DialogTitle>
+        <DialogContent dividers>
+          {editError && (
+            <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} onClose={() => setEditError('')}>
+              {editError}
+            </Alert>
+          )}
+
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <Box sx={{ p: 1.5, bgcolor: '#f3f4f6', borderRadius: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="body2" sx={{ color: '#4b5563', fontWeight: 600 }}>
+                Rider ID: <strong>{editRiderTarget?.rider_id}</strong>
+              </Typography>
+              <Chip size="small" label={editRiderForm.status} color={editRiderForm.status === 'Active' ? 'success' : 'default'} />
+            </Box>
+
+            <Grid container spacing={1.5}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Rider Name"
+                  fullWidth
+                  size="small"
+                  value={editRiderForm.name}
+                  onChange={(e) => setEditRiderForm({ ...editRiderForm, name: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Login Mobile Number"
+                  fullWidth
+                  size="small"
+                  value={editRiderForm.phone}
+                  onChange={(e) => setEditRiderForm({ ...editRiderForm, phone: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Bike Number"
+                  fullWidth
+                  size="small"
+                  value={editRiderForm.bikeNumber}
+                  onChange={(e) => setEditRiderForm({ ...editRiderForm, bikeNumber: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Zone"
+                  fullWidth
+                  size="small"
+                  value={editRiderForm.zone}
+                  onChange={(e) => setEditRiderForm({ ...editRiderForm, zone: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth size="small">
+                  <InputLabel id="edit-rider-status-label">Operational Status</InputLabel>
+                  <Select
+                    labelId="edit-rider-status-label"
+                    label="Operational Status"
+                    value={editRiderForm.status}
+                    onChange={(e) => setEditRiderForm({ ...editRiderForm, status: e.target.value })}
+                  >
+                    <MenuItem value="Active">Active (Eligible for assignment)</MenuItem>
+                    <MenuItem value="Inactive">Inactive (Suspended / Off-duty)</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+
+            <Divider sx={{ my: 1 }}>
+              <Chip label="🔑 Password Reset (Optional)" size="small" sx={{ fontWeight: 700 }} />
+            </Divider>
+
+            <Typography variant="caption" sx={{ color: '#6b7280' }}>
+              Leave blank to keep rider's existing password. Enter a new password (min 8 chars) to reset it.
+            </Typography>
+
+            <Grid container spacing={1.5}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="New Password"
+                  type={showEditPassword ? 'text' : 'password'}
+                  fullWidth
+                  size="small"
+                  placeholder="Min 8 characters"
+                  value={editRiderForm.newPassword}
+                  onChange={(e) => setEditRiderForm({ ...editRiderForm, newPassword: e.target.value })}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={() => setShowEditPassword(!showEditPassword)}>
+                          {showEditPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Confirm New Password"
+                  type={showEditPassword ? 'text' : 'password'}
+                  fullWidth
+                  size="small"
+                  disabled={!editRiderForm.newPassword}
+                  placeholder="Repeat new password"
+                  value={editRiderForm.confirmPassword}
+                  onChange={(e) => setEditRiderForm({ ...editRiderForm, confirmPassword: e.target.value })}
+                />
+              </Grid>
+            </Grid>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setEditRiderTarget(null)} disabled={editSaving}>
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleSaveRiderEdit} disabled={editSaving} sx={{ bgcolor: '#064e3b', '&:hover': { bgcolor: '#043629' } }}>
+            {editSaving ? 'Saving Changes…' : 'Save Changes'}
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} variant="scrollable" scrollButtons="auto">
         <Tab label="Rider Registration" />
         <Tab label="Order Assignment" />
@@ -314,6 +527,15 @@ export default function DeliveryOps() {
                     </Box>
                     <Stack direction="row" spacing={1} alignItems="center">
                       <Chip size="small" label={rider.status} color={rider.status === 'Active' ? 'success' : 'default'} />
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        startIcon={<EditRoundedIcon />}
+                        onClick={() => openEditRider(rider)}
+                      >
+                        Edit Details & Password
+                      </Button>
                       <Button
                         size="small"
                         variant="outlined"

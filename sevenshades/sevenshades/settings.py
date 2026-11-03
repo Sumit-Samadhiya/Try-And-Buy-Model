@@ -15,6 +15,18 @@ from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
 import secrets
 
+# Load environment variables from root and local .env files if present
+try:
+    from dotenv import load_dotenv
+    _env_root = Path(__file__).resolve().parent.parent.parent / '.env'
+    _env_local = Path(__file__).resolve().parent.parent / '.env'
+    if _env_root.exists():
+        load_dotenv(_env_root)
+    if _env_local.exists():
+        load_dotenv(_env_local)
+except ImportError:
+    pass
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -279,7 +291,7 @@ DOORDRAPE_UPI_NAME = os.environ.get('DOORDRAPE_UPI_NAME', 'DoorDrape Fashion')
 # Fixed OTP is explicitly limited to local debug mode. SMS integration is pending.
 OTP_TEST_MODE = DEBUG and os.environ.get('OTP_TEST_MODE', '1') == '1'
 
-SILENCED_SYSTEM_CHECKS = ['fields.E180']
+SILENCED_SYSTEM_CHECKS = ['fields.E180'] 
 
 RATE_LIMITS = {
     'AUTH': {

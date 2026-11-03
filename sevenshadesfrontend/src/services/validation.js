@@ -5,6 +5,7 @@ const required = {
   address_submit: ['address','city','country','postcode','address_type'], address_update: ['address','city','country','postcode','address_type'],
   pincode_lookup: ['pincode'],
   delivery_rider_create: ['name','phone','password','bike_number','zone'],
+  delivery_rider_reset_password: ['phone','otp','password','confirm_password'],
   maincategory_submit: ['maincategoryname'], editmaincategory_data: ['id','maincategoryname'],
   mysubcategory_submit: ['maincategoryid','subcategoryname'], editmysubcategory_data: ['id','maincategoryid','subcategoryname'],
   brand_submit: ['brandname'], editbrand_data: ['id','brandname'],
@@ -69,7 +70,8 @@ export function validateFields(endpoint, body) {
     if (value instanceof File && (value.size > 5 * 1024 * 1024 || !/\.(jpe?g|png|webp|avif|gif)$/i.test(value.name))) errors[key] = 'Choose an image up to 5 MB (JPG, PNG, WebP, AVIF or GIF).';
   }
   if (Number(data.offerprice) > Number(data.price)) errors.offerprice = 'Offer price cannot exceed the regular price.';
-  if (['signup_submit','reset_password','delivery_rider_create'].includes(endpoint) && (typeof data.password !== 'string' || data.password.length < 8 || /^[0-9]+$/.test(data.password))) errors.password = 'Use at least 8 characters; avoid a numeric-only password.';
+  if (['signup_submit','reset_password','delivery_rider_create','delivery_rider_reset_password'].includes(endpoint) && (typeof data.password !== 'string' || data.password.length < 8 || /^[0-9]+$/.test(data.password))) errors.password = 'Use at least 8 characters; avoid a numeric-only password.';
+  if (endpoint === 'delivery_rider_update' && data.password && (typeof data.password !== 'string' || data.password.length < 8 || /^[0-9]+$/.test(data.password))) errors.password = 'Use at least 8 characters; avoid a numeric-only password.';
   if (data.confirm_password !== undefined && data.password !== data.confirm_password) errors.confirm_password = 'Passwords do not match.';
   return errors;
 }

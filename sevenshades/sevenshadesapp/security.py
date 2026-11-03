@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 ACCOUNTS = {'customer': SignUp, 'admin': AdminLogin, 'rider': DeliveryRider}
 PUBLIC = {'auth/send-otp', 'auth/verify-otp', 'auth/firebase-login', 'otp_config', 'otp_request', 'otp_login', 'reset_password', 'signup_submit', 'check_costumer_login', 'check_admin_login', 'delivery_rider_login',
           'auth_csrf', 'auth_session', 'auth_logout', 'fetch_product_reviews', 'payment_capabilities', 'analytics_track', 'validate_coupon', 'pincode_lookup', 'generate_qr',
-          'auth/send-whatsapp-otp', 'auth/verify-whatsapp-otp', 'auth/whatsapp-status'}
+          'auth/send-whatsapp-otp', 'auth/verify-whatsapp-otp', 'auth/whatsapp-status', 'delivery_rider_reset_password'}
 CUSTOMER_FIELDS = {'customer_tickets': 'mobileno', 'create_ticket': 'mobileno',
     'fetch_user_address': 'mobile', 'address_submit': 'mobileno',
     'address_update': 'mobile', 'address_delete': 'mobile',

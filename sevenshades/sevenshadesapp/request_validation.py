@@ -129,7 +129,11 @@ ENDPOINT_SCHEMAS = {
     },
     'delivery_rider_update': {
         'required': [],
-        'allowed': {'id', 'phone', 'name', 'bike_number', 'zone', 'status'}
+        'allowed': {'id', 'rider_id', 'phone', 'name', 'bike_number', 'zone', 'status', 'password', 'confirm_password'}
+    },
+    'delivery_rider_reset_password': {
+        'required': ['phone', 'otp', 'password', 'confirm_password'],
+        'allowed': {'phone', 'otp', 'password', 'confirm_password'}
     },
     'delivery_assign_order': {
         'required': ['order_id', 'rider_id'],
@@ -405,7 +409,7 @@ TEXT_LIMITS = {
 }
 
 ENUM_CHOICES = {
-    'purpose': {'login', 'signup', 'reset', 'trial', 'order'},
+    'purpose': {'login', 'signup', 'reset', 'trial', 'order', 'rider_reset'},
     'address_type': {'Residential', 'Gated Society', 'Hostel/Commercial'},
     'delivery_mode': {'standard', 'express', 'emergency_sos'},
     'payment_mode': {'cash', 'upi', 'card'},
@@ -719,7 +723,7 @@ def validate_request(endpoint, data, files):
         if int(data['offerprice']) > int(data['price']):
             errors['offerprice'] = ['Offer price cannot exceed the regular price.']
 
-    if endpoint in ('signup_submit', 'reset_password') and 'confirm_password' in data and data.get('password') != data.get('confirm_password'):
+    if endpoint in ('signup_submit', 'reset_password', 'delivery_rider_update', 'delivery_rider_reset_password') and 'confirm_password' in data and data.get('password') != data.get('confirm_password'):
         errors['confirm_password'] = ['Passwords do not match.']
 
     if endpoint == 'submit_product_review' and not data.get('product_id') and not data.get('product_details_id'):
