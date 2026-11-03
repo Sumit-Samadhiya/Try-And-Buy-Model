@@ -288,6 +288,9 @@ RECEIPT_SELLER_ADDRESS = os.environ.get('RECEIPT_SELLER_ADDRESS', '')
 DOORDRAPE_UPI_VPA = os.environ.get('DOORDRAPE_UPI_VPA', '8840476647-2@ybl')
 DOORDRAPE_UPI_NAME = os.environ.get('DOORDRAPE_UPI_NAME', 'DoorDrape Fashion')
 
+# Geoapify API Key for Precise Geocoding, Scooter Routing & Map Tiles
+GEOAPIFY_API_KEY = os.environ.get('GEOAPIFY_API_KEY', '').strip()
+
 # Fixed OTP is explicitly limited to local debug mode. SMS integration is pending.
 OTP_TEST_MODE = DEBUG and os.environ.get('OTP_TEST_MODE', '1') == '1'
 

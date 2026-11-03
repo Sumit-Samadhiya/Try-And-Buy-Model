@@ -117,7 +117,7 @@ export default function LocationPickerModal({
 
   // Update marker position and reverse geocode
   const setPinPosition = useCallback(
-    (lat, lng, panMap = true) => {
+    (lat, lng, panMap = true, address = null) => {
       setConfirmedEntrance(false);
       setCurrentCoords({ lat, lng });
       if (markerRef.current) {
@@ -126,7 +126,11 @@ export default function LocationPickerModal({
       if (panMap && mapInstanceRef.current) {
         mapInstanceRef.current.setView([lat, lng], 15);
       }
-      resolveLocationDetails(lat, lng);
+      if (address) {
+        requestRef.current += 1;
+        setResolvedAddress({ ...address, available: true });
+        setResolving(false);
+      } else resolveLocationDetails(lat, lng);
     },
     [resolveLocationDetails]
   );
@@ -241,7 +245,7 @@ export default function LocationPickerModal({
       </DialogTitle>
 
       <DialogContent sx={{ p: 0 }}>
-        <AddressSearch onSelect={place => setPinPosition(place.latitude, place.longitude)} />
+        <AddressSearch onSelect={place => setPinPosition(place.latitude, place.longitude, true, place)} />
         {/* Quick Location Shortcuts */}
         <Box sx={{ p: 1.5, bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
           <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b', display: 'block', mb: 0.8 }}>

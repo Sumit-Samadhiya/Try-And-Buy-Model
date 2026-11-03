@@ -274,10 +274,17 @@ export default function LiveRiderTrackingMap({
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // OpenStreetMap free tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // Tile layer: Geoapify Vector/Raster map if key is set, else OpenStreetMap
+        const geoapifyKey = process.env.REACT_APP_GEOAPIFY_API_KEY;
+        const tileUrl = geoapifyKey
+          ? `https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=${geoapifyKey}`
+          : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+        L.tileLayer(tileUrl, {
           maxZoom: 19,
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          attribution: geoapifyKey
+            ? 'Powered by <a href="https://www.geoapify.com/" target="_blank">Geoapify</a> | &copy; OpenStreetMap'
+            : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         }).addTo(map);
 
         mapInstanceRef.current = map;

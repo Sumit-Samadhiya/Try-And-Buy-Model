@@ -113,7 +113,62 @@ def get_road_route(start_lat, start_lng, dest_lat, dest_lng, timeout=3.5):
     if cached:
         return cached
 
-    # Attempt OSRM turn-by-turn routing
+    # Attempt Tier 1: Geoapify Scooter Routing API if key is configured
+    from django.conf import settings
+    geo_key = getattr(settings, 'GEOAPIFY_API_KEY', '').strip()
+    if geo_key:
+        geo_url = (
+            f"https://api.geoapify.com/v1/routing"
+            f"?waypoints={start_lat:.6f},{start_lng:.6f}|{dest_lat:.6f},{dest_lng:.6f}"
+            f"&mode=scooter&apiKey={geo_key}"
+        )
+        try:
+            req = urllib.request.Request(geo_url, headers={'User-Agent': 'DoorDrape-Routing/1.0', 'Accept': 'application/json'})
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                gdata = json.loads(resp.read().decode('utf-8'))
+            if gdata.get('features'):
+                feat = gdata['features'][0]
+                props = feat.get('properties', {})
+                geom = feat.get('geometry', {})
+                raw_meters = float(props.get('distance', 0.0))
+                raw_seconds = float(props.get('time', 0.0))
+                dist_km = round(raw_meters / 1000.0, 2)
+                scooter_duration_mins = max(1, int(round((raw_seconds * TRAFFIC_MULTIPLIER) / 60.0 + GATE_ENTRY_BUFFER_MINS)))
+
+                coords_raw = geom.get('coordinates', [])
+                polyline = []
+                if geom.get('type') == 'MultiLineString':
+                    for part in coords_raw:
+                        for pt in part:
+                            if len(pt) >= 2:
+                                polyline.append([round(pt[1], 6), round(pt[0], 6)])
+                elif geom.get('type') == 'LineString':
+                    for pt in coords_raw:
+                        if len(pt) >= 2:
+                            polyline.append([round(pt[1], 6), round(pt[0], 6)])
+
+                if not polyline:
+                    polyline = [[start_lat, start_lng], [dest_lat, dest_lng]]
+
+                now = timezone.now()
+                arrival_time = now + timedelta(minutes=scooter_duration_mins)
+
+                result = {
+                    'distance_km': dist_km,
+                    'duration_minutes': scooter_duration_mins,
+                    'eta_display': f"~{scooter_duration_mins} mins ({dist_km} km)",
+                    'estimated_arrival_iso': arrival_time.isoformat(),
+                    'estimated_arrival_formatted': arrival_time.strftime('%I:%M %p').lstrip('0'),
+                    'route_polyline': polyline,
+                    'routing_engine': 'Geoapify Scooter Routing API',
+                    'is_fallback': False
+                }
+                cache.set(cache_key, result, 600)
+                return result
+        except Exception as exc:
+            logger.warning('Geoapify routing failed, falling back to OSRM: %s', exc)
+
+    # Attempt Tier 2: OSRM turn-by-turn routing
     osrm_url = (
         f"http://router.project-osrm.org/route/v1/driving/"
         f"{start_lng:.6f},{start_lat:.6f};{dest_lng:.6f},{dest_lat:.6f}"

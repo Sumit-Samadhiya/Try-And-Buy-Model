@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import LocationPickerModal from './LocationPickerModal';
 
 jest.mock('../../services/reverseGeocodeService', () => ({
+  lookupAddress: jest.fn().mockResolvedValue({ status: false, results: [] }),
   reverseGeocode: jest.fn().mockResolvedValue({
     city: 'Jhansi',
     state: 'Uttar Pradesh',
@@ -20,7 +21,7 @@ jest.mock('leaflet', () => ({
     on: jest.fn(),
   })),
   control: { zoom: jest.fn(() => ({ addTo: jest.fn() })) },
-  tileLayer: jest.fn(() => ({ addTo: jest.fn() })),
+  tileLayer: jest.fn(() => ({ addTo: jest.fn().mockReturnThis(), on: jest.fn() })),
   marker: jest.fn(() => ({
     addTo: jest.fn().mockReturnThis(),
     setLatLng: jest.fn().mockReturnThis(),
