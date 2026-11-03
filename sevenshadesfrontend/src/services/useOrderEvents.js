@@ -33,7 +33,7 @@ export default function useOrderEvents(onEvent, enabled = true, orderId = null) 
         try {
           const payload = JSON.parse(event.data);
           if (payload?.data) {
-            callback.current(payload.data);
+            callback.current(payload.data, payload.type, payload);
           }
         } catch {
           /* Ignore non-JSON ping/pong or malformed event */

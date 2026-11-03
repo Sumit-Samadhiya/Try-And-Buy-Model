@@ -32,8 +32,27 @@ class OrderConsumer(AsyncWebsocketConsumer):
         )
 
     async def receive(self, text_data=None, bytes_data=None):
-        # Gracefully accept client ping/keepalive frames
-        pass
+        if not text_data:
+            return
+        try:
+            payload = json.loads(text_data)
+            msg_type = payload.get('type')
+            if msg_type in ('RIDER_LOCATION_UPDATE', 'rider_location_update'):
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'rider_location_updated',
+                        'data': payload.get('data', {})
+                    }
+                )
+        except Exception:
+            pass
+
+    async def rider_location_updated(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'RIDER_LOCATION_UPDATED',
+            'data': event['data']
+        }))
 
     async def order_status_updated(self, event):
         if not await self.authorized():

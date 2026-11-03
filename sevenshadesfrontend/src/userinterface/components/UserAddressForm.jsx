@@ -3,6 +3,7 @@ import { validateFields } from '../../services/validation';
 import { trackOrderPlaced } from '../../services/analytics';
 import { deliverySlots, indiaDate, slotAvailable } from '../../services/deliverySchedule';
 import LocationButton from '../../services/LocationButton';
+import { detectAndReverseGeocode } from '../../services/reverseGeocodeService';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
@@ -63,6 +64,8 @@ export default function UserAddressForm() {
     if (!slotAvailable(deliveryDate, deliverySlot, clock)) setDeliverySlot(deliverySlots.find(slot => slotAvailable(deliveryDate, slot, clock)) || '');
   }, [deliveryDate, deliverySlot, clock]);
   const [editingAddress, setEditingAddress] = useState(null);
+  const [detectingLocation, setDetectingLocation] = useState(false);
+  const [detectedCoords, setDetectedCoords] = useState({ latitude: null, longitude: null });
   const [pinLookup, setPinLookup] = useState({
     loading: false,
     checked: false,
@@ -121,6 +124,32 @@ export default function UserAddressForm() {
     }
   };
 
+  const handleDetectLocation = async () => {
+    try {
+      setDetectingLocation(true);
+      notify('Detecting your GPS location...', 'info');
+      const info = await detectAndReverseGeocode();
+      if (info) {
+        if (info.city) setCity(info.city);
+        if (info.country) setCountry(info.country);
+        if (info.street) {
+          setAddress((prev) => (prev ? `${prev}, ${info.street}` : info.street));
+        }
+        if (info.latitude && info.longitude) {
+          setDetectedCoords({ latitude: info.latitude, longitude: info.longitude });
+        }
+        if (info.postcode && String(info.postcode).length === 6) {
+          handlePostcodeChange(info.postcode);
+        }
+        notify(`📍 Auto-filled from location: ${info.city || info.state || 'Detected'}`, 'success');
+      }
+    } catch (err) {
+      notify(err.message || 'Unable to detect location. Please type manually.', 'error');
+    } finally {
+      setDetectingLocation(false);
+    }
+  };
+
   const billingItems = trialDetails.billingItems || [];
   const isFirstOrder = trialDetails.isFirstOrder !== false;
   const selectedAddress = selectedAddressIndex >= 0 ? addressList[selectedAddressIndex] : null;
@@ -175,7 +204,7 @@ export default function UserAddressForm() {
 
     let result;
     if (editingAddress) {
-      result = await postData('address_update', {
+      const updatePayload = {
         id: editingAddress.id,
         address_id: editingAddress.id,
         mobile: mobileno,
@@ -188,7 +217,12 @@ export default function UserAddressForm() {
         postcode,
         country,
         address_type: addressType,
-      });
+      };
+      if (detectedCoords.latitude !== null && detectedCoords.longitude !== null) {
+        updatePayload.latitude = detectedCoords.latitude;
+        updatePayload.longitude = detectedCoords.longitude;
+      }
+      result = await postData('address_update', updatePayload);
     } else {
       const formData = new FormData();
       formData.append('country', country);
@@ -197,6 +231,10 @@ export default function UserAddressForm() {
       formData.append('postcode', postcode);
       formData.append('mobileno', mobileno);
       formData.append('address_type', addressType);
+      if (detectedCoords.latitude !== null && detectedCoords.longitude !== null) {
+        formData.append('latitude', detectedCoords.latitude);
+        formData.append('longitude', detectedCoords.longitude);
+      }
       result = await postData('address_submit', formData);
     }
 
@@ -207,6 +245,7 @@ export default function UserAddressForm() {
       setPostCode('');
       setAddressType('Residential');
       setEditingAddress(null);
+      setDetectedCoords({ latitude: null, longitude: null });
       setPinLookup({ loading: false, checked: false, serviceable: null, message: '', areas: [], zoneName: '' });
       fetchUserAddress();
     } else {
@@ -222,6 +261,11 @@ export default function UserAddressForm() {
     setPostCode(addressItem.postcode || '');
     setCountry(addressItem.country || 'India');
     setAddressType(addressItem.address_type || 'Residential');
+    if (addressItem.latitude && addressItem.longitude) {
+      setDetectedCoords({ latitude: addressItem.latitude, longitude: addressItem.longitude });
+    } else {
+      setDetectedCoords({ latitude: null, longitude: null });
+    }
     if (addressItem.postcode && String(addressItem.postcode).length === 6) {
       handlePostcodeChange(addressItem.postcode);
     }
@@ -462,12 +506,40 @@ export default function UserAddressForm() {
               <Divider sx={{ my: 3 }} />
 
               <Box component="form" noValidate onSubmit={handleSubmit}>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: '#111827', mb: 0.5 }}>
-                  {editingAddress ? 'Edit Address' : 'Add New Address'}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#6b7280', mb: 2 }}>
-                  Address details fill karein aur Category select karein.
-                </Typography>
+                <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={1} sx={{ mb: 2 }}>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#111827', mb: 0.5 }}>
+                      {editingAddress ? 'Edit Address' : 'Add New Address'}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#6b7280' }}>
+                      Address details fill karein ya 1-Click Auto-Detect use karein.
+                    </Typography>
+                  </Box>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    disabled={detectingLocation}
+                    onClick={handleDetectLocation}
+                    startIcon={detectingLocation ? <CircularProgress size={16} /> : <LocationOnOutlinedIcon />}
+                    sx={{
+                      color: '#0284c7',
+                      borderColor: '#38bdf8',
+                      borderRadius: 2,
+                      fontWeight: 700,
+                      textTransform: 'none',
+                      '&:hover': { borderColor: '#0284c7', bgcolor: 'rgba(2, 132, 199, 0.05)' }
+                    }}
+                  >
+                    {detectingLocation ? 'Detecting Location...' : '📍 Auto-Detect Location'}
+                  </Button>
+                </Stack>
+                {detectedCoords.latitude !== null && (
+                  <Chip
+                    size="small"
+                    label={`📍 Precise GPS Coordinates captured (${Number(detectedCoords.latitude).toFixed(4)}, ${Number(detectedCoords.longitude).toFixed(4)})`}
+                    sx={{ mb: 2, bgcolor: '#f0fdf4', color: '#166534', fontWeight: 700, border: '1px solid #86efac' }}
+                  />
+                )}
 
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>

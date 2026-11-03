@@ -44,6 +44,25 @@ def SettlementDetail(request):
     receipt = OrderReceipt.objects.filter(final_order=final).first() if final else None
     start = assignment.trial_start_time if assignment else None
     payment_qr = generate_payment_qr(order.order_id, final.final_payable) if (final and final.final_payable > 0) else None
+    rider_info = None
+    if assignment and assignment.rider:
+        r = assignment.rider
+        rider_info = {
+            'rider_id': r.pk,
+            'name': r.name,
+            'phone': r.phone,
+            'bike_number': r.bike_number,
+            'latitude': float(r.latitude) if r.latitude is not None else None,
+            'longitude': float(r.longitude) if r.longitude is not None else None,
+            'updated_at': r.location_updated_at.isoformat() if r.location_updated_at else None,
+        }
+    customer_location = {
+        'latitude': float(order.latitude) if order.latitude is not None else None,
+        'longitude': float(order.longitude) if order.longitude is not None else None,
+        'address_text': order.address_text,
+        'city': order.city,
+        'postcode': order.postcode,
+    }
     return JsonResponse({'status': True, 'data': {
         'try_order': TryOrderWithItemsSerializer(order).data,
         'final_order': FinalOrderWithItemsSerializer(final).data if final else None,
@@ -58,6 +77,8 @@ def SettlementDetail(request):
         'server_time': timezone.now().isoformat(), 'online_available': False,
         'receipt_number': receipt.number if receipt else None,
         'payment_qr': payment_qr,
+        'rider_info': rider_info,
+        'customer_location': customer_location,
     }})
 
 

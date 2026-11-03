@@ -47,6 +47,9 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+import NavigationRoundedIcon from '@mui/icons-material/NavigationRounded';
+import LiveRiderTrackingMap from '../components/LiveRiderTrackingMap';
+import { detectAndReverseGeocode } from '../../services/reverseGeocodeService';
 import { getData, postData, logout } from '../../services/FetchDjangoApiServices';
 
 // Web Audio API synthesizer for crisp real-time notification chime
@@ -109,6 +112,32 @@ export default function ProfilePage() {
   const [addressList, setAddressList] = useState([]);
   const [addressForm, setAddressForm] = useState({ country: 'India', address: '', city: '', postcode: '', address_type: 'Residential' });
   const [editingAddress, setEditingAddress] = useState(null);
+  const [trackingOrderId, setTrackingOrderId] = useState(null);
+  const [detectingProfileLocation, setDetectingProfileLocation] = useState(false);
+
+  const handleDetectProfileLocation = async () => {
+    try {
+      setDetectingProfileLocation(true);
+      const info = await detectAndReverseGeocode();
+      if (info) {
+        setAddressForm((prev) => ({
+          ...prev,
+          city: info.city || prev.city,
+          country: info.country || prev.country || 'India',
+          address: prev.address ? `${prev.address}, ${info.street}` : (info.street || prev.address),
+          latitude: info.latitude || null,
+          longitude: info.longitude || null,
+        }));
+        if (info.postcode && String(info.postcode).length === 6) {
+          handleProfilePostcodeChange(info.postcode);
+        }
+      }
+    } catch (err) {
+      alert(err.message || 'Unable to detect location.');
+    } finally {
+      setDetectingProfileLocation(false);
+    }
+  };
   const [addressPinLookup, setAddressPinLookup] = useState({
     loading: false,
     checked: false,
@@ -662,7 +691,7 @@ export default function ProfilePage() {
 
     let result;
     if (editingAddress) {
-      result = await postData('address_update', {
+      const updateData = {
         id: editingAddress.id,
         address_id: editingAddress.id,
         mobile: userData.mobileno,
@@ -675,7 +704,12 @@ export default function ProfilePage() {
         postcode: addressForm.postcode,
         country: addressForm.country,
         address_type: addressForm.address_type || 'Residential',
-      });
+      };
+      if (addressForm.latitude && addressForm.longitude) {
+        updateData.latitude = addressForm.latitude;
+        updateData.longitude = addressForm.longitude;
+      }
+      result = await postData('address_update', updateData);
     } else {
       const formData = new FormData();
       formData.append('country', addressForm.country);
@@ -684,6 +718,10 @@ export default function ProfilePage() {
       formData.append('postcode', addressForm.postcode);
       formData.append('address_type', addressForm.address_type || 'Residential');
       formData.append('mobileno', userData.mobileno);
+      if (addressForm.latitude && addressForm.longitude) {
+        formData.append('latitude', addressForm.latitude);
+        formData.append('longitude', addressForm.longitude);
+      }
       result = await postData('address_submit', formData);
     }
 
@@ -1393,6 +1431,22 @@ export default function ProfilePage() {
                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 2 }} alignItems="center">
                           {row?.can_cancel && <CancelTrialButton orderId={row.try_order.order_id} />}
                           <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={<NavigationRoundedIcon fontSize="small" />}
+                            sx={{
+                              color: '#0284c7',
+                              borderColor: '#38bdf8',
+                              fontWeight: 700,
+                              borderRadius: 2,
+                              textTransform: 'none',
+                              '&:hover': { borderColor: '#0284c7', bgcolor: 'rgba(2, 132, 199, 0.08)' },
+                            }}
+                            onClick={() => setTrackingOrderId(row.try_order.order_id)}
+                          >
+                            🗺️ Track Live Rider
+                          </Button>
+                          <Button
                             variant="contained"
                             size="small"
                             sx={{
@@ -1753,6 +1807,8 @@ export default function ProfilePage() {
                                 city: item.city,
                                 postcode: item.postcode,
                                 address_type: item.address_type || 'Residential',
+                                latitude: item.latitude || null,
+                                longitude: item.longitude || null,
                               });
 
                               if (item.postcode && String(item.postcode).length === 6) {
@@ -1772,103 +1828,222 @@ export default function ProfilePage() {
                   ))}
 
                   <Paper elevation={0} sx={{ p: 2.5, borderRadius: 2.5, border: '1px solid #e2e8f0', bgcolor: '#f8fafc' }}>
-                    <Typography sx={{ fontWeight: 800, mb: 1.5, color: '#0f172a' }}>
-                      {editingAddress ? 'Edit Delivery Address' : 'Add New Address'}
-                    </Typography>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={1} sx={{ mb: 1.5 }}>
+                      <Typography sx={{ fontWeight: 800, color: '#0f172a' }}>
+                        {editingAddress ? 'Edit Delivery Address' : 'Add New Address'}
+                      </Typography>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        disabled={detectingProfileLocation}
+                        onClick={handleDetectProfileLocation}
+                        startIcon={detectingProfileLocation ? <CircularProgress size={16} /> : <NavigationRoundedIcon fontSize="small" />}
+                        sx={{
+                          color: '#0284c7',
+                          borderColor: '#38bdf8',
+                          borderRadius: 2,
+                          fontWeight: 700,
+                          textTransform: 'none',
+                          '&:hover': { borderColor: '#0284c7', bgcolor: 'rgba(2, 132, 199, 0.05)' }
+                        }}
+                      >
+                        {detectingProfileLocation ? 'Detecting...' : '📍 Auto-Detect Location'}
+                      </Button>
+                    </Stack>
+                    {addressForm.latitude && (
+                      <Chip
+                        size="small"
+                        label={`📍 GPS Coordinates Captured (${Number(addressForm.latitude).toFixed(4)}, ${Number(addressForm.longitude).toFixed(4)})`}
+                        sx={{ mb: 1.5, bgcolor: '#f0fdf4', color: '#166534', fontWeight: 700, border: '1px solid #86efac' }}
+                      />
+                    )}
                     <Grid container spacing={1.5}>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Postal Code (PIN)"
-                          placeholder="e.g. 110001"
-                          value={addressForm.postcode}
-                          onChange={(e) => handleProfilePostcodeChange(e.target.value)}
-                          error={addressPinLookup.checked && addressPinLookup.serviceable === false}
-                          helperText={addressPinLookup.checked && !addressPinLookup.serviceable ? 'Doorstep trial not yet active here' : 'Enter 6-digit PIN for auto-fill'}
-                          InputProps={{
-                            endAdornment: addressPinLookup.loading ? (
-                              <InputAdornment position="end">
-                                <CircularProgress size={16} sx={{ color: '#064e3b' }} />
-                              </InputAdornment>
-                            ) : addressPinLookup.checked && addressPinLookup.serviceable ? (
-                              <InputAdornment position="end">
-                                <CheckCircleOutlineIcon sx={{ color: '#16a34a', fontSize: 18 }} />
-                              </InputAdornment>
-                            ) : null,
-                          }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="City / District"
-                          value={addressForm.city}
-                          onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
-                          helperText={addressPinLookup.checked && addressPinLookup.district ? `Auto-detected: ${addressPinLookup.district}` : ''}
-                        />
-                      </Grid>
-
-                      {addressPinLookup.checked && (
-                        <Grid item xs={12}>
-                          <Paper
-                            elevation={0}
-                            sx={{
-                              p: 1.2,
-                              borderRadius: 2,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 1,
-                              bgcolor: addressPinLookup.serviceable ? '#f0fdf4' : '#fef2f2',
-                              border: addressPinLookup.serviceable ? '1px solid #86efac' : '1px solid #fca5a5',
-                            }}
-                          >
-                            <Typography variant="body2" sx={{ fontWeight: 700, fontSize: 13, color: addressPinLookup.serviceable ? '#166534' : '#991b1b' }}>
-                              {addressPinLookup.serviceable ? `✅ ${addressPinLookup.message}` : `⚠️ ${addressPinLookup.message}`}
-                            </Typography>
-                          </Paper>
-                        </Grid>
-                      )}
-
-                      {addressPinLookup.areas && addressPinLookup.areas.length > 0 && (
-                        <Grid item xs={12}>
-                          <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', display: 'block', mb: 0.5 }}>
-                            Select Locality / Colony:
-                          </Typography>
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
-                            {addressPinLookup.areas.slice(0, 6).map((area) => (
-                              <Chip
-                                key={area}
-                                label={area}
-                                size="small"
-                                onClick={() => handleSelectProfileArea(area)}
-                                sx={{ bgcolor: '#e2e8f0', color: '#1e293b', fontWeight: 600, fontSize: 11, cursor: 'pointer' }}
-                              />
-                            ))}
-                          </Box>
-                        </Grid>
-                      )}
-
-                      <Grid item xs={12}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Street Address / Flat / Floor"
-                          value={addressForm.address}
-                          onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })}
-                        />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Country"
-                          value={addressForm.country}
-                          onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
-                        />
-                      </Grid>
-
+                      <Grid item xs={12} sm={6}>
+
+                        <TextField
+
+                          fullWidth
+
+                          size="small"
+
+                          label="Postal Code (PIN)"
+
+                          placeholder="e.g. 110001"
+
+                          value={addressForm.postcode}
+
+                          onChange={(e) => handleProfilePostcodeChange(e.target.value)}
+
+                          error={addressPinLookup.checked && addressPinLookup.serviceable === false}
+
+                          helperText={addressPinLookup.checked && !addressPinLookup.serviceable ? 'Doorstep trial not yet active here' : 'Enter 6-digit PIN for auto-fill'}
+
+                          InputProps={{
+
+                            endAdornment: addressPinLookup.loading ? (
+
+                              <InputAdornment position="end">
+
+                                <CircularProgress size={16} sx={{ color: '#064e3b' }} />
+
+                              </InputAdornment>
+
+                            ) : addressPinLookup.checked && addressPinLookup.serviceable ? (
+
+                              <InputAdornment position="end">
+
+                                <CheckCircleOutlineIcon sx={{ color: '#16a34a', fontSize: 18 }} />
+
+                              </InputAdornment>
+
+                            ) : null,
+
+                          }}
+
+                        />
+
+                      </Grid>
+
+                      <Grid item xs={12} sm={6}>
+
+                        <TextField
+
+                          fullWidth
+
+                          size="small"
+
+                          label="City / District"
+
+                          value={addressForm.city}
+
+                          onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+
+                          helperText={addressPinLookup.checked && addressPinLookup.district ? `Auto-detected: ${addressPinLookup.district}` : ''}
+
+                        />
+
+                      </Grid>
+
+
+
+                      {addressPinLookup.checked && (
+
+                        <Grid item xs={12}>
+
+                          <Paper
+
+                            elevation={0}
+
+                            sx={{
+
+                              p: 1.2,
+
+                              borderRadius: 2,
+
+                              display: 'flex',
+
+                              alignItems: 'center',
+
+                              gap: 1,
+
+                              bgcolor: addressPinLookup.serviceable ? '#f0fdf4' : '#fef2f2',
+
+                              border: addressPinLookup.serviceable ? '1px solid #86efac' : '1px solid #fca5a5',
+
+                            }}
+
+                          >
+
+                            <Typography variant="body2" sx={{ fontWeight: 700, fontSize: 13, color: addressPinLookup.serviceable ? '#166534' : '#991b1b' }}>
+
+                              {addressPinLookup.serviceable ? `✅ ${addressPinLookup.message}` : `⚠️ ${addressPinLookup.message}`}
+
+                            </Typography>
+
+                          </Paper>
+
+                        </Grid>
+
+                      )}
+
+
+
+                      {addressPinLookup.areas && addressPinLookup.areas.length > 0 && (
+
+                        <Grid item xs={12}>
+
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', display: 'block', mb: 0.5 }}>
+
+                            Select Locality / Colony:
+
+                          </Typography>
+
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
+
+                            {addressPinLookup.areas.slice(0, 6).map((area) => (
+
+                              <Chip
+
+                                key={area}
+
+                                label={area}
+
+                                size="small"
+
+                                onClick={() => handleSelectProfileArea(area)}
+
+                                sx={{ bgcolor: '#e2e8f0', color: '#1e293b', fontWeight: 600, fontSize: 11, cursor: 'pointer' }}
+
+                              />
+
+                            ))}
+
+                          </Box>
+
+                        </Grid>
+
+                      )}
+
+
+
+                      <Grid item xs={12}>
+
+                        <TextField
+
+                          fullWidth
+
+                          size="small"
+
+                          label="Street Address / Flat / Floor"
+
+                          value={addressForm.address}
+
+                          onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })}
+
+                        />
+
+                      </Grid>
+
+                      <Grid item xs={12}>
+
+                        <TextField
+
+                          fullWidth
+
+                          size="small"
+
+                          label="Country"
+
+                          value={addressForm.country}
+
+                          onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
+
+                        />
+
+                      </Grid>
+
+
+
                       <Grid item xs={12}>
                         <Typography variant="caption" sx={{ fontWeight: 700, color: '#374151', display: 'block', mb: 0.5 }}>
                           Address Type
@@ -2135,6 +2310,13 @@ export default function ProfilePage() {
           </Paper>
         </Grid>
       </Grid>
+      {trackingOrderId && (
+        <LiveRiderTrackingMap
+          orderId={trackingOrderId}
+          open={!!trackingOrderId}
+          onClose={() => setTrackingOrderId(null)}
+        />
+      )}
     </Container>
   );
 }

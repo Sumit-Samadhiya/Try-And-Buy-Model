@@ -48,7 +48,36 @@ def RiderLocation(request):
     rider.latitude, rider.longitude = point
     rider.location_updated_at = timezone.now()
     rider.save(update_fields=['latitude', 'longitude', 'location_updated_at'])
-    return JsonResponse({'status': True, 'message': 'Rider location updated.'})
+
+    # Real-time relay to active order channel group if order_id is present
+    order_id = request.data.get('order_id')
+    heading = request.data.get('heading', 0)
+    if order_id:
+        try:
+            from asgiref.sync import async_to_sync
+            from channels.layers import get_channel_layer
+            channel_layer = get_channel_layer()
+            if channel_layer:
+                async_to_sync(channel_layer.group_send)(
+                    f'order_{order_id}',
+                    {
+                        'type': 'rider_location_updated',
+                        'data': {
+                            'order_id': order_id,
+                            'lat': point[0],
+                            'lng': point[1],
+                            'heading': heading,
+                            'rider_name': rider.name,
+                            'bike_number': rider.bike_number,
+                            'phone': rider.phone,
+                            'updated_at': rider.location_updated_at.isoformat()
+                        }
+                    }
+                )
+        except Exception as exc:
+            logger.warning('Failed to broadcast rider location over channels: %s', exc)
+
+    return JsonResponse({'status': True, 'message': 'Rider location updated.', 'data': {'lat': point[0], 'lng': point[1]}})
 
 
 def distance_km(a, b, c, d):

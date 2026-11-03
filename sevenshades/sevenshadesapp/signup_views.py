@@ -100,7 +100,13 @@ def Address_Update(request):
         if isinstance(new_postcode, str): new_postcode = new_postcode.strip()
         if isinstance(new_country, str): new_country = new_country.strip() or 'India'
 
-        if any((val is not None and val != getattr(address_obj, field)) for field, val in [
+        if request.data.get('latitude') is not None and request.data.get('longitude') is not None:
+            try:
+                address_obj.latitude = float(request.data.get('latitude'))
+                address_obj.longitude = float(request.data.get('longitude'))
+            except (ValueError, TypeError):
+                pass
+        elif any((val is not None and val != getattr(address_obj, field)) for field, val in [
             ('address', new_address), ('city', new_city), ('postcode', new_postcode), ('country', new_country)
         ]):
             address_obj.latitude = address_obj.longitude = None

@@ -74,11 +74,11 @@ ENDPOINT_SCHEMAS = {
     },
     'address_submit': {
         'required': ['address', 'city', 'country', 'postcode', 'address_type'],
-        'allowed': {'address', 'city', 'country', 'postcode', 'address_type', 'state', 'landmark', 'alt_phone', 'mobileno'}
+        'allowed': {'address', 'city', 'country', 'postcode', 'address_type', 'state', 'landmark', 'alt_phone', 'mobileno', 'latitude', 'longitude'}
     },
     'address_update': {
         'required': ['address', 'city', 'country', 'postcode', 'address_type'],
-        'allowed': {'id', 'address', 'city', 'country', 'postcode', 'address_type', 'state', 'landmark', 'alt_phone', 'mobile', 'mobileno'}
+        'allowed': {'id', 'address', 'city', 'country', 'postcode', 'address_type', 'state', 'landmark', 'alt_phone', 'mobile', 'mobileno', 'latitude', 'longitude'}
     },
     'address_delete': {
         'required': ['id'],
@@ -161,7 +161,7 @@ ENDPOINT_SCHEMAS = {
     },
     'rider_location': {
         'required': ['latitude', 'longitude'],
-        'allowed': {'latitude', 'longitude', 'assignment_id'}
+        'allowed': {'latitude', 'longitude', 'assignment_id', 'order_id', 'heading'}
     },
     'rider_suggestions': {
         'required': [],

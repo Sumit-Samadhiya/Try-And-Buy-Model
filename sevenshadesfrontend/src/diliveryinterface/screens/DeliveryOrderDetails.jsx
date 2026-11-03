@@ -6,6 +6,7 @@ import DoordrapeLoader from '../../userinterface/components/DoordrapeLoader';
 import { postData, serverURL } from '../../services/FetchDjangoApiServices';
 import useOrderEvents from '../../services/useOrderEvents';
 import { remainingTrialSeconds } from '../../services/trialTimer';
+import { startRiderLocationTracking } from '../../services/riderLocationTracker';
 
 export default function DeliveryOrderDetails({ orderId, embedded = false }) {
   const params = useParams();
@@ -31,6 +32,28 @@ export default function DeliveryOrderDetails({ orderId, embedded = false }) {
   }, [taskId]);
   useEffect(() => { dirty.current = false; setData(null); load(); }, [load]);
   useOrderEvents(load, !!taskId, taskId);
+  const stage = data?.assignment_status;
+  const [lastLocationSent, setLastLocationSent] = useState(null);
+
+  useEffect(() => {
+    if (stage !== 'On Route' || !taskId) {
+      return;
+    }
+
+    const tracker = startRiderLocationTracking(taskId, {
+      intervalMs: 4000,
+      onLocationSent: (loc) => {
+        setLastLocationSent(loc);
+      },
+      onError: (err) => {
+        console.warn('Rider GPS tracking notice:', err);
+      },
+    });
+
+    return () => {
+      tracker.stop();
+    };
+  }, [stage, taskId]);
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
   const action = async (endpoint, payload) => {
     setBusy(true); setMessage('');
@@ -60,7 +83,7 @@ export default function DeliveryOrderDetails({ orderId, embedded = false }) {
     item => !purchasedIds.has(item.id) && item.status !== 'RETURNED' && item.stock_reserved
   ) : [];
   const remaining = remainingTrialSeconds(data?.trial_ends_at, now + offset.current);
-  const stage = data?.assignment_status;
+
   const advance = status => action('delivery_assignment_update_status', { assignment_id: data.assignment_id, status });
   return (
     <Shell title={'Doorstep order · ' + taskId} subtitle="Trial, customer approval and settlement" activePage="dashboard">
@@ -110,14 +133,56 @@ export default function DeliveryOrderDetails({ orderId, embedded = false }) {
                 </Button>
               )}
               {stage === 'On Route' && (
-                <Button
-                  disabled={busy}
-                  variant="contained"
-                  onClick={() => advance('Trial In Progress')}
-                  sx={{ py: 1.5, fontWeight: 800, bgcolor: '#059669', '&:hover': { bgcolor: '#047857' }, borderRadius: 2.5 }}
-                >
-                  Arrived at Doorstep — Start 15-Minute Trial
-                </Button>
+                <>
+                  <Paper
+                    sx={{
+                      p: 2,
+                      borderRadius: 2.5,
+                      bgcolor: 'rgba(2, 132, 199, 0.15)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      color: '#f8fafc',
+                    }}
+                  >
+                    <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={1.5}>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 800, color: '#38bdf8' }}>
+                          📡 Live GPS Broadcasting Active
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block' }}>
+                          {lastLocationSent
+                            ? `Broadcasting coordinates every 4s to customer • Lat: ${Number(lastLocationSent.latitude).toFixed(4)}, Lng: ${Number(lastLocationSent.longitude).toFixed(4)}`
+                            : 'Acquiring GPS fix and broadcasting location to customer map...'}
+                        </Typography>
+                      </Box>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => {
+                          const dest = `${data?.try_order?.address_text || ''}, ${data?.try_order?.city || ''}`;
+                          window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}`, '_blank');
+                        }}
+                        sx={{
+                          color: '#38bdf8',
+                          borderColor: 'rgba(56, 189, 248, 0.5)',
+                          textTransform: 'none',
+                          fontWeight: 700,
+                          borderRadius: 2,
+                          '&:hover': { borderColor: '#38bdf8', bgcolor: 'rgba(56, 189, 248, 0.1)' },
+                        }}
+                      >
+                        🧭 Open Google Navigation
+                      </Button>
+                    </Stack>
+                  </Paper>
+                  <Button
+                    disabled={busy}
+                    variant="contained"
+                    onClick={() => advance('Trial In Progress')}
+                    sx={{ py: 1.5, fontWeight: 800, bgcolor: '#059669', '&:hover': { bgcolor: '#047857' }, borderRadius: 2.5 }}
+                  >
+                    Arrived at Doorstep — Start 15-Minute Trial
+                  </Button>
+                </>
               )}
 
               {/* Home Trial Countdown Timer */}
