@@ -78,7 +78,7 @@ describe('reverseGeocodeService', () => {
     expect(coords.latitude).toBe(28.6139);
     expect(coords.longitude).toBe(77.209);
     expect(coords.accuracy).toBe(10);
-    expect(coords.source).toBe('browser_standard');
+    expect(coords.source).toBe('device_gps');
   });
 
   test('detectUserCoordinates falls back to IP geolocation when browser GPS times out', async () => {

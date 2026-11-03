@@ -157,12 +157,26 @@ def PincodeLookup(request):
                         block = first.get('Block') or ''
                         city = district if district and district.lower() != 'na' else (block or state)
                         areas = sorted({po.get('Name') for po in offices if po.get('Name')})
+                        lat, lon = None, None
+                        try:
+                            nom_url = f"https://nominatim.openstreetmap.org/search?postalcode={pin}&country=India&format=json"
+                            nom_req = urllib.request.Request(nom_url, headers={'User-Agent': 'DoorDrapeApp/1.0'})
+                            with urllib.request.urlopen(nom_req, timeout=3) as nom_resp:
+                                nom_data = json.loads(nom_resp.read().decode('utf-8'))
+                                if nom_data and len(nom_data) > 0:
+                                    lat = float(nom_data[0]['lat'])
+                                    lon = float(nom_data[0]['lon'])
+                        except Exception as e:
+                            logger.debug(f"Pincode coords lookup warning: {e}")
+
                         postal_data = {
                             'district': district,
                             'state': state,
                             'city': city,
                             'country': 'India',
                             'areas': areas[:15],
+                            'latitude': lat,
+                            'longitude': lon,
                         }
                         # Cache for 7 days
                         cache.set(cache_key, postal_data, 7 * 24 * 60 * 60)
@@ -175,7 +189,9 @@ def PincodeLookup(request):
             'state': '',
             'city': '',
             'country': 'India',
-            'areas': []
+            'areas': [],
+            'latitude': None,
+            'longitude': None,
         }
 
     if is_serviceable:
@@ -193,6 +209,8 @@ def PincodeLookup(request):
         'city': postal_data.get('city', ''),
         'country': postal_data.get('country', 'India'),
         'areas': postal_data.get('areas', []),
+        'latitude': postal_data.get('latitude'),
+        'longitude': postal_data.get('longitude'),
         'serviceable': is_serviceable,
         'zone_name': primary_zone,
         'matching_zones': matching_zones,

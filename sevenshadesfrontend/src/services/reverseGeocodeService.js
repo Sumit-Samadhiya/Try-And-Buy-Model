@@ -1,18 +1,17 @@
 /**
  * Zero-Cost Reverse Geocoding Service for DoorDrape
  * Multi-Tier Fail-Safe Architecture:
- * 1. Fast Browser Geolocation (Wi-Fi / Cell tower triangulation, <1s)
- * 2. High-Accuracy GPS if hardware is present
- * 3. Automatic IP-based Geolocation Fallback (BigDataCloud Client API) if GPS times out or is unsupported
+ * 1. Device Hardware GPS (for mobile phones with GPS enabled)
+ * 2. Standard Wi-Fi / Cell tower triangulation
+ * 3. Automatic IP-based Geolocation Fallback (with isIpFallback flag)
  * 4. OpenStreetMap Nominatim enrichment for PIN code & street precision
  * 100% Free, Zero API Keys, Zero Timeouts.
  */
 
 export async function detectUserCoordinates() {
-  // Tier 1 & 2: Try browser geolocation if available
+  // Tier 1: Try real device GPS first (high accuracy)
   if (typeof window !== 'undefined' && navigator.geolocation) {
     try {
-      // First attempt: standard accuracy (fast, works on laptops/Wi-Fi/cell, doesn't hang on GPS lock)
       const coords = await new Promise((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(
           (pos) =>
@@ -20,24 +19,48 @@ export async function detectUserCoordinates() {
               latitude: pos.coords.latitude,
               longitude: pos.coords.longitude,
               accuracy: pos.coords.accuracy,
-              source: 'browser_standard',
+              source: 'device_gps',
+              isIpFallback: false,
             }),
           (err) => reject(err),
           {
-            enableHighAccuracy: false,
-            timeout: 5000,
-            maximumAge: 300000,
+            enableHighAccuracy: true,
+            timeout: 6000,
+            maximumAge: 60000,
           }
         );
       });
       return coords;
-    } catch (err) {
-      console.warn('Standard browser geolocation note (trying IP fallback):', err?.message);
+    } catch (highErr) {
+      // Tier 2: Standard Wi-Fi / Cell positioning fallback
+      try {
+        const coords = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            (pos) =>
+              resolve({
+                latitude: pos.coords.latitude,
+                longitude: pos.coords.longitude,
+                accuracy: pos.coords.accuracy,
+                source: 'browser_standard',
+                isIpFallback: false,
+              }),
+            (err) => reject(err),
+            {
+              enableHighAccuracy: false,
+              timeout: 4000,
+              maximumAge: 300000,
+            }
+          );
+        });
+        return coords;
+      } catch (stdErr) {
+        console.warn('Browser GPS unavailable on this device, using IP fallback:', stdErr?.message);
+      }
     }
   }
 
-  // Tier 3: Zero-Failure IP-Based Geolocation via BigDataCloud Client API
-  // Works on all desktop browsers, laptops, and devices without GPS hardware
+  // Tier 3: IP-Based Geolocation via BigDataCloud Client API
+  // Note: On desktop / broadband Wi-Fi, this detects the ISP's regional routing gateway (e.g. Kanpur for UP)
   try {
     const bdcRes = await fetch(
       'https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=en'
@@ -48,8 +71,9 @@ export async function detectUserCoordinates() {
         return {
           latitude: Number(bdc.latitude),
           longitude: Number(bdc.longitude),
-          accuracy: 2000,
+          accuracy: 5000,
           source: 'ip_geolocation',
+          isIpFallback: true,
           ipData: bdc,
         };
       }
@@ -58,7 +82,7 @@ export async function detectUserCoordinates() {
     console.warn('IP geolocation fallback note:', ipErr);
   }
 
-  throw new Error('Unable to detect location automatically. Please enter your address details manually.');
+  throw new Error('Unable to detect location automatically. Please enter your PIN code manually.');
 }
 
 export async function reverseGeocode(latitude, longitude) {
@@ -138,7 +162,6 @@ export async function reverseGeocode(latitude, longitude) {
 export async function detectAndReverseGeocode() {
   const coords = await detectUserCoordinates();
 
-  // If IP geolocation already returned rich BigDataCloud metadata
   let addressDetails;
   if (coords.ipData) {
     const ip = coords.ipData;
@@ -153,7 +176,6 @@ export async function detectAndReverseGeocode() {
       formattedAddress: [ip.locality, ip.city, ip.principalSubdivision].filter(Boolean).join(', '),
     };
 
-    // If postcode is missing from IP data, enrich with Nominatim using coordinates
     if (!addressDetails.postcode && coords.latitude && coords.longitude) {
       try {
         const nomRes = await fetch(
@@ -182,5 +204,6 @@ export async function detectAndReverseGeocode() {
   return {
     ...coords,
     ...addressDetails,
+    isIpFallback: coords.isIpFallback,
   };
 }

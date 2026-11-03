@@ -3365,7 +3365,7 @@
   "pk": 8,
   "fields": {
     "zone_name": "Jhansi - Babina Cantt & Greater Hub",
-    "postcodes": "284128"
+    "postcodes": "284128,284121"
   }
 },
 {
@@ -3373,7 +3373,7 @@
   "pk": 9,
   "fields": {
     "zone_name": "General Delivery Zone",
-    "postcodes": "284001,284002,284003,284128"
+    "postcodes": "284001,284002,284003,284128,284121"
   }
 },
 {

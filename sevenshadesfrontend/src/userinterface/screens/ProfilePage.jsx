@@ -49,6 +49,7 @@ import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalance
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import NavigationRoundedIcon from '@mui/icons-material/NavigationRounded';
 import LiveRiderTrackingMap from '../components/LiveRiderTrackingMap';
+import LocationPickerModal from '../components/LocationPickerModal';
 import { detectAndReverseGeocode } from '../../services/reverseGeocodeService';
 import { getData, postData, logout } from '../../services/FetchDjangoApiServices';
 
@@ -114,6 +115,7 @@ export default function ProfilePage() {
   const [editingAddress, setEditingAddress] = useState(null);
   const [trackingOrderId, setTrackingOrderId] = useState(null);
   const [detectingProfileLocation, setDetectingProfileLocation] = useState(false);
+  const [profilePickerOpen, setProfilePickerOpen] = useState(false);
 
   const handleDetectProfileLocation = async () => {
     try {
@@ -159,6 +161,8 @@ export default function ProfilePage() {
           ...prev,
           city: result.city || prev.city,
           country: result.country || prev.country || 'India',
+          latitude: result.latitude || prev.latitude,
+          longitude: result.longitude || prev.longitude,
         }));
         setAddressPinLookup({
           loading: false,
@@ -1832,23 +1836,40 @@ export default function ProfilePage() {
                       <Typography sx={{ fontWeight: 800, color: '#0f172a' }}>
                         {editingAddress ? 'Edit Delivery Address' : 'Add New Address'}
                       </Typography>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        disabled={detectingProfileLocation}
-                        onClick={handleDetectProfileLocation}
-                        startIcon={detectingProfileLocation ? <CircularProgress size={16} /> : <NavigationRoundedIcon fontSize="small" />}
-                        sx={{
-                          color: '#0284c7',
-                          borderColor: '#38bdf8',
-                          borderRadius: 2,
-                          fontWeight: 700,
-                          textTransform: 'none',
-                          '&:hover': { borderColor: '#0284c7', bgcolor: 'rgba(2, 132, 199, 0.05)' }
-                        }}
-                      >
-                        {detectingProfileLocation ? 'Detecting...' : '📍 Auto-Detect Location'}
-                      </Button>
+                      <Stack direction="row" spacing={1}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          disabled={detectingProfileLocation}
+                          onClick={handleDetectProfileLocation}
+                          startIcon={detectingProfileLocation ? <CircularProgress size={16} /> : <NavigationRoundedIcon fontSize="small" />}
+                          sx={{
+                            color: '#0284c7',
+                            borderColor: '#38bdf8',
+                            borderRadius: 2,
+                            fontWeight: 700,
+                            textTransform: 'none',
+                            '&:hover': { borderColor: '#0284c7', bgcolor: 'rgba(2, 132, 199, 0.05)' }
+                          }}
+                        >
+                          {detectingProfileLocation ? 'Detecting...' : '📍 Auto-Detect'}
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          onClick={() => setProfilePickerOpen(true)}
+                          sx={{
+                            bgcolor: '#0f172a',
+                            color: '#ffffff',
+                            borderRadius: 2,
+                            fontWeight: 700,
+                            textTransform: 'none',
+                            '&:hover': { bgcolor: '#1e293b' }
+                          }}
+                        >
+                          🗺️ Pin on Map
+                        </Button>
+                      </Stack>
                     </Stack>
                     {addressForm.latitude && (
                       <Chip
@@ -2317,6 +2338,26 @@ export default function ProfilePage() {
           onClose={() => setTrackingOrderId(null)}
         />
       )}
+      <LocationPickerModal
+        open={profilePickerOpen}
+        onClose={() => setProfilePickerOpen(false)}
+        initialLat={addressForm.latitude || 25.5184}
+        initialLng={addressForm.longitude || 78.6821}
+        initialCity={addressForm.city || 'Jhansi'}
+        onConfirmLocation={(loc) => {
+          setAddressForm((prev) => ({
+            ...prev,
+            city: loc.city || prev.city,
+            country: loc.country || prev.country || 'India',
+            address: prev.address ? `${prev.address}, ${loc.street}` : (loc.street || prev.address),
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+          }));
+          if (loc.postcode) {
+            handleProfilePostcodeChange(loc.postcode);
+          }
+        }}
+      />
     </Container>
   );
 }

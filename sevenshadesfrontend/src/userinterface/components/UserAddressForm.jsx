@@ -4,6 +4,7 @@ import { trackOrderPlaced } from '../../services/analytics';
 import { deliverySlots, indiaDate, slotAvailable } from '../../services/deliverySchedule';
 import LocationButton from '../../services/LocationButton';
 import { detectAndReverseGeocode } from '../../services/reverseGeocodeService';
+import LocationPickerModal from './LocationPickerModal';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
@@ -65,6 +66,7 @@ export default function UserAddressForm() {
   }, [deliveryDate, deliverySlot, clock]);
   const [editingAddress, setEditingAddress] = useState(null);
   const [detectingLocation, setDetectingLocation] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [detectedCoords, setDetectedCoords] = useState({ latitude: null, longitude: null });
   const [pinLookup, setPinLookup] = useState({
     loading: false,
@@ -85,6 +87,9 @@ export default function UserAddressForm() {
       if (result && result.status) {
         if (result.city) setCity(result.city);
         if (result.country) setCountry(result.country);
+        if (result.latitude && result.longitude) {
+          setDetectedCoords({ latitude: result.latitude, longitude: result.longitude });
+        }
         setPinLookup({
           loading: false,
           checked: true,
@@ -141,7 +146,11 @@ export default function UserAddressForm() {
         if (info.postcode && String(info.postcode).length === 6) {
           handlePostcodeChange(info.postcode);
         }
-        notify(`📍 Auto-filled from location: ${info.city || info.state || 'Detected'}`, 'success');
+        if (info.isIpFallback) {
+          notify(`⚠️ ISP Network Gateway detected (${info.city}). For Jhansi doorstep trial, type PIN 284121 or click 'Pin on Map'.`, 'info');
+        } else {
+          notify(`📍 Precise device location: ${info.city || info.state || 'Detected'}`, 'success');
+        }
       }
     } catch (err) {
       notify(err.message || 'Unable to detect location. Please type manually.', 'error');
@@ -515,23 +524,40 @@ export default function UserAddressForm() {
                       Address details fill karein ya 1-Click Auto-Detect use karein.
                     </Typography>
                   </Box>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    disabled={detectingLocation}
-                    onClick={handleDetectLocation}
-                    startIcon={detectingLocation ? <CircularProgress size={16} /> : <LocationOnOutlinedIcon />}
-                    sx={{
-                      color: '#0284c7',
-                      borderColor: '#38bdf8',
-                      borderRadius: 2,
-                      fontWeight: 700,
-                      textTransform: 'none',
-                      '&:hover': { borderColor: '#0284c7', bgcolor: 'rgba(2, 132, 199, 0.05)' }
-                    }}
-                  >
-                    {detectingLocation ? 'Detecting Location...' : '📍 Auto-Detect Location'}
-                  </Button>
+                  <Stack direction="row" spacing={1} sx={{ mt: { xs: 1, sm: 0 } }}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      disabled={detectingLocation}
+                      onClick={handleDetectLocation}
+                      startIcon={detectingLocation ? <CircularProgress size={16} /> : <LocationOnOutlinedIcon />}
+                      sx={{
+                        color: '#0284c7',
+                        borderColor: '#38bdf8',
+                        borderRadius: 2,
+                        fontWeight: 700,
+                        textTransform: 'none',
+                        '&:hover': { borderColor: '#0284c7', bgcolor: 'rgba(2, 132, 199, 0.05)' }
+                      }}
+                    >
+                      {detectingLocation ? 'Detecting...' : '📍 Auto-Detect'}
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={() => setPickerOpen(true)}
+                      sx={{
+                        bgcolor: '#0f172a',
+                        color: '#ffffff',
+                        borderRadius: 2,
+                        fontWeight: 700,
+                        textTransform: 'none',
+                        '&:hover': { bgcolor: '#1e293b' }
+                      }}
+                    >
+                      🗺️ Pin on Map
+                    </Button>
+                  </Stack>
                 </Stack>
                 {detectedCoords.latitude !== null && (
                   <Chip
@@ -891,6 +917,22 @@ export default function UserAddressForm() {
             </Paper>
           </Grid>
         </Grid>
+      <LocationPickerModal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        initialLat={detectedCoords.latitude || 25.5184}
+        initialLng={detectedCoords.longitude || 78.6821}
+        initialCity={city || 'Jhansi'}
+        onConfirmLocation={(loc) => {
+          if (loc.city) setCity(loc.city);
+          if (loc.postcode) handlePostcodeChange(loc.postcode);
+          if (loc.street) {
+            setAddress((prev) => (prev ? `${prev}, ${loc.street}` : loc.street));
+          }
+          setDetectedCoords({ latitude: loc.latitude, longitude: loc.longitude });
+          notify(`📍 Exact location confirmed: ${loc.city || 'Jhansi'} (${loc.postcode || '284121'})`, 'success');
+        }}
+      />
       </Container>
     </ThemeProvider>
   );
