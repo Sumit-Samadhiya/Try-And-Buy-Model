@@ -167,6 +167,10 @@ ENDPOINT_SCHEMAS = {
         'required': [],
         'allowed': {'order_id', 'address_id', 'lat', 'lng'}
     },
+    'route_eta': {
+        'required': [],
+        'allowed': {'start_lat', 'start_lng', 'dest_lat', 'dest_lng', 'order_id', 'rider_id'}
+    },
     'scan_tamper_proof_tag': {
         'required': ['tag_id'],
         'allowed': {'tag_id', 'action'}

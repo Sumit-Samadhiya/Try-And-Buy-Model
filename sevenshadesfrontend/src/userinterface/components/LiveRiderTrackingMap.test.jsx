@@ -27,6 +27,7 @@ jest.mock('leaflet', () => ({
   polyline: jest.fn(() => ({
     addTo: jest.fn().mockReturnThis(),
     setLatLngs: jest.fn().mockReturnThis(),
+    setStyle: jest.fn().mockReturnThis(),
   })),
   divIcon: jest.fn(() => ({})),
   latLngBounds: jest.fn(() => ({})),
@@ -39,6 +40,7 @@ describe('LiveRiderTrackingMap', () => {
       address_text: 'Flat 402, Green Valley Apartments',
       city: 'Delhi',
       postcode: '110001',
+      delivery_slot: '04:00 PM - 05:00 PM',
       latitude: 28.6139,
       longitude: 77.209,
     },
@@ -76,6 +78,29 @@ describe('LiveRiderTrackingMap', () => {
     expect(screen.getByText(/DL-01-AB-1234/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Call/i })).toHaveAttribute('href', 'tel:9876543210');
     expect(screen.getByText(/km away/i)).toBeInTheDocument();
+    expect(screen.getByText(/Slot: 04:00 PM - 05:00 PM/i)).toBeInTheDocument();
+  });
+
+  test('renders road ETA display and OSRM engine when provided', async () => {
+    const dataWithRoadRoute = {
+      ...mockOrderData,
+      rider_info: {
+        ...mockOrderData.rider_info,
+        eta_display: '~14 mins (3.4 km road route)',
+        routing_engine: 'OSRM Turn-by-Turn Road Route',
+        route_polyline: [[28.625, 77.215], [28.618, 77.212], [28.6139, 77.209]],
+      },
+    };
+
+    postData.mockResolvedValueOnce({
+      status: true,
+      data: dataWithRoadRoute,
+    });
+
+    render(<LiveRiderTrackingMap orderId="TRL-LIVE-001" open={true} embedded={true} />);
+
+    expect(await screen.findByText(/~14 mins \(3.4 km road route\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Slot: 04:00 PM - 05:00 PM • 15m Doorstep Trial/i)).toBeInTheDocument();
   });
 
   test('calls onClose when close button is clicked in dialog mode', async () => {
@@ -93,4 +118,3 @@ describe('LiveRiderTrackingMap', () => {
     expect(handleClose).toHaveBeenCalled();
   });
 });
-

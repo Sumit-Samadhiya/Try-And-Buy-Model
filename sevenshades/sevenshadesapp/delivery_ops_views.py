@@ -244,7 +244,13 @@ def DeliveryRiderTasks(request):
 
 @api_view(['POST'])
 def GenerateDeliveryBatch(request):
-    return delivery_mutation(lambda: DeliveryBatchSerializer(generate_batches(request.data.get('rider_id')), many=True).data)
+    rider_id = request.data.get('rider_id')
+    max_orders = request.data.get('max_orders')
+    try:
+        max_orders = int(max_orders) if max_orders else None
+    except (ValueError, TypeError):
+        max_orders = None
+    return delivery_mutation(lambda: DeliveryBatchSerializer(generate_batches(rider_id, max_orders=max_orders), many=True).data)
 
 
 @api_view(['GET'])
@@ -334,61 +340,32 @@ def OptimizeRoute(request):
                 'order_id': order.order_id,
                 'assignment_id': a.assignment_id,
                 'address': f"{order.address_text}, {order.city} {order.postcode}".strip(),
-                'slot': order.delivery_slot,
-                'lat': order_lat,
-                'lng': order_lng,
+                'delivery_slot': order.delivery_slot,
+                'latitude': order_lat,
+                'longitude': order_lng,
             })
 
-        # Nearest-Neighbor TSP heuristic
-        curr_lat, curr_lng = base_lat, base_lng
-        order_sequence = []
-        waypoints = []
-        total_distance = 0.0
-        total_time_mins = 0.0
-        stop_num = 1
+        from .routing_service import optimize_batch_tsp
+        opt_res = optimize_batch_tsp(base_lat, base_lng, unvisited)
+        if not opt_res:
+            return JsonResponse({'status': False, 'message': 'Unable to optimize route'}, status=500, safe=False)
 
-        while unvisited:
-            best_idx = 0
-            best_dist = float('inf')
-            for idx, stop in enumerate(unvisited):
-                dist = _haversine_km(curr_lat, curr_lng, stop['lat'], stop['lng'])
-                if dist < best_dist:
-                    best_dist = dist
-                    best_idx = idx
-
-            chosen = unvisited.pop(best_idx)
-            leg_distance = round(best_dist, 2)
-            total_distance += leg_distance
-            # Travel time assuming avg 25 km/h + 15 min doorstep trial window
-            leg_travel_mins = (leg_distance / 25.0) * 60.0
-            arrival_mins = total_time_mins + leg_travel_mins
-            total_time_mins = arrival_mins + 15.0
-
-            order_sequence.append(chosen['order_id'])
-            waypoints.append({
-                'stop_number': stop_num,
-                'order_id': chosen['order_id'],
-                'assignment_id': chosen['assignment_id'],
-                'address': chosen['address'],
-                'delivery_slot': chosen['slot'],
-                'latitude': chosen['lat'],
-                'longitude': chosen['lng'],
-                'leg_distance_km': leg_distance,
-                'estimated_arrival_minutes': int(round(arrival_mins))
-            })
-            curr_lat, curr_lng = chosen['lat'], chosen['lng']
-            stop_num += 1
+        all_skipped = skipped_orders + opt_res.get('skipped_orders', [])
 
         return JsonResponse({
             'status': True,
-            'message': 'Route estimated from verified rider and delivery coordinates.',
+            'message': f"Route optimized via {opt_res.get('routing_engine', 'turn-by-turn routing')}.",
             'batch_id': batch.batch_id,
-            'order_sequence': order_sequence,
-            'waypoints': waypoints,
-            'total_distance_km': round(total_distance, 2),
-            'estimated_duration_minutes': int(round(total_time_mins)),
-            'stops_count': len(order_sequence),
-            'skipped_orders': skipped_orders
+            'order_sequence': opt_res['order_sequence'],
+            'waypoints': opt_res['waypoints'],
+            'total_distance_km': opt_res['total_distance_km'],
+            'estimated_duration_minutes': opt_res['estimated_duration_minutes'],
+            'driving_duration_minutes': opt_res.get('driving_duration_minutes', 0),
+            'total_trial_minutes': opt_res.get('total_trial_minutes', 0),
+            'stops_count': opt_res.get('stops_count', len(opt_res['order_sequence'])),
+            'route_polyline': opt_res.get('route_polyline', []),
+            'routing_engine': opt_res.get('routing_engine'),
+            'skipped_orders': all_skipped
         }, safe=False)
     except Exception:
         logger.exception('OptimizeRoute failed')

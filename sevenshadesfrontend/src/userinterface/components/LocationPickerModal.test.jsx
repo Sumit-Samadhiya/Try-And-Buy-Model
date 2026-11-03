@@ -49,7 +49,7 @@ describe('LocationPickerModal', () => {
       />
     );
 
-    expect(screen.getByText(/Pinpoint Exact Delivery Location/i)).toBeInTheDocument();
+    expect(screen.getByText(/Find your delivery entrance/i)).toBeInTheDocument();
     expect(screen.getByText(/Baragaon \(284121\)/i)).toBeInTheDocument();
     expect(screen.getByText(/Sipri Bazar \(284002\)/i)).toBeInTheDocument();
 

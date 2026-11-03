@@ -1,3 +1,5 @@
+import { postData } from './FetchDjangoApiServices';
+
 /** Device location only: never substitute an ISP gateway for a doorstep. */
 export async function detectUserCoordinates() {
   if (typeof navigator === 'undefined' || !navigator.geolocation) {
@@ -22,81 +24,36 @@ export async function detectUserCoordinates() {
   });
 }
 
-export async function reverseGeocode(latitude, longitude) {
-  const result = {
-    latitude,
-    longitude,
-    city: '',
-    state: '',
-    postcode: '',
-    street: '',
-    country: 'India',
-    formattedAddress: '',
-  };
 
-  // Primary: BigDataCloud Client API (Free, fast client-side reverse geocoding)
+let unavailableUntil = 0;
+export async function lookupAddress(body) {
+  if (Date.now() < unavailableUntil) return { status: false, results: [] };
+  let timer;
   try {
-    const bdcRes = await fetch(
-      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
-    );
-    if (bdcRes.ok) {
-      const bdc = await bdcRes.json();
-      result.city = bdc.city || bdc.locality || bdc.principalSubdivision || '';
-      result.state = bdc.principalSubdivision || '';
-      result.postcode = (bdc.postcode || '').replace(/\D/g, '').slice(0, 6);
-      result.country = bdc.countryName || 'India';
+    const result = await Promise.race([
+      postData('geocoding', body),
+      new Promise(resolve => { timer = setTimeout(() => resolve({ status: false, results: [] }), 5000); }),
+    ]);
+    if (!result?.status) unavailableUntil = Date.now() + 30000;
+    return result || { status: false, results: [] };
+  } catch (_) {
+    unavailableUntil = Date.now() + 30000;
+    return { status: false, results: [] };
+  } finally { clearTimeout(timer); }
+}
 
-      const localityParts = [bdc.locality, bdc.city].filter(Boolean);
-      result.street = Array.from(new Set(localityParts)).join(', ');
-    }
-  } catch (err) {
-    console.warn('BigDataCloud reverse geocode warning:', err);
-  }
-
-  // Secondary Fallback / Enrichment: OpenStreetMap Nominatim (if postcode or street missing)
-  if (!result.postcode || !result.street) {
-    try {
-      const nomRes = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-        { headers: { 'User-Agent': 'DoorDrapeApp/1.0 (customer-location)' } }
-      );
-      if (nomRes.ok) {
-        const nom = await nomRes.json();
-        const addr = nom?.address || {};
-        if (!result.postcode && addr.postcode) {
-          result.postcode = String(addr.postcode).replace(/\D/g, '').slice(0, 6);
-        }
-        if (!result.city) {
-          result.city = addr.city || addr.town || addr.village || addr.state_district || '';
-        }
-        if (!result.state && addr.state) {
-          result.state = addr.state;
-        }
-
-        const streetParts = [
-          addr.house_number,
-          addr.building,
-          addr.road,
-          addr.neighbourhood,
-          addr.suburb,
-        ].filter(Boolean);
-
-        if (streetParts.length > 0) {
-          result.street = streetParts.join(', ');
-        }
-      }
-    } catch (err) {
-      console.warn('Nominatim reverse geocode fallback warning:', err);
-    }
-  }
-
-  const fullParts = [result.street, result.city, result.state, result.postcode].filter(Boolean);
-  result.formattedAddress = fullParts.join(', ');
-
-  return result;
+export async function reverseGeocode(latitude, longitude) {
+  const response = await lookupAddress({ mode: 'reverse', latitude, longitude });
+  return {
+    city: '', state: '', country: '', postcode: '', street: '', formattedAddress: '',
+    ...(response.results?.[0] || {}),
+    // A geocoder may snap to a nearby street: never replace the customer's pin.
+    latitude, longitude,
+    available: Boolean(response.status && response.results?.length),
+  };
 }
 
 export async function detectAndReverseGeocode() {
-  const coords = await detectUserCoordinates();
-  return { ...await reverseGeocode(coords.latitude, coords.longitude), ...coords };
+  // Address enrichment happens after the map opens; do not delay device feedback.
+  return detectUserCoordinates();
 }

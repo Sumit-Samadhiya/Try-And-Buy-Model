@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
+  Alert,
   Box,
   Button,
   Chip,
@@ -19,6 +20,7 @@ import MyLocationRoundedIcon from '@mui/icons-material/MyLocationRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import AddressSearch from './AddressSearch';
 import { reverseGeocode } from '../../services/reverseGeocodeService';
 
 const createDraggableIcon = () =>
@@ -36,10 +38,10 @@ const createDraggableIcon = () =>
           width: 38px;
           height: 38px;
           border-radius: 50% 50% 50% 0;
-          background: #ef4444;
+          background: #059669;
           transform: rotate(-45deg);
           border: 2px solid #ffffff;
-          box-shadow: 0 4px 14px rgba(239, 68, 68, 0.5);
+          box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -85,14 +87,15 @@ export default function LocationPickerModal({
 }) {
   const mapContainerRef = useRef(null);
   const [mapReady, setMapReady] = useState(false);
+  const [mapFailed, setMapFailed] = useState(false);
   const mapInstanceRef = useRef(null);
   const markerRef = useRef(null);
   const requestRef = useRef(0);
   const [confirmedEntrance, setConfirmedEntrance] = useState(false);
 
   // Default to Jhansi Baragaon if coords are missing or default
-  const defaultLat = initialLat && !isNaN(initialLat) ? Number(initialLat) : 25.5184;
-  const defaultLng = initialLng && !isNaN(initialLng) ? Number(initialLng) : 78.6821;
+  const defaultLat = initialLat != null && Number.isFinite(Number(initialLat)) ? Number(initialLat) : 25.5184;
+  const defaultLng = initialLng != null && Number.isFinite(Number(initialLng)) ? Number(initialLng) : 78.6821;
 
   const [currentCoords, setCurrentCoords] = useState({ lat: defaultLat, lng: defaultLng });
   const [resolvedAddress, setResolvedAddress] = useState(null);
@@ -142,10 +145,13 @@ export default function LocationPickerModal({
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         }).addTo(map);
+
+        tiles.on('tileerror', () => setMapFailed(true));
+        tiles.on('tileload', () => setMapFailed(false));
 
         const marker = L.marker([defaultLat, defaultLng], {
           icon: createDraggableIcon(),
@@ -169,6 +175,7 @@ export default function LocationPickerModal({
         // Resolve initial position
         resolveLocationDetails(defaultLat, defaultLng);
       } catch (err) {
+        setMapFailed(true);
         console.warn('Picker map initialization note:', err);
       }
     }
@@ -192,7 +199,7 @@ export default function LocationPickerModal({
   }, [open]);
 
   const handleConfirm = () => {
-    if (!confirmedEntrance || resolving) return;
+    if (!confirmedEntrance || resolving || mapFailed) return;
     onConfirmLocation({
       latitude: currentCoords.lat,
       longitude: currentCoords.lng,
@@ -207,6 +214,7 @@ export default function LocationPickerModal({
 
   return (
     <Dialog
+      aria-labelledby="delivery-pin-title"
       open={open}
       TransitionProps={{ onEntered: () => setMapReady(true), onExited: () => setMapReady(false) }}
       onClose={onClose}
@@ -220,19 +228,20 @@ export default function LocationPickerModal({
         },
       }}
     >
-      <DialogTitle sx={{ p: 2, bgcolor: '#0f172a', color: '#ffffff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <DialogTitle sx={{ p: 2, bgcolor: '#064e3b', color: '#ffffff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <PlaceRoundedIcon sx={{ color: '#ef4444' }} />
-          <Typography variant="h6" sx={{ fontWeight: 800, color: '#f8fafc', fontSize: 17 }}>
-            Pinpoint Exact Delivery Location
+          <PlaceRoundedIcon sx={{ color: '#a7f3d0' }} />
+          <Typography id="delivery-pin-title" variant="h6" sx={{ fontWeight: 800, color: '#f8fafc', fontSize: 17 }}>
+            Find your delivery entrance
           </Typography>
         </Stack>
-        <IconButton size="small" onClick={onClose} sx={{ color: '#94a3b8', '&:hover': { color: '#ffffff' } }}>
+        <IconButton aria-label="Close location picker" size="small" onClick={onClose} sx={{ color: '#94a3b8', '&:hover': { color: '#ffffff' } }}>
           <CloseRoundedIcon />
         </IconButton>
       </DialogTitle>
 
       <DialogContent sx={{ p: 0 }}>
+        <AddressSearch onSelect={place => setPinPosition(place.latitude, place.longitude)} />
         {/* Quick Location Shortcuts */}
         <Box sx={{ p: 1.5, bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
           <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b', display: 'block', mb: 0.8 }}>
@@ -286,6 +295,7 @@ export default function LocationPickerModal({
           </Box>
         </Box>
 
+        {mapFailed && <Alert severity="info" sx={{ m: 2 }}>The map could not load. You can still enter your full address manually.</Alert>}
         {/* Resolved Location Details Display */}
         <Box sx={{ p: 2, bgcolor: '#ffffff' }}>
           <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, display: 'block' }}>
@@ -313,12 +323,13 @@ export default function LocationPickerModal({
             </Box>
           )}
 
+          {resolvedAddress?.available === false && <Alert severity="info" sx={{ mt: 1 }}>Address lookup is unavailable. Your pin is kept; enter the street, city and PIN in the address form.</Alert>}
           <label style={{ display: 'block', marginTop: 12 }}>
             <input type="checkbox" checked={confirmedEntrance} onChange={event => setConfirmedEntrance(event.target.checked)} />
             I checked the pin is at my delivery entrance
           </label>
           <Button
-            disabled={!confirmedEntrance || resolving}
+            disabled={!confirmedEntrance || resolving || mapFailed}
             variant="contained"
             fullWidth
             onClick={handleConfirm}
@@ -327,7 +338,7 @@ export default function LocationPickerModal({
               mt: 2,
               py: 1.2,
               fontWeight: 700,
-              bgcolor: '#0f172a',
+              bgcolor: '#064e3b',
               borderRadius: 2,
               textTransform: 'none',
               '&:hover': { bgcolor: '#1e293b' },
@@ -335,6 +346,7 @@ export default function LocationPickerModal({
           >
             Confirm & Use This Location
           </Button>
+          <Button fullWidth onClick={onClose} sx={{ mt: 1, minHeight: 44, color: '#065f46' }}>Enter address manually</Button>
         </Box>
       </DialogContent>
     </Dialog>

@@ -135,9 +135,9 @@ def advance_assignment(role, account, assignment_id, status):
 
 
 @transaction.atomic
-def generate_batches(rider_id):
+def generate_batches(rider_id, max_orders=None):
     rider = active_rider(rider_id)
-    MAX_BATCH_ORDERS = 5
+    MAX_BATCH_ORDERS = max_orders if (isinstance(max_orders, int) and max_orders > 0) else 5
 
     # Check rider zone restriction if specified
     allowed_postcodes = None

@@ -56,6 +56,19 @@ def SettlementDetail(request):
             'longitude': float(r.longitude) if r.longitude is not None else None,
             'updated_at': r.location_updated_at.isoformat() if r.location_updated_at else None,
         }
+        if r.latitude is not None and r.longitude is not None and order.latitude is not None and order.longitude is not None:
+            try:
+                from .routing_service import get_road_route
+                route = get_road_route(r.latitude, r.longitude, order.latitude, order.longitude)
+                if route:
+                    rider_info['road_distance_km'] = route.get('distance_km')
+                    rider_info['road_duration_minutes'] = route.get('duration_minutes')
+                    rider_info['eta_display'] = route.get('eta_display')
+                    rider_info['estimated_arrival_formatted'] = route.get('estimated_arrival_formatted')
+                    rider_info['route_polyline'] = route.get('route_polyline', [])
+                    rider_info['routing_engine'] = route.get('routing_engine')
+            except Exception as exc:
+                logger.warning('Failed to calculate road route in settlement_detail: %s', exc)
     customer_location = {
         'latitude': float(order.latitude) if order.latitude is not None else None,
         'longitude': float(order.longitude) if order.longitude is not None else None,

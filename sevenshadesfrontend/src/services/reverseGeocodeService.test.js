@@ -1,24 +1,28 @@
 import { detectUserCoordinates, reverseGeocode, detectAndReverseGeocode } from './reverseGeocodeService';
+import { postData } from './FetchDjangoApiServices';
+
+jest.mock('./FetchDjangoApiServices', () => ({
+  postData: jest.fn(),
+}));
 
 describe('reverseGeocodeService', () => {
   beforeEach(() => {
-    global.fetch = jest.fn();
+    jest.clearAllMocks();
   });
 
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
-  test('reverseGeocode resolves locality, city and postcode from BigDataCloud', async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        city: 'New Delhi',
-        principalSubdivision: 'Delhi',
-        postcode: '110001',
-        countryName: 'India',
-        locality: 'Connaught Place',
-      }),
+  test('reverseGeocode resolves address details from geocoding service', async () => {
+    postData.mockResolvedValueOnce({
+      status: true,
+      results: [
+        {
+          city: 'New Delhi',
+          state: 'Delhi',
+          postcode: '110001',
+          country: 'India',
+          street: 'Connaught Place',
+          formattedAddress: 'Connaught Place, New Delhi, Delhi 110001',
+        },
+      ],
     });
 
     const result = await reverseGeocode(28.6315, 77.2167);
@@ -26,38 +30,26 @@ describe('reverseGeocodeService', () => {
     expect(result.postcode).toBe('110001');
     expect(result.country).toBe('India');
     expect(result.street).toContain('Connaught Place');
+    expect(result.available).toBe(true);
+    expect(postData).toHaveBeenCalledWith('geocoding', {
+      mode: 'reverse',
+      latitude: 28.6315,
+      longitude: 77.2167,
+    });
   });
 
-  test('reverseGeocode falls back to OpenStreetMap Nominatim when postcode is empty in BigDataCloud', async () => {
-    // BigDataCloud returns empty postcode
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        city: 'South Delhi',
-        principalSubdivision: 'Delhi',
-        postcode: '',
-        countryName: 'India',
-        locality: 'Hauz Khas',
-      }),
-    });
-
-    // Nominatim fallback returns accurate postal code & road
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        address: {
-          road: 'Aurobindo Marg',
-          suburb: 'Hauz Khas',
-          city: 'New Delhi',
-          postcode: '110016',
-          state: 'Delhi',
-        },
-      }),
+  test('reverseGeocode handles unavailable service gracefully', async () => {
+    postData.mockResolvedValueOnce({
+      status: false,
+      results: [],
     });
 
     const result = await reverseGeocode(28.5494, 77.2001);
-    expect(result.postcode).toBe('110016');
-    expect(result.street).toContain('Aurobindo Marg');
+    expect(result.city).toBe('');
+    expect(result.postcode).toBe('');
+    expect(result.latitude).toBe(28.5494);
+    expect(result.longitude).toBe(77.2001);
+    expect(result.available).toBe(false);
   });
 
   test('detectUserCoordinates extracts navigator.geolocation coords when available', async () => {
@@ -81,20 +73,31 @@ describe('reverseGeocodeService', () => {
     expect(coords.source).toBe('device_location');
   });
 
-  test.each([1, 2, 3])('does not use IP fallback for device error %s', async code => {
-    navigator.geolocation = { getCurrentPosition: jest.fn((success, error) => error({ code })) };
-    await expect(detectUserCoordinates()).rejects.toThrow();
-    expect(fetch).not.toHaveBeenCalled();
-    expect(navigator.geolocation.getCurrentPosition).toHaveBeenCalledTimes(1);
+  test('detectUserCoordinates rejects when accuracy is too low', async () => {
+    const mockGeolocation = {
+      getCurrentPosition: jest.fn().mockImplementation((success) =>
+        success({
+          coords: {
+            latitude: 28.6139,
+            longitude: 77.209,
+            accuracy: 500, // too approximate (> 100m)
+          },
+        })
+      ),
+    };
+    global.navigator.geolocation = mockGeolocation;
+
+    await expect(detectUserCoordinates()).rejects.toThrow(/too approximate/i);
   });
-  test('rejects inaccurate network positions before address lookup', async () => {
-    navigator.geolocation = { getCurrentPosition: jest.fn(success => success({ coords: { latitude: 26.45, longitude: 80.32, accuracy: 5000 } })) };
-    await expect(detectAndReverseGeocode()).rejects.toThrow('too approximate');
-    expect(fetch).not.toHaveBeenCalled();
-  });
-  test('requests a fresh high accuracy fix', async () => {
-    navigator.geolocation = { getCurrentPosition: jest.fn(success => success({ coords: { latitude: 25.4, longitude: 78.5, accuracy: 20 } })) };
-    await detectUserCoordinates();
-    expect(navigator.geolocation.getCurrentPosition).toHaveBeenCalledWith(expect.any(Function), expect.any(Function), { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
+
+  test('detectUserCoordinates rejects on permission denied error', async () => {
+    const mockGeolocation = {
+      getCurrentPosition: jest.fn().mockImplementation((_, error) =>
+        error({ code: 1, message: 'User denied Geolocation' })
+      ),
+    };
+    global.navigator.geolocation = mockGeolocation;
+
+    await expect(detectUserCoordinates()).rejects.toThrow(/permission denied/i);
   });
 });

@@ -99,9 +99,74 @@ def RiderSuggestions(request):
         distance = distance_km(order.latitude, order.longitude, rider.latitude, rider.longitude) if fresh and all(value is not None for value in (order.latitude, order.longitude, rider.latitude, rider.longitude)) else None
         zone_match = rider.zone.casefold() in zone_names | {order.city.casefold(), order.postcode.casefold()}
         workload = rider.deliveryassignment_set.exclude(status='Delivered').exclude(try_order__status='CANCELLED').count()
-        values.append({'rider_id': rider.rider_id, 'name': rider.name, 'zone': rider.zone, 'distance_km': round(distance, 2) if distance is not None else None, 'zone_match': zone_match, 'active_orders': workload})
+        road_distance_km = None
+        road_eta_mins = None
+        road_eta_display = None
+        if distance is not None:
+            road_distance_km = round(distance * 1.30, 2)
+            road_eta_mins = max(1, int(round((road_distance_km / 25.0) * 60.0 * 1.25 + 3.0)))
+            road_eta_display = f"~{road_eta_mins} mins ({road_distance_km} km road)"
+
+        values.append({
+            'rider_id': rider.rider_id,
+            'name': rider.name,
+            'zone': rider.zone,
+            'distance_km': round(distance, 2) if distance is not None else None,
+            'road_distance_km': road_distance_km,
+            'road_eta_minutes': road_eta_mins,
+            'road_eta_display': road_eta_display,
+            'zone_match': zone_match,
+            'active_orders': workload
+        })
     values.sort(key=lambda row: (row['distance_km'] is None, row['distance_km'] if row['distance_km'] is not None else 0, not row['zone_match'], row['active_orders'], row['name']))
     return JsonResponse({'status': True, 'data': values})
+
+
+@api_view(['GET', 'POST'])
+def RouteETA(request):
+    """
+    Returns real turn-by-turn road route, scooter driving ETA, and polyline coordinates.
+    Accepts:
+      - start_lat, start_lng (or rider_id)
+      - dest_lat, dest_lng (or order_id)
+    """
+    data = request.data if request.method == 'POST' else request.GET
+    start_lat = data.get('start_lat')
+    start_lng = data.get('start_lng')
+    dest_lat = data.get('dest_lat')
+    dest_lng = data.get('dest_lng')
+
+    order_id = data.get('order_id')
+    if order_id and (dest_lat is None or dest_lng is None):
+        order = TryOrder.objects.filter(order_id=order_id).first()
+        if order and order.latitude is not None and order.longitude is not None:
+            dest_lat = order.latitude
+            dest_lng = order.longitude
+
+    rider_id = data.get('rider_id')
+    if rider_id and (start_lat is None or start_lng is None):
+        rider = DeliveryRider.objects.filter(rider_id=rider_id).first()
+        if rider and rider.latitude is not None and rider.longitude is not None:
+            start_lat = rider.latitude
+            start_lng = rider.longitude
+
+    if None in (start_lat, start_lng, dest_lat, dest_lng):
+        return JsonResponse({'status': False, 'message': 'Valid start and destination coordinates are required.'}, status=400)
+
+    try:
+        from .routing_service import get_road_route
+        route_res = get_road_route(float(start_lat), float(start_lng), float(dest_lat), float(dest_lng))
+        if not route_res:
+            return JsonResponse({'status': False, 'message': 'Unable to calculate road route.'}, status=400)
+
+        return JsonResponse({
+            'status': True,
+            'data': route_res
+        })
+    except Exception as exc:
+        logger.warning('RouteETA calculation failed: %s', exc)
+        return JsonResponse({'status': False, 'message': 'Route calculation error'}, status=500)
+
 
 
 @api_view(['GET', 'POST'])

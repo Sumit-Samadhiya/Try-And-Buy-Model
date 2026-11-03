@@ -1,6 +1,6 @@
 from sevenshadesapp import payment_recovery_views
 from sevenshadesapp import admin_workspace_views
-from sevenshadesapp import location_views
+from sevenshadesapp import location_views, geocoding_views
 from sevenshadesapp import settlement_views
 """
 URL configuration for sevenshades project.
@@ -70,9 +70,11 @@ urlpatterns = [
     path('api/reset_password', firebase_views.legacy_otp_disabled),
     path('api/pincode_lookup', location_views.PincodeLookup),
     path('api/pincode_lookup/', location_views.PincodeLookup),
+    path('api/geocoding', geocoding_views.Geocoding),
     path('api/address_location', location_views.AddressLocation),
     path('api/rider_location', location_views.RiderLocation),
     path('api/rider_suggestions', location_views.RiderSuggestions),
+    path('api/route_eta', location_views.RouteETA),
     path('payments/razorpay/webhook', settlement_views.RazorpayWebhook),
     path('api/settlement_detail', settlement_views.SettlementDetail),
     path('api/customer_approve_bill', settlement_views.CustomerApproveBill),

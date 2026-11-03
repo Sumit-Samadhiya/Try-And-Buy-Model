@@ -126,6 +126,9 @@ export default function LiveRiderTrackingMap({
   const [riderCoords, setRiderCoords] = useState(null);
   const [riderInfo, setRiderInfo] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [routePolyline, setRoutePolyline] = useState(null);
+  const [roadEtaDisplay, setRoadEtaDisplay] = useState(null);
+  const [routingEngine, setRoutingEngine] = useState(null);
 
   // Load initial order and rider details
   const fetchTrackingDetails = useCallback(async () => {
@@ -163,6 +166,15 @@ export default function LiveRiderTrackingMap({
             });
             setLastUpdated(d.rider_info.updated_at || new Date().toISOString());
           }
+          if (d.rider_info.route_polyline && d.rider_info.route_polyline.length > 1) {
+            setRoutePolyline(d.rider_info.route_polyline);
+          }
+          if (d.rider_info.eta_display) {
+            setRoadEtaDisplay(d.rider_info.eta_display);
+          }
+          if (d.rider_info.routing_engine) {
+            setRoutingEngine(d.rider_info.routing_engine);
+          }
         }
       } else {
         setError(res?.message || 'Unable to load order tracking details.');
@@ -180,6 +192,30 @@ export default function LiveRiderTrackingMap({
     }
   }, [open, orderId, fetchTrackingDetails]);
 
+  // Fetch road turn-by-turn route and scooter ETA from OSRM
+  const fetchRoadRoute = useCallback(async (rLat, rLng, cLat, cLng) => {
+    if (!rLat || !rLng || !cLat || !cLng) return;
+    try {
+      const res = await postData('route_eta', {
+        start_lat: rLat,
+        start_lng: rLng,
+        dest_lat: cLat,
+        dest_lng: cLng,
+      });
+      if (res && res.status && res.data) {
+        if (res.data.route_polyline && res.data.route_polyline.length > 1) {
+          setRoutePolyline(res.data.route_polyline);
+        }
+        if (res.data.eta_display) {
+          setRoadEtaDisplay(res.data.eta_display);
+        }
+        if (res.data.routing_engine) {
+          setRoutingEngine(res.data.routing_engine);
+        }
+      }
+    } catch (_) {}
+  }, []);
+
   // Handle incoming live location broadcast over Django Channels WebSockets
   const handleOrderEvent = useCallback(
     (eventData, eventType) => {
@@ -195,6 +231,10 @@ export default function LiveRiderTrackingMap({
           setRiderCoords({ lat, lng, heading });
           setLastUpdated(new Date().toISOString());
 
+          if (customerCoords?.lat && customerCoords?.lng) {
+            fetchRoadRoute(lat, lng, customerCoords.lat, customerCoords.lng);
+          }
+
           if (eventData.rider_name || eventData.bike_number || eventData.phone) {
             setRiderInfo((prev) => ({
               ...(prev || {}),
@@ -206,7 +246,7 @@ export default function LiveRiderTrackingMap({
         }
       }
     },
-    []
+    [customerCoords, fetchRoadRoute]
   );
 
   // Subscribe to order channel
@@ -283,22 +323,29 @@ export default function LiveRiderTrackingMap({
       }
     }
 
-    // Draw route preview line and adjust bounds
+    // Draw turn-by-turn road route or straight dashed preview line and adjust bounds
     if (customerCoords && riderCoords) {
-      const latlngs = [
-        [riderCoords.lat, riderCoords.lng],
-        [customerCoords.lat, customerCoords.lng],
-      ];
+      const isTurnByTurn = routePolyline && routePolyline.length > 2;
+      const latlngs = isTurnByTurn
+        ? routePolyline
+        : [
+            [riderCoords.lat, riderCoords.lng],
+            [customerCoords.lat, customerCoords.lng],
+          ];
 
       if (!routeLineRef.current) {
         routeLineRef.current = L.polyline(latlngs, {
           color: '#0284c7',
-          weight: 4,
-          opacity: 0.7,
-          dashArray: '8, 8',
+          weight: isTurnByTurn ? 5 : 4,
+          opacity: 0.85,
+          dashArray: isTurnByTurn ? null : '8, 8',
         }).addTo(map);
       } else {
         routeLineRef.current.setLatLngs(latlngs);
+        routeLineRef.current.setStyle({
+          dashArray: isTurnByTurn ? null : '8, 8',
+          weight: isTurnByTurn ? 5 : 4,
+        });
       }
 
       try {
@@ -313,7 +360,7 @@ export default function LiveRiderTrackingMap({
     return () => {
       // Map cleanup on unmount
     };
-  }, [open, customerCoords, riderCoords, riderInfo]);
+  }, [open, customerCoords, riderCoords, riderInfo, routePolyline]);
 
   // Teardown map on component unmount
   useEffect(() => {
@@ -404,7 +451,7 @@ export default function LiveRiderTrackingMap({
 
             <Grid item xs={7} sm={4}>
               <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block' }}>
-                Estimated Distance
+                Estimated Road ETA & Distance
               </Typography>
               <Typography
                 variant="body2"
@@ -413,14 +460,21 @@ export default function LiveRiderTrackingMap({
                   color: distanceKm !== null && distanceKm < 0.3 ? '#34d399' : '#38bdf8',
                 }}
               >
-                {distanceKm !== null
-                  ? distanceKm < 0.1
-                    ? 'Arriving at doorstep now!'
-                    : `${distanceKm} km away`
+                {distanceKm !== null && distanceKm < 0.1
+                  ? 'Arriving at doorstep now!'
+                  : roadEtaDisplay
+                  ? roadEtaDisplay
+                  : distanceKm !== null
+                  ? `${distanceKm} km away`
                   : riderCoords
                   ? 'Tracking live coordinates...'
                   : 'Awaiting rider dispatch signal'}
               </Typography>
+              {orderData?.try_order?.delivery_slot && (
+                <Typography variant="caption" sx={{ color: '#38bdf8', display: 'block', fontSize: 11, mt: 0.3 }}>
+                  Slot: {orderData.try_order.delivery_slot} • 15m Doorstep Trial
+                </Typography>
+              )}
             </Grid>
 
             <Grid item xs={5} sm={2} sx={{ textAlign: 'right' }}>
