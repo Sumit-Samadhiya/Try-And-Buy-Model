@@ -93,3 +93,4 @@ describe('LiveRiderTrackingMap', () => {
     expect(handleClose).toHaveBeenCalled();
   });
 });
+

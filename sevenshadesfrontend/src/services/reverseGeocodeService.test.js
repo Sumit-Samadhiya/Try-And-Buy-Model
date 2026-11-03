@@ -60,7 +60,7 @@ describe('reverseGeocodeService', () => {
     expect(result.street).toContain('Aurobindo Marg');
   });
 
-  test('detectUserCoordinates extracts navigator.geolocation coords', async () => {
+  test('detectUserCoordinates extracts navigator.geolocation coords when available', async () => {
     const mockGeolocation = {
       getCurrentPosition: jest.fn().mockImplementation((success) =>
         success({
@@ -78,5 +78,35 @@ describe('reverseGeocodeService', () => {
     expect(coords.latitude).toBe(28.6139);
     expect(coords.longitude).toBe(77.209);
     expect(coords.accuracy).toBe(10);
+    expect(coords.source).toBe('browser_standard');
+  });
+
+  test('detectUserCoordinates falls back to IP geolocation when browser GPS times out', async () => {
+    // Browser geolocation times out (error code 3)
+    const mockGeolocation = {
+      getCurrentPosition: jest.fn().mockImplementation((_, error) =>
+        error({ code: 3, message: 'Location request timed out.' })
+      ),
+    };
+    global.navigator.geolocation = mockGeolocation;
+
+    // IP geolocation fetch mock
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        latitude: 26.45,
+        longitude: 80.32,
+        city: 'Kanpur',
+        principalSubdivision: 'Uttar Pradesh',
+        countryName: 'India',
+        locality: 'Kanpur',
+        postcode: '208001',
+      }),
+    });
+
+    const coords = await detectUserCoordinates();
+    expect(coords.latitude).toBe(26.45);
+    expect(coords.longitude).toBe(80.32);
+    expect(coords.source).toBe('ip_geolocation');
   });
 });

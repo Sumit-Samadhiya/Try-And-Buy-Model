@@ -58,3 +58,4 @@ describe('riderLocationTracker', () => {
     expect(mockClear).toHaveBeenCalledWith(101);
   });
 });
+
