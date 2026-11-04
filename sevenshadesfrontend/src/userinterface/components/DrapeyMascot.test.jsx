@@ -94,3 +94,67 @@ test('feedback wakes a sleeping mascot and listeners are removed on unmount', ()
   expect(remove).toHaveBeenCalledWith('drapey-feedback', expect.any(Function));
   remove.mockRestore();
 });
+
+
+test('add_to_cart triggers yahoo animation and stars', () => {
+  const { container } = render(<DrapeyMascot />);
+  act(() => {
+    window.dispatchEvent(
+      new CustomEvent('drapey-feedback', {
+        detail: { message: 'YAAHOOO! Added to bag!', tone: 'add_to_cart' }
+      })
+    );
+  });
+  expect(container.querySelector('.drapey-action--yahoo')).toBeTruthy();
+  expect(container.querySelector('.drapey-yahoo-stars')).toBeTruthy();
+  expect(screen.getByTestId('avatar')).toHaveAttribute('data-mood', 'yahoo');
+});
+
+test('order_success triggers victory celebration dance', () => {
+  const { container } = render(<DrapeyMascot />);
+  act(() => {
+    window.dispatchEvent(
+      new CustomEvent('drapey-feedback', {
+        detail: { message: 'Order confirmed!', tone: 'order_success' }
+      })
+    );
+  });
+  expect(container.querySelector('.drapey-action--order_success')).toBeTruthy();
+  expect(container.querySelector('.drapey-order-particles')).toBeTruthy();
+  expect(screen.getByTestId('avatar')).toHaveAttribute('data-mood', 'celebrating');
+});
+
+test('rapid 3 taps triggers angry bomb explosion easter egg and recovers', () => {
+  const { container } = render(<DrapeyMascot />);
+  const button = screen.getByRole('button', { name: 'Talk to Drapey' });
+
+  // 1st click
+  fireEvent.click(button);
+  expect(container.querySelector('.drapey-mode--angry')).toBeFalsy();
+
+  // 2nd quick click
+  fireEvent.click(button);
+  expect(screen.getByText(/2 baar chhu diya/i, { selector: '.sr-only' })).toBeInTheDocument();
+
+  // 3rd quick click within 1.2s -> TRIGGERS BOMB RAGE
+  fireEvent.click(button);
+  expect(container.querySelector('.drapey-mode--angry')).toBeTruthy();
+  expect(screen.getByTestId('avatar')).toHaveAttribute('data-mood', 'angry');
+  expect(screen.getByText(/3 BAAR KYUN DABAYA/i, { selector: '.sr-only' })).toBeInTheDocument();
+
+  // Advances to explosion phase
+  act(() => jest.advanceTimersByTime(1450));
+  expect(container.querySelector('.drapey-mode--exploding')).toBeTruthy();
+  expect(container.querySelector('.drapey-bomb-explosion')).toBeTruthy();
+
+  // Advances to soot/ash phase
+  act(() => jest.advanceTimersByTime(1050));
+  expect(container.querySelector('.drapey-mode--soot')).toBeTruthy();
+  expect(screen.getByTestId('avatar')).toHaveAttribute('data-mood', 'soot');
+
+  // Advances back to normal
+  act(() => jest.advanceTimersByTime(2900));
+  expect(container.querySelector('.drapey-mode--angry')).toBeFalsy();
+  expect(container.querySelector('.drapey-mode--exploding')).toBeFalsy();
+  expect(container.querySelector('.drapey-mode--soot')).toBeFalsy();
+});

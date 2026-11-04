@@ -62,6 +62,7 @@ export default function MyBag(props) {
         if (normalizedValue >= 1) {
             dispatch({ type: "ADD_PRODUCT", payLoad: [product.id, product] });
             trackAddToCart(product);
+            drapeyFeedback('YAAHOOO! 🎉 Bag updated! Looking sharp! 🛍️', 'add_to_cart');
         } else {
             dispatch({ type: "DELETE_PRODUCT", payLoad: [product.id] });
             trackRemoveFromCart(product);

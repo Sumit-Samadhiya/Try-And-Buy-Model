@@ -194,7 +194,7 @@ export default function ProductDetailsComponent(props) {
         const payload = { ...product, qty: v, selectedSize: product.size };
         if (v >= 1) {
             dispatch({ type: 'ADD_PRODUCT', payLoad: [product.id, payload] });
-            drapeyFeedback('Your trial bag has been updated! Review it whenever you’re ready.', 'success');
+            drapeyFeedback('YAAHOOO! 🎉 Zabardast choice! Ye outfit aap par bohot jachega! Bag me add ho gaya! 💃🕺', 'add_to_cart');
             trackAddToCart(payload);
         } else {
             dispatch({ type: 'DELETE_PRODUCT', payLoad: [product.id] });

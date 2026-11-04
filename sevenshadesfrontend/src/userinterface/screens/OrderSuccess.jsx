@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import NavigationRoundedIcon from '@mui/icons-material/NavigationRounded';
 import Button from '@mui/material/Button';
@@ -9,6 +9,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useLocation, useNavigate } from 'react-router-dom';
 import LiveRiderTrackingMap from '../components/LiveRiderTrackingMap';
+import { drapeyFeedback } from '../../services/drapeyFeedback';
 
 export default function OrderSuccess() {
   const navigate = useNavigate();
@@ -19,6 +20,12 @@ export default function OrderSuccess() {
   const billingAmount = payload.billingAmount || 0;
   const paymentMode = (payload.paymentMode || 'N/A').toUpperCase();
   const totalItems = payload.totalTryItems || 0;
+
+  useEffect(() => {
+    if (payload.orderId) {
+      drapeyFeedback('BOOM! 🎊 Order Placed! Party time! Humare rider bhaiya ready ho rahe hain aapke doorstep par aane ke liye! 🛵💨', 'order_success');
+    }
+  }, [payload.orderId]);
 
   if (!payload.orderId) {
     return (

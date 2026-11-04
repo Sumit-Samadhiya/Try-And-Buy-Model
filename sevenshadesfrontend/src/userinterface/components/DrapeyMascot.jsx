@@ -1,9 +1,20 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import DrapeyAvatar from './DrapeyAvatar';
 import './DrapeyMascot.css';
 
-const greeting = 'Hey! I’m Drapey. Let’s find something you’ll love 😊';
+const greeting = 'Hey! Namaste! 🙏 Main Drapey hoon — aapka personal Try & Buy stylist! Ghar baithe try karo, pasand aaye tabhi khareedo! 😉✨';
 const clamp = (value, low, high) => Math.max(low, Math.min(Math.max(low, high), value));
+
+const NAUGHTY_TIPS = [
+  'Pro Tip: Doorstep trial room ready hai! 15 minutes aaram se mirror ke samne try karo! 🪞😎',
+  'Confused about size? 2 sizes order karo — jo fit baithe wo rakho, dusra rider le jayega! 😉',
+  'Arey suno! Paisa tabhi dena jab kapda pasand aaye! Zero advance payment! 💸🚫',
+  '30-45 minutes me rider aapke ghar par hoga! Ready rehna trial ke liye! 🛵💨',
+  'Koi fitting issue? Humare riders friendly hain, instant return le lete hain! 🤝',
+  'Ek secret bataun? Try & Buy model sirf smart shoppers use karte hain! Jaise aap! 😉✨',
+  'Styling advice chahiye? Bas kapde bag me daalo aur ghar par pehen kar dekho! 💃',
+  'Drapey ka rule: Pehle try karo, phir decide karo! No return headache! ✨'
+];
 
 export function guidePosition(scroll, width, height, bubbleHeight = 98) {
   const mobile = width <= 600;
@@ -16,7 +27,7 @@ export function guidePosition(scroll, width, height, bubbleHeight = 98) {
   const below = y - bubbleHeight - 25 < 112 && y + size + bubbleHeight + 25 < bottom;
   const safeY = below ? y : Math.max(Math.min(bottom - size, bubbleHeight + 128), y);
   const left = clamp(x + size - bubbleWidth, 12, width - bubbleWidth - 12);
-  return { x, y:safeY, below, offset:left - x, tail:clamp(x + size / 2 - left, 18, bubbleWidth - 18) };
+  return { x, y: safeY, below, offset: left - x, tail: clamp(x + size / 2 - left, 18, bubbleWidth - 18) };
 }
 
 export default function DrapeyMascot({ routeKey = 'home', greetingMessage = greeting }) {
@@ -31,7 +42,34 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
   const dismissed = useRef(false);
   const feedbackUntil = useRef(0);
   const [tone, setTone] = useState('info');
-  const mood = reduced ? 'idle' : sleepy ? 'sleeping' : phase === 'thinking' ? 'thinking' : phase === 'typing' ? 'speaking' : phase === 'speaking' ? (tone === 'error' ? 'thinking' : 'happy') : 'idle';
+
+  // Emotional states & Easter egg states
+  const [rageState, setRageState] = useState('normal'); // 'normal' | 'angry' | 'exploding' | 'soot'
+  const [specialAction, setSpecialAction] = useState(null); // null | 'yahoo' | 'order_success' | 'poke'
+  const clickTimestamps = useRef([]);
+  const rageTimer = useRef(null);
+  const tipIndex = useRef(0);
+
+  // Computed mood for avatar
+  const mood = reduced
+    ? 'idle'
+    : rageState === 'angry' || rageState === 'exploding'
+    ? 'angry'
+    : rageState === 'soot'
+    ? 'soot'
+    : specialAction === 'yahoo'
+    ? 'yahoo'
+    : specialAction === 'order_success'
+    ? 'celebrating'
+    : sleepy
+    ? 'sleeping'
+    : phase === 'thinking'
+    ? 'thinking'
+    : phase === 'typing'
+    ? 'speaking'
+    : phase === 'speaking'
+    ? (tone === 'error' ? 'thinking' : 'happy')
+    : 'idle';
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -49,7 +87,7 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
         frame = null;
         const sections = ['home', '/', '/home'].includes(routeKey) ? [...document.querySelectorAll('[data-drapey-message]')] : [];
         const active = sections.filter(section => section.getBoundingClientRect().top <= window.innerHeight * .5).pop();
-        if (Date.now() >= feedbackUntil.current) {
+        if (Date.now() >= feedbackUntil.current && rageState === 'normal' && !specialAction) {
           setTone('info');
           setMessage(active?.dataset.drapeyMessage || greetingMessage);
         }
@@ -66,29 +104,51 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
       });
     };
     update();
-    window.addEventListener('scroll', update, { passive:true });
+    window.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
     const resize = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
     if (bubble.current) resize?.observe(bubble.current);
     const main = document.querySelector('main');
     if (main) resize?.observe(main);
-    return () => { cancelAnimationFrame(frame); resize?.disconnect(); window.removeEventListener('scroll', update); window.removeEventListener('resize', update); };
-  }, [routeKey, greetingMessage]);
+    return () => {
+      cancelAnimationFrame(frame);
+      resize?.disconnect();
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
+  }, [routeKey, greetingMessage, rageState, specialAction]);
 
   useEffect(() => {
     const feedback = event => {
       const detail = event.detail;
       if (!detail || typeof detail.message !== 'string' || !detail.message.trim()) return;
-      feedbackUntil.current = Date.now() + 14000;
-      setTone(detail.tone || 'info');
-      setMessage(detail.message.slice(0, 220));
+
+      const actionTone = detail.tone || 'info';
       setSleepy(false);
+      setTone(actionTone);
+      setMessage(detail.message.slice(0, 220));
       setReplay(value => value + 1);
+
+      if (actionTone === 'add_to_cart') {
+        feedbackUntil.current = Date.now() + 6000;
+        setSpecialAction('yahoo');
+        setTimeout(() => setSpecialAction(null), 3600);
+      } else if (actionTone === 'order_success') {
+        feedbackUntil.current = Date.now() + 9000;
+        setSpecialAction('order_success');
+        setTimeout(() => setSpecialAction(null), 5000);
+      } else {
+        feedbackUntil.current = Date.now() + 14000;
+      }
     };
+
     const invalid = () => feedback({ detail: { message: 'Please check the highlighted field before continuing.', tone: 'error' } });
     window.addEventListener('drapey-feedback', feedback);
     document.addEventListener('invalid', invalid, true);
-    return () => { window.removeEventListener('drapey-feedback', feedback); document.removeEventListener('invalid', invalid, true); };
+    return () => {
+      window.removeEventListener('drapey-feedback', feedback);
+      document.removeEventListener('invalid', invalid, true);
+    };
   }, []);
 
   useEffect(() => {
@@ -103,41 +163,196 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
       let index = 0;
       const letters = Array.from(message);
       typing = setInterval(() => {
-        if (dismissed.current) { clearInterval(typing); return; }
+        if (dismissed.current) {
+          clearInterval(typing);
+          return;
+        }
         index += 1;
         setTyped(letters.slice(0, index).join(''));
         if (index >= letters.length) {
           clearInterval(typing);
           setPhase('speaking');
-          hide = setTimeout(() => setPhase('quiet'), 6500);
+          hide = setTimeout(() => setPhase('quiet'), 7000);
         }
-      }, 30);
-    }, 700);
-    return () => { clearTimeout(start); clearTimeout(hide); clearInterval(typing); };
+      }, 25);
+    }, 600);
+    return () => {
+      clearTimeout(start);
+      clearTimeout(hide);
+      clearInterval(typing);
+    };
   }, [message, replay, reduced]);
 
   useEffect(() => {
     let timer;
-    const wake = () => { setSleepy(false); clearTimeout(timer); timer = setTimeout(() => setSleepy(true), 30000); };
-    const key = event => { if (event.key === 'Escape') { dismissed.current = true; setPhase('quiet'); } wake(); };
+    const wake = () => {
+      setSleepy(false);
+      clearTimeout(timer);
+      timer = setTimeout(() => setSleepy(true), 30000);
+    };
+    const key = event => {
+      if (event.key === 'Escape') {
+        dismissed.current = true;
+        setPhase('quiet');
+      }
+      wake();
+    };
     const visibility = () => setSleepy(document.hidden);
-    window.addEventListener('scroll', wake, { passive:true });
+    window.addEventListener('scroll', wake, { passive: true });
     window.addEventListener('pointerdown', wake);
     window.addEventListener('keydown', key);
     document.addEventListener('visibilitychange', visibility);
     wake();
-    return () => { clearTimeout(timer); window.removeEventListener('scroll', wake); window.removeEventListener('pointerdown', wake); window.removeEventListener('keydown', key); document.removeEventListener('visibilitychange', visibility); };
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', wake);
+      window.removeEventListener('pointerdown', wake);
+      window.removeEventListener('keydown', key);
+      document.removeEventListener('visibilitychange', visibility);
+      clearTimeout(rageTimer.current);
+    };
   }, []);
 
-  return <aside className={`drapey ${position.below ? 'drapey--bubble-below' : 'drapey--bubble-above'} ${reduced ? 'drapey--still' : ''} drapey--${phase}`} aria-label="Drapey style guide"
-    style={{ transform:`translate3d(${position.x}px, ${position.y}px, 0)`, '--bubble-offset':`${position.offset}px`, '--tail':`${position.tail}px` }}>
-    <button className={`drapey-character drapey--${mood}`} onClick={() => { setSleepy(false); setReplay(value => value + 1); }} aria-label="Talk to Drapey" onKeyDown={event => { if (event.key === 'Escape') setPhase('quiet'); }}>
-      <DrapeyAvatar mood={mood} reduced={reduced} />
-      <span className="drapey-ground" aria-hidden="true" />
-    </button>
-    <div ref={bubble} className="drapey-copy" aria-hidden={phase === 'quiet'}>
-      <span className="sr-only">{message}</span>
-      <span aria-hidden="true" className="drapey-speech">{phase === 'thinking' ? <span className="drapey-dots"><i/><i/><i/></span> : typed}</span>
-    </div>
-  </aside>;
+  // Rapid Touch / Triple Click Bomb Rage Trigger
+  const triggerBombRage = useCallback(() => {
+    feedbackUntil.current = Date.now() + 10000;
+    setTone('error');
+    setRageState('angry');
+    setMessage('ARGHHH! 3 BAAR KYUN DABAYA?! AB DEKHO MERA GUSSA... MAIN PHATNE WALA HOON! 💣😡🔥');
+    setReplay(v => v + 1);
+
+    clearTimeout(rageTimer.current);
+    rageTimer.current = setTimeout(() => {
+      // Explosion phase
+      setRageState('exploding');
+      setMessage('💥 KABOOOMMM!! 💥💣🔥');
+
+      rageTimer.current = setTimeout(() => {
+        // Soot recovery phase
+        setRageState('soot');
+        setMessage('Khasi-khasi... 💨 Dekh liya mera gussa? Pura phat gaya na! Ab shanti se shopping karo! 🤪');
+        setReplay(v => v + 1);
+
+        rageTimer.current = setTimeout(() => {
+          // Return to normal
+          setRageState('normal');
+          setMessage(greetingMessage);
+          setTone('info');
+          setReplay(v => v + 1);
+        }, 2800);
+      }, 1000);
+    }, 1400);
+  }, [greetingMessage]);
+
+  const handleCharacterClick = () => {
+    setSleepy(false);
+    if (rageState !== 'normal') return;
+
+    const now = Date.now();
+    // Keep clicks within the last 1200ms
+    clickTimestamps.current = clickTimestamps.current.filter(t => now - t <= 1200);
+    clickTimestamps.current.push(now);
+
+    const clicksInWindow = clickTimestamps.current.length;
+
+    if (clicksInWindow >= 3) {
+      clickTimestamps.current = [];
+      triggerBombRage();
+      return;
+    }
+
+    if (clicksInWindow === 2) {
+      feedbackUntil.current = Date.now() + 4500;
+      setTone('warning');
+      setMessage('Hey! 2 baar chhu diya! Ek baar aur tap kiya toh main BOMB ki tarah phat jaunga, bata raha hoon! 😤⚠️💣');
+      setReplay(v => v + 1);
+      setSpecialAction('poke');
+      setTimeout(() => setSpecialAction(null), 800);
+      return;
+    }
+
+    // Single click: cycle through naughty & helpful tips
+    const tip = NAUGHTY_TIPS[tipIndex.current % NAUGHTY_TIPS.length];
+    tipIndex.current += 1;
+    feedbackUntil.current = Date.now() + 8000;
+    setTone('info');
+    setMessage(tip);
+    setReplay(v => v + 1);
+    setSpecialAction('poke');
+    setTimeout(() => setSpecialAction(null), 800);
+  };
+
+  const isRage = rageState !== 'normal';
+  const characterModifier = isRage
+    ? `drapey-rage--${rageState}`
+    : specialAction
+    ? `drapey--${specialAction}-active`
+    : `drapey--${mood}`;
+
+  return (
+    <aside
+      className={`drapey ${position.below ? 'drapey--bubble-below' : 'drapey--bubble-above'} ${
+        reduced ? 'drapey--still' : ''
+      } drapey--${phase} ${isRage ? `drapey-mode--${rageState}` : ''} ${
+        specialAction ? `drapey-action--${specialAction}` : ''
+      }`}
+      aria-label="Drapey style guide"
+      style={{
+        transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
+        '--bubble-offset': `${position.offset}px`,
+        '--tail': `${position.tail}px`
+      }}
+    >
+      <button
+        className={`drapey-character ${characterModifier}`}
+        onClick={handleCharacterClick}
+        aria-label="Talk to Drapey"
+        onKeyDown={event => {
+          if (event.key === 'Escape') setPhase('quiet');
+        }}
+      >
+        <DrapeyAvatar mood={mood} reduced={reduced} />
+        <span className="drapey-ground" aria-hidden="true" />
+
+        {/* Visual FX Overlays */}
+        {specialAction === 'yahoo' && (
+          <span className="drapey-yahoo-stars" aria-hidden="true">
+            <span>✨</span><span>🎉</span><span>💃</span>
+          </span>
+        )}
+
+        {specialAction === 'order_success' && (
+          <span className="drapey-order-particles" aria-hidden="true">
+            <span>🛵</span><span>🎊</span><span>💖</span>
+          </span>
+        )}
+
+        {rageState === 'exploding' && (
+          <span className="drapey-bomb-explosion" aria-hidden="true">
+            <span className="drapey-shockwave" />
+            <span className="drapey-boom-text">💥 BOOM! 💥</span>
+          </span>
+        )}
+      </button>
+
+      <div
+        ref={bubble}
+        className={`drapey-copy drapey-copy--${tone} ${isRage ? `drapey-copy--${rageState}` : ''} ${
+          specialAction ? `drapey-copy--${specialAction}` : ''
+        }`}
+        aria-hidden={phase === 'quiet'}
+      >
+        <span className="sr-only">{message}</span>
+        <span aria-hidden="true" className="drapey-speech">
+          {phase === 'thinking' ? (
+            <span className="drapey-dots">
+              <i /><i /><i />
+            </span>
+          ) : (
+            typed
+          )}
+        </span>
+      </div>
+    </aside>
+  );
 }

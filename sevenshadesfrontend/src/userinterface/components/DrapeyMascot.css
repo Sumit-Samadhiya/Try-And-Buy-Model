@@ -1,45 +1,526 @@
-.drapey { position:fixed; left:0; top:0; z-index:1100; width:64px; height:64px; pointer-events:none; transition:transform 850ms cubic-bezier(.18,.75,.2,1); will-change:transform; color:#16372d; }
-.drapey-character { display:block; width:64px; height:64px; border:0; padding:0; background:none; cursor:pointer; pointer-events:auto; position:relative; }
-.drapey-character:focus-visible { outline:2px solid #b88d47; outline-offset:5px; border-radius:50%; }
-.drapey-avatar { display:block; width:100%; height:100%; filter:drop-shadow(0 0 13px #50867455); animation:drapey-hover 4.4s ease-in-out infinite; }
-.drapey-avatar .bs-avatar { display:block!important; }
-.drapey-ground { position:absolute; bottom:-10px; left:12%; width:76%; height:1px; background:linear-gradient(90deg,transparent,#b88d47,transparent); opacity:.6; }
-.drapey-copy { position:absolute; left:var(--bubble-offset); width:max-content; max-width:min(270px,calc(100vw - 24px)); box-sizing:border-box; padding:12px 16px; border-radius:23px; background:#fff7e2; box-shadow:0 3px 0 #d9bb7f,0 7px 24px #16372d12; font:600 14px/1.45 system-ui,sans-serif; opacity:1; transition:opacity .22s,scale .3s; transform-origin:var(--tail) center; }
-.drapey-copy::before { content:''; position:absolute; width:27px; height:19px; border-radius:50%; background:#fff7e2; left:15px; top:-7px; box-shadow:18px -2px 0 #fff7e2; }
-.drapey-copy::after { content:''; position:absolute; width:10px; height:10px; background:#fff7e2; border-radius:50%; left:var(--tail); bottom:-19px; box-shadow:5px 13px 0 -2px #fff7e2; }
-.drapey--bubble-above .drapey-copy { bottom:calc(100% + 29px); }
-.drapey--bubble-below .drapey-copy { top:calc(100% + 29px); }
-.drapey--bubble-below .drapey-copy::after { bottom:auto; top:-19px; box-shadow:5px -13px 0 -2px #fff7e2; }
-.drapey--quiet .drapey-copy { opacity:0; scale:.85; visibility:hidden; }
-.drapey-speech { position:relative; }
-.drapey-dots { display:flex; align-items:center; gap:5px; height:18px; }
-.drapey-dots i { width:6px; height:6px; border-radius:50%; background:#508674; animation:drapey-dot .9s ease-in-out infinite; }
-.drapey-dots i:nth-child(2) { animation-delay:.15s; }
-.drapey-dots i:nth-child(3) { animation-delay:.3s; }
-body:has([aria-label="Cookie consent banner"]) .drapey { visibility:hidden; }
-@keyframes drapey-hover { 50% { transform:translateY(-5px); } }
-@keyframes drapey-dot { 50% { transform:translateY(-3px); opacity:.45; } }
-.drapey--still,.drapey--still * { animation:none!important; transition:none!important; }
-@media(max-width:600px) { .drapey,.drapey-character { width:54px; height:54px; } .drapey-copy { max-width:min(230px,calc(100vw - 24px)); font-size:13px; padding:11px 14px; } }
-@media(prefers-reduced-motion:reduce) { .drapey,.drapey * { animation:none!important; transition:none!important; } }
-.drapey-copy { width:270px; }
-.drapey--thinking .drapey-copy { width:62px; left:auto; right:0; --tail:30px; }
-@media(max-width:600px) { .drapey-copy { width:230px; } }
-/* Expressive face, lit body and small limbs layered over Avatar Lab geometry. */
-.drapey-avatar { position:relative; }
-.drapey-runtime { display:block; width:100%; height:100%; }
-.drapey-runtime svg > g { visibility:hidden; }
-.drapey-features { position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
-.drapey-bright-eyes { transform-box:fill-box; transform-origin:center; animation:drapey-natural-blink 5.2s infinite; }
-.drapey-talking-mouth { transform-box:fill-box; transform-origin:center; animation:drapey-talk .22s ease-in-out infinite alternate; }
-.drapey-antenna { transform-origin:52px 15px; animation:drapey-antenna-sway 3.8s ease-in-out infinite; }
-.drapey-face--thinking .drapey-bright-eyes { transform:translate(2px,-2px); }
-.drapey-face--happy .drapey-hands { transform-origin:50px 50px; animation:drapey-small-wave 1.2s ease-in-out 2; }
-.drapey-face--sleeping { animation-duration:6s; }
-.drapey-sleep-marks { animation:drapey-sleep 2.5s ease-in-out infinite; }
-.drapey-face--still * { animation:none!important; }
-@keyframes drapey-natural-blink { 0%,44%,48%,100% { scale:1 1; } 46% { scale:1 .12; } }
-@keyframes drapey-talk { from { scale:1 .35; } to { scale:.85 1; } }
-@keyframes drapey-antenna-sway { 50% { transform:rotate(9deg); } }
-@keyframes drapey-small-wave { 50% { transform:rotate(-7deg); } }
-@keyframes drapey-sleep { 0%,100% { opacity:.25; transform:translateY(1px); } 50% { opacity:.9; transform:translateY(-3px); } }
+/* ==========================================================================
+   DRAPEY MASCOT - INTERACTIVE EMOTIONAL AI COMPANION
+   Playful hover • Yahoo jump • Victory dance • Bomb explosion easter egg
+   ========================================================================== */
+
+.drapey {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1100;
+    width: 64px;
+    height: 64px;
+    pointer-events: none;
+    transition: transform 850ms cubic-bezier(.18, .75, .2, 1);
+    will-change: transform;
+    color: #16372d;
+}
+
+.drapey-character {
+    display: block;
+    width: 64px;
+    height: 64px;
+    border: 0;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+    pointer-events: auto;
+    position: relative;
+    transition: filter 0.3s ease, transform 0.25s ease;
+}
+
+.drapey-character:focus-visible {
+    outline: 2px solid #b88d47;
+    outline-offset: 5px;
+    border-radius: 50%;
+}
+
+.drapey-avatar {
+    display: block;
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 13px #50867455);
+    animation: drapey-hover 4.4s ease-in-out infinite;
+    position: relative;
+}
+
+.drapey-avatar .bs-avatar {
+    display: block !important;
+}
+
+.drapey-ground {
+    position: absolute;
+    bottom: -10px;
+    left: 12%;
+    width: 76%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #b88d47, transparent);
+    opacity: .6;
+    transition: opacity 0.3s ease;
+}
+
+/* ==========================================================================
+   Speech Bubble
+   ========================================================================== */
+
+.drapey-copy {
+    position: absolute;
+    left: var(--bubble-offset);
+    width: 270px;
+    max-width: min(270px, calc(100vw - 24px));
+    box-sizing: border-box;
+    padding: 12px 16px;
+    border-radius: 20px;
+    background: #fff7e2;
+    border: 1px solid #ebd4a8;
+    box-shadow: 0 3px 0 #d9bb7f, 0 7px 24px rgba(22, 55, 45, 0.12);
+    font: 600 14px/1.45 'Plus Jakarta Sans', system-ui, sans-serif;
+    color: #1f2937;
+    opacity: 1;
+    transition: opacity .22s, scale .3s, background .3s, border-color .3s;
+    transform-origin: var(--tail) center;
+}
+
+.drapey-copy::before {
+    content: '';
+    position: absolute;
+    width: 27px;
+    height: 19px;
+    border-radius: 50%;
+    background: inherit;
+    left: 15px;
+    top: -7px;
+    box-shadow: 18px -2px 0 inherit;
+}
+
+.drapey-copy::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: inherit;
+    border-radius: 50%;
+    left: var(--tail);
+    bottom: -19px;
+    box-shadow: 5px 13px 0 -2px inherit;
+}
+
+.drapey--bubble-above .drapey-copy {
+    bottom: calc(100% + 29px);
+}
+
+.drapey--bubble-below .drapey-copy {
+    top: calc(100% + 29px);
+}
+
+.drapey--bubble-below .drapey-copy::after {
+    bottom: auto;
+    top: -19px;
+    box-shadow: 5px -13px 0 -2px inherit;
+}
+
+.drapey--quiet .drapey-copy {
+    opacity: 0;
+    scale: .85;
+    visibility: hidden;
+}
+
+.drapey-speech {
+    position: relative;
+    display: block;
+}
+
+.drapey-dots {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 18px;
+}
+
+.drapey-dots i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #508674;
+    animation: drapey-dot .9s ease-in-out infinite;
+}
+
+.drapey-dots i:nth-child(2) { animation-delay: .15s; }
+.drapey-dots i:nth-child(3) { animation-delay: .3s; }
+
+body:has([aria-label="Cookie consent banner"]) .drapey {
+    visibility: hidden;
+}
+
+.drapey--thinking .drapey-copy {
+    width: 62px;
+    left: auto;
+    right: 0;
+    --tail: 30px;
+}
+
+/* ==========================================================================
+   Bubble Variations for Tone & Action
+   ========================================================================== */
+
+.drapey-copy--error,
+.drapey-copy--angry {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #991b1b;
+    box-shadow: 0 3px 0 #dc2626, 0 7px 24px rgba(220, 38, 38, 0.2);
+}
+
+.drapey-copy--warning {
+    background: #fef3c7;
+    border-color: #f59e0b;
+    color: #92400e;
+    box-shadow: 0 3px 0 #d97706, 0 7px 24px rgba(217, 119, 6, 0.18);
+}
+
+.drapey-copy--add_to_cart,
+.drapey-copy--yahoo {
+    background: #ecfdf5;
+    border-color: #10b981;
+    color: #065f46;
+    box-shadow: 0 3px 0 #059669, 0 7px 24px rgba(5, 150, 105, 0.2);
+    font-weight: 700;
+}
+
+.drapey-copy--order_success {
+    background: #eff6ff;
+    border-color: #3b82f6;
+    color: #1e40af;
+    box-shadow: 0 3px 0 #2563eb, 0 7px 24px rgba(37, 99, 235, 0.2);
+    font-weight: 700;
+}
+
+.drapey-copy--soot {
+    background: #f3f4f6;
+    border-color: #6b7280;
+    color: #374151;
+    box-shadow: 0 3px 0 #4b5563, 0 7px 24px rgba(75, 85, 99, 0.2);
+}
+
+/* ==========================================================================
+   Interactive Animation 1: Poke / Tap Reaction
+   ========================================================================== */
+
+.drapey--poke-active .drapey-avatar {
+    animation: drapey-poke-hop 0.7s cubic-bezier(.34, 1.56, .64, 1) !important;
+}
+
+@keyframes drapey-poke-hop {
+    0% { transform: scale(1); }
+    30% { transform: translateY(-16px) scale(0.85, 1.25); }
+    60% { transform: translateY(6px) scale(1.18, 0.85); }
+    100% { transform: translateY(0) scale(1); }
+}
+
+/* ==========================================================================
+   Interactive Animation 2: YAHOO! Add To Cart Super Jump & Flip
+   ========================================================================== */
+
+.drapey--yahoo-active .drapey-character {
+    animation: drapey-yahoo-character 3.2s cubic-bezier(.22, 1, .36, 1) !important;
+}
+
+.drapey-yahoo-stars {
+    position: absolute;
+    inset: -20px;
+    pointer-events: none;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.drapey-yahoo-stars span {
+    font-size: 20px;
+    animation: drapey-star-burst 2.8s ease-out forwards;
+}
+
+.drapey-yahoo-stars span:nth-child(1) { animation-delay: 0.1s; }
+.drapey-yahoo-stars span:nth-child(2) { animation-delay: 0.25s; }
+.drapey-yahoo-stars span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes drapey-yahoo-character {
+    0% { transform: translateY(0) scale(1); }
+    10% { transform: translateY(10px) scale(1.3, 0.7); }
+    30% { transform: translateY(-58px) scale(0.85, 1.25) rotate(-20deg); }
+    50% { transform: translateY(-40px) scale(1.1) rotate(360deg); }
+    70% { transform: translateY(4px) scale(1.25, 0.8); }
+    85% { transform: translateY(-12px) scale(0.95, 1.05); }
+    100% { transform: translateY(0) scale(1) rotate(360deg); }
+}
+
+@keyframes drapey-star-burst {
+    0% { opacity: 0; transform: scale(0.2) translateY(0); }
+    30% { opacity: 1; transform: scale(1.4) translateY(-30px); }
+    80% { opacity: 0.8; transform: scale(1) translateY(-50px); }
+    100% { opacity: 0; transform: scale(0.5) translateY(-70px); }
+}
+
+/* ==========================================================================
+   Interactive Animation 3: Order Success Victory Dance
+   ========================================================================== */
+
+.drapey--order_success-active .drapey-character {
+    animation: drapey-order-dance 4.2s ease-in-out infinite !important;
+}
+
+.drapey-order-particles {
+    position: absolute;
+    inset: -25px;
+    pointer-events: none;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.drapey-order-particles span {
+    font-size: 22px;
+    animation: drapey-party-float 3.5s ease-in-out infinite;
+}
+
+.drapey-order-particles span:nth-child(1) { animation-delay: 0s; }
+.drapey-order-particles span:nth-child(2) { animation-delay: 0.4s; }
+.drapey-order-particles span:nth-child(3) { animation-delay: 0.8s; }
+
+@keyframes drapey-order-dance {
+    0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+    12% { transform: translateY(-16px) rotate(-16deg) scale(1.1); }
+    24% { transform: translateY(0) rotate(16deg) scale(1.05); }
+    36% { transform: translateY(-22px) rotate(-16deg) scale(1.15); }
+    48% { transform: translateY(0) rotate(16deg) scale(1.05); }
+    60% { transform: translateY(-14px) rotate(-10deg) scale(1.1); }
+    72% { transform: translateY(0) rotate(10deg) scale(1); }
+    84% { transform: translateY(-18px) rotate(-14deg) scale(1.12); }
+}
+
+@keyframes drapey-party-float {
+    0%, 100% { opacity: 0; transform: translateY(10px) scale(0.5); }
+    30% { opacity: 1; transform: translateY(-25px) scale(1.2); }
+    70% { opacity: 0.9; transform: translateY(-45px) scale(1); }
+    90% { opacity: 0; transform: translateY(-60px) scale(0.6); }
+}
+
+/* ==========================================================================
+   Interactive Animation 4: Bomb Explosion Easter Egg (3 Rapid Clicks)
+   ========================================================================== */
+
+/* Phase 1: Swelling & Turning Fiery Red with Violent Shivering */
+.drapey-rage--angry .drapey-character {
+    animation: drapey-rage-shake 0.1s linear infinite, drapey-rage-swell 1.4s ease-in forwards !important;
+    filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.95)) drop-shadow(0 0 35px #dc2626) hue-rotate(155deg) saturate(4.5) !important;
+}
+
+@keyframes drapey-rage-shake {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(-4px, 3px) rotate(-6deg); }
+    50% { transform: translate(4px, -3px) rotate(6deg); }
+    75% { transform: translate(-3px, -2px) rotate(-5deg); }
+}
+
+@keyframes drapey-rage-swell {
+    0% { scale: 1; }
+    40% { scale: 1.15; }
+    70% { scale: 1.3; }
+    100% { scale: 1.45; }
+}
+
+/* Phase 2: KABOOM! The Explosion */
+.drapey-rage--exploding .drapey-character {
+    animation: drapey-kaboom 0.9s cubic-bezier(.1, .9, .2, 1) forwards !important;
+}
+
+.drapey-bomb-explosion {
+    position: absolute;
+    inset: -40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 50;
+}
+
+.drapey-shockwave {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 6px solid #ef4444;
+    background: radial-gradient(circle, #f59e0b, #ef4444);
+    animation: drapey-shockwave-burst 0.9s ease-out forwards;
+}
+
+.drapey-boom-text {
+    position: absolute;
+    font-size: 24px;
+    font-weight: 900;
+    color: #ef4444;
+    text-shadow: 0 0 10px #f59e0b, 0 0 20px #dc2626;
+    animation: drapey-boom-text-pop 0.9s ease-out forwards;
+    white-space: nowrap;
+}
+
+@keyframes drapey-kaboom {
+    0% { transform: scale(1.45); opacity: 1; filter: brightness(2) hue-rotate(155deg); }
+    40% { transform: scale(2.2); opacity: 0.9; filter: brightness(3); }
+    70% { transform: scale(2.6); opacity: 0.3; filter: blur(4px); }
+    100% { transform: scale(0.1); opacity: 0; }
+}
+
+@keyframes drapey-shockwave-burst {
+    0% { transform: scale(0.3); opacity: 1; border-width: 10px; }
+    50% { transform: scale(3.5); opacity: 0.8; border-width: 4px; }
+    100% { transform: scale(5.5); opacity: 0; border-width: 1px; }
+}
+
+@keyframes drapey-boom-text-pop {
+    0% { transform: scale(0.2) rotate(-15deg); opacity: 0; }
+    30% { transform: scale(1.4) rotate(0deg); opacity: 1; }
+    70% { transform: scale(1.2) translateY(-15px); opacity: 1; }
+    100% { transform: scale(0.8) translateY(-30px); opacity: 0; }
+}
+
+/* Phase 3: Cute Soot / Ash Covered Face with Dazed Wobble */
+.drapey-rage--soot .drapey-character {
+    filter: grayscale(0.9) contrast(1.4) brightness(0.6) drop-shadow(0 0 10px rgba(0, 0, 0, 0.4)) !important;
+    animation: drapey-dazed-wobble 0.9s ease-in-out infinite alternate !important;
+}
+
+@keyframes drapey-dazed-wobble {
+    0% { transform: rotate(-8deg) translateY(-2px); }
+    100% { transform: rotate(8deg) translateY(2px); }
+}
+
+/* ==========================================================================
+   Avatar Features & Movements
+   ========================================================================== */
+
+.drapey-runtime {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.drapey-runtime svg > g {
+    visibility: hidden;
+}
+
+.drapey-features {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.drapey-bright-eyes {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: drapey-natural-blink 5.2s infinite;
+}
+
+.drapey-talking-mouth {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: drapey-talk .22s ease-in-out infinite alternate;
+}
+
+.drapey-antenna {
+    transform-origin: 52px 15px;
+    animation: drapey-antenna-sway 3.8s ease-in-out infinite;
+}
+
+.drapey-face--thinking .drapey-bright-eyes {
+    transform: translate(2px, -2px);
+}
+
+.drapey-face--happy .drapey-hands {
+    transform-origin: 50px 50px;
+    animation: drapey-small-wave 1.2s ease-in-out 2;
+}
+
+.drapey-hands--celebrate {
+    animation: drapey-celebrate-wave 0.6s ease-in-out infinite alternate;
+}
+
+.drapey-face--sleeping {
+    animation-duration: 6s;
+}
+
+.drapey-sleep-marks {
+    animation: drapey-sleep 2.5s ease-in-out infinite;
+}
+
+.drapey-face--still * {
+    animation: none !important;
+}
+
+/* Standard Keyframes */
+@keyframes drapey-hover {
+    50% { transform: translateY(-6px); }
+}
+
+@keyframes drapey-dot {
+    50% { transform: translateY(-3px); opacity: .45; }
+}
+
+@keyframes drapey-natural-blink {
+    0%, 44%, 48%, 100% { scale: 1 1; }
+    46% { scale: 1 .12; }
+}
+
+@keyframes drapey-talk {
+    from { scale: 1 .35; }
+    to { scale: .85 1; }
+}
+
+@keyframes drapey-antenna-sway {
+    50% { transform: rotate(9deg); }
+}
+
+@keyframes drapey-small-wave {
+    50% { transform: rotate(-7deg); }
+}
+
+@keyframes drapey-celebrate-wave {
+    from { transform: translateY(0); }
+    to { transform: translateY(-4px); }
+}
+
+@keyframes drapey-sleep {
+    0%, 100% { opacity: .25; transform: translateY(1px); }
+    50% { opacity: .9; transform: translateY(-3px); }
+}
+
+/* Accessibility & Mobile Responsive */
+.drapey--still,
+.drapey--still * {
+    animation: none !important;
+    transition: none !important;
+}
+
+@media (max-width: 600px) {
+    .drapey,
+    .drapey-character {
+        width: 54px;
+        height: 54px;
+    }
+    .drapey-copy {
+        width: 230px;
+        max-width: min(230px, calc(100vw - 24px));
+        font-size: 13px;
+        padding: 11px 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .drapey,
+    .drapey * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
