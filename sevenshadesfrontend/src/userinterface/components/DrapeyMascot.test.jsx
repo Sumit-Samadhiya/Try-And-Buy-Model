@@ -231,15 +231,8 @@ test('dragging drapey updates position and avoids triggering click easter egg', 
   expect(container.querySelector('.drapey-mode--angry')).toBeFalsy();
 });
 
-test('sound toggle switches between mute and unmute and preserves single button role', () => {
+test('mascot maintains exactly 1 accessible button role without any audio controls', () => {
   const { container } = render(<DrapeyMascot />);
-  const toggle = container.querySelector('.drapey-sound-toggle');
-  expect(toggle).toBeInTheDocument();
-
-  // Clicking toggle changes mute state
-  fireEvent.click(toggle);
-  expect(toggle.textContent).toMatch(/🔇|🔊/);
-
-  // Still only 1 standard button (the mascot itself)
+  expect(container.querySelector('.drapey-sound-toggle')).toBeFalsy();
   expect(screen.getAllByRole('button')).toHaveLength(1);
 });

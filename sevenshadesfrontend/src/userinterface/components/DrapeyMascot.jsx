@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import DrapeyAvatar from './DrapeyAvatar';
-import { playDrapeySfx, speakDrapeyVoice, playChikuVoice, stopChikuVoice, playDrapeyDialogue, stopAllVoices, isSoundMuted, setSoundMuted } from './drapeyAudio';
 import './DrapeyMascot.css';
 
 const greeting = 'Hey! Hehe! Hii cutie! 💖 Main Drapey hoon — aapka chhotu sa shopping dost! Pehle ghar baithe mast try karo, pasand aaye tabhi khareedo na! 😉✨';
@@ -52,7 +51,6 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
   const [sleepy, setSleepy] = useState(false);
   const [position, setPosition] = useState(() => guidePosition(0, window.innerWidth, window.innerHeight));
   const [isDragging, setIsDragging] = useState(false);
-  const [muted, setMuted] = useState(() => isSoundMuted());
   const bubble = useRef(null);
   const dismissed = useRef(false);
   const feedbackUntil = useRef(0);
@@ -92,21 +90,6 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
     : phase === 'speaking'
     ? (tone === 'error' ? 'thinking' : 'happy')
     : 'idle';
-
-  const handleToggleMute = useCallback(e => {
-    e.stopPropagation();
-    setMuted(prev => {
-      const next = !prev;
-      setSoundMuted(next);
-      if (!next) {
-        playDrapeySfx('pop');
-        playDrapeyDialogue('greeting', greetingMessage, 'happy');
-      } else {
-        stopAllVoices();
-      }
-      return next;
-    });
-  }, [greetingMessage]);
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -186,19 +169,13 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
       if (actionTone === 'add_to_cart') {
         feedbackUntil.current = Date.now() + 6000;
         setSpecialAction('yahoo');
-        playDrapeySfx('yahoo');
-        playDrapeyDialogue('cart', detail.message, 'yahoo');
         setTimeout(() => setSpecialAction(null), 3600);
       } else if (actionTone === 'order_success') {
         feedbackUntil.current = Date.now() + 9000;
         setSpecialAction('order_success');
-        playDrapeySfx('order_success');
-        playDrapeyDialogue('order_success', detail.message, 'celebrating');
         setTimeout(() => setSpecialAction(null), 5000);
       } else {
         feedbackUntil.current = Date.now() + 14000;
-        playDrapeySfx('pop');
-        speakDrapeyVoice(detail.message, actionTone === 'error' ? 'thinking' : 'happy');
       }
     };
 
@@ -220,7 +197,6 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
     const start = setTimeout(() => {
       if (reduced || dismissed.current) return;
       setPhase('typing');
-      speakDrapeyVoice(message, mood);
       let index = 0;
       const letters = Array.from(message);
       typing = setInterval(() => {
@@ -255,7 +231,6 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
       if (event.key === 'Escape') {
         dismissed.current = true;
         setPhase('quiet');
-        stopAllVoices();
       }
       wake();
     };
@@ -283,9 +258,6 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
     const rageMsg = 'ARGHHH! 3 BAAR KYUN DABAYA?! 💣😡 Ab dekho mera cutie gussa... Main phatne wala hoon! 💥';
     setMessage(rageMsg);
     setReplay(v => v + 1);
-    playDrapeySfx('bomb');
-    playDrapeyDialogue('bomb_rage', rageMsg, 'angry');
-
     clearTimeout(rageTimer.current);
     rageTimer.current = setTimeout(() => {
       // Explosion phase
@@ -298,9 +270,6 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
         const sootMsg = 'Khasi-khasi... 💨 Hihihi, dekh liya mera cutie gussa? Ab chalo shanti se pyaari shopping karo! 💖';
         setMessage(sootMsg);
         setReplay(v => v + 1);
-        playDrapeySfx('soot');
-        playDrapeyDialogue('soot', sootMsg, 'soot');
-
         rageTimer.current = setTimeout(() => {
           // Return to normal
           setRageState('normal');
@@ -325,7 +294,6 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
       pointerId: event.pointerId
     };
     hasDraggedRef.current = false;
-    playDrapeySfx('drag');
     try {
       event.currentTarget?.setPointerCapture?.(event.pointerId);
     } catch (_) {}
@@ -368,7 +336,6 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
     dragStartRef.current = null;
     setIsDragging(false);
     if (hasDraggedRef.current) {
-      playDrapeySfx('drop');
       lastDragEndTimeRef.current = Date.now();
       setTimeout(() => {
         hasDraggedRef.current = false;
@@ -427,8 +394,6 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
       setMessage(warnMsg);
       setReplay(v => v + 1);
       setSpecialAction('poke');
-      playDrapeySfx('squeak');
-      playDrapeyDialogue('warning', warnMsg, 'angry');
       setTimeout(() => setSpecialAction(null), 800);
       return;
     }
@@ -442,8 +407,6 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
     setMessage(tip);
     setReplay(v => v + 1);
     setSpecialAction('poke');
-    playDrapeySfx('squeak');
-    playDrapeyDialogue(`tip_${currentIdx + 1}`, tip, 'happy');
     setTimeout(() => setSpecialAction(null), 800);
   };
 
@@ -519,23 +482,6 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
         }`}
         aria-hidden={phase === 'quiet'}
       >
-        <span
-          role="switch"
-          aria-checked={!muted}
-          tabIndex={0}
-          className="drapey-sound-toggle"
-          onClick={handleToggleMute}
-          onKeyDown={e => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleToggleMute(e);
-            }
-          }}
-          title={muted ? 'Cute baby voice muted - click to enable' : 'Cute baby voice active - click to mute'}
-          aria-label={muted ? 'Unmute Drapey baby voice' : 'Mute Drapey baby voice'}
-        >
-          {muted ? '🔇' : '🔊'}
-        </span>
         <span className="sr-only">{message}</span>
         <span aria-hidden="true" className="drapey-speech">
           {phase === 'thinking' ? (
