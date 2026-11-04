@@ -144,8 +144,9 @@ class DeliveryTests(TestCase):
         self.order('SOS', delivery_mode='emergency_sos')
         self.order('CANCEL', status='CANCELLED')
         batches = generate_batches(self.rider.rider_id)
-        self.assertEqual(len(batches), 2)
-        self.assertEqual(DeliveryAssignment.objects.count(), 2)
+        self.assertEqual(len(batches), 1)
+        self.assertEqual(DeliveryAssignment.objects.count(), 1)
+        self.assertEqual(len(generate_batches(self.rider.rider_id)), 1)
         self.assertEqual(generate_batches(self.rider.rider_id), [])
         self.assertEqual(DeliveryBatch.objects.count(), 2)
         assignment = first.deliveryassignment_set.get()
@@ -183,8 +184,10 @@ class DeliveryTests(TestCase):
         self.order('ORD_TODAY', delivery_slot='10:00 AM - 02:00 PM', scheduled_date=today)
         self.order('ORD_TOMORROW', delivery_slot='10:00 AM - 02:00 PM', scheduled_date=tomorrow)
         batches = generate_batches(self.rider.rider_id)
-        # Separate batches created for different scheduled dates
-        self.assertEqual(len(batches), 2)
+        # Only the first date is assigned in one operation.
+        self.assertEqual(len(batches), 1)
+        self.assertEqual(batches[0].deliveryassignment_set.count(), 1)
+        self.assertEqual(len(generate_batches(self.rider.rider_id)), 1)
 
     def test_trial_timer_overdue_and_sos_sla(self):
         from .serializer import DeliveryAssignmentWithRefSerializer
@@ -218,16 +221,46 @@ class DeliveryTests(TestCase):
         other.refresh_from_db()
         self.assertIsNone(other.assigned_rider)
 
-    def test_batch_capacity_capped_at_five_orders(self):
+    def test_batch_capacity_capped_at_three_active_orders(self):
         # 7 orders in identical group
         for i in range(7):
             self.order(f'CAP_{i}', postcode='110001', delivery_slot='Night')
         cap_batches = generate_batches(self.rider.rider_id)
-        # 7 orders must be split across batches of at most 5 orders: 5 + 2 = 2 batches
-        self.assertEqual(len(cap_batches), 2)
+        # One three-bag load; remaining orders stay unassigned.
+        self.assertEqual(len(cap_batches), 1)
         counts = sorted([b.deliveryassignment_set.count() for b in cap_batches])
-        self.assertEqual(counts, [2, 5])
+        self.assertEqual(counts, [3])
+        with self.assertRaises(InventoryError):
+            generate_batches(self.rider.rider_id)
 
+
+    @patch('sevenshadesapp.routing_service.optimize_batch_tsp')
+    def test_feasible_route_is_saved_but_fallback_is_not(self, planner):
+        from rest_framework.test import APIRequestFactory
+        from .delivery_ops_views import OptimizeRoute
+        order = self.order('PLAN', latitude=25.45, longitude=78.58)
+        assignment = assign_order(order.order_id, self.rider.rider_id)
+        batch = DeliveryBatch.objects.create(batch_id='PLAN-BATCH', rider=self.rider)
+        assignment.batch = batch
+        assignment.save()
+        planner.return_value = dict(order_sequence=['PLAN'], waypoints=[], total_distance_km=2,
+            estimated_duration_minutes=25, fits_all_slots=True, is_fallback=False)
+        request = APIRequestFactory().post('/api/optimize_route',
+            {'batch_id': batch.batch_id, 'start_lat':25.44, 'start_lng':78.57}, format='json')
+        request.account_role, request.account = 'admin', self.admin
+        import json
+        self.assertTrue(json.loads(OptimizeRoute(request).content)['route_saved'])
+        assignment.refresh_from_db()
+        self.assertEqual(assignment.route_position, 1)
+        assignment.route_position = None
+        assignment.save()
+        planner.return_value['is_fallback'] = True
+        request = APIRequestFactory().post('/api/optimize_route',
+            {'batch_id': batch.batch_id, 'start_lat':25.44, 'start_lng':78.57}, format='json')
+        request.account_role, request.account = 'admin', self.admin
+        self.assertFalse(json.loads(OptimizeRoute(request).content)['route_saved'])
+        assignment.refresh_from_db()
+        self.assertIsNone(assignment.route_position)
 
     def test_optimize_route_haversine_sequencing(self):
         client = APIClient(enforce_csrf_checks=False)

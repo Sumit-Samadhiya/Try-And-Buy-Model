@@ -97,16 +97,12 @@ class RouteETAEndpointTests(TestCase):
         self.assertGreater(data['data']['duration_minutes'], 0)
         self.assertGreaterEqual(len(data['data']['route_polyline']), 2)
 
-    def test_route_eta_with_rider_and_order_ids(self):
+    def test_route_eta_with_rider_and_order_ids_requires_login(self):
         res = self.client.post('/api/route_eta', {
             'rider_id': self.rider.rider_id,
             'order_id': self.order.order_id
         }, format='json')
-        self.assertEqual(res.status_code, 200)
-        data = res.json()
-        self.assertTrue(data['status'])
-        self.assertGreater(data['data']['distance_km'], 0)
-        self.assertIn('route_polyline', data['data'])
+        self.assertEqual(res.status_code, 401)
 
     def test_route_eta_missing_coordinates(self):
         res = self.client.post('/api/route_eta', {}, format='json')

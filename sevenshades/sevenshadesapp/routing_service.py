@@ -2,7 +2,8 @@ import json
 import logging
 import math
 import urllib.request
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta, time, date
+from itertools import permutations
 from django.core.cache import cache
 from django.utils import timezone
 
@@ -111,7 +112,7 @@ def get_road_route(start_lat, start_lng, dest_lat, dest_lng, timeout=3.5):
     cache_key = f"osrm_route_{round(start_lat, 4)}_{round(start_lng, 4)}_{round(dest_lat, 4)}_{round(dest_lng, 4)}"
     cached = cache.get(cache_key)
     if cached:
-        return cached
+        return fresh_arrival(cached)
 
     # Attempt Tier 1: Geoapify Scooter Routing API if key is configured
     from django.conf import settings
@@ -160,17 +161,17 @@ def get_road_route(start_lat, start_lng, dest_lat, dest_lng, timeout=3.5):
                     'estimated_arrival_iso': arrival_time.isoformat(),
                     'estimated_arrival_formatted': arrival_time.strftime('%I:%M %p').lstrip('0'),
                     'route_polyline': polyline,
-                    'routing_engine': 'Geoapify Scooter Routing API',
+                    'routing_engine': 'Geoapify driving estimate',
                     'is_fallback': False
                 }
                 cache.set(cache_key, result, 600)
-                return result
+                return fresh_arrival(result)
         except Exception as exc:
-            logger.warning('Geoapify routing failed, falling back to OSRM: %s', exc)
+            logger.warning('Geoapify routing unavailable (%s)', type(exc).__name__)
 
     # Attempt Tier 2: OSRM turn-by-turn routing
     osrm_url = (
-        f"http://router.project-osrm.org/route/v1/driving/"
+        f"https://router.project-osrm.org/route/v1/driving/"
         f"{start_lng:.6f},{start_lat:.6f};{dest_lng:.6f},{dest_lat:.6f}"
         f"?overview=full&geometries=geojson"
     )
@@ -204,11 +205,11 @@ def get_road_route(start_lat, start_lng, dest_lat, dest_lng, timeout=3.5):
                 'estimated_arrival_iso': arrival_time.isoformat(),
                 'estimated_arrival_formatted': arrival_time.strftime('%I:%M %p').lstrip('0'),
                 'route_polyline': polyline,
-                'routing_engine': 'OSRM Turn-by-Turn Road Route',
+                'routing_engine': 'OSRM driving estimate',
                 'is_fallback': False
             }
             cache.set(cache_key, result, 600)
-            return result
+            return fresh_arrival(result)
     except Exception as exc:
         logger.warning('OSRM route lookup failed, switching to scooter estimation fallback: %s', exc)
 
@@ -232,262 +233,106 @@ def get_road_route(start_lat, start_lng, dest_lat, dest_lng, timeout=3.5):
         'routing_engine': 'Scooter Road Estimator (Fallback)',
         'is_fallback': True
     }
-    return fallback_result
+    cache.set(cache_key, fallback_result, 30)
+    return fresh_arrival(fallback_result)
 
 
-def optimize_batch_tsp(start_lat, start_lng, stops, start_time=None, timeout=4.5):
-    """
-    Optimizes a delivery batch route for up to 3 trial bags (or more) starting from rider/hub location.
-    Uses OSRM Trip API (TSP solver) with automated fallback to 2-Opt / Nearest-Neighbor heuristic.
-    Calculates per-stop arrival times incorporating the mandatory 15-minute doorstep trial slot.
-    Validates whether each stop arrival satisfies the customer's booked delivery slot.
-    """
+def fresh_arrival(route):
+    result = dict(route)
+    arrival = timezone.localtime(timezone.now() + timedelta(minutes=result['duration_minutes']))
+    result.update(estimated_arrival_iso=arrival.isoformat(), estimated_arrival_formatted=arrival.strftime('%I:%M %p').lstrip('0'), live_traffic=False)
+    return result
+
+
+def optimize_batch_tsp(start_lat, start_lng, stops, start_time=None, timeout=3):
+    """Enumerate up to six 3-bag loops, preferring feasible appointment windows."""
     try:
-        start_lat = float(start_lat)
-        start_lng = float(start_lng)
-    except (ValueError, TypeError):
+        origin = (float(start_lat), float(start_lng))
+        if not all(math.isfinite(v) for v in origin) or abs(origin[0]) > 90 or abs(origin[1]) > 180:
+            return None
+    except (TypeError, ValueError):
         return None
-
-    if not stops:
-        return {
-            'order_sequence': [],
-            'waypoints': [],
-            'total_distance_km': 0.0,
-            'estimated_duration_minutes': 0,
-            'driving_duration_minutes': 0,
-            'total_trial_minutes': 0,
-            'stops_count': 0,
-            'route_polyline': [],
-            'routing_engine': 'Empty',
-            'skipped_orders': [],
-            'is_fallback': False
-        }
-
+    # Existing larger batches must be split explicitly, never silently dropped.
+    if len(stops) > 3:
+        return None
     now = start_time or timezone.now()
-
-    # Filter stops with valid coordinates
-    valid_stops = []
-    skipped_orders = []
-    for s in stops:
+    valid, skipped = [], []
+    for stop in stops:
         try:
-            slat = float(s.get('latitude'))
-            slng = float(s.get('longitude'))
-            if -90 <= slat <= 90 and -180 <= slng <= 180:
-                valid_stops.append({
-                    'order_id': s.get('order_id'),
-                    'assignment_id': s.get('assignment_id'),
-                    'address': s.get('address') or '',
-                    'delivery_slot': s.get('delivery_slot') or '',
-                    'latitude': slat,
-                    'longitude': slng,
-                })
-            else:
-                skipped_orders.append({'order_id': s.get('order_id'), 'reason': 'out_of_bounds_coordinates'})
-        except (ValueError, TypeError):
-            skipped_orders.append({'order_id': s.get('order_id'), 'reason': 'missing_or_invalid_coordinates'})
+            lat, lon = float(stop['latitude']), float(stop['longitude'])
+            if not math.isfinite(lat + lon) or abs(lat) > 90 or abs(lon) > 180:
+                raise ValueError()
+            valid.append({**stop, 'latitude': lat, 'longitude': lon})
+        except (KeyError, TypeError, ValueError):
+            skipped.append({'order_id': stop.get('order_id'), 'reason': 'missing_or_invalid_coordinates'})
+    points = [origin] + [(s['latitude'], s['longitude']) for s in valid]
+    coords = ';'.join(f'{lon:.6f},{lat:.6f}' for lat, lon in points)
+    n = len(points)
+    durations = distances = None
+    fallback = True
+    if valid:
+        try:
+            req = urllib.request.Request(f'https://router.project-osrm.org/table/v1/driving/{coords}?annotations=duration,distance', headers={'User-Agent': 'DoorDrape/1.0'})
+            with urllib.request.urlopen(req, timeout=timeout) as response:
+                data = json.loads(response.read(500000))
+            durations, distances = data['durations'], data['distances']
+            if data.get('code') != 'Ok' or any(len(m) != n or any(len(row) != n for row in m) for m in (durations, distances)):
+                raise ValueError('Invalid matrix')
+            # Null means unreachable, not zero travel time.
+            if any(v is None or not math.isfinite(v) or v < 0 for m in (durations, distances) for row in m for v in row):
+                raise ValueError('Incomplete road matrix')
+            fallback = False
+        except (OSError, KeyError, ValueError, TypeError):
+            distances = [[haversine_km(*a, *b) * ROAD_DETOUR_FACTOR * 1000 for b in points] for a in points]
+            durations = [[d / 1000 / SCOOTER_AVG_SPEED_KMH * 3600 for d in row] for row in distances]
+    else:
+        distances = durations = [[0]]
 
-    if not valid_stops:
-        return {
-            'order_sequence': [],
-            'waypoints': [],
-            'total_distance_km': 0.0,
-            'estimated_duration_minutes': 0,
-            'driving_duration_minutes': 0,
-            'total_trial_minutes': 0,
-            'stops_count': 0,
-            'route_polyline': [],
-            'routing_engine': 'No Valid Stops',
-            'skipped_orders': skipped_orders,
-            'is_fallback': False
-        }
+    def timeline(sequence):
+        cursor, previous, driving, waiting, distance = now, 0, 0, 0, 0
+        waypoints, late, unknown = [], 0, 0
+        for number, index in enumerate(sequence, 1):
+            stop = valid[index - 1]
+            minutes = math.ceil(durations[previous][index] * TRAFFIC_MULTIPLIER / 60) + GATE_ENTRY_BUFFER_MINS
+            distance += distances[previous][index]
+            driving += minutes
+            arrival = cursor + timedelta(minutes=minutes)
+            scheduled = stop.get('scheduled_date') or timezone.localdate(now)
+            try:
+                if isinstance(scheduled, str): scheduled = date.fromisoformat(scheduled)
+                slot_start, slot_end = parse_slot_time_range(stop.get('delivery_slot'), scheduled)
+            except (ValueError, TypeError):
+                slot_start = slot_end = None
+            trial_start = max(arrival, slot_start) if slot_start else arrival
+            trial_end = trial_start + timedelta(minutes=15)
+            wait = math.ceil((trial_start - arrival).total_seconds() / 60)
+            waiting += wait
+            fits = trial_end <= slot_end if slot_end else None
+            late += int(fits is False)
+            unknown += int(fits is None)
+            local_start, local_end = timezone.localtime(trial_start), timezone.localtime(trial_end)
+            waypoints.append({**stop, 'stop_number': number, 'leg_distance_km': round(distances[previous][index] / 1000, 2),
+                'driving_duration_minutes': minutes, 'waiting_minutes': wait,
+                'estimated_arrival_minutes': math.ceil((arrival - now).total_seconds() / 60),
+                'estimated_arrival_iso': arrival.isoformat(), 'estimated_arrival_time': timezone.localtime(arrival).strftime('%d %b, %I:%M %p'),
+                'trial_start_iso': trial_start.isoformat(), 'trial_end_iso': trial_end.isoformat(),
+                'trial_window': f"{local_start.strftime('%d %b, %I:%M %p')} - {local_end.strftime('%I:%M %p')} (15m Trial)",
+                'fits_booked_slot': fits, 'slot_status': 'Slot unknown' if fits is None else 'Reschedule needed' if not fits else 'Wait for slot' if wait else 'Within slot'})
+            cursor, previous = trial_end, index
+        # Complete loop back to the actual starting point.
+        back = math.ceil(durations[previous][0] * TRAFFIC_MULTIPLIER / 60) if sequence else 0
+        driving += back
+        distance += distances[previous][0]
+        elapsed = math.ceil((cursor - now).total_seconds() / 60) + back
+        return (late, unknown, distance, elapsed), waypoints, driving, waiting, back
 
-    # Attempt OSRM Trip API (Traveling Salesperson Route Optimization)
-    coords_list = [f"{start_lng:.6f},{start_lat:.6f}"]
-    for s in valid_stops:
-        coords_list.append(f"{s['longitude']:.6f},{s['latitude']:.6f}")
-
-    osrm_trip_url = (
-        f"http://router.project-osrm.org/trip/v1/driving/{';'.join(coords_list)}"
-        f"?source=first&roundtrip=false&overview=full&geometries=geojson"
-    )
-
-    try:
-        req = urllib.request.Request(osrm_trip_url, headers={'User-Agent': 'DoorDrape-TSP/1.0'})
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            data = json.loads(resp.read().decode('utf-8'))
-
-        if data.get('code') == 'Ok' and data.get('trips') and data.get('waypoints'):
-            trip = data['trips'][0]
-            osrm_waypoints = data['waypoints']
-            legs = trip.get('legs', [])
-
-            # Map input stops to their visited sequence rank
-            ordered_indices = []
-            for idx, stop in enumerate(valid_stops):
-                wp = osrm_waypoints[idx + 1]
-                visit_rank = wp.get('waypoint_index', idx + 1)
-                ordered_indices.append((visit_rank, stop))
-
-            ordered_indices.sort(key=lambda item: item[0])
-            sorted_stops = [item[1] for item in ordered_indices]
-
-            # Invert GeoJSON coordinates for Leaflet
-            raw_trip_coords = trip.get('geometry', {}).get('coordinates', [])
-            full_polyline = [[round(pt[1], 6), round(pt[0], 6)] for pt in raw_trip_coords if len(pt) >= 2]
-
-            # Build timeline with 15-minute trial slots
-            curr_cursor = now
-            waypoints = []
-            order_sequence = []
-            cumulative_driving_mins = 0
-            total_trial_mins = 0
-
-            for stop_num, stop in enumerate(sorted_stops, start=1):
-                leg_idx = stop_num - 1
-                leg = legs[leg_idx] if leg_idx < len(legs) else {}
-                leg_distance_km = round(float(leg.get('distance', 0.0)) / 1000.0, 2)
-                raw_leg_secs = float(leg.get('duration', 0.0))
-                leg_driving_mins = max(1, int(round((raw_leg_secs * TRAFFIC_MULTIPLIER) / 60.0 + GATE_ENTRY_BUFFER_MINS)))
-                cumulative_driving_mins += leg_driving_mins
-
-                arrival_dt = curr_cursor + timedelta(minutes=leg_driving_mins)
-                trial_start_dt = arrival_dt
-                trial_end_dt = trial_start_dt + timedelta(minutes=DOORDRAPE_TRIAL_DURATION_MINS)
-                total_trial_mins += DOORDRAPE_TRIAL_DURATION_MINS
-                curr_cursor = trial_end_dt
-
-                # Slot verification
-                slot_start, slot_end = parse_slot_time_range(stop['delivery_slot'], timezone.localdate(now))
-                fits_slot = True
-                slot_status = 'On Time'
-                if slot_end:
-                    if arrival_dt > slot_end + timedelta(minutes=15):
-                        fits_slot = False
-                        slot_status = 'Delayed'
-                    elif slot_start and arrival_dt < slot_start:
-                        slot_status = 'Early / Scheduled Ahead'
-                    else:
-                        slot_status = 'On Time'
-
-                order_sequence.append(stop['order_id'])
-                waypoints.append({
-                    'stop_number': stop_num,
-                    'order_id': stop['order_id'],
-                    'assignment_id': stop.get('assignment_id'),
-                    'address': stop['address'],
-                    'delivery_slot': stop['delivery_slot'],
-                    'latitude': stop['latitude'],
-                    'longitude': stop['longitude'],
-                    'leg_distance_km': leg_distance_km,
-                    'driving_duration_minutes': leg_driving_mins,
-                    'estimated_arrival_minutes': int(round((arrival_dt - now).total_seconds() / 60.0)),
-                    'estimated_arrival_iso': arrival_dt.isoformat(),
-                    'estimated_arrival_time': arrival_dt.strftime('%I:%M %p').lstrip('0'),
-                    'trial_window': f"{trial_start_dt.strftime('%I:%M %p').lstrip('0')} - {trial_end_dt.strftime('%I:%M %p').lstrip('0')} (15m Trial)",
-                    'fits_booked_slot': fits_slot,
-                    'slot_status': slot_status
-                })
-
-            total_trip_dist = round(float(trip.get('distance', 0.0)) / 1000.0, 2)
-            total_elapsed_mins = int(round((curr_cursor - now).total_seconds() / 60.0))
-
-            return {
-                'order_sequence': order_sequence,
-                'waypoints': waypoints,
-                'total_distance_km': total_trip_dist,
-                'estimated_duration_minutes': total_elapsed_mins,
-                'driving_duration_minutes': cumulative_driving_mins,
-                'total_trial_minutes': total_trial_mins,
-                'stops_count': len(order_sequence),
-                'route_polyline': full_polyline,
-                'routing_engine': 'OSRM Traveling Salesperson Loop',
-                'skipped_orders': skipped_orders,
-                'is_fallback': False
-            }
-    except Exception as exc:
-        logger.warning('OSRM Trip TSP failed, switching to Nearest-Neighbor fallback: %s', exc)
-
-    # Nearest-Neighbor TSP Heuristic Fallback
-    unvisited = list(valid_stops)
-    curr_lat, curr_lng = start_lat, start_lng
-    curr_cursor = now
-    waypoints = []
-    order_sequence = []
-    total_dist = 0.0
-    cumulative_driving_mins = 0
-    total_trial_mins = 0
-    fallback_polyline = [[start_lat, start_lng]]
-
-    stop_num = 1
-    while unvisited:
-        best_idx = 0
-        best_dist = float('inf')
-        for idx, s in enumerate(unvisited):
-            dist = haversine_km(curr_lat, curr_lng, s['latitude'], s['longitude'])
-            if dist < best_dist:
-                best_dist = dist
-                best_idx = idx
-
-        chosen = unvisited.pop(best_idx)
-        leg_road_dist = round(best_dist * ROAD_DETOUR_FACTOR, 2)
-        total_dist += leg_road_dist
-
-        leg_driving_mins = max(1, int(round((leg_road_dist / SCOOTER_AVG_SPEED_KMH) * 60.0 * TRAFFIC_MULTIPLIER + GATE_ENTRY_BUFFER_MINS)))
-        cumulative_driving_mins += leg_driving_mins
-
-        arrival_dt = curr_cursor + timedelta(minutes=leg_driving_mins)
-        trial_start_dt = arrival_dt
-        trial_end_dt = trial_start_dt + timedelta(minutes=DOORDRAPE_TRIAL_DURATION_MINS)
-        total_trial_mins += DOORDRAPE_TRIAL_DURATION_MINS
-        curr_cursor = trial_end_dt
-
-        slot_start, slot_end = parse_slot_time_range(chosen['delivery_slot'], timezone.localdate(now))
-        fits_slot = True
-        slot_status = 'On Time'
-        if slot_end:
-            if arrival_dt > slot_end + timedelta(minutes=15):
-                fits_slot = False
-                slot_status = 'Delayed'
-            elif slot_start and arrival_dt < slot_start:
-                slot_status = 'Early / Scheduled Ahead'
-            else:
-                slot_status = 'On Time'
-
-        order_sequence.append(chosen['order_id'])
-        waypoints.append({
-            'stop_number': stop_num,
-            'order_id': chosen['order_id'],
-            'assignment_id': chosen.get('assignment_id'),
-            'address': chosen['address'],
-            'delivery_slot': chosen['delivery_slot'],
-            'latitude': chosen['latitude'],
-            'longitude': chosen['longitude'],
-            'leg_distance_km': leg_road_dist,
-            'driving_duration_minutes': leg_driving_mins,
-            'estimated_arrival_minutes': int(round((arrival_dt - now).total_seconds() / 60.0)),
-            'estimated_arrival_iso': arrival_dt.isoformat(),
-            'estimated_arrival_time': arrival_dt.strftime('%I:%M %p').lstrip('0'),
-            'trial_window': f"{trial_start_dt.strftime('%I:%M %p').lstrip('0')} - {trial_end_dt.strftime('%I:%M %p').lstrip('0')} (15m Trial)",
-            'fits_booked_slot': fits_slot,
-            'slot_status': slot_status
-        })
-
-        fallback_polyline.append([chosen['latitude'], chosen['longitude']])
-        curr_lat, curr_lng = chosen['latitude'], chosen['longitude']
-        stop_num += 1
-
-    total_elapsed_mins = int(round((curr_cursor - now).total_seconds() / 60.0))
-
-    return {
-        'order_sequence': order_sequence,
-        'waypoints': waypoints,
-        'total_distance_km': round(total_dist, 2),
-        'estimated_duration_minutes': total_elapsed_mins,
-        'driving_duration_minutes': cumulative_driving_mins,
-        'total_trial_minutes': total_trial_mins,
-        'stops_count': len(order_sequence),
-        'route_polyline': fallback_polyline,
-        'routing_engine': 'Nearest-Neighbor Heuristic (Fallback)',
-        'skipped_orders': skipped_orders,
-        'is_fallback': True
-    }
+    candidates = [timeline(seq) for seq in permutations(range(1, n))]
+    score, waypoints, driving, waiting, back = min(candidates, key=lambda row: row[0])
+    return {'order_sequence': [wp['order_id'] for wp in waypoints], 'waypoints': waypoints,
+        'total_distance_km': round(score[2] / 1000, 2), 'estimated_duration_minutes': score[3],
+        'driving_duration_minutes': driving, 'waiting_minutes': waiting, 'return_minutes': back,
+        'total_trial_minutes': 15 * len(valid), 'stops_count': len(valid), 'route_polyline': [],
+        'routing_engine': 'Approximate distance estimate' if fallback else 'OSRM road matrix',
+        'is_fallback': fallback, 'live_traffic': False, 'roundtrip': True,
+        'fits_all_slots': score[0] == 0 and score[1] == 0 and not skipped,
+        'skipped_orders': skipped}

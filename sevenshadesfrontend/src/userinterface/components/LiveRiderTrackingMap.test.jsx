@@ -77,7 +77,7 @@ describe('LiveRiderTrackingMap', () => {
     expect(await screen.findByText(/Ramesh Kumar/i)).toBeInTheDocument();
     expect(screen.getByText(/DL-01-AB-1234/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Call/i })).toHaveAttribute('href', 'tel:9876543210');
-    expect(screen.getByText(/km away/i)).toBeInTheDocument();
+    expect(screen.getByText(/km straight-line distance/i)).toBeInTheDocument();
     expect(screen.getByText(/Slot: 04:00 PM - 05:00 PM/i)).toBeInTheDocument();
   });
 

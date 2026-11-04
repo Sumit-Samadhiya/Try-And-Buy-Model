@@ -22,3 +22,13 @@ test('a failed refresh preserves cached tasks and reports failure instead of an 
   expect(await fetchDeliveryTasksFromApi('9876543210')).toEqual([]);
   expect(getDeliveryTasks()).toEqual([]);
 });
+
+ test('saved route positions determine rider stop order', async () => {
+  postData.mockResolvedValue({ status: true, data: [
+    { assignment_id: 1, route_position: 2, status: 'Assigned', try_order: { order_id: 'SECOND', tryorderitem_set: [] } },
+    { assignment_id: 2, route_position: 1, status: 'Assigned', try_order: { order_id: 'FIRST', tryorderitem_set: [] } },
+  ] });
+  await fetchDeliveryTasksFromApi('9876543210');
+  expect(getDeliveryTasks().map(task => task.id)).toEqual(['FIRST', 'SECOND']);
+  expect(getDeliveryTasks().every(task => task.routePlanned)).toBe(true);
+});

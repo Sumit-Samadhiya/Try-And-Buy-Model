@@ -1,6 +1,6 @@
 from django.http.response import JsonResponse
 from rest_framework.decorators import api_view
-from django.db import OperationalError
+from django.db import OperationalError, transaction
 import logging
 import uuid
 import re
@@ -13,6 +13,7 @@ from sevenshadesapp.security import authenticate_account, failure
 from sevenshadesapp.models import DeliveryRider, DeliveryAssignment, DeliveryBatch, WhatsAppOtp
 from sevenshadesapp.serializer import DeliveryRiderSerializer, DeliveryAssignmentWithRefSerializer, DeliveryBatchSerializer
 from django.utils import timezone
+from datetime import timedelta
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -298,6 +299,8 @@ def OptimizeRoute(request):
                 'waypoints': []
             }, safe=False)
 
+        if len(assignments) > 3:
+            return failure('Split this batch into at most 3 trial bags before planning its route.', 400)
         # Route estimates require measured coordinates. Never fabricate a hub or stop.
         rider = batch.rider
         req_lat = request.data.get('start_lat')
@@ -309,6 +312,8 @@ def OptimizeRoute(request):
             except (ValueError, TypeError):
                 return failure('Enter valid route starting coordinates.', 400)
         elif rider and rider.latitude is not None and rider.longitude is not None:
+            if not rider.location_updated_at or rider.location_updated_at < timezone.now() - timedelta(minutes=5):
+                return failure('Rider location is outdated. Ask the rider to refresh it before planning.', 409)
             try:
                 base_lat, base_lng = float(rider.latitude), float(rider.longitude)
             except (ValueError, TypeError):
@@ -341,6 +346,7 @@ def OptimizeRoute(request):
                 'assignment_id': a.assignment_id,
                 'address': f"{order.address_text}, {order.city} {order.postcode}".strip(),
                 'delivery_slot': order.delivery_slot,
+                'scheduled_date': order.scheduled_date or timezone.localdate(order.created_at),
                 'latitude': order_lat,
                 'longitude': order_lng,
             })
@@ -351,6 +357,21 @@ def OptimizeRoute(request):
             return JsonResponse({'status': False, 'message': 'Unable to optimize route'}, status=500, safe=False)
 
         all_skipped = skipped_orders + opt_res.get('skipped_orders', [])
+        saved = False
+        # Save only complete, feasible road plans while assignments are still pending.
+        if not all_skipped and opt_res.get('fits_all_slots') and not opt_res.get('is_fallback'):
+            with transaction.atomic():
+                current = list(DeliveryAssignment.objects.select_for_update().filter(batch=batch).exclude(status__in=['Delivered', 'Cancelled']))
+                before = {(a.pk, a.rider_id, a.status) for a in assignments}
+                after = {(a.pk, a.rider_id, a.status) for a in current}
+                if before != after:
+                    return failure('Assignments changed while planning. Refresh and try again.', 409)
+                if all(a.status == 'Assigned' for a in current):
+                    ranks = {order_id: i for i, order_id in enumerate(opt_res['order_sequence'], 1)}
+                    for assignment in current:
+                        assignment.route_position = ranks[assignment.try_order.order_id]
+                    DeliveryAssignment.objects.bulk_update(current, ['route_position'])
+                    saved = True
 
         return JsonResponse({
             'status': True,
@@ -365,6 +386,11 @@ def OptimizeRoute(request):
             'stops_count': opt_res.get('stops_count', len(opt_res['order_sequence'])),
             'route_polyline': opt_res.get('route_polyline', []),
             'routing_engine': opt_res.get('routing_engine'),
+            'is_fallback': opt_res.get('is_fallback', True),
+            'waiting_minutes': opt_res.get('waiting_minutes', 0),
+            'return_minutes': opt_res.get('return_minutes', 0),
+            'fits_all_slots': opt_res.get('fits_all_slots', False) and not all_skipped,
+            'route_saved': saved,
             'skipped_orders': all_skipped
         }, safe=False)
     except Exception:

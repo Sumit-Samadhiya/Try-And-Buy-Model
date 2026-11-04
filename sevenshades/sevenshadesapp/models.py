@@ -249,6 +249,7 @@ class DeliveryAssignment(models.Model):
     class Meta:
         constraints = [models.UniqueConstraint(fields=['try_order'], name='one_assignment_per_trial')]
     assignment_id = models.CharField(max_length=40, unique=True)
+    route_position = models.PositiveSmallIntegerField(null=True, blank=True)
     try_order = models.ForeignKey(TryOrder, on_delete=models.CASCADE)
     rider = models.ForeignKey(DeliveryRider, on_delete=models.CASCADE)
     batch = models.ForeignKey(DeliveryBatch, on_delete=models.SET_NULL, null=True, blank=True)

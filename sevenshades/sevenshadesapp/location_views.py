@@ -8,8 +8,8 @@ from django.core.cache import cache
 from django.http import JsonResponse
 from django.utils import timezone
 from rest_framework.decorators import api_view
-from .models import UserAddress, TryOrder, DeliveryRider, DeliveryZone, ExcludedArea
-from .security import failure
+from .models import UserAddress, TryOrder, DeliveryRider, DeliveryZone, ExcludedArea, DeliveryAssignment
+from .security import failure, owns_order
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +45,8 @@ def RiderLocation(request):
     if not point:
         return failure('A valid location is required.', 400)
     rider = request.account
+    if request.data.get('order_id') and not DeliveryAssignment.objects.filter(try_order__order_id=request.data['order_id'], rider=rider).exists():
+        return failure('This order is not assigned to you.', 403)
     rider.latitude, rider.longitude = point
     rider.location_updated_at = timezone.now()
     rider.save(update_fields=['latitude', 'longitude', 'location_updated_at'])
@@ -94,9 +96,12 @@ def RiderSuggestions(request):
         return failure('Order not found.', 404)
     zone_names = {zone.zone_name.casefold() for zone in DeliveryZone.objects.all() if order.postcode in [code.strip() for code in zone.postcodes.split(',')]}
     values = []
+    rider_points = {}
     for rider in DeliveryRider.objects.filter(status='Active'):
-        fresh = rider.location_updated_at and rider.location_updated_at >= timezone.now() - timedelta(minutes=30)
+        fresh = rider.location_updated_at and rider.location_updated_at >= timezone.now() - timedelta(minutes=5)
         distance = distance_km(order.latitude, order.longitude, rider.latitude, rider.longitude) if fresh and all(value is not None for value in (order.latitude, order.longitude, rider.latitude, rider.longitude)) else None
+        if distance is not None:
+            rider_points[rider.rider_id] = (rider.latitude, rider.longitude)
         zone_match = rider.zone.casefold() in zone_names | {order.city.casefold(), order.postcode.casefold()}
         workload = rider.deliveryassignment_set.exclude(status='Delivered').exclude(try_order__status='CANCELLED').count()
         road_distance_km = None
@@ -105,7 +110,7 @@ def RiderSuggestions(request):
         if distance is not None:
             road_distance_km = round(distance * 1.30, 2)
             road_eta_mins = max(1, int(round((road_distance_km / 25.0) * 60.0 * 1.25 + 3.0)))
-            road_eta_display = f"~{road_eta_mins} mins ({road_distance_km} km road)"
+            road_eta_display = f"~{road_eta_mins} mins ({road_distance_km} km approximate)"
 
         values.append({
             'rider_id': rider.rider_id,
@@ -115,10 +120,32 @@ def RiderSuggestions(request):
             'road_distance_km': road_distance_km,
             'road_eta_minutes': road_eta_mins,
             'road_eta_display': road_eta_display,
+            'is_fallback': True,
             'zone_match': zone_match,
             'active_orders': workload
         })
     values.sort(key=lambda row: (row['distance_km'] is None, row['distance_km'] if row['distance_km'] is not None else 0, not row['zone_match'], row['active_orders'], row['name']))
+    # One matrix call for a bounded shortlist, rather than one request per rider.
+    shortlist = [row for row in values if row['rider_id'] in rider_points][:5]
+    if shortlist:
+        points = [rider_points[row['rider_id']] for row in shortlist] + [(order.latitude, order.longitude)]
+        path = ';'.join(f'{float(lon):.6f},{float(lat):.6f}' for lat, lon in points)
+        sources = ';'.join(str(i) for i in range(len(shortlist)))
+        try:
+            url = f'https://router.project-osrm.org/table/v1/driving/{path}?sources={sources}&destinations={len(shortlist)}&annotations=duration,distance'
+            with urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'DoorDrape/1.0'}), timeout=2) as response:
+                matrix = json.loads(response.read(100000))
+            if matrix.get('code') == 'Ok':
+                for i, row in enumerate(shortlist):
+                    seconds, metres = matrix['durations'][i][0], matrix['distances'][i][0]
+                    if seconds is None or metres is None or not isfinite(seconds + metres) or min(seconds, metres) < 0:
+                        continue
+                    minutes = max(1, int(round(seconds * 1.25 / 60 + 3)))
+                    row.update(road_distance_km=round(metres / 1000, 2), road_eta_minutes=minutes,
+                               road_eta_display=f'~{minutes} mins ({metres / 1000:.1f} km, no live traffic)', is_fallback=False)
+        except (OSError, ValueError, KeyError, IndexError, TypeError):
+            pass
+        values.sort(key=lambda row: (row['road_eta_minutes'] is None, row['is_fallback'], row['road_eta_minutes'] or 0, row['active_orders']))
     return JsonResponse({'status': True, 'data': values})
 
 
@@ -137,6 +164,19 @@ def RouteETA(request):
     dest_lng = data.get('dest_lng')
 
     order_id = data.get('order_id')
+    rider_id = data.get('rider_id')
+    if order_id or rider_id:
+        role, account = getattr(request, 'account_role', None), getattr(request, 'account', None)
+        if not account:
+            return failure('Please sign in to view delivery locations.', 401)
+        if order_id:
+            selected_order = TryOrder.objects.filter(order_id=order_id).first()
+            if not selected_order or not owns_order(role, account, selected_order):
+                return failure('Order not found or access denied.', 403)
+            if rider_id and role != 'admin' and not DeliveryAssignment.objects.filter(try_order=selected_order, rider__rider_id=rider_id).exists():
+                return failure('Rider is not assigned to this order.', 403)
+        elif role != 'admin' and not (role == 'rider' and str(account.rider_id) == str(rider_id)):
+            return failure('You cannot view this rider location.', 403)
     if order_id and (dest_lat is None or dest_lng is None):
         order = TryOrder.objects.filter(order_id=order_id).first()
         if order and order.latitude is not None and order.longitude is not None:
@@ -146,6 +186,8 @@ def RouteETA(request):
     rider_id = data.get('rider_id')
     if rider_id and (start_lat is None or start_lng is None):
         rider = DeliveryRider.objects.filter(rider_id=rider_id).first()
+        if rider and (not rider.location_updated_at or rider.location_updated_at < timezone.now() - timedelta(minutes=5)):
+            return failure('Rider location is outdated. Ask the rider to refresh it.', 409)
         if rider and rider.latitude is not None and rider.longitude is not None:
             start_lat = rider.latitude
             start_lng = rider.longitude

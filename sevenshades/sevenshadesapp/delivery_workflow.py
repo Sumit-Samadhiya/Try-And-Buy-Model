@@ -68,7 +68,8 @@ def reassign_order(order_id, new_rider_id):
     old_batch_id = assignment.batch_id
     assignment.rider = new_rider
     assignment.batch = None
-    assignment.save(update_fields=['rider', 'batch', 'updated_at'])
+    assignment.route_position = None
+    assignment.save(update_fields=['rider', 'batch', 'route_position', 'updated_at'])
     order.assigned_rider = new_rider
     order.save(update_fields=['assigned_rider', 'updated_at'])
     if old_batch_id:
@@ -137,7 +138,13 @@ def advance_assignment(role, account, assignment_id, status):
 @transaction.atomic
 def generate_batches(rider_id, max_orders=None):
     rider = active_rider(rider_id)
-    MAX_BATCH_ORDERS = max_orders if (isinstance(max_orders, int) and max_orders > 0) else 5
+    MAX_BATCH_ORDERS = min(max_orders, 3) if (isinstance(max_orders, int) and max_orders > 0) else 3
+
+    active_count = DeliveryAssignment.objects.filter(rider=rider).exclude(status__in=['Delivered', 'Cancelled']).exclude(try_order__status='CANCELLED').count()
+    remaining_capacity = max(0, 3 - active_count)
+    if remaining_capacity == 0:
+        raise InventoryError('This rider already has 3 active trial bags. Complete or reassign them before adding more.')
+    MAX_BATCH_ORDERS = min(MAX_BATCH_ORDERS, remaining_capacity)
 
     # Check rider zone restriction if specified
     allowed_postcodes = None
@@ -180,4 +187,6 @@ def generate_batches(rider_id, max_orders=None):
             for order in chunk:
                 attach(order, rider, batch)
             result.append(batch)
+            # One route load at a time; later groups stay pending for another rider.
+            return result
     return result

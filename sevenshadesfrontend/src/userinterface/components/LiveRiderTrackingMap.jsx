@@ -194,7 +194,7 @@ export default function LiveRiderTrackingMap({
 
   // Fetch road turn-by-turn route and scooter ETA from OSRM
   const fetchRoadRoute = useCallback(async (rLat, rLng, cLat, cLng) => {
-    if (!rLat || !rLng || !cLat || !cLng) return;
+    if (![rLat, rLng, cLat, cLng].every(Number.isFinite)) return;
     try {
       const res = await postData('route_eta', {
         start_lat: rLat,
@@ -458,7 +458,7 @@ export default function LiveRiderTrackingMap({
 
             <Grid item xs={7} sm={4}>
               <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block' }}>
-                Estimated Road ETA & Distance
+                Estimated travel time · no live traffic
               </Typography>
               <Typography
                 variant="body2"
@@ -468,11 +468,11 @@ export default function LiveRiderTrackingMap({
                 }}
               >
                 {distanceKm !== null && distanceKm < 0.1
-                  ? 'Arriving at doorstep now!'
+                  ? 'Rider is nearby — arrival not yet confirmed'
                   : roadEtaDisplay
                   ? roadEtaDisplay
                   : distanceKm !== null
-                  ? `${distanceKm} km away`
+                  ? `${distanceKm} km straight-line distance`
                   : riderCoords
                   ? 'Tracking live coordinates...'
                   : 'Awaiting rider dispatch signal'}

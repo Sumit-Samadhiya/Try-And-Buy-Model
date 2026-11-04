@@ -29,7 +29,7 @@ export default function DeliveryTaskCard({ task, onStatusChange, onOpenDetails }
       <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
         <Chip
           size="small"
-          label={`Route #${task.routeOrder}`}
+          label={task.routePlanned ? `Planned stop #${task.routeOrder}` : "Route not planned"}
           sx={{ bgcolor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', fontWeight: 700 }}
         />
         <Chip

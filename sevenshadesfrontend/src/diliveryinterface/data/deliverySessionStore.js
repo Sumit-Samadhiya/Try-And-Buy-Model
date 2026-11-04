@@ -38,7 +38,8 @@ const mapAssignmentToTask = (assignment, index) => {
   return {
     id: tryOrder.order_id,
     assignmentId: assignment.assignment_id,
-    routeOrder: index + 1,
+    routeOrder: assignment.route_position || index + 1,
+    routePlanned: assignment.route_position != null,
     routeDistanceKm: null,
     customerName: tryOrder.mobileno ? `Customer ${tryOrder.mobileno}` : 'Customer',
     customerPhone: tryOrder.mobileno || 'N/A',

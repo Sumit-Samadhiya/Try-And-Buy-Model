@@ -32,6 +32,7 @@ export default function DeliveryBatches({ riders, onAssigned }) {
   const handleOptimizeRoute = async (batchId) => {
     try {
       setOptimizingBatch(batchId);
+      setRouteInfo(prev => ({ ...prev, [batchId]: null }));
       const res = await postData('optimize_route', { batch_id: batchId });
       if (res && res.status) {
         setRouteInfo(prev => ({ ...prev, [batchId]: res }));
@@ -47,11 +48,11 @@ export default function DeliveryBatches({ riders, onAssigned }) {
 
   return <Paper sx={{ p: 2, my: 2 }}><Stack spacing={2}>
     <Typography variant="h6">Delivery batches</Typography>
-    <Typography>Assign pending standard orders to one rider, grouped by postcode, delivery slot and order date.</Typography>
+    <Typography>Assign up to 3 trial bags to an available rider, grouped by postcode, booked slot and date. Plan the route below to review appointment feasibility.</Typography>
     <TextField select label="Batch rider" value={riderId} onChange={event => setRiderId(event.target.value)}>
       {riders.filter(rider => rider.status === 'Active').map(rider => <MenuItem key={rider.rider_id} value={rider.rider_id}>{rider.name}</MenuItem>)}
     </TextField>
-    <Button disabled={busy || !riderId} onClick={generate}>Assign pending orders in batches</Button>
+    <Button disabled={busy || !riderId} onClick={generate}>Assign next trial batch</Button>
     <Button disabled={busy} onClick={load}>Refresh batches</Button>
     {message && <Alert severity="info">{message}</Alert>}
     {batches.map(batch => {
@@ -73,11 +74,11 @@ export default function DeliveryBatches({ riders, onAssigned }) {
               size="small"
               variant="outlined"
               startIcon={isOptimizing ? <CircularProgress size={16} /> : <RouteRoundedIcon fontSize="small" />}
-              disabled={isOptimizing || !batch.order_ids?.length}
+              disabled={optimizingBatch !== null || !batch.order_ids?.length}
               onClick={() => handleOptimizeRoute(batch.batch_id)}
               sx={{ textTransform: 'none', fontWeight: 600 }}
             >
-              {isOptimizing ? 'Optimizing TSP...' : 'Optimize 3-Bag Route'}
+              {isOptimizing ? 'Planning stops...' : 'Plan trial route'}
             </Button>
           </Stack>
 
@@ -87,22 +88,29 @@ export default function DeliveryBatches({ riders, onAssigned }) {
               <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" sx={{ mb: 1 }}>
                 <Chip
                   size="small"
-                  label={route.routing_engine || 'OSRM TSP Loop'}
+                  label={route.is_fallback ? 'Approximate route' : 'Road-based route'}
                   color="primary"
                   variant="outlined"
                 />
                 <Chip
                   size="small"
                   icon={<TwoWheelerRoundedIcon fontSize="small" />}
-                  label={`Road: ${route.total_distance_km} km`}
+                  label={`${route.is_fallback ? "Approx." : "Road"}: ${route.total_distance_km} km`}
                 />
                 <Chip
                   size="small"
                   icon={<AccessTimeRoundedIcon fontSize="small" />}
-                  label={`Total: ~${route.estimated_duration_minutes} mins (incl. 15m trials)`}
+                  label={`Total: ~${route.estimated_duration_minutes} mins (trials, waiting + return)`}
                 />
               </Stack>
 
+              <Alert severity={route.is_fallback || !route.fits_all_slots ? 'warning' : 'info'} sx={{ mb: 1.5 }}>
+                {route.is_fallback ? 'Road routing is unavailable. These are approximate distances; confirm the route before dispatch. ' : 'Driving estimates do not include live traffic. '}
+                {!route.fits_all_slots && 'Some appointments need review before dispatch. '}
+                {route.route_saved ? 'Stop sequence saved for the rider. Refresh rider tasks to see it.' : 'Preview only: resolve warnings before a stop sequence can be saved.'}
+              </Alert>
+              {!!route.skipped_orders?.length && <Alert severity="warning" sx={{ mb: 1 }}>Missing location: {route.skipped_orders.map(item => item.order_id).join(', ')}. These orders are excluded from the route.</Alert>}
+              <Typography variant="body2" sx={{ mb: 1 }}>Waiting: {route.waiting_minutes || 0} min · Return to start: {route.return_minutes || 0} min</Typography>
               <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', display: 'block', mb: 0.5 }}>
                 Optimized Stop Sequence & 15-Minute Trial Timeline:
               </Typography>
@@ -128,7 +136,7 @@ export default function DeliveryBatches({ riders, onAssigned }) {
                         {wp.address} • {wp.leg_distance_km} km ({wp.driving_duration_minutes}m drive)
                       </Typography>
                     </Box>
-                    <Stack direction="row" spacing={1} alignItems="center">
+                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center">
                       <Chip
                         size="small"
                         label={`ETA: ${wp.estimated_arrival_time || wp.estimated_arrival_minutes + 'm'}`}
@@ -142,7 +150,7 @@ export default function DeliveryBatches({ riders, onAssigned }) {
                       <Chip
                         size="small"
                         label={wp.slot_status || 'On Time'}
-                        color={wp.fits_booked_slot ? 'success' : 'warning'}
+                        color={wp.fits_booked_slot === true ? 'success' : 'warning'}
                       />
                     </Stack>
                   </Paper>

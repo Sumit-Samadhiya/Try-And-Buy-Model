@@ -11,7 +11,7 @@ test('batch generation requires an active rider and displays real order membersh
   postData.mockImplementation(async () => { generated = true; return { status: true, data: [row] }; });
   const onAssigned = jest.fn();
   render(<DeliveryBatches riders={[{ rider_id: 'R1', name: 'Rider One', status: 'Active' }, { rider_id: 'R2', name: 'Inactive Rider', status: 'Inactive' }]} onAssigned={onAssigned} />);
-  const button = screen.getByRole('button', { name: 'Assign pending orders in batches' });
+  const button = screen.getByRole('button', { name: 'Assign next trial batch' });
   expect(button).toBeDisabled();
   fireEvent.mouseDown(screen.getByRole('combobox'));
   expect(screen.queryByRole('option', { name: 'Inactive Rider' })).not.toBeInTheDocument();
@@ -57,10 +57,10 @@ test('optimizes batch route and displays 15-minute trial slot schedule', async (
   });
 
   render(<DeliveryBatches riders={[]} />);
-  const optButton = await screen.findByRole('button', { name: /Optimize 3-Bag Route/i });
+  const optButton = await screen.findByRole('button', { name: /Plan trial route/i });
   fireEvent.click(optButton);
 
-  expect(await screen.findByText(/OSRM Traveling Salesperson Loop/i)).toBeInTheDocument();
+  expect(await screen.findByText(/Road-based route/i)).toBeInTheDocument();
   expect(screen.getByText(/Road: 14.5 km/i)).toBeInTheDocument();
   expect(screen.getByText(/Stop #1: ORD-1/i)).toBeInTheDocument();
   expect(screen.getByText(/4:14 PM - 4:29 PM \(15m Trial\)/i)).toBeInTheDocument();
