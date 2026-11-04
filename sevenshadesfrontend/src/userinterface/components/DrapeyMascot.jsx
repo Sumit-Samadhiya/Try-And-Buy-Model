@@ -3,18 +3,18 @@ import DrapeyAvatar from './DrapeyAvatar';
 import { playDrapeySfx, speakDrapeyVoice, playChikuVoice, stopChikuVoice, playDrapeyDialogue, stopAllVoices, isSoundMuted, setSoundMuted } from './drapeyAudio';
 import './DrapeyMascot.css';
 
-const greeting = 'Hey! Namaste! 🙏 Main Drapey hoon — aapka personal Try & Buy stylist! Ghar baithe try karo, pasand aaye tabhi khareedo! 😉✨';
+const greeting = 'Hey! Hehe! Hii cutie! 💖 Main Drapey hoon — aapka chhotu sa shopping dost! Pehle ghar baithe mast try karo, pasand aaye tabhi khareedo na! 😉✨';
 const clamp = (value, low, high) => Math.max(low, Math.min(Math.max(low, high), value));
 
 const NAUGHTY_TIPS = [
-  'Pro Tip: Doorstep trial room ready hai! 15 minutes aaram se mirror ke samne try karo! 🪞😎',
-  'Confused about size? 2 sizes order karo — jo fit baithe wo rakho, dusra rider le jayega! 😉',
-  'Arey suno! Paisa tabhi dena jab kapda pasand aaye! Zero advance payment! 💸🚫',
-  '30-45 minutes me rider aapke ghar par hoga! Ready rehna trial ke liye! 🛵💨',
-  'Koi fitting issue? Humare riders friendly hain, instant return le lete hain! 🤝',
-  'Ek secret bataun? Try & Buy model sirf smart shoppers use karte hain! Jaise aap! 😉✨',
-  'Styling advice chahiye? Bas kapde bag me daalo aur ghar par pehen kar dekho! 💃',
-  'Drapey ka rule: Pehle try karo, phir decide karo! No return headache! ✨'
+  'Psst! Ek secret bataun? Pehle ghar par mirror ke samne 15 minute aaram se try karo! 🪞😎',
+  'Confused ho? 2 sizes order karo, jo fit aaye wahi rakhna, dusra rider le jayega! 😉',
+  'Arey suno! Zero advance payment! Kapda dil ko bhaaye, tabhi paise dena! 💸💖',
+  'Superfast 30 se 45 minutes me rider bhaiya ghar aayenge, ready rehna trial ke liye! 🛵💨',
+  'Koi fitting issue? Instant return bina kisi sawal ke! Riders bohot friendly hain! 🤝',
+  'Ek secret bataun? Try & Buy model sirf smart shoppers use karte hain, jaise aap! 😉✨',
+  'Aap mujhe ungli se pakad kar screen par kahi bhi ghumma sakte ho! Masti! 🎈',
+  'Mujhe baar-baar zor se mat dabana, mujhe bahut tez gussa aata hai! Hehe! 😤'
 ];
 
 export function calculateBubbleLayout(x, y, width, height, bubbleHeight = 98) {
@@ -67,6 +67,7 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
   // Emotional states & Easter egg states
   const [rageState, setRageState] = useState('normal'); // 'normal' | 'angry' | 'exploding' | 'soot'
   const [specialAction, setSpecialAction] = useState(null); // null | 'yahoo' | 'order_success' | 'poke'
+  const [hearts, setHearts] = useState([]);
   const clickTimestamps = useRef([]);
   const rageTimer = useRef(null);
   const tipIndex = useRef(0);
@@ -279,11 +280,11 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
     feedbackUntil.current = Date.now() + 10000;
     setTone('error');
     setRageState('angry');
-    const rageMsg = 'ARGHHH! 3 BAAR KYUN DABAYA?! AB DEKHO MERA GUSSA... MAIN PHATNE WALA HOON! 💣😡🔥';
+    const rageMsg = 'ARGHHH! 3 BAAR KYUN DABAYA?! 💣😡 Ab dekho mera cutie gussa... Main phatne wala hoon! 💥';
     setMessage(rageMsg);
     setReplay(v => v + 1);
     playDrapeySfx('bomb');
-    playDrapeyDialogue('bomb_rage', '3 BAAR KYUN DABAYA? Main phatne wala hoon!', 'angry');
+    playDrapeyDialogue('bomb_rage', rageMsg, 'angry');
 
     clearTimeout(rageTimer.current);
     rageTimer.current = setTimeout(() => {
@@ -294,11 +295,11 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
       rageTimer.current = setTimeout(() => {
         // Soot recovery phase
         setRageState('soot');
-        const sootMsg = 'Khasi-khasi... 💨 Dekh liya mera gussa? Pura phat gaya na! Ab shanti se shopping karo! 🤪';
+        const sootMsg = 'Khasi-khasi... 💨 Hihihi, dekh liya mera cutie gussa? Ab chalo shanti se pyaari shopping karo! 💖';
         setMessage(sootMsg);
         setReplay(v => v + 1);
         playDrapeySfx('soot');
-        playDrapeyDialogue('soot', 'Khasi-khasi... Dekh liya mera gussa? Pura phat gaya na! Ab shanti se shopping karo!', 'soot');
+        playDrapeyDialogue('soot', sootMsg, 'soot');
 
         rageTimer.current = setTimeout(() => {
           // Return to normal
@@ -407,14 +408,26 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
       return;
     }
 
+    // Cute floating heart or sparkle particle on every tap
+    const cuteSymbols = ['💖', '✨', '🌸', '🎀'];
+    const newHeart = {
+      id: Date.now() + Math.random(),
+      symbol: cuteSymbols[Math.floor(Math.random() * cuteSymbols.length)],
+      x: Math.random() * 24 - 12
+    };
+    setHearts(prev => [...prev.slice(-3), newHeart]);
+    setTimeout(() => {
+      setHearts(prev => prev.filter(h => h.id !== newHeart.id));
+    }, 950);
+
     if (clicksInWindow === 2) {
       feedbackUntil.current = Date.now() + 4500;
       setTone('warning');
-      const warnMsg = 'Hey! 2 baar chhu diya! Ek baar aur tap kiya toh main BOMB ki tarah phat jaunga, bata raha hoon! 😤⚠️💣';
+      const warnMsg = 'Oye cutie! 2 baar chhu diya na! 🙈 Ek baar aur tap kiya toh main gusse me bomb ban jaunga, bata raha hoon! 😤⚠️💣';
       setMessage(warnMsg);
       setReplay(v => v + 1);
       setSpecialAction('poke');
-      playDrapeySfx('pop');
+      playDrapeySfx('squeak');
       playDrapeyDialogue('warning', warnMsg, 'angry');
       setTimeout(() => setSpecialAction(null), 800);
       return;
@@ -429,7 +442,7 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
     setMessage(tip);
     setReplay(v => v + 1);
     setSpecialAction('poke');
-    playDrapeySfx('pop');
+    playDrapeySfx('squeak');
     playDrapeyDialogue(`tip_${currentIdx + 1}`, tip, 'happy');
     setTimeout(() => setSpecialAction(null), 800);
   };
@@ -470,6 +483,13 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
       >
         <DrapeyAvatar mood={mood} reduced={reduced} />
         <span className="drapey-ground" aria-hidden="true" />
+
+        {/* Floating Cute Hearts & Sparkles on Tap */}
+        {hearts.map(h => (
+          <span key={h.id} className="drapey-heart-particle" style={{ '--hx': `${h.x}px` }} aria-hidden="true">
+            {h.symbol}
+          </span>
+        ))}
 
         {/* Visual FX Overlays */}
         {specialAction === 'yahoo' && (

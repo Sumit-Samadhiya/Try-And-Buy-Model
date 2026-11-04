@@ -12,3 +12,4 @@ echo Once installed, open VoiceStudio and run:
 echo python scripts\voicestudio_sync.py
 echo ========================================================
 pause
+

@@ -653,3 +653,39 @@ body:has([aria-label="Cookie consent banner"]) .drapey {
   48% { transform: translateY(-18px) rotate(-9deg) scale(.96, 1.05); }
   78% { transform: translateY(0) scale(1.06, .94); }
 }
+
+/* ==========================================================================
+   Cute Floating Heart & Sparkle Particles (Tap Reaction)
+   ========================================================================== */
+.drapey-heart-particle {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    font-size: 20px;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    z-index: 25;
+    filter: drop-shadow(0 2px 8px rgba(255, 105, 180, 0.5));
+    animation: drapey-heart-float 0.95s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+@keyframes drapey-heart-float {
+    0% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--hx, 0px)), 4px) scale(0.4);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(calc(-50% + var(--hx, 0px) * 1.2), -16px) scale(1.3);
+    }
+    75% {
+        opacity: 0.9;
+        transform: translate(calc(-50% + var(--hx, 0px) * 1.8), -36px) scale(1.1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--hx, 0px) * 2.2), -52px) scale(0.85);
+    }
+}

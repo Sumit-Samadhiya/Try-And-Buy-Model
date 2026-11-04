@@ -114,11 +114,35 @@ export default function DrapeyAvatar({ mood, reduced }) {
 
         <ellipse cx="36" cy="28" rx="10" ry="5" fill="#e9f9d6" opacity={mood === 'soot' ? 0.05 : 0.25} transform="rotate(-30 36 28)" />
 
-        {/* Cheeks */}
+        {/* Adorable Rosy Blushing Cheeks with Kawaii Anime Hatching */}
         {mood !== 'soot' && (
-          <g className="drapey-cheeks" fill={mood === 'angry' ? '#ef4444' : '#deb77b'} opacity={mood === 'angry' ? 0.85 : 0.65}>
-            <ellipse cx="29" cy="61" rx="5" ry="2.8" />
-            <ellipse cx="71" cy="61" rx="5" ry="2.8" />
+          <g className="drapey-cheeks">
+            <ellipse
+              cx="28"
+              cy="61"
+              rx="6.5"
+              ry="3.6"
+              fill={mood === 'angry' ? '#ef4444' : '#ff7aa2'}
+              opacity={mood === 'angry' ? 0.85 : 0.78}
+            />
+            <ellipse
+              cx="72"
+              cy="61"
+              rx="6.5"
+              ry="3.6"
+              fill={mood === 'angry' ? '#ef4444' : '#ff7aa2'}
+              opacity={mood === 'angry' ? 0.85 : 0.78}
+            />
+            {mood !== 'angry' && (
+              <g stroke="#ff4d80" strokeWidth="1.2" strokeLinecap="round" opacity="0.65">
+                <line x1="25" y1="60" x2="27" y2="62" />
+                <line x1="28" y1="60" x2="30" y2="62" />
+                <line x1="31" y1="60" x2="33" y2="62" />
+                <line x1="69" y1="60" x2="71" y2="62" />
+                <line x1="72" y1="60" x2="74" y2="62" />
+                <line x1="75" y1="60" x2="77" y2="62" />
+              </g>
+            )}
           </g>
         )}
 
@@ -178,26 +202,40 @@ export default function DrapeyAvatar({ mood, reduced }) {
           </>
         ) : (
           <>
-            {/* Default Big Bright Eyes */}
+            {/* Big Expressive Kawaii Eyes with Sparkle Highlights */}
             <g className="drapey-bright-eyes">
+              {/* Cute curved upper eyelids */}
+              <path d="M32 43 Q38 39 44 44" fill="none" stroke="#092e25" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M56 44 Q62 39 68 43" fill="none" stroke="#092e25" strokeWidth="1.8" strokeLinecap="round" />
+
               <g fill="#092e25">
-                <ellipse cx="38" cy="49" rx="5" ry="7" />
-                <ellipse cx="62" cy="49" rx="5" ry="7" />
+                <ellipse cx="38" cy="49" rx="5.2" ry="7.2" />
+                <ellipse cx="62" cy="49" rx="5.2" ry="7.2" />
               </g>
-              <g fill="#fff9e9">
-                <ellipse cx="36.5" cy="46.5" rx="1.9" ry="2.5" />
-                <ellipse cx="60.5" cy="46.5" rx="1.9" ry="2.5" />
-                <circle cx="40" cy="52" r=".9" />
-                <circle cx="64" cy="52" r=".9" />
+              {/* Primary Glint */}
+              <g fill="#ffffff">
+                <ellipse cx="36.2" cy="46.2" rx="2.1" ry="2.7" />
+                <ellipse cx="60.2" cy="46.2" rx="2.1" ry="2.7" />
+              </g>
+              {/* Secondary Sparkle Glints */}
+              <g fill="#ffffff" opacity="0.95">
+                <circle cx="40.2" cy="52.2" r="1.1" />
+                <circle cx="64.2" cy="52.2" r="1.1" />
+                <circle cx="36.5" cy="52.8" r="0.65" />
+                <circle cx="60.5" cy="52.8" r="0.65" />
               </g>
             </g>
 
             {mood === 'thinking' || mood === 'curious' ? (
-              <ellipse cx="51" cy="65" rx="2.7" ry="3.4" fill="#092e25" />
+              <ellipse cx="50" cy="65" rx="2.7" ry="3.4" fill="#092e25" />
             ) : mood === 'speaking' ? (
               <ellipse className="drapey-talking-mouth" cx="50" cy="65" rx="4.4" ry="5" fill="#092e25" />
             ) : (
-              <path d="M46 64q4 5 8 0" fill="none" stroke="#092e25" strokeWidth="2.3" strokeLinecap="round" />
+              /* Ultra-cute smile with little tongue blep */
+              <g className="drapey-cute-smile">
+                <path d="M44 63 Q50 71 56 63 Z" fill="#092e25" />
+                <path d="M47 67 Q50 71 53 67 Z" fill="#ff7aa2" />
+              </g>
             )}
           </>
         )}

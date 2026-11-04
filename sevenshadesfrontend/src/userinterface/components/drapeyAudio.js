@@ -79,19 +79,20 @@ export const playDrapeySfx = (type) => {
   const now = ctx.currentTime;
 
   try {
-    if (type === 'pop') {
-      // Cute bubble pop (on tap / tips)
+    if (type === 'pop' || type === 'squeak' || type === 'giggle') {
+      // Adorable anime squeak / chirp with playful spring
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(420, now);
-      osc.frequency.exponentialRampToValueAtTime(900, now + 0.08);
-      gain.gain.setValueAtTime(0.18, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.frequency.setValueAtTime(620, now);
+      osc.frequency.exponentialRampToValueAtTime(1450, now + 0.055);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.08);
+      osc.stop(now + 0.13);
     } else if (type === 'yahoo') {
       // Cheerful multi-tone chime (Cart Add)
       const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
