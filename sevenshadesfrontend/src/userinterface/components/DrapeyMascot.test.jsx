@@ -5,6 +5,37 @@ jest.mock('./DrapeyAvatar', () => ({ mood }) => <span data-testid="avatar" data-
 beforeEach(() => {
   jest.useFakeTimers();
   window.matchMedia = jest.fn().mockReturnValue({ matches:false, addEventListener:jest.fn(), removeEventListener:jest.fn() });
+  if (typeof window.speechSynthesis === 'undefined') {
+    window.speechSynthesis = {
+      speak: jest.fn(),
+      cancel: jest.fn(),
+      getVoices: jest.fn().mockReturnValue([])
+    };
+  }
+  if (typeof window.SpeechSynthesisUtterance === 'undefined') {
+    window.SpeechSynthesisUtterance = function(text) { this.text = text; };
+  }
+  if (typeof window.AudioContext === 'undefined') {
+    window.AudioContext = function() {
+      return {
+        currentTime: 0,
+        state: 'running',
+        resume: jest.fn().mockResolvedValue(),
+        createOscillator: () => ({
+          type: 'sine',
+          frequency: { setValueAtTime: jest.fn(), exponentialRampToValueAtTime: jest.fn() },
+          connect: jest.fn(),
+          start: jest.fn(),
+          stop: jest.fn()
+        }),
+        createGain: () => ({
+          gain: { setValueAtTime: jest.fn(), exponentialRampToValueAtTime: jest.fn() },
+          connect: jest.fn()
+        }),
+        destination: {}
+      };
+    };
+  }
   if (typeof window.PointerEvent === 'undefined') {
     window.PointerEvent = class PointerEvent extends window.MouseEvent {
       constructor(type, params = {}) {
@@ -196,4 +227,17 @@ test('dragging drapey updates position and avoids triggering click easter egg', 
     fireEvent.click(button);
   });
   expect(container.querySelector('.drapey-mode--angry')).toBeFalsy();
+});
+
+test('sound toggle switches between mute and unmute and preserves single button role', () => {
+  const { container } = render(<DrapeyMascot />);
+  const toggle = container.querySelector('.drapey-sound-toggle');
+  expect(toggle).toBeInTheDocument();
+
+  // Clicking toggle changes mute state
+  fireEvent.click(toggle);
+  expect(toggle.textContent).toMatch(/🔇|🔊/);
+
+  // Still only 1 standard button (the mascot itself)
+  expect(screen.getAllByRole('button')).toHaveLength(1);
 });

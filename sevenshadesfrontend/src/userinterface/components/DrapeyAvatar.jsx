@@ -43,7 +43,7 @@ export default function DrapeyAvatar({ mood, reduced }) {
           const targetAnim =
             state.current.mood === 'speaking' || state.current.mood === 'yahoo' || state.current.mood === 'celebrating'
               ? 'happy'
-              : state.current.mood;
+              : ['wink', 'curious'].includes(state.current.mood) ? 'idle' : state.current.mood;
           controller.current.play(targetAnim);
         }
       })
@@ -62,7 +62,7 @@ export default function DrapeyAvatar({ mood, reduced }) {
       controller.current?.stop();
     } else {
       const targetAnim =
-        mood === 'speaking' || mood === 'yahoo' || mood === 'celebrating' || mood === 'angry' ? 'happy' : mood;
+        mood === 'speaking' || mood === 'yahoo' || mood === 'celebrating' || mood === 'angry' ? 'happy' : ['wink', 'curious'].includes(mood) ? 'idle' : mood;
       controller.current?.play(targetAnim);
     }
   }, [mood, reduced]);
@@ -128,6 +128,12 @@ export default function DrapeyAvatar({ mood, reduced }) {
             <path d="M33 49q5 5 10 0M57 49q5 5 10 0" />
             <path d="M47 65q3-2 6 0" />
           </g>
+        ) : mood === 'wink' ? (
+          <g stroke="#092e25" strokeWidth="2.8" strokeLinecap="round">
+            <ellipse cx="38" cy="49" rx="5" ry="7" fill="#092e25" />
+            <circle cx="36" cy="46" r="1.7" fill="#fff9e9" stroke="none" />
+            <path d="M56 50q6-6 12 0M45 64q6 7 12-1" fill="none" />
+          </g>
         ) : mood === 'angry' ? (
           <>
             {/* Slanted Angry Eyebrows */}
@@ -186,7 +192,7 @@ export default function DrapeyAvatar({ mood, reduced }) {
               </g>
             </g>
 
-            {mood === 'thinking' ? (
+            {mood === 'thinking' || mood === 'curious' ? (
               <ellipse cx="51" cy="65" rx="2.7" ry="3.4" fill="#092e25" />
             ) : mood === 'speaking' ? (
               <ellipse className="drapey-talking-mouth" cx="50" cy="65" rx="4.4" ry="5" fill="#092e25" />
