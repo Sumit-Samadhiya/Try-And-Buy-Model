@@ -14,6 +14,12 @@
     transition: transform 850ms cubic-bezier(.18, .75, .2, 1);
     will-change: transform;
     color: #16372d;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.drapey--dragging {
+    transition: none !important;
 }
 
 .drapey-character {
@@ -23,10 +29,29 @@
     border: 0;
     padding: 0;
     background: none;
-    cursor: pointer;
+    cursor: grab;
     pointer-events: auto;
     position: relative;
     transition: filter 0.3s ease, transform 0.25s ease;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.drapey--dragging .drapey-character {
+    cursor: grabbing;
+    transform: scale(1.08);
+    filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.25));
+}
+
+.drapey--dragging .drapey-avatar {
+    animation: none !important;
+}
+
+.drapey--dragging .drapey-ground {
+    animation: none !important;
+    opacity: 0.25;
+    transform: scale(0.7);
 }
 
 .drapey-character:focus-visible {
@@ -47,27 +72,6 @@
 
 .drapey-avatar .bs-avatar {
     display: block !important;
-}
-
-/* Pookie Pink Ribbon Bow */
-.drapey-pookie-bow {
-    position: absolute;
-    top: -9px;
-    right: 2px;
-    width: 32px;
-    height: 32px;
-    z-index: 15;
-    pointer-events: none;
-    transform-origin: 30% 70%;
-    animation: drapey-bow-wiggle 3.2s ease-in-out infinite;
-    filter: drop-shadow(0 2px 5px rgba(219, 39, 119, 0.38));
-}
-
-.drapey-bow-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
 }
 
 .drapey-ground {
@@ -545,24 +549,6 @@ body:has([aria-label="Cookie consent banner"]) .drapey {
     }
 }
 
-@keyframes drapey-bow-wiggle {
-    0%, 100% {
-        transform: rotate(0deg) scale(1);
-    }
-    18% {
-        transform: rotate(7deg) scale(1.06);
-    }
-    28% {
-        transform: rotate(-6deg) scale(1.08);
-    }
-    45% {
-        transform: rotate(4deg) scale(1.02);
-    }
-    60% {
-        transform: rotate(-3deg) scale(0.98);
-    }
-}
-
 @keyframes drapey-hover {
     50% { transform: translateY(-6px); }
 }
@@ -611,12 +597,6 @@ body:has([aria-label="Cookie consent banner"]) .drapey {
     .drapey-character {
         width: 54px;
         height: 54px;
-    }
-    .drapey-pookie-bow {
-        width: 27px;
-        height: 27px;
-        top: -7px;
-        right: 1px;
     }
     .drapey-copy {
         width: 230px;

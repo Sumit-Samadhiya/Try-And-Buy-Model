@@ -5,6 +5,15 @@ jest.mock('./DrapeyAvatar', () => ({ mood }) => <span data-testid="avatar" data-
 beforeEach(() => {
   jest.useFakeTimers();
   window.matchMedia = jest.fn().mockReturnValue({ matches:false, addEventListener:jest.fn(), removeEventListener:jest.fn() });
+  if (typeof window.PointerEvent === 'undefined') {
+    window.PointerEvent = class PointerEvent extends window.MouseEvent {
+      constructor(type, params = {}) {
+        super(type, params);
+        this.pointerId = params.pointerId ?? 1;
+        this.pointerType = params.pointerType ?? 'mouse';
+      }
+    };
+  }
 });
 afterEach(() => jest.useRealTimers());
 
@@ -157,4 +166,34 @@ test('rapid 3 taps triggers angry bomb explosion easter egg and recovers', () =>
   expect(container.querySelector('.drapey-mode--angry')).toBeFalsy();
   expect(container.querySelector('.drapey-mode--exploding')).toBeFalsy();
   expect(container.querySelector('.drapey-mode--soot')).toBeFalsy();
+});
+
+test('dragging drapey updates position and avoids triggering click easter egg', () => {
+  const { container } = render(<DrapeyMascot />);
+  const button = screen.getByRole('button', { name: 'Talk to Drapey' });
+  const aside = container.querySelector('.drapey');
+
+  const initialTransform = aside.style.transform;
+
+  // Pointer down & move wrapped in act
+  act(() => {
+    fireEvent.pointerDown(button, { button: 0, clientX: 100, clientY: 100, pointerId: 1 });
+    fireEvent.pointerMove(button, { clientX: 220, clientY: 280, pointerId: 1 });
+  });
+  expect(container.querySelector('.drapey--dragging')).toBeTruthy();
+
+  // Pointer up
+  act(() => {
+    fireEvent.pointerUp(button, { clientX: 220, clientY: 280, pointerId: 1 });
+  });
+  expect(container.querySelector('.drapey--dragging')).toBeFalsy();
+
+  // Transform should have changed to new dragged coordinates
+  expect(aside.style.transform).not.toBe(initialTransform);
+
+  // Subsequent click does NOT trigger angry mode
+  act(() => {
+    fireEvent.click(button);
+  });
+  expect(container.querySelector('.drapey-mode--angry')).toBeFalsy();
 });

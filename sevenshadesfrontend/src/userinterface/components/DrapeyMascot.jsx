@@ -16,6 +16,18 @@ const NAUGHTY_TIPS = [
   'Drapey ka rule: Pehle try karo, phir decide karo! No return headache! ✨'
 ];
 
+export function calculateBubbleLayout(x, y, width, height, bubbleHeight = 98) {
+  const mobile = width <= 600;
+  const size = mobile ? 54 : 64;
+  const bubbleWidth = Math.min(mobile ? 230 : 270, width - 24);
+  const bottom = height - (mobile ? 100 : 24);
+  const below = y - bubbleHeight - 25 < 60 && y + size + bubbleHeight + 25 < bottom;
+  const left = clamp(x + size / 2 - bubbleWidth / 2, 12, width - bubbleWidth - 12);
+  const offset = left - x;
+  const tail = clamp(x + size / 2 - left, 18, bubbleWidth - 18);
+  return { below, offset, tail };
+}
+
 export function guidePosition(scroll, width, height, bubbleHeight = 98) {
   const mobile = width <= 600;
   const size = mobile ? 54 : 64;
@@ -38,10 +50,17 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
   const [replay, setReplay] = useState(0);
   const [sleepy, setSleepy] = useState(false);
   const [position, setPosition] = useState(() => guidePosition(0, window.innerWidth, window.innerHeight));
+  const [isDragging, setIsDragging] = useState(false);
   const bubble = useRef(null);
   const dismissed = useRef(false);
   const feedbackUntil = useRef(0);
   const [tone, setTone] = useState('info');
+
+  // Drag & Drop tracking
+  const isCustomPlacedRef = useRef(false);
+  const dragStartRef = useRef(null);
+  const hasDraggedRef = useRef(false);
+  const lastDragEndTimeRef = useRef(0);
 
   // Emotional states & Easter egg states
   const [rageState, setRageState] = useState('normal'); // 'normal' | 'angry' | 'exploding' | 'soot'
@@ -91,6 +110,23 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
           setTone('info');
           setMessage(active?.dataset.drapeyMessage || greetingMessage);
         }
+
+        // If user has custom placed Drapey via drag-drop, maintain his position and clamp on resize
+        if (isCustomPlacedRef.current) {
+          setPosition(old => {
+            const mobile = window.innerWidth <= 600;
+            const size = mobile ? 54 : 64;
+            const clampedX = clamp(old.x, 10, window.innerWidth - size - 10);
+            const clampedY = clamp(old.y, 40, window.innerHeight - size - 20);
+            const layout = calculateBubbleLayout(clampedX, clampedY, window.innerWidth, window.innerHeight, bubble.current?.offsetHeight || 98);
+            if (old.x === clampedX && old.y === clampedY && old.below === layout.below && old.offset === layout.offset && old.tail === layout.tail) {
+              return old;
+            }
+            return { x: clampedX, y: clampedY, below: layout.below, offset: layout.offset, tail: layout.tail };
+          });
+          return;
+        }
+
         const next = guidePosition(window.scrollY, window.innerWidth, window.innerHeight, bubble.current?.offsetHeight || 98);
         if (!['home', '/', '/home'].includes(routeKey)) {
           const mobile = window.innerWidth <= 600;
@@ -244,7 +280,84 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
     }, 1400);
   }, [greetingMessage]);
 
+  // Drag & Drop Pointer Handlers
+  const handlePointerDown = event => {
+    if (event.button !== undefined && event.button !== 0 && event.pointerType === 'mouse') return;
+    const clientX = event.clientX ?? (event.touches?.[0]?.clientX ?? 0);
+    const clientY = event.clientY ?? (event.touches?.[0]?.clientY ?? 0);
+    dragStartRef.current = {
+      pointerX: clientX,
+      pointerY: clientY,
+      mascotX: position.x,
+      mascotY: position.y,
+      pointerId: event.pointerId
+    };
+    hasDraggedRef.current = false;
+    try {
+      event.currentTarget?.setPointerCapture?.(event.pointerId);
+    } catch (_) {}
+  };
+
+  const handlePointerMove = event => {
+    if (!dragStartRef.current) return;
+    const clientX = event.clientX ?? (event.touches?.[0]?.clientX ?? 0);
+    const clientY = event.clientY ?? (event.touches?.[0]?.clientY ?? 0);
+    const dx = clientX - dragStartRef.current.pointerX;
+    const dy = clientY - dragStartRef.current.pointerY;
+
+    if (!hasDraggedRef.current && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+      hasDraggedRef.current = true;
+      isCustomPlacedRef.current = true;
+      setIsDragging(true);
+    }
+
+    if (hasDraggedRef.current) {
+      const mobile = window.innerWidth <= 600;
+      const size = mobile ? 54 : 64;
+      const newX = clamp(dragStartRef.current.mascotX + dx, 10, window.innerWidth - size - 10);
+      const newY = clamp(dragStartRef.current.mascotY + dy, 40, window.innerHeight - size - 20);
+      const layout = calculateBubbleLayout(newX, newY, window.innerWidth, window.innerHeight, bubble.current?.offsetHeight || 98);
+      setPosition({
+        x: newX,
+        y: newY,
+        below: layout.below,
+        offset: layout.offset,
+        tail: layout.tail
+      });
+    }
+  };
+
+  const handlePointerUp = event => {
+    if (!dragStartRef.current) return;
+    try {
+      event.currentTarget?.releasePointerCapture?.(event.pointerId);
+    } catch (_) {}
+    dragStartRef.current = null;
+    setIsDragging(false);
+    if (hasDraggedRef.current) {
+      lastDragEndTimeRef.current = Date.now();
+      setTimeout(() => {
+        hasDraggedRef.current = false;
+      }, 350);
+    }
+  };
+
+  const handlePointerCancel = event => {
+    if (!dragStartRef.current) return;
+    try {
+      event.currentTarget?.releasePointerCapture?.(event.pointerId);
+    } catch (_) {}
+    dragStartRef.current = null;
+    setIsDragging(false);
+    hasDraggedRef.current = false;
+  };
+
   const handleCharacterClick = () => {
+    // If user was dragging, ignore click event
+    if (hasDraggedRef.current || Date.now() - lastDragEndTimeRef.current < 350) {
+      return;
+    }
+
     setSleepy(false);
     if (rageState !== 'normal') return;
 
@@ -271,7 +384,7 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
       return;
     }
 
-    // Single click: cycle through naughty & helpful tips
+    // Single click: cycle through tips
     const tip = NAUGHTY_TIPS[tipIndex.current % NAUGHTY_TIPS.length];
     tipIndex.current += 1;
     feedbackUntil.current = Date.now() + 8000;
@@ -295,7 +408,7 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
         reduced ? 'drapey--still' : ''
       } drapey--${phase} ${isRage ? `drapey-mode--${rageState}` : ''} ${
         specialAction ? `drapey-action--${specialAction}` : ''
-      }`}
+      } ${isDragging ? 'drapey--dragging' : ''}`}
       aria-label="Drapey style guide"
       style={{
         transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
@@ -306,7 +419,12 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
       <button
         className={`drapey-character ${characterModifier}`}
         onClick={handleCharacterClick}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
         aria-label="Talk to Drapey"
+        title="Drag me anywhere or click to chat!"
         onKeyDown={event => {
           if (event.key === 'Escape') setPhase('quiet');
         }}
