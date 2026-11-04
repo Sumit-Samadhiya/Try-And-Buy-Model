@@ -2,6 +2,8 @@
 
 Project root on this machine: `C:/Users/adesh/Desktop/SevenshadesProject-20250626T054447Z-1-001/SevenshadesProject/sumit`.
 
+Owner update, 2026-11-03: service city is Jhansi, Uttar Pradesh, India. This confirms city-level targeting, not every pincode. Marketing uses AI-generated video, Instagram @doordrapeofficial, drafts first; production provider/budget are pending.
+
 DoorDrape offers clothing selection, home trial, keeping selected garments and handing unselected garments back to a rider. Customer, rider and administrator journeys are separate.
 
 ## Implemented checkout evidence

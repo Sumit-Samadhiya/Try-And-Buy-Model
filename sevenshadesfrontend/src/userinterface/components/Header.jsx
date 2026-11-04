@@ -404,27 +404,8 @@ export default function Header() {
                 </Toolbar>
             </AppBar>
 
-            {/* Sub-header / Subcategory Strip */}
-            {!md_matches && (
-                <div style={{
-                    backgroundColor: '#022c22',
-                    height: 44,
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '0 24px',
-                    borderTop: '1px solid rgba(16, 185, 129, 0.15)',
-                    boxShadow: '0 2px 8px rgba(2, 44, 34, 0.25)',
-                }}>
-                    <div style={{ display: 'flex', overflowX: 'auto', alignItems: 'center', scrollbarWidth: 'none' }}>
-                        {showAllSubCategory()}
-                    </div>
-                </div>
-            )}
-
             <MobileSearchOverlay open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} />
             <DrawerComponent open={open} setOpen={setOpen} />
-            {statusSubMenu ? showSubMenu() : null}
         </Box>
     );
 }

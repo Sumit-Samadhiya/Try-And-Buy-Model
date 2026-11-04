@@ -86,6 +86,7 @@ export default function BudgetBazaarComponent({ subcategories = [], products = [
         navigate('/productpage', {
             state: {
                 pageView: 'BudgetBazaarComponent',
+                dealId: deal.id,
                 products: {
                     id: deal.subcategoryid,
                     maincategoryid: deal.maincategoryid,

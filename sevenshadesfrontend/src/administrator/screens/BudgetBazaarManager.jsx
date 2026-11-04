@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import DoordrapeLoader from '../../userinterface/components/DoordrapeLoader';
 import {
   Box,
@@ -26,13 +26,22 @@ import {
   FormControl,
   InputLabel,
   Paper,
-  Tooltip
+  Tooltip,
+  InputAdornment,
+  Tabs,
+  Tab,
+  Alert
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import SearchIcon from '@mui/icons-material/Search';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import Swal from 'sweetalert2';
 import { getData, postData } from '../../services/FetchDjangoApiServices';
 import imageUrl from '../../services/imageUrl';
@@ -51,6 +60,15 @@ export default function BudgetBazaarManager() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Product Selection / Visibility Dialog State
+  const [productsModalOpen, setProductsModalOpen] = useState(false);
+  const [selectedDealForProducts, setSelectedDealForProducts] = useState(null);
+  const [dealProductsLoading, setDealProductsLoading] = useState(false);
+  const [dealProducts, setDealProducts] = useState([]);
+  const [productSearch, setProductSearch] = useState('');
+  const [productFilterTab, setProductFilterTab] = useState('all'); // 'all', 'visible', 'hidden', 'eligible'
+  const [savingProducts, setSavingProducts] = useState(false);
 
   const [formData, setFormData] = useState({
     id: null,
@@ -111,7 +129,7 @@ export default function BudgetBazaarManager() {
       id: deal.id,
       title: deal.title || '',
       price_tag: deal.price_tag || '',
-      max_price: deal.max_price !== null ? String(deal.max_price) : '',
+      max_price: deal.max_price !== null && deal.max_price !== undefined ? String(deal.max_price) : '',
       maincategoryid: deal.maincategoryid || '',
       subcategoryid: deal.subcategoryid || '',
       tier_color: deal.tier_color || 'blue',
@@ -212,7 +230,117 @@ export default function BudgetBazaarManager() {
     }
   };
 
-  // Filter subcategories by selected maincategory
+  // --- Product Visibility Management Handlers ---
+  const handleOpenProductsModal = async (deal) => {
+    setSelectedDealForProducts(deal);
+    setProductsModalOpen(true);
+    setDealProductsLoading(true);
+    setProductSearch('');
+    setProductFilterTab('all');
+
+    const res = await getData(`admin_budget_bazaar_products?deal_id=${deal.id}&scope=all`);
+    if (res && res.status) {
+      setDealProducts(res.products || []);
+    } else {
+      Swal.fire('Error', res?.message || 'Failed to load deal products', 'error');
+      setProductsModalOpen(false);
+    }
+    setDealProductsLoading(false);
+  };
+
+  const handleToggleProduct = (productId) => {
+    setDealProducts(prev => prev.map(p => {
+      if (p.id === productId) {
+        return { ...p, is_visible: !p.is_visible };
+      }
+      return p;
+    }));
+  };
+
+  const handleResetToPriceDefault = () => {
+    setDealProducts(prev => prev.map(p => ({
+      ...p,
+      is_visible: p.default_visible
+    })));
+    Swal.fire({
+      icon: 'info',
+      title: 'Reset to Price Default',
+      text: selectedDealForProducts?.max_price 
+        ? `Reset to show all items ≤ ₹${selectedDealForProducts.max_price} (e.g. ₹399 for under ₹400).`
+        : 'Reset to show all products by default.',
+      timer: 1800,
+      showConfirmButton: false
+    });
+  };
+
+  const handleSelectAllFiltered = () => {
+    const filteredIds = new Set(displayedDealProducts.map(p => p.id));
+    setDealProducts(prev => prev.map(p => filteredIds.has(p.id) ? { ...p, is_visible: true } : p));
+  };
+
+  const handleDeselectAllFiltered = () => {
+    const filteredIds = new Set(displayedDealProducts.map(p => p.id));
+    setDealProducts(prev => prev.map(p => filteredIds.has(p.id) ? { ...p, is_visible: false } : p));
+  };
+
+  const handleSaveProducts = async () => {
+    if (!selectedDealForProducts) return;
+    setSavingProducts(true);
+
+    const excluded_product_ids = [];
+    const included_product_ids = [];
+
+    dealProducts.forEach(p => {
+      if (p.default_visible && !p.is_visible) {
+        excluded_product_ids.push(p.id);
+      } else if (!p.default_visible && p.is_visible) {
+        included_product_ids.push(p.id);
+      }
+    });
+
+    const res = await postData('admin_budget_bazaar_products_save', {
+      deal_id: selectedDealForProducts.id,
+      selection_mode: 'auto',
+      included_product_ids,
+      excluded_product_ids
+    });
+
+    setSavingProducts(false);
+    if (res && res.status) {
+      Swal.fire('Success', res.message, 'success');
+      setProductsModalOpen(false);
+      fetchDeals();
+    } else {
+      Swal.fire('Error', res?.message || 'Failed to save deal products', 'error');
+    }
+  };
+
+  const displayedDealProducts = useMemo(() => {
+    let list = dealProducts;
+    if (productSearch.trim()) {
+      const q = productSearch.toLowerCase();
+      list = list.filter(p => 
+        (p.productname && p.productname.toLowerCase().includes(q)) ||
+        (p.brandname && p.brandname.toLowerCase().includes(q)) ||
+        (p.subcategoryname && p.subcategoryname.toLowerCase().includes(q)) ||
+        (p.maincategoryname && p.maincategoryname.toLowerCase().includes(q))
+      );
+    }
+    if (productFilterTab === 'visible') {
+      list = list.filter(p => p.is_visible);
+    } else if (productFilterTab === 'hidden') {
+      list = list.filter(p => !p.is_visible);
+    } else if (productFilterTab === 'eligible') {
+      list = list.filter(p => p.default_visible);
+    }
+    return list;
+  }, [dealProducts, productSearch, productFilterTab]);
+
+  const visibleCount = useMemo(() => dealProducts.filter(p => p.is_visible).length, [dealProducts]);
+  const eligibleCount = useMemo(() => dealProducts.filter(p => p.default_visible).length, [dealProducts]);
+  const hiddenCount = useMemo(() => dealProducts.filter(p => !p.is_visible).length, [dealProducts]);
+
+  // Filter subcategories by selected maincategory in Add/Edit modal
   const filteredSubcategories = subcategories.filter(sub => {
     if (!formData.maincategoryid) return true;
     return Number(sub.maincategoryid) === Number(formData.maincategoryid);
@@ -230,7 +358,7 @@ export default function BudgetBazaarManager() {
             </Typography>
           </Stack>
           <Typography variant="body2" color="#64748b" sx={{ mt: 0.5 }}>
-            Configure and curate value deals shown on the homepage 3-tier grid (prices, categories, images & color accents).
+            Configure and curate value deals shown on storefront (default price thresholds, product inclusions & exclusions).
           </Typography>
         </Box>
         <Stack direction="row" spacing={1.5}>
@@ -272,14 +400,17 @@ export default function BudgetBazaarManager() {
                 <TableCell sx={{ fontWeight: 700 }}>Price Tag</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Max Price</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Linked Category</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Live Products</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Accent</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Live on Store</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Live</TableCell>
                 <TableCell sx={{ fontWeight: 700, textAlign: 'right' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {deals.map((deal) => {
                 const accent = TIER_COLORS.find(c => c.value === deal.tier_color) || TIER_COLORS[0];
+                const activeCount = deal.active_product_count !== undefined ? deal.active_product_count : (deal.product_count || 0);
+
                 return (
                   <TableRow key={deal.id} hover sx={{ '&:last-child td': { border: 0 } }}>
                     <TableCell>
@@ -343,18 +474,38 @@ export default function BudgetBazaarManager() {
                     </TableCell>
                     <TableCell>
                       <Typography fontWeight={600} color="#334155">
-                        {deal.max_price ? `₹${deal.max_price}` : 'Auto / None'}
+                        {deal.max_price ? `≤ ₹${deal.max_price}` : 'All (No Cap)'}
                       </Typography>
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight={600} color="#1e293b">
-                        {deal.subcategoryname || 'Any'}
+                        {deal.subcategoryname || 'Any Subcategory'}
                       </Typography>
                       {deal.maincategoryname && (
                         <Typography variant="caption" color="#64748b">
                           in {deal.maincategoryname}
                         </Typography>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Chip
+                          size="small"
+                          label={`${activeCount} products`}
+                          color={activeCount > 0 ? "success" : "warning"}
+                          variant={activeCount > 0 ? "filled" : "outlined"}
+                          sx={{ fontWeight: 700, fontSize: 12 }}
+                        />
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={<Inventory2OutlinedIcon />}
+                          onClick={() => handleOpenProductsModal(deal)}
+                          sx={{ textTransform: 'none', borderRadius: 2, fontSize: 12, px: 1.5, py: 0.3 }}
+                        >
+                          Manage Products
+                        </Button>
+                      </Stack>
                     </TableCell>
                     <TableCell>
                       <Chip
@@ -388,7 +539,7 @@ export default function BudgetBazaarManager() {
         )}
       </TableContainer>
 
-      {/* Add / Edit Dialog */}
+      {/* Add / Edit Deal Dialog */}
       <Dialog
         open={dialogOpen}
         onClose={() => !saving && setDialogOpen(false)}
@@ -400,7 +551,7 @@ export default function BudgetBazaarManager() {
           {formData.id ? 'Edit Budget Bazaar Deal' : 'Add New Budget Bazaar Deal'}
         </DialogTitle>
         <Box component="form" onSubmit={handleSave}>
-          <DialogContent dividers>
+          <DialogContent dividers sx={{ p: 3 }}>
             <Grid container spacing={3}>
               {/* Left Column: Form Fields */}
               <Grid item xs={12} md={7}>
@@ -408,44 +559,44 @@ export default function BudgetBazaarManager() {
                   <TextField
                     fullWidth
                     label="Deal Title"
-                    required
-                    placeholder="e.g. Oversized T-Shirts, Casual Tops"
+                    placeholder="e.g. Oversized T-Shirts"
                     value={formData.title}
                     onChange={e => setFormData({ ...formData, title: e.target.value })}
+                    required
                   />
 
                   <Grid container spacing={2}>
-                    <Grid item xs={6}>
+                    <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
-                        label="Price Tag Display"
-                        required
+                        label="Price Tag Label"
                         placeholder="e.g. Under ₹499"
                         value={formData.price_tag}
                         onChange={e => setFormData({ ...formData, price_tag: e.target.value })}
-                        helperText="Visible on the pill badge"
+                        required
+                        helperText="Visible badge on homepage"
                       />
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
                         label="Max Price Filter (₹)"
+                        placeholder="e.g. 400 or 499"
                         type="number"
-                        placeholder="e.g. 499"
                         value={formData.max_price}
                         onChange={e => setFormData({ ...formData, max_price: e.target.value })}
-                        helperText="Filters catalog on click"
+                        helperText="Products ≤ this price show by default (blank = all)"
                       />
                     </Grid>
                   </Grid>
 
                   <Grid container spacing={2}>
-                    <Grid item xs={6}>
+                    <Grid item xs={12} sm={6}>
                       <FormControl fullWidth>
                         <InputLabel>Main Category</InputLabel>
                         <Select
-                          label="Main Category"
                           value={formData.maincategoryid}
+                          label="Main Category"
                           onChange={e => setFormData({ ...formData, maincategoryid: e.target.value, subcategoryid: '' })}
                         >
                           <MenuItem value="">Any Category</MenuItem>
@@ -457,12 +608,12 @@ export default function BudgetBazaarManager() {
                         </Select>
                       </FormControl>
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid item xs={12} sm={6}>
                       <FormControl fullWidth>
                         <InputLabel>Sub Category</InputLabel>
                         <Select
-                          label="Sub Category"
                           value={formData.subcategoryid}
+                          label="Sub Category"
                           onChange={e => setFormData({ ...formData, subcategoryid: e.target.value })}
                         >
                           <MenuItem value="">Any Subcategory</MenuItem>
@@ -477,26 +628,26 @@ export default function BudgetBazaarManager() {
                   </Grid>
 
                   <Grid container spacing={2}>
-                    <Grid item xs={6}>
+                    <Grid item xs={12} sm={6}>
                       <FormControl fullWidth>
                         <InputLabel>Accent Color</InputLabel>
                         <Select
-                          label="Accent Color"
                           value={formData.tier_color}
+                          label="Accent Color"
                           onChange={e => setFormData({ ...formData, tier_color: e.target.value })}
                         >
                           {TIER_COLORS.map(c => (
                             <MenuItem key={c.value} value={c.value}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Stack direction="row" spacing={1} alignItems="center">
                                 <Box sx={{ width: 14, height: 14, borderRadius: '50%', bgcolor: c.text }} />
-                                {c.label}
-                              </Box>
+                                <span>{c.label}</span>
+                              </Stack>
                             </MenuItem>
                           ))}
                         </Select>
                       </FormControl>
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
                         label="Display Order"
@@ -610,6 +761,253 @@ export default function BudgetBazaarManager() {
             </Button>
           </DialogActions>
         </Box>
+      </Dialog>
+
+      {/* Manage Products Modal (Product Inclusions / Exclusions) */}
+      <Dialog
+        open={productsModalOpen}
+        onClose={() => !savingProducts && setProductsModalOpen(false)}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3, p: 1, minHeight: '80vh' } }}
+      >
+        <DialogTitle sx={{ fontWeight: 800, color: '#0f172a', pb: 1 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+            <Box>
+              <Typography variant="h6" fontWeight={800}>
+                Manage Products: {selectedDealForProducts?.title}
+              </Typography>
+              <Typography variant="body2" color="#64748b">
+                Tag: {selectedDealForProducts?.price_tag} | Price Rule:{' '}
+                {selectedDealForProducts?.max_price ? `≤ ₹${selectedDealForProducts.max_price}` : 'All Catalog Items'}
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={1}>
+              <Chip
+                label={`${visibleCount} Visible in Deal`}
+                color="success"
+                sx={{ fontWeight: 700 }}
+              />
+              <Chip
+                label={`${hiddenCount} Excluded`}
+                color="default"
+                sx={{ fontWeight: 700 }}
+              />
+            </Stack>
+          </Stack>
+        </DialogTitle>
+
+        <DialogContent dividers sx={{ p: { xs: 1.5, md: 3 } }}>
+          <Alert severity="info" sx={{ mb: 2.5, borderRadius: 2 }}>
+            {selectedDealForProducts?.max_price ? (
+              <span>
+                <strong>Default Price Rule:</strong> All products with effective selling price ≤ ₹
+                {selectedDealForProducts.max_price} (e.g. items at ₹399 for under ₹400) are{' '}
+                <strong>visible by default</strong>. Products above this price are hidden by default. Use the switches below to customize which products are shown or hidden.
+              </span>
+            ) : (
+              <span>
+                <strong>Default Price Rule:</strong> By default, all products in this category/catalog are{' '}
+                <strong>visible</strong>. You can turn off any product below to hide it from this deal.
+              </span>
+            )}
+          </Alert>
+
+          {/* Search, Filter & Quick Actions */}
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={2}
+            justifyContent="space-between"
+            alignItems={{ xs: 'stretch', md: 'center' }}
+            sx={{ mb: 2.5 }}
+          >
+            <TextField
+              size="small"
+              placeholder="Search products by name, brand, subcategory..."
+              value={productSearch}
+              onChange={e => setProductSearch(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" sx={{ color: '#94a3b8' }} />
+                  </InputAdornment>
+                )
+              }}
+              sx={{ minWidth: 320 }}
+            />
+
+            <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<RestartAltIcon />}
+                onClick={handleResetToPriceDefault}
+                sx={{ borderRadius: 2, textTransform: 'none' }}
+              >
+                Reset to Price Default
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<CheckCircleOutlineIcon />}
+                onClick={handleSelectAllFiltered}
+                sx={{ borderRadius: 2, textTransform: 'none' }}
+              >
+                Select Filtered
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                color="secondary"
+                startIcon={<HighlightOffIcon />}
+                onClick={handleDeselectAllFiltered}
+                sx={{ borderRadius: 2, textTransform: 'none' }}
+              >
+                Deselect Filtered
+              </Button>
+            </Stack>
+          </Stack>
+
+          {/* Filter Tabs */}
+          <Tabs
+            value={productFilterTab}
+            onChange={(e, val) => setProductFilterTab(val)}
+            sx={{ mb: 2, borderBottom: '1px solid #e2e8f0' }}
+          >
+            <Tab label={`All Products (${dealProducts.length})`} value="all" sx={{ textTransform: 'none', fontWeight: 600 }} />
+            <Tab label={`Visible in Deal (${visibleCount})`} value="visible" sx={{ textTransform: 'none', fontWeight: 600 }} />
+            <Tab label={`Hidden / Excluded (${hiddenCount})`} value="hidden" sx={{ textTransform: 'none', fontWeight: 600 }} />
+            <Tab label={`Eligible by Price (${eligibleCount})`} value="eligible" sx={{ textTransform: 'none', fontWeight: 600 }} />
+          </Tabs>
+
+          {/* Product Items Table */}
+          {dealProductsLoading ? (
+            <DoordrapeLoader variant="admin" text="Loading products for deal..." role="status" />
+          ) : displayedDealProducts.length === 0 ? (
+            <Box sx={{ textAlign: 'center', p: 4, color: '#64748b' }}>
+              <Typography variant="body1">No products match your search or filter.</Typography>
+            </Box>
+          ) : (
+            <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 2, maxHeight: 420 }}>
+              <Table stickyHeader size="small">
+                <TableHead sx={{ bgcolor: '#f8fafc' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, width: 80 }}>Image</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Product Title & Brand</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Effective Price</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Price Match</TableCell>
+                    <TableCell sx={{ fontWeight: 700, textAlign: 'right' }}>Show in Deal?</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {displayedDealProducts.map((p) => {
+                    const maxP = selectedDealForProducts?.max_price;
+                    const isPriceEligible = !maxP || p.effective_price <= maxP;
+
+                    return (
+                      <TableRow key={p.id} hover sx={{ bgcolor: p.is_visible ? 'inherit' : 'rgba(241, 245, 249, 0.4)' }}>
+                        <TableCell>
+                          <Box sx={{ width: 44, height: 44, borderRadius: 1.5, overflow: 'hidden', bgcolor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <img
+                              src={imageUrl(p.icon)}
+                              alt={p.productname}
+                              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                              onError={e => { e.currentTarget.src = '/images/product-placeholder.svg'; }}
+                            />
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={700} color="#0f172a">
+                            {p.productname}
+                          </Typography>
+                          <Typography variant="caption" color="#64748b">
+                            {p.brandname || 'SevenShades'} (ID: {p.id})
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="caption" display="block" color="#334155" fontWeight={600}>
+                            {p.subcategoryname || 'General'}
+                          </Typography>
+                          <Typography variant="caption" color="#94a3b8">
+                            {p.maincategoryname}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={1} alignItems="baseline">
+                            <Typography variant="body2" fontWeight={800} color="#0f172a">
+                              ₹{p.effective_price}
+                            </Typography>
+                            {p.min_offerprice > 0 && p.min_offerprice < p.min_price && (
+                              <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#94a3b8' }}>
+                                ₹{p.min_price}
+                              </Typography>
+                            )}
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          {isPriceEligible ? (
+                            <Chip
+                              size="small"
+                              label={`≤ ₹${maxP || p.effective_price} (Eligible)`}
+                              color="success"
+                              variant="outlined"
+                              sx={{ fontWeight: 700, fontSize: 11 }}
+                            />
+                          ) : (
+                            <Chip
+                              size="small"
+                              label={`₹${p.effective_price} (> ₹${maxP})`}
+                              color="warning"
+                              variant="outlined"
+                              sx={{ fontWeight: 600, fontSize: 11 }}
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell sx={{ textAlign: 'right' }}>
+                          <Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end">
+                            <Typography variant="caption" fontWeight={700} color={p.is_visible ? '#16a34a' : '#94a3b8'}>
+                              {p.is_visible ? 'Visible' : 'Hidden'}
+                            </Typography>
+                            <Switch
+                              checked={p.is_visible}
+                              onChange={() => handleToggleProduct(p.id)}
+                              color="success"
+                              size="small"
+                            />
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ p: 2.5, justifyContent: 'space-between' }}>
+          <Typography variant="body2" color="#64748b">
+            Showing {displayedDealProducts.length} of {dealProducts.length} catalog items ({visibleCount} active in this deal)
+          </Typography>
+          <Stack direction="row" spacing={1.5}>
+            <Button
+              disabled={savingProducts}
+              onClick={() => setProductsModalOpen(false)}
+              sx={{ borderRadius: 2 }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              disabled={savingProducts || dealProductsLoading}
+              onClick={handleSaveProducts}
+              sx={{ borderRadius: 2, bgcolor: '#22372f', '&:hover': { bgcolor: '#162520' }, px: 3 }}
+            >
+              {savingProducts ? 'Saving Selection...' : 'Save Product Selection'}
+            </Button>
+          </Stack>
+        </DialogActions>
       </Dialog>
     </Box>
   );

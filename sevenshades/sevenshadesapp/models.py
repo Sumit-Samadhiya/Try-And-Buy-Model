@@ -414,6 +414,9 @@ class BudgetDeal(models.Model):
     tier_color = models.CharField(max_length=20, default='blue')
     order_index = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    selection_mode = models.CharField(max_length=20, default='auto')
+    included_product_ids = models.JSONField(default=list, blank=True)
+    excluded_product_ids = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

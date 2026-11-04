@@ -303,6 +303,55 @@ def User_Product_List(request):
           return JsonResponse({"data": [], "status": False}, safe=False)
 
 
+def get_deal_effective_products(deal):
+    """
+    Returns queryset of Product objects active in a BudgetDeal.
+    Supports auto (by default price <= max_price, or all if no max_price) and custom selection,
+    respecting excluded_product_ids and included_product_ids.
+    """
+    base_qs = Product.objects.all().select_related('maincategoryid', 'subcategoryid', 'brandid').prefetch_related('productdetails_set')
+    if deal.subcategoryid_id:
+        base_qs = base_qs.filter(subcategoryid=deal.subcategoryid_id)
+    elif deal.maincategoryid_id:
+        base_qs = base_qs.filter(maincategoryid=deal.maincategoryid_id)
+
+    included_ids = set(deal.included_product_ids or [])
+    excluded_ids = set(deal.excluded_product_ids or [])
+
+    if deal.selection_mode == 'custom':
+        if not included_ids:
+            return Product.objects.none()
+        return Product.objects.filter(id__in=included_ids).select_related('maincategoryid', 'subcategoryid', 'brandid').prefetch_related('productdetails_set')
+
+    eligible_ids = []
+    for prod in base_qs:
+        p_id = prod.id
+        if p_id in excluded_ids:
+            continue
+        if p_id in included_ids:
+            eligible_ids.append(p_id)
+            continue
+
+        vars = prod.productdetails_set.all()
+        offerprices = [v.offerprice for v in vars if 0 < v.offerprice <= v.price]
+        prices = [v.price for v in vars if v.price > 0]
+        min_op = min(offerprices) if offerprices else 0
+        min_p = min(prices) if prices else 0
+        eff = min_op if min_op > 0 else min_p
+
+        if eff > 0:
+            if deal.max_price is None or deal.max_price <= 0:
+                eligible_ids.append(p_id)
+            elif eff <= deal.max_price:
+                eligible_ids.append(p_id)
+
+    for inc_id in included_ids:
+        if inc_id not in eligible_ids and inc_id not in excluded_ids:
+            eligible_ids.append(inc_id)
+
+    return Product.objects.filter(id__in=eligible_ids).select_related('maincategoryid', 'subcategoryid', 'brandid').prefetch_related('productdetails_set')
+
+
 @api_view(['GET'])
 def User_Budget_Bazaar_List(request):
     try:
@@ -322,6 +371,8 @@ def User_Budget_Bazaar_List(request):
                     pass
             if not icon_url:
                 icon_url = sub_icon or main_icon
+
+            prod_count = get_deal_effective_products(d).count()
             data.append({
                 'id': d.id,
                 'title': d.title,
@@ -336,11 +387,74 @@ def User_Budget_Bazaar_List(request):
                 'icon': icon_url,
                 'tier_color': d.tier_color,
                 'order_index': d.order_index,
+                'selection_mode': d.selection_mode,
+                'product_count': prod_count,
             })
         return JsonResponse({'data': data, 'status': True})
     except Exception as e:
         logger.exception('Error in User_Budget_Bazaar_List: %s', e)
         return JsonResponse({'data': [], 'status': False}, safe=False)
+
+
+@api_view(['GET'])
+def User_Budget_Bazaar_Products(request):
+    """
+    Returns color listings for a specific BudgetDeal or price-filtered collection.
+    Supports deal_id with admin-curated product inclusions/exclusions, or fallback query params.
+    """
+    try:
+        deal_id = request.query_params.get('deal_id') or request.query_params.get('id')
+        deal = None
+        if deal_id:
+            deal = BudgetDeal.objects.filter(id=deal_id, is_active=True).first()
+
+        if deal:
+            products_qs = get_deal_effective_products(deal)
+            listings = serialize_flipkart_color_listings(products_qs)
+            deal_data = {
+                'id': deal.id,
+                'title': deal.title,
+                'price_tag': deal.price_tag,
+                'max_price': deal.max_price,
+                'tier_color': deal.tier_color,
+                'selection_mode': deal.selection_mode,
+            }
+            return JsonResponse({'status': True, 'deal': deal_data, 'data': listings, 'count': len(listings)})
+
+        # Fallback if no deal_id: filter by max_price, subcategoryid, maincategoryid
+        max_p = request.query_params.get('max_price') or request.query_params.get('maxPrice')
+        sub_id = request.query_params.get('subcategoryid') or request.query_params.get('id')
+        main_id = request.query_params.get('maincategoryid') or request.query_params.get('category')
+
+        qs = Product.objects.all().select_related('maincategoryid', 'subcategoryid', 'brandid').prefetch_related('productdetails_set')
+        if sub_id:
+            qs = qs.filter(subcategoryid=sub_id)
+        elif main_id:
+            qs = qs.filter(maincategoryid=main_id)
+
+        try:
+            max_price_num = int(max_p) if max_p else None
+        except (ValueError, TypeError):
+            max_price_num = None
+
+        if max_price_num and max_price_num > 0:
+            filtered_ids = []
+            for p in qs:
+                vars = p.productdetails_set.all()
+                offerprices = [v.offerprice for v in vars if 0 < v.offerprice <= v.price]
+                prices = [v.price for v in vars if v.price > 0]
+                min_op = min(offerprices) if offerprices else 0
+                min_p = min(prices) if prices else 0
+                eff = min_op if min_op > 0 else min_p
+                if eff > 0 and eff <= max_price_num:
+                    filtered_ids.append(p.id)
+            qs = qs.filter(id__in=filtered_ids)
+
+        listings = serialize_flipkart_color_listings(qs)
+        return JsonResponse({'status': True, 'deal': None, 'data': listings, 'count': len(listings)})
+    except Exception as e:
+        logger.exception('Error in User_Budget_Bazaar_Products: %s', e)
+        return JsonResponse({'status': False, 'data': [], 'message': str(e)}, status=500)
 
 
 @api_view(['GET', 'POST'])

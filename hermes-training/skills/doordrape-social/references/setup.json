@@ -1,0 +1,19 @@
+{
+  "updated": "2026-11-03",
+  "primary_role": "DoorDrape organic social media marketing",
+  "timezone": "Asia/Kolkata",
+  "organic_autopublish_requested": false,
+  "publishing_mode": "drafts_only",
+  "accounts": [{"platform": "instagram", "handle": "doordrapeofficial", "url": "https://www.instagram.com/doordrapeofficial/", "connected": false}],
+  "service_areas": [{"city": "Jhansi", "state": "Uttar Pradesh", "country": "India", "source": "owner_confirmed_2026-11-03", "pincode_coverage": "check_current_checkout"}],
+  "video_style": "ai_generated",
+  "posts_per_day": null,
+  "publish_time": null,
+  "monthly_production_budget_inr": null,
+  "video_provider": null,
+  "publisher": null,
+  "scheduler_job_id": null,
+  "status": "drafts_only; ai_video_provider_and_budget_pending",
+  "paid_ad_spend_authorized": false,
+  "bulk_outreach_authorized": false
+}

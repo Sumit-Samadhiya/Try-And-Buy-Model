@@ -1,6 +1,5 @@
-import TryBuyScene from '../components/TryBuyScene';
 import Header from "../components/Header";
-
+import CurtainIntro from "../components/CurtainIntro";
 import DoordrapeLoader from "../components/DoordrapeLoader";
 import SubcategoryComponent from "../components/SubcategoryComponent";
 import SliderComponent from "../components/SliderComponent";
@@ -10,6 +9,7 @@ import Footer from "../components/Footer";
 import { catalogData } from "../../services/FetchDjangoApiServices";
 import MainCategoryComponent from "../components/MainCategoryComponent";
 import AdvertiseComponent from "../components/AdvertiseComponent";
+import HowItWorksSection from "../components/HowItWorksSection";
 import HomeFaqSection from "../components/HomeFaqSection";
 import { useNavigate } from "react-router-dom";
 import { useCallback, useState, useEffect } from "react";
@@ -106,6 +106,7 @@ export default function Home(props) {
             navigate('/productpage', {
                 state: {
                     pageView: 'BudgetBazaarComponent',
+                    dealId: deal.id,
                     products: {
                         id: deal.subcategoryid,
                         maincategoryid: deal.maincategoryid,
@@ -157,12 +158,9 @@ export default function Home(props) {
         Promise.all([fetchAllBanners(), fetchAllSubCategoryList(), fetchAllMainCategoryList()]).finally(() => setLoading(false));
     }, [fetchAllBanners, fetchAllSubCategoryList, fetchAllMainCategoryList, reload]);
 
-    useEffect(() => {
-        if (!loading) window.dispatchEvent(new Event('doordrape-home-ready'));
-    }, [loading]);
-
     return (
         <div style={{ position: 'relative', width: '100%', backgroundColor: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <CurtainIntro ready={!loading} />
             <Header />
             {loading && <DoordrapeLoader text="Loading curated collections…" role="status" />}
             {!loading && loadError && <div role="alert" style={{ padding: 24 }}>Some collections could not load. <button onClick={() => setReload(value => value + 1)}>Retry collections</button></div>}
@@ -171,13 +169,12 @@ export default function Home(props) {
             <main style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1 }}>
                 <h1 className="sr-only">Doordrape: Doorstep Try &amp; Buy Fashion — Try Clothes at Home Before You Buy</h1>
                 {/* Hero Banner Carousel */}
-                <section data-drapey-message="Hi, I’m Drapey! Scroll along — let’s find your style." style={{ width: '100%', padding: sm_matches ? '8px 10px 0' : '16px 16px 0', boxSizing: 'border-box' }}>
+                <section style={{ width: '100%', padding: sm_matches ? '8px 10px 0' : '16px 16px 0', boxSizing: 'border-box' }}>
                     <SliderComponent data={listBanner} onBannerClick={handleBannerClick} />
                 </section>
 
-
                 {/* Trust & Value Proposition Strip */}
-                <section data-drapey-message="Try at home, keep your favourites. That’s the DoorDrape way." style={{ width: '100%', maxWidth: 1360, padding: sm_matches ? '12px 16px 0' : '20px 16px 0', boxSizing: 'border-box' }}>
+                <section style={{ width: '100%', maxWidth: 1360, padding: sm_matches ? '12px 16px 0' : '20px 16px 0', boxSizing: 'border-box' }}>
                     <div style={{
                         display: 'grid',
                         gridTemplateColumns: sm_matches ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
@@ -219,11 +216,12 @@ export default function Home(props) {
                     </div>
                 </section>
 
-
+                {/* How It Works 3-Step Process */}
+                <HowItWorksSection />
 
                 {/* Subcategories Strip */}
                 {listSubCategory.length > 0 && (
-                    <section data-drapey-message="Looking for something specific? Explore these categories." style={{ width: '100%', maxWidth: 1360, marginTop: 40, padding: '0 16px', boxSizing: 'border-box' }}>
+                    <section style={{ width: '100%', maxWidth: 1360, marginTop: 40, padding: '0 16px', boxSizing: 'border-box' }}>
                         <div style={{ marginBottom: 16, textAlign: 'left' }}>
                             <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#64748b' }}>
                                 Trending Categories
@@ -238,13 +236,13 @@ export default function Home(props) {
 
                 {/* Featured Collections: Women & Men (Displayed Horizontally Side-by-Side) */}
                 {listMainCategory.length > 0 && (
-                    <section data-drapey-message="Start here to browse our collections." style={{ width: '100%', maxWidth: 1360, marginTop: sm_matches ? 28 : 48, padding: '0 16px', boxSizing: 'border-box' }}>
+                    <section style={{ width: '100%', maxWidth: 1360, marginTop: sm_matches ? 28 : 48, padding: '0 16px', boxSizing: 'border-box' }}>
                         <MainCategoryComponent data={listMainCategory} />
                     </section>
                 )}
 
                 {/* Budget Bazaar: 3-Tier Value Grid (Under ₹299, ₹399, ₹499) */}
-                <section data-drapey-message="Style on a budget? Explore the Budget Bazaar picks!" style={{ width: '100%', maxWidth: 1360, marginTop: sm_matches ? 24 : 48, padding: '0 16px', boxSizing: 'border-box' }}>
+                <section style={{ width: '100%', maxWidth: 1360, marginTop: sm_matches ? 24 : 48, padding: '0 16px', boxSizing: 'border-box' }}>
                     <BudgetBazaarComponent
                         subcategories={listSubCategory}
                         products={[...menProducts, ...womenProducts]}
@@ -254,14 +252,14 @@ export default function Home(props) {
 
                 {/* Promotional Try & Buy Value Banner (Desktop only - removed from mobile view) */}
                 {!sm_matches && (
-                    <section data-drapey-message="Your home can be your trial room." style={{ width: '100%', marginTop: 56 }}>
+                    <section style={{ width: '100%', marginTop: 56 }}>
                         <AdvertiseComponent />
                     </section>
                 )}
 
                 {/* Section 1: Shop for Men (Showcase Card Matching Demo Layout) */}
                 {menProducts.length > 0 && (
-                    <section data-drapey-message="Fresh picks for him — tap a product to explore sizes." style={{ width: '100%', maxWidth: 1360, marginTop: sm_matches ? 24 : 48, padding: '0 16px', boxSizing: 'border-box' }}>
+                    <section style={{ width: '100%', maxWidth: 1360, marginTop: sm_matches ? 24 : 48, padding: '0 16px', boxSizing: 'border-box' }}>
                         <CategoryShowcaseCard
                             title="Shop for Men"
                             items={menProducts}
@@ -274,7 +272,7 @@ export default function Home(props) {
 
                 {/* Section 2: Shop for Women (Showcase Card Matching Demo Layout) */}
                 {womenProducts.length > 0 && (
-                    <section data-drapey-message="Something lovely for her — explore these favourites." style={{ width: '100%', maxWidth: 1360, marginTop: sm_matches ? 20 : 32, padding: '0 16px', boxSizing: 'border-box' }}>
+                    <section style={{ width: '100%', maxWidth: 1360, marginTop: sm_matches ? 20 : 32, padding: '0 16px', boxSizing: 'border-box' }}>
                         <CategoryShowcaseCard
                             title="Shop for Women"
                             items={womenProducts}
@@ -285,11 +283,8 @@ export default function Home(props) {
                     </section>
                 )}
 
-
-                <TryBuyScene />
-
                 {/* FAQ Section matching JSON-LD Schema */}
-                <div style={{ width: "100%" }} data-drapey-message="Questions about your trial? Find the answers right here."><HomeFaqSection /></div>
+                <HomeFaqSection />
             </main>
 
             <Footer />

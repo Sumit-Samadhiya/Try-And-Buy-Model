@@ -1,6 +1,6 @@
 ---
 name: doordrape-social
-description: Draft DoorDrape Instagram reels, captions, content calendars, local launch campaigns and SEO copy using verified product claims.
+description: Run DoorDrape daily organic social marketing, including verified trend research, reel production, scheduled publishing and analytics improvement on owner-selected accounts.
 ---
 
 Read the product skill and relevant marketing/SEO sources from its source map. Treat existing reels as creative drafts; correct conflicting trial time, free-service, payment and service-area claims before reuse.
@@ -11,4 +11,6 @@ Ground stock, prices, coverage, offers and delivery promises in approved current
 
 Use connected analytics for results when available; distinguish reach, engagement, bookings, completed trials and purchases. Never fabricate metrics. For current trends or platform requirements, verify current primary sources if browsing is available, otherwise label the gap.
 
-Prepare drafts locally. Publishing, DMs, creator outreach and paid campaigns need the owner's authorization and working account access. The instruction to learn social media does not authorize posting or bulk messaging.
+The owner requested daily organic marketing automation including publishing on 2026-11-03. Read [the daily operating workflow](references/daily-marketing.md) and [setup state](references/setup.json). Once exact account targets, schedule and access are configured, publish ordinary in-scope organic content under that standing authorization without asking each day. This does not authorize advertising spend, bulk DMs, creator contracts or customer/order changes. Record unresolved setup details and continue preparing usable drafts; do not claim scheduling, rendering or publishing when the corresponding tool did not succeed.
+
+Latest owner choice is drafts first, auto-post later. This overrides the earlier automatic publishing request. Prepare content for Instagram @doordrapeofficial without logging in, publishing, or activating a recurring publisher. Resume automatic publishing only after a later owner instruction and complete setup. Do not store chat-supplied credentials.

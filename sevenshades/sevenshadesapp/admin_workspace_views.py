@@ -8,7 +8,7 @@ from django.core.files.storage import default_storage
 from django.http import JsonResponse
 from django.utils import timezone
 from rest_framework.decorators import api_view
-from .models import TryOrder, FinalOrder, SignUp, DeliveryRider, ProductDetails, SupportTicket, DeliveryZone, ExcludedArea, BudgetDeal, MainCategory, MySubCategory
+from .models import TryOrder, FinalOrder, SignUp, DeliveryRider, Product, ProductDetails, SupportTicket, DeliveryZone, ExcludedArea, BudgetDeal, MainCategory, MySubCategory
 
 from .security import failure
 
@@ -442,6 +442,7 @@ def RemovePincode(request):
 @api_view(['GET'])
 def Admin_Budget_Bazaar_List(request):
     try:
+        from .userinterface import get_deal_effective_products
         deals = BudgetDeal.objects.all().select_related('maincategoryid', 'subcategoryid').order_by('order_index', 'id')
         data = []
         for d in deals:
@@ -458,6 +459,8 @@ def Admin_Budget_Bazaar_List(request):
                     pass
             if not icon_url:
                 icon_url = sub_icon or main_icon
+
+            active_count = get_deal_effective_products(d).count()
             data.append({
                 'id': d.id,
                 'title': d.title,
@@ -473,6 +476,10 @@ def Admin_Budget_Bazaar_List(request):
                 'tier_color': d.tier_color,
                 'order_index': d.order_index,
                 'is_active': d.is_active,
+                'selection_mode': d.selection_mode,
+                'included_product_ids': d.included_product_ids or [],
+                'excluded_product_ids': d.excluded_product_ids or [],
+                'active_product_count': active_count,
             })
         return JsonResponse({'status': True, 'data': data})
     except Exception as e:
@@ -493,6 +500,7 @@ def Admin_Budget_Bazaar_Save(request):
         tier_color = (request.data.get('tier_color') or 'blue').strip()
         order_index = int(request.data.get('order_index') or 0)
         is_active = str(request.data.get('is_active', 'true')).lower() in ('true', '1')
+        selection_mode = request.data.get('selection_mode')
 
         if not title:
             return failure('Title is required.', 400)
@@ -524,6 +532,8 @@ def Admin_Budget_Bazaar_Save(request):
             deal.tier_color = tier_color
             deal.order_index = order_index
             deal.is_active = is_active
+            if selection_mode:
+                deal.selection_mode = selection_mode
             if 'icon' in request.FILES:
                 deal.icon = request.FILES['icon']
             deal.save()
@@ -538,6 +548,7 @@ def Admin_Budget_Bazaar_Save(request):
                 tier_color=tier_color,
                 order_index=order_index,
                 is_active=is_active,
+                selection_mode=selection_mode or 'auto',
                 icon=request.FILES.get('icon')
             )
             msg = 'Budget deal created successfully.'
@@ -546,6 +557,153 @@ def Admin_Budget_Bazaar_Save(request):
     except Exception as e:
         logger.exception('Admin_Budget_Bazaar_Save error: %s', e)
         return failure('Failed to save budget deal.', 500)
+
+
+@api_view(['GET'])
+def Admin_Budget_Bazaar_Products_Get(request):
+    """
+    Returns products for a deal with pricing and inclusion/exclusion status.
+    Admin can view which products are shown or hidden.
+    """
+    try:
+        deal_id = request.query_params.get('deal_id') or request.query_params.get('id')
+        if not deal_id:
+            return failure('Deal ID is required.', 400)
+        deal = BudgetDeal.objects.filter(id=deal_id).first()
+        if not deal:
+            return failure('Deal not found.', 404)
+
+        cat_scope = request.query_params.get('scope', 'all')
+        qs = Product.objects.all().select_related('maincategoryid', 'subcategoryid', 'brandid').prefetch_related('productdetails_set').order_by('pk')
+        if cat_scope == 'deal_category':
+            if deal.subcategoryid_id:
+                qs = qs.filter(subcategoryid=deal.subcategoryid_id)
+            elif deal.maincategoryid_id:
+                qs = qs.filter(maincategoryid=deal.maincategoryid_id)
+
+        included_ids = set(deal.included_product_ids or [])
+        excluded_ids = set(deal.excluded_product_ids or [])
+
+        products_data = []
+        for prod in qs:
+            vars = list(prod.productdetails_set.all())
+            offerprices = [v.offerprice for v in vars if 0 < v.offerprice <= v.price]
+            prices = [v.price for v in vars if v.price > 0]
+            min_op = min(offerprices) if offerprices else 0
+            min_p = min(prices) if prices else 0
+            eff = min_op if min_op > 0 else min_p
+
+            default_visible = True
+            if deal.max_price and deal.max_price > 0:
+                default_visible = bool(eff > 0 and eff <= deal.max_price)
+
+            if deal.selection_mode == 'custom':
+                is_visible = prod.id in included_ids
+            else:
+                if prod.id in excluded_ids:
+                    is_visible = False
+                elif prod.id in included_ids:
+                    is_visible = True
+                else:
+                    is_visible = default_visible
+
+            products_data.append({
+                'id': prod.id,
+                'productname': prod.productname,
+                'brandname': prod.brandid.brandname if prod.brandid else '',
+                'maincategoryname': prod.maincategoryid.maincategoryname if prod.maincategoryid else '',
+                'maincategoryid': prod.maincategoryid_id,
+                'subcategoryname': prod.subcategoryid.subcategoryname if prod.subcategoryid else '',
+                'subcategoryid': prod.subcategoryid_id,
+                'icon': str(prod.icon),
+                'min_price': min_p,
+                'min_offerprice': min_op,
+                'effective_price': eff,
+                'default_visible': default_visible,
+                'is_visible': is_visible,
+                'is_in_deal_category': (
+                    (deal.subcategoryid_id and prod.subcategoryid_id == deal.subcategoryid_id) or
+                    (deal.maincategoryid_id and not deal.subcategoryid_id and prod.maincategoryid_id == deal.maincategoryid_id) or
+                    (not deal.maincategoryid_id and not deal.subcategoryid_id)
+                ),
+            })
+
+        deal_info = {
+            'id': deal.id,
+            'title': deal.title,
+            'price_tag': deal.price_tag,
+            'max_price': deal.max_price,
+            'maincategoryid': deal.maincategoryid_id,
+            'maincategoryname': deal.maincategoryid.maincategoryname if deal.maincategoryid else '',
+            'subcategoryid': deal.subcategoryid_id,
+            'subcategoryname': deal.subcategoryid.subcategoryname if deal.subcategoryid else '',
+            'selection_mode': deal.selection_mode,
+            'included_product_ids': deal.included_product_ids or [],
+            'excluded_product_ids': deal.excluded_product_ids or [],
+        }
+
+        return JsonResponse({
+            'status': True,
+            'deal': deal_info,
+            'products': products_data,
+            'total_products': len(products_data),
+            'visible_count': sum(1 for p in products_data if p['is_visible'])
+        })
+    except Exception as e:
+        logger.exception('Admin_Budget_Bazaar_Products_Get error: %s', e)
+        return failure('Failed to fetch deal products.', 500)
+
+
+@api_view(['POST'])
+@transaction.atomic
+def Admin_Budget_Bazaar_Products_Save(request):
+    """
+    Saves product visibility preferences for a deal:
+    Accepts:
+      - deal_id: int
+      - selection_mode: 'auto' | 'custom'
+      - included_product_ids: list of int
+      - excluded_product_ids: list of int
+    """
+    try:
+        deal_id = request.data.get('deal_id') or request.data.get('id')
+        if not deal_id:
+            return failure('Deal ID is required.', 400)
+        deal = BudgetDeal.objects.filter(id=deal_id).first()
+        if not deal:
+            return failure('Deal not found.', 404)
+
+        selection_mode = request.data.get('selection_mode') or 'auto'
+        included = request.data.get('included_product_ids', [])
+        excluded = request.data.get('excluded_product_ids', [])
+
+        if isinstance(included, str):
+            import json
+            try: included = json.loads(included)
+            except: included = []
+        if isinstance(excluded, str):
+            import json
+            try: excluded = json.loads(excluded)
+            except: excluded = []
+
+        deal.selection_mode = selection_mode
+        deal.included_product_ids = [int(x) for x in included if str(x).isdigit()]
+        deal.excluded_product_ids = [int(x) for x in excluded if str(x).isdigit()]
+        deal.save()
+
+        return JsonResponse({
+            'status': True,
+            'message': f'Product visibility updated for deal "{deal.title}".',
+            'data': {
+                'deal_id': deal.id,
+                'selection_mode': deal.selection_mode,
+                'included_count': len(deal.included_product_ids),
+                'excluded_count': len(deal.excluded_product_ids),
+            }
+        })
+    except Exception as e:
+        logger.exception('Admin_Budget_Bazaar_Products_Save error: %s', e)
+        return failure('Failed to save deal products.', 500)
 
 
 @api_view(['POST'])

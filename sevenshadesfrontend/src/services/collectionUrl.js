@@ -4,6 +4,7 @@ export function collectionUrl(state = {}) {
   const query = new URLSearchParams();
   if (state.searchQuery) query.set('search', state.searchQuery);
   if (state.pageView) query.set('view', state.pageView);
+  if (state.dealId) query.set('dealId', state.dealId);
   if (p.id) query.set('id', p.id);
   if (p.maincategoryid) query.set('category', p.maincategoryid);
   const title = state.dealTitle || p.subcategoryname || p.maincategoryname || p.brandname;
@@ -25,10 +26,14 @@ export function collectionFromSearch(search) {
     };
   }
   if (!query.has('view')) return null;
-  return {
+  const result = {
     pageView: query.get('view'),
     products: { id: Number(query.get('id')) || undefined, maincategoryid: Number(query.get('category')) || undefined },
     dealTitle: query.get('title') || undefined,
     maxPrice: Number(query.get('maxPrice')) || undefined,
   };
+  if (query.has('dealId')) {
+    result.dealId = Number(query.get('dealId')) || undefined;
+  }
+  return result;
 }

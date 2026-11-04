@@ -74,24 +74,30 @@ export default function ProductPage(props) {
             const brandFiltered = allProducts.filter((item) => item?.brandid?.id === products.id);
             setProductList(brandFiltered);
         } else if (pageView === "BudgetBazaarComponent") {
-            let items = [];
-            if (products.maincategoryid) {
-                const res = await postData('user_products_maincategory', { maincategoryid: products.maincategoryid });
-                items = res?.data || [];
+            const dealId = selection.dealId || location.state?.dealId;
+            if (dealId) {
+                const res = await getData(`user_budget_bazaar_products?deal_id=${dealId}`);
+                setProductList(res?.data || []);
             } else {
-                const result = await getData('user_product_list');
-                items = result.data || [];
+                let items = [];
+                if (products?.maincategoryid) {
+                    const res = await postData('user_products_maincategory', { maincategoryid: products.maincategoryid });
+                    items = res?.data || [];
+                } else {
+                    const result = await getData('user_product_list');
+                    items = result.data || [];
+                }
+                if (products?.id) {
+                    items = items.filter((item) => Number(item?.subcategoryid?.id) === Number(products.id));
+                }
+                if (maxPrice && Number(maxPrice) > 0) {
+                    items = items.filter((item) => {
+                        const price = Number(item.min_offerprice > 0 ? item.min_offerprice : item.min_price || item.offerprice || item.price);
+                        return price > 0 && price <= Number(maxPrice);
+                    });
+                }
+                setProductList(items);
             }
-            if (products.id) {
-                items = items.filter((item) => Number(item?.subcategoryid?.id) === Number(products.id));
-            }
-            if (maxPrice && Number(maxPrice) > 0) {
-                items = items.filter((item) => {
-                    const price = Number(item.min_offerprice > 0 ? item.min_offerprice : item.min_price || item.offerprice || item.price);
-                    return !price || price <= Number(maxPrice);
-                });
-            }
-            setProductList(items);
         } else if (pageView === "SearchComponent" || selection.searchQuery) {
             const q = selection.searchQuery || '';
             const res = await postData('user_search_products', { q });
@@ -103,7 +109,7 @@ export default function ProductPage(props) {
 
         } catch (failure) { if (version === requestVersion.current) { setError(failure.message); if (!append) setProductList([]); } }
         finally { if (version === requestVersion.current) { setLoading(false); setLoadingMore(false); } }
-    }, [pageView, products, maxPrice, selection.searchQuery]);
+    }, [pageView, products, maxPrice, selection.searchQuery, selection.dealId, location.state]);
 
     useEffect(() => {
         setPageView();
