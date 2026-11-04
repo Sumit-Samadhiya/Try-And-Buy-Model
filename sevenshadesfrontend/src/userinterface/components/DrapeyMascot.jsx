@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import DrapeyAvatar from './DrapeyAvatar';
-import { playDrapeySfx, speakDrapeyVoice, playChikuVoice, stopChikuVoice, isSoundMuted, setSoundMuted } from './drapeyAudio';
+import { playDrapeySfx, speakDrapeyVoice, playChikuVoice, stopChikuVoice, playDrapeyDialogue, stopAllVoices, isSoundMuted, setSoundMuted } from './drapeyAudio';
 import './DrapeyMascot.css';
 
 const greeting = 'Hey! Namaste! 🙏 Main Drapey hoon — aapka personal Try & Buy stylist! Ghar baithe try karo, pasand aaye tabhi khareedo! 😉✨';
@@ -99,16 +99,13 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
       setSoundMuted(next);
       if (!next) {
         playDrapeySfx('pop');
-        playChikuVoice('greet');
+        playDrapeyDialogue('greeting', greetingMessage, 'happy');
       } else {
-        stopChikuVoice();
-        if (typeof window !== 'undefined' && window.speechSynthesis) {
-          window.speechSynthesis.cancel();
-        }
+        stopAllVoices();
       }
       return next;
     });
-  }, []);
+  }, [greetingMessage]);
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -189,15 +186,13 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
         feedbackUntil.current = Date.now() + 6000;
         setSpecialAction('yahoo');
         playDrapeySfx('yahoo');
-        playChikuVoice('cart');
-        speakDrapeyVoice(detail.message, 'yahoo');
+        playDrapeyDialogue('cart', detail.message, 'yahoo');
         setTimeout(() => setSpecialAction(null), 3600);
       } else if (actionTone === 'order_success') {
         feedbackUntil.current = Date.now() + 9000;
         setSpecialAction('order_success');
         playDrapeySfx('order_success');
-        playChikuVoice('cart');
-        speakDrapeyVoice(detail.message, 'celebrating');
+        playDrapeyDialogue('order_success', detail.message, 'celebrating');
         setTimeout(() => setSpecialAction(null), 5000);
       } else {
         feedbackUntil.current = Date.now() + 14000;
@@ -259,10 +254,7 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
       if (event.key === 'Escape') {
         dismissed.current = true;
         setPhase('quiet');
-        stopChikuVoice();
-        if (typeof window !== 'undefined' && window.speechSynthesis) {
-          window.speechSynthesis.cancel();
-        }
+        stopAllVoices();
       }
       wake();
     };
@@ -291,8 +283,7 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
     setMessage(rageMsg);
     setReplay(v => v + 1);
     playDrapeySfx('bomb');
-    playChikuVoice('angry');
-    speakDrapeyVoice('3 BAAR KYUN DABAYA? Main phatne wala hoon!', 'angry');
+    playDrapeyDialogue('bomb_rage', '3 BAAR KYUN DABAYA? Main phatne wala hoon!', 'angry');
 
     clearTimeout(rageTimer.current);
     rageTimer.current = setTimeout(() => {
@@ -307,7 +298,7 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
         setMessage(sootMsg);
         setReplay(v => v + 1);
         playDrapeySfx('soot');
-        speakDrapeyVoice('Khasi-khasi... Dekh liya mera gussa? Pura phat gaya na! Ab shanti se shopping karo!', 'soot');
+        playDrapeyDialogue('soot', 'Khasi-khasi... Dekh liya mera gussa? Pura phat gaya na! Ab shanti se shopping karo!', 'soot');
 
         rageTimer.current = setTimeout(() => {
           // Return to normal
@@ -424,14 +415,14 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
       setReplay(v => v + 1);
       setSpecialAction('poke');
       playDrapeySfx('pop');
-      playChikuVoice('poke');
-      speakDrapeyVoice('Hey! 2 baar chhu diya! Ek baar aur tap kiya toh main bomb ki tarah phat jaunga!', 'angry');
+      playDrapeyDialogue('warning', warnMsg, 'angry');
       setTimeout(() => setSpecialAction(null), 800);
       return;
     }
 
     // Single click: cycle through tips
-    const tip = NAUGHTY_TIPS[tipIndex.current % NAUGHTY_TIPS.length];
+    const currentIdx = tipIndex.current % NAUGHTY_TIPS.length;
+    const tip = NAUGHTY_TIPS[currentIdx];
     tipIndex.current += 1;
     feedbackUntil.current = Date.now() + 8000;
     setTone('info');
@@ -439,8 +430,7 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
     setReplay(v => v + 1);
     setSpecialAction('poke');
     playDrapeySfx('pop');
-    playChikuVoice('poke');
-    speakDrapeyVoice(tip, 'happy');
+    playDrapeyDialogue(`tip_${currentIdx + 1}`, tip, 'happy');
     setTimeout(() => setSpecialAction(null), 800);
   };
 

@@ -225,8 +225,20 @@ export const getBestCuteVoice = () => {
 };
 
 // Sweet, Natural, Pleasant Voice Text-To-Speech with Emotion
+export const isDialogueAudioPlaying = () => {
+  try {
+    return Boolean(
+      (currentDialogueAudio && !currentDialogueAudio.paused && !currentDialogueAudio.ended) ||
+      (currentChikuAudio && !currentChikuAudio.paused && !currentChikuAudio.ended)
+    );
+  } catch (_) {
+    return false;
+  }
+};
+
 export const speakDrapeyVoice = (rawText, mood = 'happy') => {
   if (isSoundMuted()) return;
+  if (isDialogueAudioPlaying()) return;
   if (typeof window === 'undefined' || !window.speechSynthesis) return;
 
   const text = cleanTextForSpeech(rawText);
@@ -301,7 +313,26 @@ const CHIKU_SOUNDS = {
   full: '/sounds/op_chiku_voice.mp3'
 };
 
+// Pre-rendered studio dialogue audio clips (Chiku & cute baby studio clips)
+const DRAPEY_DIALOGUE_AUDIO = {
+  greeting: '/sounds/drapey_greeting.mp3',
+  cart: '/sounds/drapey_cart.mp3',
+  order_success: '/sounds/drapey_order_success.mp3',
+  warning: '/sounds/drapey_warning.mp3',
+  bomb_rage: '/sounds/drapey_bomb_rage.mp3',
+  soot: '/sounds/drapey_soot.mp3',
+  tip_1: '/sounds/drapey_tip_1.mp3',
+  tip_2: '/sounds/drapey_tip_2.mp3',
+  tip_3: '/sounds/drapey_tip_3.mp3',
+  tip_4: '/sounds/drapey_tip_4.mp3',
+  tip_5: '/sounds/drapey_tip_5.mp3',
+  tip_6: '/sounds/drapey_tip_6.mp3',
+  tip_7: '/sounds/drapey_tip_7.mp3',
+  tip_8: '/sounds/drapey_tip_8.mp3',
+};
+
 let currentChikuAudio = null;
+let currentDialogueAudio = null;
 
 export const playChikuVoice = (clip = 'poke') => {
   if (isSoundMuted()) return;
@@ -325,6 +356,50 @@ export const stopChikuVoice = () => {
     if (currentChikuAudio) {
       currentChikuAudio.pause();
       currentChikuAudio.currentTime = 0;
+      currentChikuAudio = null;
     }
   } catch (_) {}
+};
+
+export const playDrapeyDialogue = (dialogueKey, fallbackText = '', mood = 'happy') => {
+  if (isSoundMuted()) return;
+  if (typeof window === 'undefined') return;
+
+  stopAllVoices();
+
+  const audioSrc = DRAPEY_DIALOGUE_AUDIO[dialogueKey];
+  if (audioSrc) {
+    try {
+      const audio = new Audio(audioSrc);
+      audio.volume = 0.95;
+      currentDialogueAudio = audio;
+      const playPromise = audio.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {
+          if (fallbackText) speakDrapeyVoice(fallbackText, mood);
+        });
+      }
+      return;
+    } catch (_) {}
+  }
+
+  if (fallbackText) {
+    speakDrapeyVoice(fallbackText, mood);
+  }
+};
+
+export const stopAllVoices = () => {
+  try {
+    if (currentDialogueAudio) {
+      currentDialogueAudio.pause();
+      currentDialogueAudio.currentTime = 0;
+      currentDialogueAudio = null;
+    }
+  } catch (_) {}
+  stopChikuVoice();
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    try {
+      window.speechSynthesis.cancel();
+    } catch (_) {}
+  }
 };
