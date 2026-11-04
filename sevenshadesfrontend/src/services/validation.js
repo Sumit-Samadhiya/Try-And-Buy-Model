@@ -1,5 +1,5 @@
 const required = {
-  signup_submit: ['mobileno','fname','lname','emailid','password','confirm_password','otp','challenge_id'],
+  signup_submit: ['mobileno','fname','lname','password','confirm_password','otp','challenge_id'],
   check_costumer_login: ['mobileno','password'], check_admin_login: ['emailid','password'], delivery_rider_login: ['phone','password'],
   otp_request: ['mobileno','purpose'], otp_login: ['mobileno','otp','challenge_id'], reset_password: ['mobileno','otp','challenge_id','password','confirm_password'],
   address_submit: ['address','city','country','postcode','address_type'], address_update: ['address','city','country','postcode','address_type'],
@@ -58,7 +58,7 @@ export function validateFields(endpoint, body) {
   for (const [key, value] of Object.entries(data)) {
     if (limits[key] && !(key === 'address' && endpoint === 'try_order_create') && (typeof value !== 'string' || value.length > limits[key] || (!value.trim() && !['review_text','bannerdescription','sku'].includes(key)))) errors[key] = 'Enter valid text up to ' + limits[key] + ' characters.';
     if (['mobileno','mobile','phone','user_mobile'].includes(key) && !/^[6-9][0-9]{9}$/.test(String(value))) errors[key] = 'Enter a 10-digit mobile number starting with 6–9.';
-    if (key === 'emailid' && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || value.length > 70)) errors[key] = 'Enter a valid email address.';
+    if (key === 'emailid' && value && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || value.length > 70)) errors[key] = 'Enter a valid email address.';
     if (['postcode', 'pincode'].includes(key) && !/^[1-9][0-9]{5}$/.test(value)) errors[key] = 'Enter a valid 6-digit PIN code.';
     if (['password','confirm_password'].includes(key) && (typeof value !== 'string' || !value.trim() || value.length > 128)) errors[key] = 'Enter a password up to 128 characters.';
     if (key === 'otp' && !/^[0-9]{6}$/.test(value)) errors[key] = 'Enter the 6-digit OTP.';

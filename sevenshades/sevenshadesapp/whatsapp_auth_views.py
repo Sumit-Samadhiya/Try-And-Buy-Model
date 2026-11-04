@@ -314,7 +314,17 @@ def verify_whatsapp_otp(request):
         confirm_password = str(data.get('confirm_password') or '')
         fname = str(data.get('fname') or 'Customer').strip()
         lname = str(data.get('lname') or '').strip()
-        emailid = str(data.get('emailid') or '').strip()
+        raw_email = str(data.get('emailid') or '').strip().lower()
+        clean_email = raw_email if raw_email else None
+
+        if clean_email:
+            if SignUp.objects.filter(emailid__iexact=clean_email).exists():
+                return JsonResponse({
+                    'status': False,
+                    'success': False,
+                    'message': 'An account with this email address already exists. Please sign in or use a different email.',
+                    'errors': {'emailid': 'This email address is already registered.'}
+                }, status=409)
 
         if password or confirm_password:
             if password != confirm_password:
@@ -332,7 +342,7 @@ def verify_whatsapp_otp(request):
             mobileno=phone,
             fname=fname or 'Customer',
             lname=lname,
-            emailid=emailid,
+            emailid=clean_email,
             password=make_password(password) if password else make_password(None)
         )
         get_user_model().objects.get_or_create(

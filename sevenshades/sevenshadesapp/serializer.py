@@ -139,10 +139,14 @@ class  BannerSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class  SignUpSerializer(AccountSerializer):
-    emailid = serializers.EmailField(max_length=70)
+    emailid = serializers.EmailField(max_length=70, required=False, allow_blank=True, allow_null=True)
 
     def validate_emailid(self, value):
+        if not value:
+            return None
         value = value.strip().lower()
+        if not value:
+            return None
         existing = SignUp.objects.filter(emailid__iexact=value)
         if self.instance: existing = existing.exclude(pk=self.instance.pk)
         if existing.exists(): raise serializers.ValidationError('An account with this email already exists.')

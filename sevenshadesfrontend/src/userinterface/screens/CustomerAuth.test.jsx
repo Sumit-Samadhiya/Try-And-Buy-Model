@@ -8,13 +8,18 @@ import { postData } from '../../services/FetchDjangoApiServices';
 
 jest.mock('../../services/FetchDjangoApiServices', () => ({
   getData: jest.fn(),
-  prepareSession: jest.fn(() => Promise.resolve()), postData: jest.fn(),
+  prepareSession: jest.fn(() => Promise.resolve()),
+  postData: jest.fn(),
   clearCachedAccounts: jest.fn()
 }));
 
 jest.mock('../../services/analytics', () => ({
   trackAuthEvent: jest.fn(),
   trackEvent: jest.fn()
+}));
+
+jest.mock('sweetalert2', () => ({
+  fire: jest.fn(() => Promise.resolve({ isConfirmed: true }))
 }));
 
 let currentView = null;
@@ -62,11 +67,6 @@ test('invalid login fields show inline errors without a request', async () => {
   show();
   await screen.findByText('Welcome back.');
 
-  // Switch to Password tab
-  await act(async () => {
-    fireEvent.click(screen.getByRole('button', { name: 'Password' }));
-  });
-
   fill(/Mobile number/, '123');
   fill(/^Password/, 'test');
   await act(async () => {
@@ -76,55 +76,52 @@ test('invalid login fields show inline errors without a request', async () => {
   expect(postData).not.toHaveBeenCalled();
 });
 
-test('WhatsApp OTP login requests OTP and logs in successfully', async () => {
-  postData
-    .mockResolvedValueOnce({
-      status: true,
-      success: true,
-      message: 'OTP sent to your WhatsApp successfully.',
-      phone: '9876543210',
-      cooldown: 60,
-      expiresIn: 300
-    })
-    .mockResolvedValueOnce({
-      status: true,
-      success: true,
-      token: 'jwt-whatsapp-token-abc',
-      user: { mobileno: '9876543210', fname: 'Customer' },
-      data: [{ mobileno: '9876543210', fname: 'Customer' }]
-    });
+test('password login signs in successfully with valid credentials', async () => {
+  postData.mockResolvedValueOnce({
+    status: true,
+    data: [{ mobileno: '9876543210', fname: 'Customer' }],
+    token: 'jwt-auth-token-123'
+  });
 
   show();
   await screen.findByText('Welcome back.');
 
   fill(/Mobile number/, '9876543210');
+  fill(/^Password/, 'MyValidPassword123');
 
-  // Click Get OTP on WhatsApp
   await act(async () => {
-    fireEvent.click(screen.getByRole('button', { name: /Get OTP on WhatsApp/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in', exact: true }));
   });
 
-  expect(postData).toHaveBeenCalledWith('auth/send-whatsapp-otp', {
-    phone: '9876543210',
-    purpose: 'login'
-  });
-  expect(await screen.findByText(/OTP sent to your WhatsApp/i)).toBeInTheDocument();
-
-  // Enter 6-digit WhatsApp OTP
-  fill(/WhatsApp OTP/, '654321');
-
-  // Submit verification
-  await act(async () => {
-    fireEvent.click(screen.getByRole('button', { name: /Verify & sign in/i }));
-  });
-
-  expect(postData).toHaveBeenCalledWith('auth/verify-whatsapp-otp', {
-    phone: '9876543210',
-    otp: '654321',
-    purpose: 'login'
+  expect(postData).toHaveBeenCalledWith('check_costumer_login', {
+    mobileno: '9876543210',
+    password: 'MyValidPassword123'
   });
   expect(await screen.findByText('Signed in home')).toBeInTheDocument();
-  expect(localStorage.getItem('sevenshades_token')).toBe('jwt-whatsapp-token-abc');
+  expect(localStorage.getItem('sevenshades_token')).toBe('jwt-auth-token-123');
+});
+
+test('shows friendly error when login credentials fail', async () => {
+  postData.mockResolvedValueOnce({
+    status: false,
+    message: 'Invalid credentials'
+  });
+
+  show();
+  await screen.findByText('Welcome back.');
+
+  fill(/Mobile number/, '9998887776');
+  fill(/^Password/, 'WrongPassword123');
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in', exact: true }));
+  });
+
+  expect(postData).toHaveBeenCalledWith('check_costumer_login', {
+    mobileno: '9998887776',
+    password: 'WrongPassword123'
+  });
+  expect(await screen.findByText(/Incorrect mobile number or password/i)).toBeInTheDocument();
 });
 
 test('signup rejects mismatched confirmation before requesting WhatsApp OTP', async () => {
@@ -198,6 +195,57 @@ test('signup sends registration details with WhatsApp OTP verification', async (
   expect(localStorage.getItem('sevenshades_token')).toBe('jwt-new-user-token');
 });
 
+test('signup succeeds without optional email address', async () => {
+  postData
+    .mockResolvedValueOnce({
+      status: true,
+      success: true,
+      message: 'OTP sent to your WhatsApp successfully.',
+      phone: '9000000092'
+    })
+    .mockResolvedValueOnce({
+      status: true,
+      success: true,
+      token: 'jwt-new-user-token-2',
+      created: true,
+      user: { mobileno: '9000000092', fname: 'NoEmail' }
+    });
+
+  show('signup');
+  fill(/First name/, 'NoEmail');
+  fill(/Last name/, 'User');
+  fill(/Mobile number/, '9000000092');
+  // Email address is intentionally left empty
+  fill(/^Password/, 'Strong-pass!429');
+  fill(/Confirm password/, 'Strong-pass!429');
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /Get OTP on WhatsApp/i }));
+  });
+
+  expect(postData).toHaveBeenCalledWith('auth/send-whatsapp-otp', {
+    phone: '9000000092',
+    purpose: 'signup'
+  });
+
+  fill(/WhatsApp OTP/, '112233');
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /Verify & create account/i }));
+  });
+
+  expect(postData).toHaveBeenCalledWith('auth/verify-whatsapp-otp', {
+    phone: '9000000092',
+    otp: '112233',
+    purpose: 'signup',
+    fname: 'NoEmail',
+    lname: 'User',
+    password: 'Strong-pass!429',
+    confirm_password: 'Strong-pass!429'
+  });
+  expect(await screen.findByText('Signed in home')).toBeInTheDocument();
+});
+
 test('reset sends new password with WhatsApp OTP verification', async () => {
   postData
     .mockResolvedValueOnce({
@@ -251,37 +299,18 @@ test('WhatsApp OTP displays error message when service is offline or rate limite
     message: 'Too many OTP requests. Please wait 15 minutes before requesting again.'
   });
 
-  show();
+  show('signup');
+  fill(/First name/, 'John');
+  fill(/Last name/, 'Doe');
   fill(/Mobile number/, '9876543210');
+  fill(/^Password/, 'StrongPassword123');
+  fill(/Confirm password/, 'StrongPassword123');
 
   await act(async () => {
     fireEvent.click(screen.getByRole('button', { name: /Get OTP on WhatsApp/i }));
   });
 
-  expect(await screen.findByText(/Too many OTP requests/i)).toBeInTheDocument();
-});
-
-test('shows error when unregistered mobile tries to sign in', async () => {
-  postData.mockResolvedValueOnce({
-    status: false,
-    success: false,
-    message: 'No account found with this mobile number. Please sign up first.',
-    errors: { mobileno: 'No account found with this mobile number. Please sign up first.' }
-  });
-
-  show();
-  fill(/Mobile number/, '9998887776');
-
-  await act(async () => {
-    fireEvent.click(screen.getByRole('button', { name: /Get OTP on WhatsApp/i }));
-  });
-
-  expect(postData).toHaveBeenCalledWith('auth/send-whatsapp-otp', {
-    phone: '9998887776',
-    purpose: 'login'
-  });
-  expect((await screen.findAllByText(/No account found with this mobile number/i)).length).toBeGreaterThan(0);
-  expect(screen.queryByLabelText(/WhatsApp OTP/)).not.toBeInTheDocument();
+  expect(await screen.findByText(/Too many attempts/i)).toBeInTheDocument();
 });
 
 test('shows error when unregistered mobile tries to reset password', async () => {
@@ -305,7 +334,6 @@ test('shows error when unregistered mobile tries to reset password', async () =>
     phone: '9998887776',
     purpose: 'reset'
   });
-  expect((await screen.findAllByText(/No account found with this mobile number/i)).length).toBeGreaterThan(0);
+  expect((await screen.findAllByText(/No account was found with this mobile number/i)).length).toBeGreaterThan(0);
   expect(screen.queryByLabelText(/WhatsApp OTP/)).not.toBeInTheDocument();
 });
-

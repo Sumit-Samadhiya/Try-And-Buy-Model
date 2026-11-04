@@ -116,64 +116,127 @@
     max-width: 440px;
 }
 
-.auth-methods {
-    display: flex;
-    background-color: #ecfdf5;
-    border: 1px solid #d1fae5;
-    border-radius: 12px;
-    padding: 4px;
-    margin-bottom: 24px;
-    gap: 4px;
-}
-
-.auth-methods button {
-    flex: 1;
-    color: #065f46;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 13px;
-    border: none;
-    padding: 8px 10px;
-    cursor: pointer;
-    background: transparent;
-    transition: all 0.15s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    white-space: nowrap;
-}
-
-.auth-methods button[aria-pressed=true] {
-    background-color: #ffffff;
-    color: #064e3b;
-    box-shadow: 0 2px 6px rgba(6, 78, 59, 0.12);
-    font-weight: 800;
-}
-
 .auth-name-row {
     display: flex;
     gap: 16px;
 }
 
 .auth-forgot {
-    align-self: flex-end;
+    display: inline-block;
     font-size: 13px;
     color: #059669;
-    cursor: pointer;
     font-weight: 600;
-    margin-top: 4px;
+    text-decoration: none;
+    transition: color 0.15s ease;
 }
 
 .auth-forgot:hover {
     color: #064e3b;
+    text-decoration: underline;
 }
 
 .auth-link {
-    color: #065f46;
+    color: #064e3b;
     font-weight: 700;
     text-underline-offset: 4px;
+    text-decoration: none;
 }
+
+.auth-link:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   MUI TextFields & Modern Input UI Fixes (Desktop + Mobile)
+   Ensures labels never clip or overlap the bottom outline border
+   ========================================================================== */
+
+.customer-auth .MuiFormControl-root {
+    width: 100%;
+    position: relative;
+}
+
+.customer-auth .MuiOutlinedInput-root {
+    background-color: #ffffff;
+    border-radius: 12px;
+    font-size: 15px;
+    min-height: 52px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.customer-auth .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline {
+    border-color: #cbd5e1;
+    border-width: 1px;
+}
+
+.customer-auth .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+    border-color: #94a3b8;
+}
+
+.customer-auth .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: #064e3b;
+    border-width: 2px;
+}
+
+.customer-auth .MuiOutlinedInput-root.Mui-focused {
+    box-shadow: 0 0 0 3px rgba(6, 78, 59, 0.08);
+}
+
+.customer-auth .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+    border-color: #dc2626;
+}
+
+.customer-auth .MuiOutlinedInput-input {
+    padding: 14px 16px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #0f172a;
+    box-sizing: border-box;
+    height: auto;
+}
+
+.customer-auth .MuiInputLabel-root {
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569;
+    letter-spacing: 0.01em;
+    line-height: 1;
+}
+
+.customer-auth .MuiInputLabel-root.Mui-focused {
+    color: #064e3b;
+    font-weight: 700;
+}
+
+.customer-auth .MuiInputLabel-root.Mui-error {
+    color: #dc2626;
+}
+
+.customer-auth .MuiInputLabel-outlined.MuiInputLabel-shrink {
+    transform: translate(14px, -9px) scale(0.85);
+    background-color: #ffffff;
+    padding: 0 6px;
+    border-radius: 4px;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.customer-auth .MuiFormHelperText-root {
+    margin-left: 4px;
+    margin-top: 4px;
+    font-size: 12px;
+}
+
+.customer-auth .MuiInputAdornment-root p {
+    color: #64748b;
+    font-weight: 600;
+    font-size: 15px;
+    margin: 0;
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
 
 @media (max-width: 860px) {
     .customer-auth {
@@ -181,15 +244,17 @@
     }
 
     .auth-story {
-        padding: 32px 24px;
+        padding: 28px 24px;
     }
 
-    .auth-story > div, .auth-footnote, .auth-steps {
+    .auth-story > div,
+    .auth-footnote,
+    .auth-steps {
         display: none;
     }
 
     .auth-wordmark {
-        font-size: 24px;
+        font-size: 22px;
     }
 
     .auth-form-side {
@@ -199,5 +264,30 @@
     .auth-name-row {
         flex-direction: column;
         gap: 16px;
+    }
+}
+
+@media (max-width: 600px) {
+    .auth-form-side {
+        padding: 24px 16px 40px;
+    }
+
+    .auth-card {
+        max-width: 100%;
+    }
+
+    .customer-auth .MuiOutlinedInput-root {
+        min-height: 48px;
+        border-radius: 10px;
+    }
+
+    .customer-auth .MuiOutlinedInput-input {
+        padding: 12px 14px;
+        font-size: 16px; /* Prevents auto-zoom on mobile iOS Safari */
+    }
+
+    .customer-auth .MuiInputLabel-outlined.MuiInputLabel-shrink {
+        transform: translate(12px, -8px) scale(0.85);
+        font-size: 13px;
     }
 }

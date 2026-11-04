@@ -1,6 +1,6 @@
 import { drapeyFeedback } from '../../services/drapeyFeedback';
 import BrandLogo from '../../userinterface/components/BrandLogo';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { Alert, Box, Button, IconButton, InputAdornment, Stack, TextField, Typography } from '@mui/material';
@@ -8,74 +8,145 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import WhatsApp from '@mui/icons-material/WhatsApp';
+import Swal from 'sweetalert2';
 import { postData, clearCachedAccounts, prepareSession } from '../../services/FetchDjangoApiServices';
 import { validateFields } from '../../services/validation';
 import { trackAuthEvent } from '../../services/analytics';
 import DoordrapeLoader from '../../userinterface/components/DoordrapeLoader';
 import './CustomerAuth.css';
 
+function getCustomerFriendlyMessage(rawMessage, fallback = 'Something went wrong. Please try again.') {
+  if (!rawMessage || typeof rawMessage !== 'string') return fallback;
+  const msg = rawMessage.trim();
+  const lower = msg.toLowerCase();
+
+  if (lower.includes('invalid credentials') || (lower.includes('fail') && lower.includes('login'))) {
+    return 'Incorrect mobile number or password. Please verify your details, or use "Forgot password?" to reset.';
+  }
+  if (lower.includes('no account found') || lower.includes('does not exist') || lower.includes('unregistered')) {
+    return 'No account was found with this mobile number. Please check the number or create an account.';
+  }
+  if (lower.includes('already exists') || lower.includes('already registered')) {
+    return 'An account already exists with this mobile number. Please sign in instead.';
+  }
+  if (lower.includes('email already exists') || (lower.includes('email') && lower.includes('exists'))) {
+    return 'An account with this email address already exists. Please use a different email or sign in.';
+  }
+  if (lower.includes('too many') || lower.includes('rate limit') || lower.includes('attempts')) {
+    return 'Too many attempts for your security. Please wait a few minutes before trying again.';
+  }
+  if (lower.includes('invalid or expired') || lower.includes('otp expired') || (lower.includes('otp') && lower.includes('expired'))) {
+    return 'The verification code has expired or is invalid. Please request a new code.';
+  }
+  if (lower.includes('whatsapp') && (lower.includes('unreachable') || lower.includes('offline') || lower.includes('service'))) {
+    return 'Our WhatsApp verification service is momentarily busy. Please try again in a few moments.';
+  }
+  if (lower.includes('network') || lower.includes('failed to fetch') || lower.includes('connection')) {
+    return 'Unable to reach the server. Please check your internet connection and try again.';
+  }
+  if (lower.includes('passwords do not match')) {
+    return 'Passwords do not match. Please ensure both passwords are identical.';
+  }
+  return msg;
+}
+
 export default function CustomerAuth({ kind = 'login' }) {
   const navigate = useNavigate(), location = useLocation(), dispatch = useDispatch();
   const signup = kind === 'signup', reset = kind === 'reset';
-  const [method, setMethod] = useState('whatsapp');
-  const [form, setForm] = useState({ mobileno:'', fname:'', lname:'', emailid:'', password:'', confirm_password:'', otp:'' });
-  const [errors, setErrors] = useState({}), [message, setMessage] = useState('');
+
+  // WhatsApp OTP is only used for signup and reset; sign-in is strictly password-based
+  const isWhatsApp = signup || reset;
+  const method = isWhatsApp ? 'whatsapp' : 'password';
+
+  const [form, setForm] = useState({
+    mobileno: '',
+    fname: '',
+    lname: '',
+    emailid: '',
+    password: '',
+    confirm_password: '',
+    otp: ''
+  });
+  const [errors, setErrors] = useState({});
+  const [message, setMessage] = useState('');
   const [severity, setSeverity] = useState('error');
   const [challenge, setChallenge] = useState(null);
-  const [busy, setBusy] = useState(false), [showPassword, setShowPassword] = useState(false), [now, setNow] = useState(Date.now());
+  const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [now, setNow] = useState(Date.now());
   const pending = useRef(false);
-  useEffect(() => { prepareSession()?.catch(() => {}); }, []);
-  const isWhatsApp = signup || reset || method === 'whatsapp';
-  const cooldown = Math.max(0, Math.ceil(((challenge?.resendAt || 0) - now) / 1000));
-  const expired = challenge && now >= challenge.expiresAt;
 
   useEffect(() => {
+    prepareSession()?.catch(() => {});
+  }, []);
+
+  // Performance optimization: only tick interval when an active challenge exists
+  useEffect(() => {
+    if (!challenge) return;
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [challenge]);
+
+  const cooldown = challenge ? Math.max(0, Math.ceil(((challenge.resendAt || 0) - now) / 1000)) : 0;
+  const expired = challenge ? now >= challenge.expiresAt : false;
 
   useEffect(() => {
     const first = Object.values(errors).find(Boolean);
     if (first) drapeyFeedback(String(first), 'error');
   }, [errors]);
+
   useEffect(() => {
-    if (message) drapeyFeedback(severity === 'success' ? 'Your verification code was sent. Check WhatsApp and enter it here.' : 'We couldn’t complete that step. Check the message in the form and try again.', severity);
+    if (message) {
+      drapeyFeedback(
+        severity === 'success'
+          ? 'Your verification code was sent. Check WhatsApp and enter it here.'
+          : message,
+        severity
+      );
+    }
   }, [message, severity]);
 
-  const change = field => event => {
-    setForm(old => ({ ...old, [field]: event.target.value }));
+  const change = useCallback(field => event => {
+    const val = event.target.value;
+    setForm(old => ({ ...old, [field]: val }));
     setErrors(old => ({ ...old, [field]: '' }));
     setMessage('');
-  };
+  }, []);
 
-  const setResult = result => {
+  const setResult = useCallback(result => {
     setSeverity('error');
-    setMessage(result.message || 'Please check your details.');
-    setErrors(Object.fromEntries(Object.entries(result.errors || {}).map(([key, value]) => [
+    const userFriendly = getCustomerFriendlyMessage(result?.message, 'Please check your details and try again.');
+    setMessage(userFriendly);
+    setErrors(Object.fromEntries(Object.entries(result?.errors || {}).map(([key, value]) => [
       key,
       Array.isArray(value) ? value.join(' ') : value
     ])));
+  }, []);
+
+  const field = (name, label, options = {}) => {
+    const isRequired = options.required !== undefined ? options.required : true;
+    return (
+      <TextField
+        fullWidth
+        required={isRequired}
+        name={name}
+        label={label}
+        InputLabelProps={{ shrink: true, ...(options.InputLabelProps || {}) }}
+        value={form[name]}
+        onChange={change(name)}
+        error={!!errors[name]}
+        helperText={errors[name] || options.helperText}
+        disabled={busy || (name === 'mobileno' && !!challenge)}
+        {...options}
+      />
+    );
   };
 
-  const field = (name, label, options = {}) => (
-    <TextField
-      fullWidth
-      required
-      name={name}
-      label={label}
-      value={form[name]}
-      onChange={change(name)}
-      error={!!errors[name]}
-      helperText={errors[name] || options.helperText}
-      disabled={busy || (name === 'mobileno' && !!challenge)}
-      {...options}
-    />
-  );
-
-  const passwordField = (name, label) => field(name, label, {
+  const passwordField = (name, label, options = {}) => field(name, label, {
     type: showPassword ? 'text' : 'password',
     autoComplete: kind === 'login' ? 'current-password' : 'new-password',
     inputProps: { maxLength: 128 },
+    InputLabelProps: { shrink: true },
     InputProps: {
       endAdornment: (
         <InputAdornment position="end">
@@ -83,12 +154,14 @@ export default function CustomerAuth({ kind = 'login' }) {
             aria-label={showPassword ? 'Hide password' : 'Show password'}
             onClick={() => setShowPassword(value => !value)}
             edge="end"
+            size="small"
           >
-            {showPassword ? <VisibilityOff /> : <Visibility />}
+            {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
           </IconButton>
         </InputAdornment>
       )
-    }
+    },
+    ...options
   });
 
   const run = async callback => {
@@ -104,19 +177,19 @@ export default function CustomerAuth({ kind = 'login' }) {
     }
   };
 
-  // WhatsApp OTP Request
+  // WhatsApp OTP Request (Sign-up and Forgot Password only)
   const requestWhatsAppOtp = () => run(async () => {
     const rawNumber = form.mobileno.trim();
     if (!/^[6-9]\d{9}$/.test(rawNumber)) {
-      setErrors({ mobileno: 'Enter a valid 10-digit mobile number' });
+      setErrors({ mobileno: 'Please enter a valid 10-digit mobile number.' });
       return;
     }
 
     if (signup) {
       const errs = {};
       if (!form.fname.trim()) errs.fname = 'First name is required.';
-      if (!form.emailid.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.emailid)) {
-        errs.emailid = 'Enter a valid email address.';
+      if (form.emailid && form.emailid.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.emailid.trim())) {
+        errs.emailid = 'Please enter a valid email address.';
       }
       if (!form.password) {
         errs.password = 'Password is required.';
@@ -147,7 +220,7 @@ export default function CustomerAuth({ kind = 'login' }) {
     }
 
     try {
-      const purpose = signup ? 'signup' : reset ? 'reset' : 'login';
+      const purpose = signup ? 'signup' : 'reset';
       const res = await postData('auth/send-whatsapp-otp', { phone: rawNumber, purpose });
       if (!res || (!res.status && !res.success)) {
         setResult(res || { message: 'Failed to send WhatsApp verification code.' });
@@ -169,29 +242,29 @@ export default function CustomerAuth({ kind = 'login' }) {
     } catch (err) {
       console.error('WhatsApp OTP send error:', err);
       setSeverity('error');
-      setMessage(err?.message || 'Service temporarily unavailable, please try again in a few moments.');
+      setMessage(getCustomerFriendlyMessage(err?.message, 'Verification service temporarily unavailable. Please try again in a few moments.'));
     }
   });
 
-  // WhatsApp OTP Verification
+  // WhatsApp OTP Verification (Sign-up and Forgot Password only)
   const verifyWhatsAppOtp = () => run(async () => {
     const rawNumber = form.mobileno.trim();
     const rawOtp = form.otp.trim();
     if (!/^[0-9]{6}$/.test(rawOtp)) {
-      setErrors({ otp: 'Please enter 6-digit WhatsApp OTP' });
+      setErrors({ otp: 'Please enter 6-digit WhatsApp OTP.' });
       return;
     }
 
     try {
-      const purpose = signup ? 'signup' : reset ? 'reset' : 'login';
+      const purpose = signup ? 'signup' : 'reset';
       const payload = {
         phone: rawNumber,
         otp: rawOtp,
         purpose,
         ...(signup ? {
-          fname: form.fname,
-          lname: form.lname,
-          emailid: form.emailid,
+          fname: form.fname.trim(),
+          lname: form.lname.trim(),
+          emailid: form.emailid.trim() || undefined,
           password: form.password,
           confirm_password: form.confirm_password
         } : {}),
@@ -203,9 +276,18 @@ export default function CustomerAuth({ kind = 'login' }) {
 
       const res = await postData('auth/verify-whatsapp-otp', payload);
       if (!res || (!res.status && !res.success)) {
-        setResult(res || { message: 'Verification failed. Please try again.' });
+        setResult(res || { message: 'Verification failed. Please check the code and try again.' });
         return;
       }
+
+      Swal.fire({
+        icon: 'success',
+        title: signup ? 'Welcome to Doordrape!' : 'Password updated!',
+        text: signup ? 'Account created successfully. Signing you in…' : 'Your password has been reset. Signing you in…',
+        timer: 1500,
+        showConfirmButton: false,
+        timerProgressBar: true
+      });
 
       drapeyFeedback('You’re signed in! Let’s find your next favourite outfit.', 'success');
       clearCachedAccounts();
@@ -227,10 +309,12 @@ export default function CustomerAuth({ kind = 'login' }) {
       );
     } catch (err) {
       console.error('WhatsApp OTP verify error:', err);
-      setMessage(err?.message || 'Verification failed. Please try again.');
+      setSeverity('error');
+      setMessage(getCustomerFriendlyMessage(err?.message, 'Verification failed. Please try again.'));
     }
   });
 
+  // Main Submit Handler
   const submit = event => {
     event.preventDefault();
 
@@ -243,9 +327,10 @@ export default function CustomerAuth({ kind = 'login' }) {
       return;
     }
 
-    // Password login flow (only available on login page when method === 'password')
+    // Direct password login flow for Sign-in
     run(async () => {
-      const body = { mobileno: form.mobileno, password: form.password };
+      const cleanMobile = form.mobileno.trim();
+      const body = { mobileno: cleanMobile, password: form.password };
       const check = validateFields('check_costumer_login', body);
       if (Object.keys(check).length) {
         setErrors(check);
@@ -253,12 +338,26 @@ export default function CustomerAuth({ kind = 'login' }) {
       }
 
       const result = await postData('check_costumer_login', body);
-      if (!result.status) {
-        setResult(result);
+      if (!result || !result.status) {
+        const friendly = getCustomerFriendlyMessage(result?.message, 'Incorrect mobile number or password. Please verify your details.');
+        setSeverity('error');
+        setMessage(friendly);
+        if (result?.errors) {
+          setErrors(Object.fromEntries(Object.entries(result.errors).map(([k, v]) => [k, Array.isArray(v) ? v.join(' ') : v])));
+        }
         return;
       }
 
       const user = result.data[0];
+      Swal.fire({
+        icon: 'success',
+        title: 'Welcome back!',
+        text: `Glad to see you again, ${user?.fname || 'Customer'}!`,
+        timer: 1400,
+        showConfirmButton: false,
+        timerProgressBar: true
+      });
+
       drapeyFeedback('You’re signed in! Let’s find your next favourite outfit.', 'success');
       clearCachedAccounts();
       if (result.token) {
@@ -313,120 +412,127 @@ export default function CustomerAuth({ kind = 'login' }) {
             />
           )}
 
-          <Button component={Link} to="/home" startIcon={<ArrowBack />} sx={{ color: '#666', alignSelf: 'flex-start', mb: 3 }}>
+          <Button component={Link} to="/home" startIcon={<ArrowBack />} sx={{ color: '#64748b', alignSelf: 'flex-start', mb: 3, textTransform: 'none', fontWeight: 600 }}>
             Back to shopping
           </Button>
 
           <Typography variant="overline" sx={{ display: 'block', color: '#059669', letterSpacing: 2, fontWeight: 700 }}>
             YOUR DOORDRAPE ACCOUNT
           </Typography>
-          <Typography component="h1" variant="h4" sx={{ fontWeight: 800, mt: 1 }}>
+          <Typography component="h1" variant="h4" sx={{ fontWeight: 800, mt: 1, color: '#0f172a' }}>
             {signup ? 'Make yourself at home.' : reset ? 'A fresh start.' : 'Welcome back.'}
           </Typography>
-          <Typography sx={{ color: '#727272', mt: 1, mb: 3 }}>
+          <Typography sx={{ color: '#64748b', mt: 1, mb: 3, fontSize: '15px' }}>
             {signup
               ? 'Create your account with instant WhatsApp verification.'
               : reset
               ? 'Verify your WhatsApp to set a new password.'
-              : 'Sign in with your WhatsApp number or account password.'}
+              : 'Sign in with your mobile number and password.'}
           </Typography>
 
-          {!signup && !reset && (
-            <div className="auth-methods">
-              <Button
-                onClick={() => {
-                  setMethod('whatsapp');
-                  setChallenge(null);
-                  setErrors({});
-                  setMessage('');
-                }}
-                aria-pressed={method === 'whatsapp'}
-                startIcon={<WhatsApp sx={{ fontSize: '18px !important', color: method === 'whatsapp' ? '#25d366' : 'inherit' }} />}
-              >
-                WhatsApp OTP
-              </Button>
-              <Button
-                onClick={() => {
-                  setMethod('password');
-                  setChallenge(null);
-                  setErrors({});
-                  setMessage('');
-                }}
-                aria-pressed={method === 'password'}
-              >
-                Password
-              </Button>
-            </div>
-          )}
-
-          <Stack component="form" noValidate onSubmit={submit} spacing={2}>
+          <Stack component="form" noValidate onSubmit={submit} spacing={2.5}>
             {location.state?.authMessage && kind === 'login' && (
-              <Alert severity="success">{location.state.authMessage}</Alert>
+              <Alert severity="success" sx={{ borderRadius: 2 }}>{location.state.authMessage}</Alert>
             )}
-            {message && <Alert severity={severity} role="status">{message}</Alert>}
+            {message && (
+              <Alert
+                severity={severity}
+                role="status"
+                sx={{ borderRadius: 2, '& .MuiAlert-message': { fontSize: '14px', lineHeight: 1.5 } }}
+              >
+                {message}
+              </Alert>
+            )}
 
             {signup && (
               <div className="auth-name-row">
-                {field('fname', 'First name', { autoComplete: 'given-name', inputProps: { maxLength: 70 } })}
-                {field('lname', 'Last name', { autoComplete: 'family-name', inputProps: { maxLength: 70 } })}
+                {field('fname', 'First name', {
+                  placeholder: 'e.g. Rahul',
+                  autoComplete: 'given-name',
+                  inputProps: { maxLength: 70 }
+                })}
+                {field('lname', 'Last name', {
+                  placeholder: 'e.g. Sharma',
+                  autoComplete: 'family-name',
+                  inputProps: { maxLength: 70 }
+                })}
               </div>
             )}
 
             {field('mobileno', 'Mobile number', {
               type: 'tel',
+              placeholder: '10-digit mobile number',
               autoComplete: 'tel-national',
               inputProps: { inputMode: 'numeric', maxLength: 10 },
               InputProps: { startAdornment: <InputAdornment position="start">+91</InputAdornment> }
             })}
 
-            {signup && field('emailid', 'Email address', { type: 'email', autoComplete: 'email', inputProps: { maxLength: 70 } })}
+            {signup && field('emailid', 'Email address (Optional)', {
+              required: false,
+              type: 'email',
+              placeholder: 'name@example.com',
+              autoComplete: 'email',
+              inputProps: { maxLength: 70 }
+            })}
 
             {(signup || reset || method === 'password') && (
-              passwordField('password', reset ? 'New password' : 'Password')
+              passwordField('password', reset ? 'New password' : 'Password', {
+                placeholder: 'At least 8 characters'
+              })
             )}
 
             {(signup || reset) && (
               <>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{ color: '#64748b', mt: -1, display: 'block' }}>
                   Use 8–128 characters. Avoid common or numeric-only passwords.
                 </Typography>
-                {passwordField('confirm_password', 'Confirm password')}
+                {passwordField('confirm_password', 'Confirm password', {
+                  placeholder: 'Re-enter your password'
+                })}
               </>
             )}
 
             {challenge && (
-              <>
+              <Box sx={{ mt: 1, p: 2, bgcolor: '#f0fdf4', borderRadius: 2.5, border: '1px solid #bbf7d0' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#166534', mb: 1.5 }}>
+                  Enter WhatsApp Verification Code
+                </Typography>
                 {field('otp', '6-digit WhatsApp OTP', {
+                  placeholder: 'e.g. 123456',
                   autoComplete: 'one-time-code',
                   inputProps: { inputMode: 'numeric', maxLength: 6 }
                 })}
-                <Typography variant="caption" color={expired ? 'error' : 'text.secondary'}>
+                <Typography variant="caption" sx={{ display: 'block', mt: 1, color: expired ? '#dc2626' : '#166534', fontWeight: 600 }}>
                   {expired
-                    ? 'OTP expired. Request a new code.'
-                    : `OTP expires in ${Math.max(0, Math.ceil((challenge.expiresAt - now) / 1000))} seconds.`}
+                    ? 'OTP expired. Please request a new code.'
+                    : `Code valid for ${Math.max(0, Math.ceil((challenge.expiresAt - now) / 1000))}s.`}
                 </Typography>
-                <Stack direction="row" justifyContent="space-between">
+                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1.5 }}>
                   <Button
+                    size="small"
                     disabled={busy || cooldown > 0}
                     onClick={requestWhatsAppOtp}
+                    sx={{ textTransform: 'none', fontWeight: 700, color: '#166534' }}
                   >
                     {cooldown ? `Resend in ${cooldown}s` : 'Resend WhatsApp OTP'}
                   </Button>
                   <Button
+                    size="small"
                     disabled={busy}
                     onClick={() => {
                       setChallenge(null);
                       setForm(old => ({ ...old, otp: '' }));
                     }}
+                    sx={{ textTransform: 'none', color: '#64748b' }}
                   >
                     Change mobile
                   </Button>
                 </Stack>
-              </>
+              </Box>
             )}
 
             {isWhatsApp && !challenge && (
-              <Typography variant="caption" sx={{ color: '#047857', display: 'block', textAlign: 'center' }}>
+              <Typography variant="caption" sx={{ color: '#047857', display: 'block', textAlign: 'center', fontWeight: 600 }}>
                 ⚡ Instant verification via WhatsApp • ₹0 cost • No waiting for SMS
               </Typography>
             )}
@@ -442,7 +548,9 @@ export default function CustomerAuth({ kind = 'login' }) {
                 color: '#ffffff',
                 borderRadius: 2.5,
                 py: 1.5,
+                fontSize: '15px',
                 fontWeight: 700,
+                textTransform: 'none',
                 boxShadow: isWhatsApp
                   ? '0 4px 14px rgba(37, 211, 102, 0.35)'
                   : '0 4px 14px rgba(6, 78, 59, 0.3)',
@@ -457,14 +565,17 @@ export default function CustomerAuth({ kind = 'login' }) {
                 ? 'Verify & create account'
                 : reset
                 ? 'Verify & reset password'
-                : isWhatsApp
-                ? 'Verify & sign in'
                 : 'Sign in'}
             </Button>
           </Stack>
 
-          {!signup && !reset && <Link className="auth-link" to="/forgotpassword">Forgot password?</Link>}
-          <Typography sx={{ mt: 3, textAlign: 'center', color: '#666' }}>
+          {!signup && !reset && (
+            <Box sx={{ mt: 2, textAlign: 'right' }}>
+              <Link className="auth-forgot" to="/forgotpassword">Forgot password?</Link>
+            </Box>
+          )}
+
+          <Typography sx={{ mt: 3, textAlign: 'center', color: '#64748b', fontSize: '14px' }}>
             {signup || reset ? 'Already have an account? ' : 'New to Doordrape? '}
             <Link className="auth-link" to={signup || reset ? '/signindisplay' : '/signupdisplay'} state={location.state}>
               {signup || reset ? 'Sign in' : 'Create an account'}
