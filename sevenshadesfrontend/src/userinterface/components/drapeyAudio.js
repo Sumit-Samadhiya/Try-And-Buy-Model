@@ -290,3 +290,41 @@ export const speakDrapeyVoice = (rawText, mood = 'happy') => {
     window.speechSynthesis.speak(utterance);
   } catch (_) {}
 };
+
+
+// Real OP Chiku Voice Clips (Extracted from user audio)
+const CHIKU_SOUNDS = {
+  greet: '/sounds/chiku_greet.wav',
+  cart: '/sounds/chiku_cart.wav',
+  poke: '/sounds/chiku_poke.wav',
+  angry: '/sounds/chiku_angry.wav',
+  full: '/sounds/op_chiku_voice.mp3'
+};
+
+let currentChikuAudio = null;
+
+export const playChikuVoice = (clip = 'poke') => {
+  if (isSoundMuted()) return;
+  if (typeof window === 'undefined') return;
+
+  try {
+    if (currentChikuAudio) {
+      currentChikuAudio.pause();
+      currentChikuAudio.currentTime = 0;
+    }
+    const url = CHIKU_SOUNDS[clip] || CHIKU_SOUNDS.poke;
+    const audio = new Audio(url);
+    audio.volume = 0.95;
+    currentChikuAudio = audio;
+    audio.play().catch(() => {});
+  } catch (_) {}
+};
+
+export const stopChikuVoice = () => {
+  try {
+    if (currentChikuAudio) {
+      currentChikuAudio.pause();
+      currentChikuAudio.currentTime = 0;
+    }
+  } catch (_) {}
+};

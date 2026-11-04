@@ -15,6 +15,8 @@ beforeEach(() => {
   if (typeof window.SpeechSynthesisUtterance === 'undefined') {
     window.SpeechSynthesisUtterance = function(text) { this.text = text; };
   }
+  window.HTMLMediaElement.prototype.play = jest.fn().mockResolvedValue();
+  window.HTMLMediaElement.prototype.pause = jest.fn();
   if (typeof window.AudioContext === 'undefined') {
     window.AudioContext = function() {
       return {
