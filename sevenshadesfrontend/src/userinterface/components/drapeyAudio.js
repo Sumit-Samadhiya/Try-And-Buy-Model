@@ -1,7 +1,20 @@
-// Web Audio API procedural sound effects & Cute Child/Baby Text-to-Speech
+// Web Audio API procedural sound effects & Natural Sweet / Cute Text-to-Speech
 // 100% lightweight, zero external MP3 dependencies, fast & instant
 
 let audioCtx = null;
+let cachedVoices = [];
+
+// Pre-cache voices and update when available
+export const refreshVoices = () => {
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    cachedVoices = window.speechSynthesis.getVoices() || [];
+  }
+};
+
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+  refreshVoices();
+  window.speechSynthesis.onvoiceschanged = refreshVoices;
+}
 
 export const getAudioContext = () => {
   if (typeof window === 'undefined') return null;
@@ -32,15 +45,27 @@ export const setSoundMuted = (muted) => {
   } catch (_) {}
 };
 
-// Clean emojis & special symbols for clean text-to-speech pronunciation
+// Voice Profile (Sweet Natural vs Chibi Cartoon)
+export const getVoiceProfile = () => {
+  try {
+    return localStorage.getItem('drapey_voice_profile') || 'sweet';
+  } catch (_) {
+    return 'sweet';
+  }
+};
+
+export const setVoiceProfile = (profile) => {
+  try {
+    localStorage.setItem('drapey_voice_profile', profile);
+  } catch (_) {}
+};
+
+// Clean emojis & symbols for natural text-to-speech pronunciation
 export const cleanTextForSpeech = (text) => {
   if (!text) return '';
   return text
-    // Remove specific emojis & unicode symbols
     .replace(/[🙏✨😉😎💸🚫🛵💨🤝💃🪞😤⚠️💣💥🔥🤪💖🎊🎉]/gu, '')
-    // Remove general emojis
     .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')
-    // Clean repetitive exclamation marks or spaces
     .replace(/\s+/g, ' ')
     .trim();
 };
@@ -155,7 +180,51 @@ export const playDrapeySfx = (type) => {
   } catch (_) {}
 };
 
-// Cute Child / Baby Voice Text-To-Speech with Emotion
+// Select the most sweet, natural, pleasant voice available on the device
+export const getBestCuteVoice = () => {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return null;
+  const voices = cachedVoices.length ? cachedVoices : (window.speechSynthesis.getVoices?.() || []);
+  if (!voices.length) return null;
+
+  // 1. Top preference: Indian Natural / Hindi Female (Swara, Neerja, Google Hindi, Kalpana)
+  const indianFemale = voices.find(v => {
+    const name = v.name.toLowerCase();
+    const lang = (v.lang || '').toLowerCase();
+    const isIndian = lang.startsWith('hi') || lang.includes('in') || name.includes('india') || name.includes('hindi');
+    const isFemale = name.includes('female') || name.includes('swara') || name.includes('neerja') || name.includes('kalpana') || name.includes('heera');
+    return isIndian && isFemale;
+  });
+  if (indianFemale) return indianFemale;
+
+  // 2. High-quality natural female voices (Aria, Jenny, Google UK English Female, Samantha, Victoria, Zira)
+  const naturalFemale = voices.find(v => {
+    const name = v.name.toLowerCase();
+    return (
+      name.includes('swara') ||
+      name.includes('neerja') ||
+      name.includes('natural') ||
+      name.includes('google uk english female') ||
+      name.includes('aria') ||
+      name.includes('jenny') ||
+      name.includes('samantha') ||
+      name.includes('zira') ||
+      name.includes('victoria') ||
+      name.includes('female')
+    );
+  });
+  if (naturalFemale) return naturalFemale;
+
+  // 3. Any female-sounding voice, explicitly avoiding adult male voices (David, Mark, George, Guy)
+  const nonMale = voices.find(v => {
+    const name = v.name.toLowerCase();
+    return !name.includes('david') && !name.includes('mark') && !name.includes('george') && !name.includes('guy') && !name.includes('male');
+  });
+  if (nonMale) return nonMale;
+
+  return voices[0] || null;
+};
+
+// Sweet, Natural, Pleasant Voice Text-To-Speech with Emotion
 export const speakDrapeyVoice = (rawText, mood = 'happy') => {
   if (isSoundMuted()) return;
   if (typeof window === 'undefined' || !window.speechSynthesis) return;
@@ -168,38 +237,55 @@ export const speakDrapeyVoice = (rawText, mood = 'happy') => {
     window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
+    const selectedVoice = getBestCuteVoice();
 
-    // Pick best child-friendly / Hindi / natural female voice
-    const voices = window.speechSynthesis.getVoices?.() || [];
-    const preferredVoice =
-      voices.find(v => v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi')) ||
-      voices.find(v => v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('natural') || v.name.toLowerCase().includes('zira') || v.name.toLowerCase().includes('samantha')) ||
-      voices[0];
-
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+      utterance.lang = selectedVoice.lang || 'hi-IN';
     }
 
-    // Configure Child Baby Timbre (High pitch, cute cadence) with emotional pitch modulation
-    if (mood === 'yahoo') {
-      utterance.pitch = 1.85; // Extra high squeal of joy!
-      utterance.rate = 1.22;  // Fast excited
-    } else if (mood === 'celebrating') {
-      utterance.pitch = 1.72; // Sing-song celebration
-      utterance.rate = 1.15;
-    } else if (mood === 'angry' || mood === 'exploding') {
-      utterance.pitch = 1.48; // Squeaky baby tantrum!
-      utterance.rate = 1.32;
-    } else if (mood === 'soot') {
-      utterance.pitch = 1.05; // Dazed groggy baby
-      utterance.rate = 0.88;
+    const profile = getVoiceProfile();
+
+    // Natural, sweet, youthful pitch (1.18x instead of chipmunk 1.62x)
+    if (profile === 'chibi') {
+      // Playful chibi / cartoon
+      if (mood === 'yahoo') {
+        utterance.pitch = 1.45;
+        utterance.rate = 1.18;
+      } else if (mood === 'celebrating') {
+        utterance.pitch = 1.35;
+        utterance.rate = 1.1;
+      } else if (mood === 'angry' || mood === 'exploding') {
+        utterance.pitch = 1.38;
+        utterance.rate = 1.25;
+      } else if (mood === 'soot') {
+        utterance.pitch = 0.95;
+        utterance.rate = 0.9;
+      } else {
+        utterance.pitch = 1.32;
+        utterance.rate = 1.08;
+      }
     } else {
-      // Default sweet baby / child voice
-      utterance.pitch = 1.62; // High-pitch cute baby
-      utterance.rate = 1.12;  // Cheerful sweet pace
+      // 'sweet': Natural, sweet, human, gentle and cheerful (Default)
+      if (mood === 'yahoo') {
+        utterance.pitch = 1.28; // Cheerful bright lift
+        utterance.rate = 1.12;
+      } else if (mood === 'celebrating') {
+        utterance.pitch = 1.22; // Sing-song joyful
+        utterance.rate = 1.06;
+      } else if (mood === 'angry' || mood === 'exploding') {
+        utterance.pitch = 1.25; // Energetic dramatic
+        utterance.rate = 1.18;
+      } else if (mood === 'soot') {
+        utterance.pitch = 0.92; // Dazed groggy
+        utterance.rate = 0.88;
+      } else {
+        utterance.pitch = 1.16; // Natural sweet, warm, friendly (Sounds human & pleasant!)
+        utterance.rate = 1.02;  // Clear, natural pace
+      }
     }
 
-    utterance.volume = 0.85;
+    utterance.volume = 0.9;
 
     window.speechSynthesis.speak(utterance);
   } catch (_) {}
