@@ -40,7 +40,8 @@
     width: 100%;
     height: 100%;
     filter: drop-shadow(0 0 13px #50867455);
-    animation: drapey-hover 4.4s ease-in-out infinite;
+    animation: drapey-naughty-bounce 3.2s cubic-bezier(0.28, 0.84, 0.42, 1) infinite;
+    transform-origin: center bottom;
     position: relative;
 }
 
@@ -48,14 +49,37 @@
     display: block !important;
 }
 
+/* Pookie Pink Ribbon Bow */
+.drapey-pookie-bow {
+    position: absolute;
+    top: -9px;
+    right: 2px;
+    width: 32px;
+    height: 32px;
+    z-index: 15;
+    pointer-events: none;
+    transform-origin: 30% 70%;
+    animation: drapey-bow-wiggle 3.2s ease-in-out infinite;
+    filter: drop-shadow(0 2px 5px rgba(219, 39, 119, 0.38));
+}
+
+.drapey-bow-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
 .drapey-ground {
     position: absolute;
     bottom: -10px;
     left: 12%;
     width: 76%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, #b88d47, transparent);
+    height: 2px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(184, 141, 71, 0.65) 0%, rgba(184, 141, 71, 0) 75%);
     opacity: .6;
+    animation: drapey-shadow-bounce 3.2s cubic-bezier(0.28, 0.84, 0.42, 1) infinite;
     transition: opacity 0.3s ease;
 }
 
@@ -459,7 +483,86 @@ body:has([aria-label="Cookie consent banner"]) .drapey {
     animation: none !important;
 }
 
-/* Standard Keyframes */
+/* Standard Keyframes & Naughty Jumping Bounce */
+@keyframes drapey-naughty-bounce {
+    0%, 100% {
+        transform: translateY(0) scale(1, 1) rotate(0deg);
+    }
+    12% {
+        /* pre-hop playful crouch */
+        transform: translateY(3px) scale(1.09, 0.91) rotate(0deg);
+    }
+    26% {
+        /* naughty spring hop into air with cheeky tilt */
+        transform: translateY(-17px) scale(0.92, 1.09) rotate(-4deg);
+    }
+    40% {
+        /* floating apex wiggle */
+        transform: translateY(-13px) scale(1.02, 0.98) rotate(3deg);
+    }
+    54% {
+        /* landing squash */
+        transform: translateY(2px) scale(1.11, 0.89) rotate(0deg);
+    }
+    68% {
+        /* secondary playful hop */
+        transform: translateY(-6px) scale(0.96, 1.04) rotate(-2deg);
+    }
+    82% {
+        /* settle back down */
+        transform: translateY(0) scale(1.02, 0.98) rotate(0deg);
+    }
+}
+
+@keyframes drapey-shadow-bounce {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+    12% {
+        transform: scale(1.18, 1);
+        opacity: 0.78;
+    }
+    26% {
+        transform: scale(0.62, 0.75);
+        opacity: 0.22;
+    }
+    40% {
+        transform: scale(0.7, 0.85);
+        opacity: 0.3;
+    }
+    54% {
+        transform: scale(1.2, 1);
+        opacity: 0.82;
+    }
+    68% {
+        transform: scale(0.85, 0.92);
+        opacity: 0.42;
+    }
+    82% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+}
+
+@keyframes drapey-bow-wiggle {
+    0%, 100% {
+        transform: rotate(0deg) scale(1);
+    }
+    18% {
+        transform: rotate(7deg) scale(1.06);
+    }
+    28% {
+        transform: rotate(-6deg) scale(1.08);
+    }
+    45% {
+        transform: rotate(4deg) scale(1.02);
+    }
+    60% {
+        transform: rotate(-3deg) scale(0.98);
+    }
+}
+
 @keyframes drapey-hover {
     50% { transform: translateY(-6px); }
 }
@@ -508,6 +611,12 @@ body:has([aria-label="Cookie consent banner"]) .drapey {
     .drapey-character {
         width: 54px;
         height: 54px;
+    }
+    .drapey-pookie-bow {
+        width: 27px;
+        height: 27px;
+        top: -7px;
+        right: 1px;
     }
     .drapey-copy {
         width: 230px;
