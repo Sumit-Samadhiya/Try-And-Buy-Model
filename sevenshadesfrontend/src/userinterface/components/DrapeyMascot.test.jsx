@@ -184,18 +184,18 @@ test('rapid 3 taps triggers angry bomb explosion easter egg and recovers', () =>
   expect(screen.getByTestId('avatar')).toHaveAttribute('data-mood', 'angry');
   expect(screen.getByText(/3 BAAR KYUN DABAYA/i, { selector: '.sr-only' })).toBeInTheDocument();
 
-  // Advances to explosion phase
-  act(() => jest.advanceTimersByTime(1450));
+  // Advances to explosion phase (after comfortable reading time of angry message)
+  act(() => jest.advanceTimersByTime(6050));
   expect(container.querySelector('.drapey-mode--exploding')).toBeTruthy();
   expect(container.querySelector('.drapey-bomb-explosion')).toBeTruthy();
 
-  // Advances to soot/ash phase
-  act(() => jest.advanceTimersByTime(1050));
+  // Advances to soot/ash phase (after explosion animation)
+  act(() => jest.advanceTimersByTime(2050));
   expect(container.querySelector('.drapey-mode--soot')).toBeTruthy();
   expect(screen.getByTestId('avatar')).toHaveAttribute('data-mood', 'soot');
 
-  // Advances back to normal
-  act(() => jest.advanceTimersByTime(2900));
+  // Advances back to normal (after comfortable reading time of soot message)
+  act(() => jest.advanceTimersByTime(7100));
   expect(container.querySelector('.drapey-mode--angry')).toBeFalsy();
   expect(container.querySelector('.drapey-mode--exploding')).toBeFalsy();
   expect(container.querySelector('.drapey-mode--soot')).toBeFalsy();

@@ -285,7 +285,8 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
 
   // Rapid Touch / Triple Click Bomb Rage Trigger
   const triggerBombRage = useCallback(() => {
-    feedbackUntil.current = Date.now() + 10000;
+    feedbackUntil.current = Date.now() + 18000;
+    messageDisplayedAt.current = Date.now();
     setTone('error');
     setRageState('angry');
     const rageMsg = 'ARGHHH! 3 BAAR KYUN DABAYA?! 💣😡 Ab dekho mera cutie gussa... Main phatne wala hoon! 💥';
@@ -296,22 +297,25 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
       // Explosion phase
       setRageState('exploding');
       setMessage('💥 KABOOOMMM!! 💥💣🔥');
+      messageDisplayedAt.current = Date.now();
 
       rageTimer.current = setTimeout(() => {
         // Soot recovery phase
         setRageState('soot');
         const sootMsg = 'Khasi-khasi... 💨 Hihihi, dekh liya mera cutie gussa? Ab chalo shanti se pyaari shopping karo! 💖';
         setMessage(sootMsg);
+        messageDisplayedAt.current = Date.now();
         setReplay(v => v + 1);
         rageTimer.current = setTimeout(() => {
           // Return to normal
           setRageState('normal');
           setMessage(greetingMessage);
           setTone('info');
+          messageDisplayedAt.current = Date.now();
           setReplay(v => v + 1);
-        }, 2800);
-      }, 1000);
-    }, 1400);
+        }, 7000);
+      }, 2000);
+    }, 6000);
   }, [greetingMessage]);
 
   // Drag & Drop Pointer Handlers
@@ -396,8 +400,8 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
     if (rageState !== 'normal') return;
 
     const now = Date.now();
-    // Keep clicks within the last 1200ms
-    clickTimestamps.current = clickTimestamps.current.filter(t => now - t <= 1200);
+    // Keep clicks within the last 1500ms
+    clickTimestamps.current = clickTimestamps.current.filter(t => now - t <= 1500);
     clickTimestamps.current.push(now);
 
     const clicksInWindow = clickTimestamps.current.length;
