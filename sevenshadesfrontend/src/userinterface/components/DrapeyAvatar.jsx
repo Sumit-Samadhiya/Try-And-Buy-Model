@@ -114,38 +114,6 @@ export default function DrapeyAvatar({ mood, reduced }) {
 
         <ellipse cx="36" cy="28" rx="10" ry="5" fill="#e9f9d6" opacity={mood === 'soot' ? 0.05 : 0.25} transform="rotate(-30 36 28)" />
 
-        {/* Adorable Rosy Blushing Cheeks with Kawaii Anime Hatching */}
-        {mood !== 'soot' && (
-          <g className="drapey-cheeks">
-            <ellipse
-              cx="28"
-              cy="61"
-              rx="6.5"
-              ry="3.6"
-              fill={mood === 'angry' ? '#ef4444' : '#ff7aa2'}
-              opacity={mood === 'angry' ? 0.85 : 0.78}
-            />
-            <ellipse
-              cx="72"
-              cy="61"
-              rx="6.5"
-              ry="3.6"
-              fill={mood === 'angry' ? '#ef4444' : '#ff7aa2'}
-              opacity={mood === 'angry' ? 0.85 : 0.78}
-            />
-            {mood !== 'angry' && (
-              <g stroke="#ff4d80" strokeWidth="1.2" strokeLinecap="round" opacity="0.65">
-                <line x1="25" y1="60" x2="27" y2="62" />
-                <line x1="28" y1="60" x2="30" y2="62" />
-                <line x1="31" y1="60" x2="33" y2="62" />
-                <line x1="69" y1="60" x2="71" y2="62" />
-                <line x1="72" y1="60" x2="74" y2="62" />
-                <line x1="75" y1="60" x2="77" y2="62" />
-              </g>
-            )}
-          </g>
-        )}
-
         {/* Face Elements depending on mood */}
         {mood === 'sleeping' ? (
           <g fill="none" stroke="#092e25" strokeWidth="2.8" strokeLinecap="round">

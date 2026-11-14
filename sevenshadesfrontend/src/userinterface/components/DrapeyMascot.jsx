@@ -56,6 +56,15 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
   const feedbackUntil = useRef(0);
   const [tone, setTone] = useState('info');
 
+  const phaseRef = useRef(phase);
+  phaseRef.current = phase;
+  const messageRef = useRef(message);
+  messageRef.current = message;
+  const messageDisplayedAt = useRef(Date.now());
+  const isHoveredRef = useRef(false);
+  const hideTimerRef = useRef(null);
+  const prevRouteKeyRef = useRef(routeKey);
+
   // Drag & Drop tracking
   const isCustomPlacedRef = useRef(false);
   const dragStartRef = useRef(null);
@@ -107,9 +116,27 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
         frame = null;
         const sections = ['home', '/', '/home'].includes(routeKey) ? [...document.querySelectorAll('[data-drapey-message]')] : [];
         const active = sections.filter(section => section.getBoundingClientRect().top <= window.innerHeight * .5).pop();
+        const targetMessage = active?.dataset.drapeyMessage || greetingMessage;
+
+        const routeChanged = prevRouteKeyRef.current !== routeKey;
+        if (routeChanged) {
+          prevRouteKeyRef.current = routeKey;
+        }
+
         if (Date.now() >= feedbackUntil.current && rageState === 'normal' && !specialAction) {
-          setTone('info');
-          setMessage(active?.dataset.drapeyMessage || greetingMessage);
+          const currentMsg = messageRef.current;
+          const isInitialGreeting = currentMsg === greetingMessage;
+          const isQuiet = phaseRef.current === 'quiet';
+          const timeSinceDisplayed = Date.now() - messageDisplayedAt.current;
+
+          if (routeChanged || currentMsg !== targetMessage) {
+            // Smooth dwell protection: don't rapidly overwrite active speech while reading
+            if (routeChanged || isInitialGreeting || isQuiet || timeSinceDisplayed >= 8000) {
+              setTone('info');
+              setMessage(targetMessage);
+              messageDisplayedAt.current = Date.now();
+            }
+          }
         }
 
         // If user has custom placed Drapey via drag-drop, maintain his position and clamp on resize
@@ -164,6 +191,7 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
       setSleepy(false);
       setTone(actionTone);
       setMessage(detail.message.slice(0, 220));
+      messageDisplayedAt.current = Date.now();
       setReplay(value => value + 1);
 
       if (actionTone === 'add_to_cart') {
@@ -190,10 +218,10 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
 
   useEffect(() => {
     let typing;
-    let hide;
     dismissed.current = false;
     setTyped(reduced ? message : '');
     setPhase(reduced ? 'speaking' : 'thinking');
+    clearTimeout(hideTimerRef.current);
     const start = setTimeout(() => {
       if (reduced || dismissed.current) return;
       setPhase('typing');
@@ -209,13 +237,18 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
         if (index >= letters.length) {
           clearInterval(typing);
           setPhase('speaking');
-          hide = setTimeout(() => setPhase('quiet'), 7000);
+          clearTimeout(hideTimerRef.current);
+          hideTimerRef.current = setTimeout(() => {
+            if (!isHoveredRef.current) {
+              setPhase('quiet');
+            }
+          }, 7000);
         }
       }, 25);
     }, 600);
     return () => {
       clearTimeout(start);
-      clearTimeout(hide);
+      clearTimeout(hideTimerRef.current);
       clearInterval(typing);
     };
   }, [message, replay, reduced]);
@@ -388,7 +421,8 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
     }, 950);
 
     if (clicksInWindow === 2) {
-      feedbackUntil.current = Date.now() + 4500;
+      feedbackUntil.current = Date.now() + 9000;
+      messageDisplayedAt.current = Date.now();
       setTone('warning');
       const warnMsg = 'Oye cutie! 2 baar chhu diya na! 🙈 Ek baar aur tap kiya toh main gusse me bomb ban jaunga, bata raha hoon! 😤⚠️💣';
       setMessage(warnMsg);
@@ -402,12 +436,32 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
     const currentIdx = tipIndex.current % NAUGHTY_TIPS.length;
     const tip = NAUGHTY_TIPS[currentIdx];
     tipIndex.current += 1;
-    feedbackUntil.current = Date.now() + 8000;
+    feedbackUntil.current = Date.now() + 12000;
+    messageDisplayedAt.current = Date.now();
     setTone('info');
     setMessage(tip);
     setReplay(v => v + 1);
     setSpecialAction('poke');
     setTimeout(() => setSpecialAction(null), 800);
+  };
+
+  const handleBubbleMouseEnter = () => {
+    isHoveredRef.current = true;
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+    }
+  };
+
+  const handleBubbleMouseLeave = () => {
+    isHoveredRef.current = false;
+    if (phaseRef.current === 'speaking') {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = setTimeout(() => {
+        if (!isHoveredRef.current) {
+          setPhase('quiet');
+        }
+      }, 4000);
+    }
   };
 
   const isRage = rageState !== 'normal';
@@ -481,6 +535,8 @@ export default function DrapeyMascot({ routeKey = 'home', greetingMessage = gree
           specialAction ? `drapey-copy--${specialAction}` : ''
         }`}
         aria-hidden={phase === 'quiet'}
+        onMouseEnter={handleBubbleMouseEnter}
+        onMouseLeave={handleBubbleMouseLeave}
       >
         <span className="sr-only">{message}</span>
         <span aria-hidden="true" className="drapey-speech">
