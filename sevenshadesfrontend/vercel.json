@@ -21,9 +21,22 @@
           "value": "noindex, follow"
         }
       ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
     }
   ],
   "rewrites": [
+    {
+      "source": "/api/catalog-read",
+      "destination": "/api/catalog-read"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"

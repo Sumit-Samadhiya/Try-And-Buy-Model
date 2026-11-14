@@ -1,12 +1,12 @@
 import Header from "../components/Header";
 import CurtainIntro from "../components/CurtainIntro";
-import DoordrapeLoader from "../components/DoordrapeLoader";
+import CatalogSkeleton from "../components/CatalogSkeleton";
 import SubcategoryComponent from "../components/SubcategoryComponent";
 import SliderComponent from "../components/SliderComponent";
 import CategoryShowcaseCard from "../components/CategoryShowcaseCard";
 import BudgetBazaarComponent from "../components/BudgetBazaarComponent";
 import Footer from "../components/Footer";
-import { catalogData } from "../../services/FetchDjangoApiServices";
+import { catalogData, warmBackend } from "../../services/FetchDjangoApiServices";
 import MainCategoryComponent from "../components/MainCategoryComponent";
 import AdvertiseComponent from "../components/AdvertiseComponent";
 import HowItWorksSection from "../components/HowItWorksSection";
@@ -29,6 +29,7 @@ export default function Home(props) {
     const theme = useTheme();
     const sm_matches = useMediaQuery(theme.breakpoints.down('sm'));
     const [listBanner, setListBanner] = useState([]);
+    useEffect(() => { warmBackend(); }, []);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [reload, setReload] = useState(0);
@@ -162,7 +163,7 @@ export default function Home(props) {
         <div style={{ position: 'relative', width: '100%', backgroundColor: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <CurtainIntro ready={!loading} />
             <Header />
-            {loading && <DoordrapeLoader text="Loading curated collections…" role="status" />}
+            {loading && <CatalogSkeleton hero />}
             {!loading && loadError && <div role="alert" style={{ padding: 24 }}>Some collections could not load. <button onClick={() => setReload(value => value + 1)}>Retry collections</button></div>}
             {!loading && !loadError && !listMainCategory.length && <p style={{ padding: 24 }}>New collections are coming soon.</p>}
 

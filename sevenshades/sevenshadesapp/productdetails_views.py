@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import F
@@ -47,7 +48,11 @@ def ProductDetails_Submit(request):
     if not serializer.is_valid():
         return JsonResponse({'status':False,'message':'Check variant fields.','errors':serializer.errors},status=400)
     names=Upload_Files(request.FILES)
-    try: serializer.save(icon=names)
+    try:
+        serializer.save(icon=names)
+        pid = data.get('productid')
+        if pid:
+            cache.delete(f"product_details_{pid}")
     except Exception:
         cleanup(names)
         raise
@@ -122,6 +127,9 @@ def ProductDetails_BatchSubmit(request):
         for serializer in prepared:
             serializer.save(icon=names)
             created += 1
+        pid = shared.get('productid')
+        if pid:
+            cache.delete(f"product_details_{pid}")
     except Exception:
         cleanup(names)
         raise
@@ -152,6 +160,8 @@ def EditProductDetails_Icon(request):
     try:
         variant.icon=names
         variant.save(update_fields=['icon'])
+        if variant.productid_id:
+            cache.delete(f"product_details_{variant.productid_id}")
     except Exception:
         cleanup(names)
         raise
@@ -175,6 +185,8 @@ def EditProductDetails_Data(request):
     if not serializer.is_valid():
         return JsonResponse({'status':False,'message':'Check variant fields.','errors':serializer.errors},status=400)
     serializer.save()
+    if variant.productid_id:
+        cache.delete(f"product_details_{variant.productid_id}")
     return JsonResponse({'status':True,'message':'Variant updated.'})
 
 @api_view(['POST'])
@@ -185,5 +197,8 @@ def DeleteProductDetails_Data(request):
     if not variant: return failure('Variant not found.',404)
     if TryOrderItem.objects.filter(product_details=variant).exists():
         return failure('This variant is linked to orders and must be kept for stock and return tracking.',409)
+    pid = variant.productid_id
     variant.delete()
+    if pid:
+        cache.delete(f"product_details_{pid}")
     return JsonResponse({'status':True,'message':'Variant deleted.'})

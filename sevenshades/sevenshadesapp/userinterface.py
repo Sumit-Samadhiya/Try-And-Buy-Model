@@ -1,4 +1,5 @@
 import logging
+from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.shortcuts import render
 from django.http.response import JsonResponse
@@ -256,13 +257,29 @@ def User_Products_Maincategory(request):
 @api_view(['GET','POST','DELETE'])
 def User_ProductsDetails_By_Id(request):
      try:
-          if request.method=='POST':
-               productid=request.data['productid']
-               productdetails_list=ProductDetails.objects.all().filter(productid_id=productid)
-               productdetails_serializer_list=ProductDetailsGetSerializer(productdetails_list,many=True)
-               return JsonResponse({"data":productdetails_serializer_list.data, "status":True})
+          if request.method == 'GET':
+               productid = request.query_params.get('productid')
+          elif request.method == 'POST':
+               productid = request.data.get('productid')
           else:
                return JsonResponse({"data":[],"status":False},safe=False)
+
+          if not productid or not str(productid).isdigit():
+               return JsonResponse({"data":[],"status":False},safe=False)
+
+          pid = int(productid)
+          cache_key = f"product_details_{pid}"
+          cached = cache.get(cache_key)
+          if cached is not None:
+               return JsonResponse({"data": cached, "status": True})
+
+          productdetails_list = ProductDetails.objects.filter(productid_id=pid).select_related(
+              'maincategoryid', 'subcategoryid', 'brandid', 'productid'
+          )
+          productdetails_serializer_list = ProductDetailsGetSerializer(productdetails_list, many=True)
+          data = productdetails_serializer_list.data
+          cache.set(cache_key, data, timeout=300)
+          return JsonResponse({"data": data, "status": True})
      except Exception as e:
           logger.exception('Error in User_ProductsDetails_By_Id: %s', e)
           return JsonResponse({"data":[],"status":False},safe=False)

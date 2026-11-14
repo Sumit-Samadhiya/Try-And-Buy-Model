@@ -7,17 +7,32 @@ const optimized = (source, width, useCloud = false) => {
   const variants = catalogImages[key.startsWith('static/') ? key : `static/${key}`];
   if (!variants) return undefined;
   const local = variants[String(width)];
-  if (!useCloud || !cloudName || window.location.hostname !== 'try-and-buy-model.vercel.app') return local;
-  return `https://res.cloudinary.com/${cloudName}/image/fetch/f_auto,q_auto/https://try-and-buy-model.vercel.app${local}`;
+  if (!useCloud || !cloudName) return local;
+  return `https://res.cloudinary.com/${cloudName}/image/fetch/f_auto,q_auto/https://doordrape.com${local}`;
 };
 
 export const responsiveImage = (value, sizes = '(max-width: 600px) 50vw, 25vw', hero = false) => {
-  const first = String(value || '').split(',')[0].trim();
+  const raw = String(value || '').trim();
+  // Cloudinary transformations contain commas; never split an absolute URL.
+  const first = /^https?:\/\//i.test(raw) ? raw : raw.split(',')[0].trim();
+  if (/^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\//.test(first) && !/\/s--/.test(first)) {
+    const widths = hero ? [480, 960, 1600] : [320, 480, 800];
+    const url = width => first.replace('/image/upload/', `/image/upload/f_auto,q_auto,c_limit,w_${width}/`);
+    return { src: url(hero ? 960 : 480), srcSet: widths.map(w => `${url(w)} ${w}w`).join(', '), sizes,
+      onError: event => { const target = event.currentTarget; if (target.dataset.fallback) return;
+        target.dataset.fallback = 'true'; target.removeAttribute('srcset'); target.src = first; } };
+  }
   const widths = hero ? [480, 960, 1600] : [480, 960];
   const sources = widths.map(width => optimized(first, width, true));
   if (sources.some(source => !source)) {
     const original = imageUrl(value);
     const localUpload = original?.startsWith(`${serverURL.replace(/\/+$/, '')}/media/`);
+    if (cloudName && localUpload) {
+      const url = width => `https://res.cloudinary.com/${cloudName}/image/fetch/f_auto,q_auto,c_limit,w_${width}/${original}`;
+      return { src: url(hero ? 960 : 480), srcSet: widths.map(w => `${url(w)} ${w}w`).join(', '), sizes,
+        onError: event => { const target = event.currentTarget; if (target.dataset.fallback) return;
+          target.dataset.fallback = 'true'; target.removeAttribute('srcset'); target.src = original; } };
+    }
     return { src: !hero && localUpload ? `${original}?thumbnail=1` : original };
   }
   return {

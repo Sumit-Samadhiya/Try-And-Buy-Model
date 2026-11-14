@@ -1,3 +1,4 @@
+import { prefetchCategory } from '../../services/FetchDjangoApiServices';
 import imageUrl from '../../services/imageUrl';
 import { useTheme } from '@mui/material/styles';
 import UseMediaQuery from '@mui/material/useMediaQuery';
@@ -20,6 +21,9 @@ export default function MainCategoryComponent(props) {
             return (
                 <div
                     key={item.id}
+                    onMouseEnter={() => prefetchCategory(item.id, false)}
+                    onFocus={() => prefetchCategory(item.id, false)}
+                    onTouchStart={() => prefetchCategory(item.id, false)}
                     onClick={() => handleClick(item)}
                     style={{
                         flex: '1 1 0',

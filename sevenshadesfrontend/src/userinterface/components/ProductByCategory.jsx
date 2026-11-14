@@ -1,9 +1,11 @@
+import { prefetchProduct, useProductPrefetch } from '../../services/productPrefetch';
 import { responsiveImage } from '../../services/imageUrl';
 import './ProductByCategory.css';
 import { useNavigate } from 'react-router-dom';
 
 export default function ProductByCategory(props) {
     const navigate = useNavigate();
+    const prefetchRoot = useProductPrefetch(props.data || []);
 
     const handleNextPage = (item) => {
         const queryParams = new URLSearchParams();
@@ -42,6 +44,12 @@ export default function ProductByCategory(props) {
                     key={item.listing_id || index}
                     onClick={() => handleNextPage(item)}
                     className="pbc-product-card"
+                    role="link" tabIndex={0}
+                    onKeyDown={event => { if (event.key === 'Enter') handleNextPage(item); }}
+                    data-prefetch-product={item.id}
+                    onMouseEnter={() => prefetchProduct(item)}
+                    onFocus={() => prefetchProduct(item)}
+                    onTouchStart={() => prefetchProduct(item)}
                     style={{ opacity: isUnavailable ? 0.8 : 1 }}
                 >
                     {/* Fixed Aspect-Ratio Image Container */}
@@ -62,7 +70,7 @@ export default function ProductByCategory(props) {
                             </span>
                         )}
 
-                        <img
+                        <img width={480} height={600}
                             {...responsiveImage(item.icon)} decoding="async"
                             alt={item.productname || 'Doordrape Product'}
                             className="pbc-product-image"
@@ -156,7 +164,7 @@ export default function ProductByCategory(props) {
     };
 
     return (
-        <div className="pbc-product-grid">
+        <div className="pbc-product-grid" ref={prefetchRoot}>
             {renderProducts()}
         </div>
     );

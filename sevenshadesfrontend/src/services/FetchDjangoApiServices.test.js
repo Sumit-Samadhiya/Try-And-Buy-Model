@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { postData, logout, catalogData, clearCatalogCache, clearCsrfToken } from './FetchDjangoApiServices';
+import { postData, logout, catalogData, clearCatalogCache, clearCsrfToken, prefetchCategory } from './FetchDjangoApiServices';
 
 jest.mock('axios', () => ({ create: jest.fn(options => ({ defaults: options, get: jest.fn(), post: jest.fn() })) }));
 const api = axios.create.mock.results[0].value;
@@ -86,3 +86,11 @@ test('stored application JWT is used and removed after logout', async () => {
   await postData('fetch_user_address', {});
   expect(api.get).toHaveBeenCalledTimes(2);
  });
+
+test('hover prefetch is reused by the category page', async () => {
+  api.get.mockResolvedValue({data:{status:true,data:[{id:7}]}});
+  await prefetchCategory(7);
+  const result = await catalogData('user_product_list?page=1&page_size=12&maincategoryid=7');
+  expect(result.data).toEqual([{id:7}]);
+  expect(api.get).toHaveBeenCalledTimes(1);
+});

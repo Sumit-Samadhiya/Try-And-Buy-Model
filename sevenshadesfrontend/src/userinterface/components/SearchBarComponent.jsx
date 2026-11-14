@@ -5,7 +5,8 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getData } from '../../services/FetchDjangoApiServices';
+import { getData, prefetchCategory } from '../../services/FetchDjangoApiServices';
+import { prefetchProduct } from '../../services/productPrefetch';
 import { useDebounce } from '../../services/useDebounce';
 
 export default function SearchBarComponent(props) {
@@ -194,6 +195,14 @@ export default function SearchBarComponent(props) {
                         <div
                             key={`${item.type}-${item.id}`}
                             onMouseDown={() => handleSelectProduct(item)}
+                            onMouseEnter={() => {
+                                if (item.type === 'product') prefetchProduct(item);
+                                else if (item.type === 'subcategory') prefetchCategory(item.id, true);
+                                else if (item.type === 'maincategory') prefetchCategory(item.id, false);
+                            }}
+                            onTouchStart={() => {
+                                if (item.type === 'product') prefetchProduct(item);
+                            }}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',

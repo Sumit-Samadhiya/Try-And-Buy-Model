@@ -1,3 +1,4 @@
+import { prefetchProduct, useProductPrefetch } from '../../services/productPrefetch';
 import { responsiveImage } from '../../services/imageUrl';
 import './CategoryShowcaseCard.css';
 
@@ -8,6 +9,7 @@ export default function CategoryShowcaseCard({
     onItemClick,
     maxItems = 4,
 }) {
+    const prefetchRoot = useProductPrefetch(items);
     if (!items || items.length === 0) return null;
 
     const displayItems = items.slice(0, maxItems);
@@ -60,19 +62,24 @@ export default function CategoryShowcaseCard({
             </div>
 
             {/* Grid of Products (4 in row on desktop, 2x2 on mobile) */}
-            <div className="csc-grid">
+            <div className="csc-grid" ref={prefetchRoot}>
                 {displayItems.map((item, index) => {
                     const { subtext, maintext } = getItemBadges(item, index);
                     return (
                         <div
                             key={item.listing_id || item.id || index}
                             className="csc-item"
+                            data-prefetch-product={item.id}
+                            onMouseEnter={() => prefetchProduct(item)}
+                            onFocus={() => prefetchProduct(item)}
+                            onTouchStart={() => prefetchProduct(item)}
+                            onKeyDown={event => { if (event.key === 'Enter') onItemClick?.(item); }}
                             onClick={() => onItemClick && onItemClick(item)}
                             role="button"
                             tabIndex={0}
                         >
                             <div className="csc-img-wrapper">
-                                <img
+                                <img width={480} height={600}
                                     {...responsiveImage(item.icon)} decoding="async"
                                     alt={item.productname ? `${item.productname} - Doorstep Try & Buy` : 'Fashion item - Doordrape'}
                                     className="csc-img"

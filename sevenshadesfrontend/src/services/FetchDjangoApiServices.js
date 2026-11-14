@@ -1,3 +1,4 @@
+import { queryClient } from './queryClient';
 import { validateFields } from './validation';
 import axios from 'axios';
 
@@ -49,33 +50,52 @@ const getData = async url => {
 };
 
 // Only public catalog reads may be retried, never checkout or payment mutations.
-const catalogCache = new Map();
-const catalogPending = new Map();
-export const clearCatalogCache = () => catalogCache.clear();
+export const clearCatalogCache = () => queryClient.removeQueries({ queryKey: ['catalog'] });
 const fetchCatalog = async (url, body) => {
-  if (!new Set(['user_product_list', 'user_banner_list', 'user_subcategory_list', 'user_maincategory_list', 'user_products_maincategory', 'user_budget_bazaar_list', 'user_search_products']).has(url.split('?')[0])) throw new Error('Catalog endpoint required');
+  const base = url.split('?')[0];
+  if (!new Set(['user_product_list', 'user_banner_list', 'user_subcategory_list', 'user_maincategory_list', 'user_products_maincategory', 'user_budget_bazaar_list', 'user_budget_bazaar_products', 'user_search_products', 'user_productsdetails_by_id']).has(base)) throw new Error('Catalog endpoint required');
+  let edgeUrl = url;
+  if (base === 'user_productsdetails_by_id' && body?.productid && !url.includes('?')) {
+    edgeUrl = `${url}?productid=${encodeURIComponent(body.productid)}`;
+  }
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    const result = body === undefined ? await getData(url) : await postData(url, body);
+    let result;
+    if ((body === undefined || (base === 'user_productsdetails_by_id' && body?.productid)) &&
+        ['doordrape.com', 'www.doordrape.com', 'try-and-buy-model.vercel.app'].includes(window.location.hostname) &&
+        ['user_banner_list', 'user_maincategory_list', 'user_subcategory_list', 'user_product_list', 'user_productsdetails_by_id'].includes(base)) {
+      try {
+        result = (await axios.get(`/api/catalog-read?resource=${encodeURIComponent(edgeUrl)}`, { timeout: 22000, withCredentials: false })).data;
+      } catch (_) { /* Direct origin remains available if the edge route is unavailable. */ }
+    }
+    if (!result?.status) result = body === undefined ? await getData(url) : await postData(url, body);
     if (result.status || (result.httpStatus && result.httpStatus < 500) || attempt === 1) return result;
     await new Promise(resolve => setTimeout(resolve, 750));
   }
 };
 
-// Brief, memory-only cache for public browsing. Checkout always validates live stock.
-export const catalogData = (url, body) => {
-  const key = JSON.stringify([url, body]);
-  const cached = catalogCache.get(key);
-  if (cached && cached.expires > Date.now()) return Promise.resolve(cached.result);
-  if (catalogPending.has(key)) return catalogPending.get(key);
-  const request = fetchCatalog(url, body).then(result => {
-    if (result?.status) {
-      if (catalogCache.size >= 50) catalogCache.delete(catalogCache.keys().next().value);
-      catalogCache.set(key, { result, expires: Date.now() + 60000 });
-    }
+// Shared query keys let hover prefetch and navigation reuse the same request.
+const catalogOptions = (url, body) => ({
+  queryKey: ['catalog', url, body ?? null],
+  queryFn: async () => {
+    const result = await fetchCatalog(url, body);
+    if (!result?.status) throw Object.assign(new Error(result?.message || 'Unable to load catalog'), { result });
     return result;
-  }).finally(() => catalogPending.delete(key));
-  catalogPending.set(key, request);
-  return request;
+  },
+});
+export const catalogData = (url, body) => queryClient.fetchQuery(catalogOptions(url, body))
+  .catch(error => { if (error.message === 'Catalog endpoint required') throw error; return error.result || { status: false, data: [], message: error.message }; });
+export const prefetchCatalog = (url, body) => {
+  if (navigator.connection?.saveData || /2g/.test(navigator.connection?.effectiveType || '')) return Promise.resolve();
+  return queryClient.prefetchQuery(catalogOptions(url, body));
+};
+export const prefetchCategory = (id, subcategory = false) => prefetchCatalog(
+  `user_product_list?page=1&page_size=12&${subcategory ? 'subcategoryid' : 'maincategoryid'}=${encodeURIComponent(id)}`
+);
+let warmRequest;
+export const warmBackend = () => {
+  if (!warmRequest) warmRequest = axios.get(`${serverURL.replace(/\/+$/, '')}/health/`,
+    { timeout: 60000, withCredentials: false }).catch(() => undefined);
+  return warmRequest;
 };
 
 let csrfRequest;

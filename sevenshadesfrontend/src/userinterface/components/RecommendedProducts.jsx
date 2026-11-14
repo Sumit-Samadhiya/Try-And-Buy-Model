@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { catalogData, postData, getData } from '../../services/FetchDjangoApiServices';
 import { responsiveImage } from '../../services/imageUrl';
+import { prefetchProduct } from '../../services/productPrefetch';
 import './RecommendedProducts.css';
 
 /**
@@ -270,11 +271,15 @@ export default function RecommendedProducts({
                         (typeof item.subcategoryid === 'string' ? item.subcategoryid : '');
                     const brandLabel = item.brandname || (item.categoryname ? `${item.categoryname}` : 'Doordrape');
 
+                    const rawId = item.id || item.productid?.id || item.productid;
                     return (
                         <div
                             key={item.listing_id || item.id || idx}
                             className="rec-card"
                             onClick={() => handleCardClick(item)}
+                            onMouseEnter={() => prefetchProduct({ id: rawId })}
+                            onFocus={() => prefetchProduct({ id: rawId })}
+                            onTouchStart={() => prefetchProduct({ id: rawId })}
                             role="button"
                             tabIndex={0}
                             onKeyDown={(e) => {

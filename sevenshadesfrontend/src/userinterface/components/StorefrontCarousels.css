@@ -78,6 +78,7 @@
 .home-banner-slide img {
     display: block;
     width: 100%;
+    height: auto;
     aspect-ratio: 1440 / 460;
     object-fit: cover;
     object-position: center;

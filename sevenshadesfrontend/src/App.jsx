@@ -10,7 +10,7 @@ import { getData, clearCachedAccounts } from './services/FetchDjangoApiServices'
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { useDispatch } from 'react-redux';
 import {BrowserRouter,Routes,Route, Navigate} from 'react-router-dom'
-import AdminLogin from './administrator/screens/AdminLogin';
+const AdminLogin = lazy(() => import('./administrator/screens/AdminLogin'));
 const ForgotPassword = lazy(() => import('./userinterface/screens/ForgotPassword'));
 
 const AdminDashboard = lazy(() => import('./administrator/screens/AdminDashboard'));

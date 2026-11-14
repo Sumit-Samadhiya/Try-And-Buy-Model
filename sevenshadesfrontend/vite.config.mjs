@@ -10,7 +10,30 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: { ...define, 'process.env': '{}' },
-    build: { outDir: 'build', target: 'es2015' },
+    build: {
+      outDir: 'build',
+      target: 'es2015',
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('@mui/material') || id.includes('@emotion')) {
+                return 'vendor-mui';
+              }
+              if (id.includes('@mui/icons-material')) {
+                return 'vendor-mui-icons';
+              }
+              if (id.includes('leaflet')) {
+                return 'vendor-maps';
+              }
+              if (id.includes('three')) {
+                return 'vendor-three';
+              }
+            }
+          },
+        },
+      },
+    },
     server: { host: '127.0.0.1', port: 3000 },
     preview: { host: '127.0.0.1', port: 4173 },
   };

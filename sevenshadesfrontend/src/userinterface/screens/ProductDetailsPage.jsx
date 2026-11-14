@@ -1,11 +1,11 @@
 import { useLocation, useNavigate } from "react-router-dom"
-import { postData } from "../../services/FetchDjangoApiServices"
+import { catalogData } from "../../services/FetchDjangoApiServices"
 import { useCallback, useEffect, useState } from "react"
 import { trackProductView } from "../../services/analytics"
 import ProductDetailsComponent from "../components/ProductDetailsComponent"
 import Header from "../components/Header"
 import Footer from "../components/Footer"
-import DoordrapeLoader from "../components/DoordrapeLoader"
+import CatalogSkeleton from "../components/CatalogSkeleton"
 import { Container, Paper, Typography, Button } from "@mui/material"
 
 export default function ProductDetailsPage(props){
@@ -30,7 +30,7 @@ export default function ProductDetailsPage(props){
             return
         }
         setLoading(true)
-        const result = await postData('user_productsdetails_by_id', { productid: Number(productid) })
+        const result = await catalogData('user_productsdetails_by_id', { productid: Number(productid) })
         if (result && result.status && Array.isArray(result.data)) {
             setProductList(result.data)
             if (result.data.length > 0) {
@@ -54,7 +54,7 @@ export default function ProductDetailsPage(props){
         return (
             <div>
                 <Header />
-                <DoordrapeLoader text="Loading product details & available sizes…" role="status" />
+                <CatalogSkeleton />
                 <Footer />
             </div>
         )

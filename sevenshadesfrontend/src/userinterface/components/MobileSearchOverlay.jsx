@@ -12,7 +12,8 @@ import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 import imageUrl from '../../services/imageUrl';
 import { trackSearch } from '../../services/analytics';
-import { getData } from '../../services/FetchDjangoApiServices';
+import { getData, prefetchCategory } from '../../services/FetchDjangoApiServices';
+import { prefetchProduct } from '../../services/productPrefetch';
 import { useDebounce } from '../../services/useDebounce';
 
 const Transition = React.forwardRef(function Transition(props, ref) {
@@ -484,6 +485,14 @@ export default function MobileSearchOverlay({ open, onClose }) {
                                         <div
                                             key={`${item.type}-${item.id}`}
                                             onClick={() => handleSelectProduct(item)}
+                                            onMouseEnter={() => {
+                                                if (item.type === 'product') prefetchProduct(item);
+                                                else if (item.type === 'subcategory') prefetchCategory(item.id, true);
+                                                else if (item.type === 'maincategory') prefetchCategory(item.id, false);
+                                            }}
+                                            onTouchStart={() => {
+                                                if (item.type === 'product') prefetchProduct(item);
+                                            }}
                                             data-testid={`search-item-${item.id}`}
                                             style={{
                                                 display: 'flex',

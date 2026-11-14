@@ -294,7 +294,8 @@ def secure_media_serve(request, path: str):
     }
     content_type = content_types.get(ext, 'application/octet-stream')
 
-    if request.GET.get('thumbnail') == '1':
+    wants_thumbnail = request.GET.get('thumbnail') == '1' or request.GET.get('format') == 'webp'
+    if wants_thumbnail:
         stat = target_path.stat()
         data = _cached_thumbnail(str(target_path), stat.st_mtime_ns, stat.st_size)
         # The optimizer can fall back to the original on decode failure.
@@ -307,5 +308,6 @@ def secure_media_serve(request, path: str):
     response['Content-Security-Policy'] = "default-src 'none'; sandbox"
     response['Content-Disposition'] = 'inline'
     response['X-Frame-Options'] = 'DENY'
-    response['Cache-Control'] = 'public, max-age=3600'
+    response['Vary'] = 'Accept'
+    response['Cache-Control'] = 'public, max-age=86400, stale-while-revalidate=604800'
     return response

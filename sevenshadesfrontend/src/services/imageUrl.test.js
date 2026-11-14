@@ -19,3 +19,15 @@ test('responsive images offer fixed sizes and a local fallback without an error 
   props.onError({ currentTarget: target });
   expect(target.removeAttribute).toHaveBeenCalledTimes(1);
 });
+
+test('Cloudinary upload transformations retain comma-containing URLs and resize responsively', () => {
+  const url = 'https://res.cloudinary.com/demo/image/upload/v123/dress.jpg';
+  const props = responsiveImage(url);
+  expect(props.src).toContain('f_auto,q_auto,c_limit,w_480/v123/dress.jpg');
+  expect(props.srcSet).toContain('800w');
+  const transformed = responsiveImage('https://res.cloudinary.com/demo/image/upload/q_auto,w_900/dress.jpg');
+  expect(transformed.src).toContain('q_auto,w_900/dress.jpg');
+  const target = { dataset: {}, removeAttribute: jest.fn() };
+  props.onError({currentTarget:target});
+  expect(target.src).toBe(url);
+});

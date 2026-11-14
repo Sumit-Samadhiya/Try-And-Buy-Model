@@ -1,3 +1,4 @@
+import { prefetchCategory } from '../../services/FetchDjangoApiServices';
 import { useRef } from 'react';
 import Slider from 'react-slick';
 import { useTheme } from '@mui/material/styles';
@@ -43,7 +44,10 @@ export default function SubcategoryComponent({ data = [], onItemClick }) {
               className="category-card"
               role="button"
               tabIndex={0}
-              onClick={() => onItemClick?.(item)}
+              onMouseEnter={() => prefetchCategory(item.id, true)}
+                    onFocus={() => prefetchCategory(item.id, true)}
+                    onTouchStart={() => prefetchCategory(item.id, true)}
+                    onClick={() => onItemClick?.(item)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();

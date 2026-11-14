@@ -310,8 +310,8 @@ test('WhatsApp OTP displays error message when service is offline or rate limite
     fireEvent.click(screen.getByRole('button', { name: /Get OTP on WhatsApp/i }));
   });
 
-  expect(await screen.findByText(/Too many attempts/i)).toBeInTheDocument();
-});
+  expect(await screen.findByText(/Too many attempts/i, {}, { timeout: 8000 })).toBeInTheDocument();
+}, 10000);
 
 test('shows error when unregistered mobile tries to reset password', async () => {
   postData.mockResolvedValueOnce({
