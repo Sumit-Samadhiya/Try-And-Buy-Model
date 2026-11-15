@@ -8,7 +8,6 @@ import BudgetBazaarComponent from "../components/BudgetBazaarComponent";
 import Footer from "../components/Footer";
 import { catalogData, warmBackend } from "../../services/FetchDjangoApiServices";
 import MainCategoryComponent from "../components/MainCategoryComponent";
-import AdvertiseComponent from "../components/AdvertiseComponent";
 import HowItWorksSection from "../components/HowItWorksSection";
 import HomeFaqSection from "../components/HomeFaqSection";
 import { useNavigate } from "react-router-dom";
@@ -217,12 +216,9 @@ export default function Home(props) {
                     </div>
                 </section>
 
-                {/* How It Works 3-Step Process */}
-                <HowItWorksSection />
-
                 {/* Subcategories Strip */}
                 {listSubCategory.length > 0 && (
-                    <section style={{ width: '100%', maxWidth: 1360, marginTop: 40, padding: '0 16px', boxSizing: 'border-box' }}>
+                    <section style={{ width: '100%', maxWidth: 1360, marginTop: sm_matches ? 28 : 40, padding: '0 16px', boxSizing: 'border-box' }}>
                         <div style={{ marginBottom: 16, textAlign: 'left' }}>
                             <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#64748b' }}>
                                 Trending Categories
@@ -251,12 +247,8 @@ export default function Home(props) {
                     />
                 </section>
 
-                {/* Promotional Try & Buy Value Banner (Desktop only - removed from mobile view) */}
-                {!sm_matches && (
-                    <section style={{ width: '100%', marginTop: 56 }}>
-                        <AdvertiseComponent />
-                    </section>
-                )}
+                {/* How It Works 3-Step Process */}
+                <HowItWorksSection />
 
                 {/* Section 1: Shop for Men (Showcase Card Matching Demo Layout) */}
                 {menProducts.length > 0 && (
