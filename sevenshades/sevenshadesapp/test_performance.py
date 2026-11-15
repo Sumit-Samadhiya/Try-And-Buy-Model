@@ -32,7 +32,7 @@ class ImagePerformanceTests(SimpleTestCase):
             response = secure_media_serve(request, 'photo.png')
             self.assertEqual(response['Content-Type'], 'image/webp')
             self.assertEqual(Image.open(BytesIO(response.content)).size, (250, 500))
-            self.assertIn('max-age=3600', response['Cache-Control'])
+            self.assertEqual(response['Cache-Control'], 'public, max-age=86400, stale-while-revalidate=604800')
 
 
 class CatalogLimitTests(TestCase):
