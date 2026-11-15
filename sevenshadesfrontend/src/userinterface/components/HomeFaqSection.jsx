@@ -3,28 +3,7 @@ import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-const FAQ_ITEMS = [
-    {
-        question: 'How does Doordrape Try & Buy work?',
-        answer: 'Browse our catalog and add up to 4 styles or alternate sizes to your cart. Select Doorstep Try & Buy at checkout. Our delivery rider arrives at your doorstep in 30-45 minutes and gives you a 15-minute trial window to try the clothes in your room. Keep what fits and pay on the spot via Cash or UPI; the rider takes back unwanted items immediately.',
-    },
-    {
-        question: 'How much time do I get for the doorstep clothes trial?',
-        answer: 'You receive a dedicated 15-minute trial window at your home. This gives you plenty of time to check the fitting, fabric texture, mirror look, and comfort before making any payment decision.',
-    },
-    {
-        question: 'Can I order multiple sizes of the same product to try?',
-        answer: 'Yes! That is one of our most popular features. You can order multiple sizes (e.g., Medium and Large) of the same dress or shirt to see which one fits best, keep the right size, and return the other size on the spot with zero hassle.',
-    },
-    {
-        question: 'What happens if none of the clothes fit me?',
-        answer: 'If none of the clothes match your size or liking, you are never forced to buy! Simply return all items directly to the delivery partner at the doorstep. You only pay nominal doorstep trial delivery fees.',
-    },
-    {
-        question: 'What payment methods are accepted after trying clothes?',
-        answer: 'You pay after your 15-minute trial is complete. We accept Cash on Delivery (COD), UPI (Google Pay, PhonePe, Paytm, BHIM), and all major debit and credit cards.',
-    },
-];
+import FAQ_ITEMS from '../../services/homeFaq.json';
 
 export default function HomeFaqSection() {
     const theme = useTheme();

@@ -188,8 +188,8 @@ export default function Home(props) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <span style={{ fontSize: 20 }}>⚡</span>
                             <div>
-                                <strong style={{ display: 'block', fontSize: sm_matches ? '12px' : '13px', color: '#0f172a' }}>30-45 Min Delivery</strong>
-                                <span style={{ fontSize: '11px', color: '#64748b' }}>Fast doorstep service</span>
+                                <strong style={{ display: 'block', fontSize: sm_matches ? '12px' : '13px', color: '#0f172a' }}>Doorstep Delivery</strong>
+                                <span style={{ fontSize: '11px', color: '#64748b' }}>Check available slots</span>
                             </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

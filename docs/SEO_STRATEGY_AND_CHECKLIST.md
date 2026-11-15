@@ -44,3 +44,23 @@ Do not target "pay later" (can imply credit), claim nationwide availability, or 
 - Market terminology: https://modaapp.co/ and https://play.google.com/store/apps/details?hl=en-US&id=app.slikk.club
 
 Indexing, position #1 and a 24–48 hour turnaround are not guaranteed. Requesting indexing is a request, not proof of inclusion.
+
+## 2026-11-15 technical follow-up
+
+Pre-GSC ownership review: homepage retains brand/home-trial intent; catalog retains collection browsing; policies retain legal intent. No new competing keyword landing pages were introduced. GSC ownership and performance remain unverified in this session.
+
+- Shared route metadata now generates public HTML heads during production builds, including canonical and social tags. This fixes all routes initially receiving homepage metadata.
+- Public sitemap is generated from that same allowlist without invented dates.
+- A separate noindex application shell serves private/unknown routes before JavaScript executes. Unknown routes still need genuine HTTP 404 handling; noindex is not an HTTP status fix.
+- Product titles now expose actual crawlable links while product indexing remains gated on validated metadata/inventory.
+- No visual redesign or unsupported service/payment promises added.
+- Static heads are not server-rendered body content. Product schema, inventory sitemap, full rendering and production/GSC verification remain release work.
+
+Measurement plan: after verification, export GSC page + query data, separate branded searches (DoorDrape / Door Drape) from service searches, compare comparable 28-day periods, and inspect indexing before interpreting missing impressions. Do not invent volume/difficulty or assume zero impressions means zero demand.
+
+### Release continuation — 2026-11-15
+- User confirmed mixed/demo inventory: product indexing/schema and inventory sitemap intentionally remain disabled. This is a release constraint, not an uncompleted product rollout.
+- Public DNS includes a google-site-verification TXT record. Owner access and sitemap submission cannot be inferred from DNS alone; authenticated GSC verification remains necessary.
+- Homepage FAQs are shared between the React UI and build-generated HTML, visible to all clients before JavaScript mounts. Catalog/policy HTML includes only a summary and navigation; this is not full React SSR or full policy-body prerendering.
+- Removed unsupported delivery-time and payment guarantees from the homepage FAQ/how-it-works copy. Checkout determines fees, payment options and availability.
+- Run `node scripts/verify-seo.mjs` after production build to verify the generated documents and intentional product exclusion.

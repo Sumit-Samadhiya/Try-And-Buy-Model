@@ -1,7 +1,7 @@
 import { prefetchProduct, useProductPrefetch } from '../../services/productPrefetch';
 import { responsiveImage } from '../../services/imageUrl';
 import './ProductByCategory.css';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function ProductByCategory(props) {
     const navigate = useNavigate();
@@ -85,7 +85,7 @@ export default function ProductByCategory(props) {
                         </div>
 
                         <h3 className="pbc-card-title" title={item.display_title || item.productname}>
-                            {item.display_title || item.productname}
+                            <Link to={`/productdetailspage?productid=${encodeURIComponent(item.id)}`} onClick={event => event.stopPropagation()} style={{ color: 'inherit', textDecoration: 'none' }}>{item.display_title || item.productname}</Link>
                         </h3>
 
                         {item.description && (

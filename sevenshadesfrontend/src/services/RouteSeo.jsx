@@ -2,12 +2,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const origin = 'https://doordrape.com';
-const pages = {
-  '/': ['DoorDrape: Doorstep Try & Buy Fashion | Try Clothes at Home', 'Try clothes at home with DoorDrape. Enjoy a 15-minute doorstep trial and pay for what you keep. Check availability and trial fees at checkout.'],
-  '/productpage': ['Shop Clothing Collections | DoorDrape', 'Explore clothing collections at DoorDrape. Choose your styles and sizes, and check doorstep trial availability at checkout.'],
-  '/privacy-policy': ['Privacy Policy | DoorDrape', 'Read how DoorDrape handles your personal information, account data and privacy choices.'],
-  '/terms-and-conditions': ['Terms & Conditions | DoorDrape', 'Read DoorDrape terms for orders, doorstep trials, payments and returns.'],
-};
+import pages from './seoPages.json';
 
 export function routeMetadata(pathname, search = '') {
   const path = pathname === '/home' ? '/' : pathname;

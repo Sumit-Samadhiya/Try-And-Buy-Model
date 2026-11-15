@@ -14,19 +14,19 @@ export default function HowItWorksSection() {
             number: '01',
             icon: <CheckroomOutlinedIcon style={{ fontSize: 28, color: '#047857' }} />,
             title: 'Pick Multiple Sizes & Styles',
-            description: 'Select up to 4 outfits or alternate sizes to try at home. Zero advance prepayment required.',
+            description: 'Select up to 4 outfits or alternate sizes to try at home. Check availability and any fees at checkout.',
         },
         {
             number: '02',
             icon: <TimerOutlinedIcon style={{ fontSize: 28, color: '#047857' }} />,
             title: '15-Minute Doorstep Trial',
-            description: 'Our rider arrives at your doorstep in 30-45 minutes and waits while you try items in your room.',
+            description: 'Choose an available delivery slot. Your rider waits during the 15-minute trial while you try items at home.',
         },
         {
             number: '03',
             icon: <PaymentOutlinedIcon style={{ fontSize: 28, color: '#047857' }} />,
             title: 'Pay Only For What Fits',
-            description: 'Keep the pieces you love and pay via Cash or UPI. Return any unfit items to the rider instantly.',
+            description: 'Keep the pieces you love and use the payment method confirmed at checkout. Return any unfit items to the rider instantly.',
         },
     ];
 
