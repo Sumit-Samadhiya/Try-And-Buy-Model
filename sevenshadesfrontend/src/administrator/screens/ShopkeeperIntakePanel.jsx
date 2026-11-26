@@ -71,6 +71,7 @@ export default function ShopkeeperIntakePanel({ catalog, onCatalogChanged }) {
   const [customSize, setCustomSize] = useState('');
   const [files, setFiles] = useState([]);
   const [fileKey, setFileKey] = useState(0);
+  const [polishingIndex, setPolishingIndex] = useState(null);
 
   // Staging filters, bulk selection & dialogs
   const [filterShopkeeper, setFilterShopkeeper] = useState('');
@@ -159,6 +160,41 @@ export default function ShopkeeperIntakePanel({ catalog, onCatalogChanged }) {
       setSizeRows(prev => [...prev, { size: clean, qty: '1' }]);
     }
     setCustomSize('');
+  };
+
+  const appendFiles = fileList => {
+    const incoming = Array.from(fileList || []);
+    if (!incoming.length) return;
+    setFiles(prev => [...prev, ...incoming].slice(0, 10));
+    setFileKey(k => k + 1);
+  };
+
+  const removeFileAt = idx => {
+    setFiles(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const makeStudioPhoto = async idx => {
+    const target = files[idx];
+    if (!target || busy || polishingIndex !== null) return;
+    setPolishingIndex(idx);
+    setError('');
+    setSuccess('');
+    const body = new FormData();
+    body.append('icon', target);
+    if (maincategoryid) body.append('maincategoryid', maincategoryid);
+    if (subcategoryid) body.append('subcategoryid', subcategoryid);
+    const res = await postData('intake_studio_photo', body);
+    setPolishingIndex(null);
+    if (res?.status && res.data?.data_url) {
+      const blob = await (await fetch(res.data.data_url)).blob();
+      const ext = res.data.mime_type === 'image/png' ? 'png' : 'jpg';
+      const baseName = target.name.replace(/\.[^.]+$/, '') || 'studio';
+      const enhancedFile = new File([blob], `${baseName}_studio.${ext}`, { type: res.data.mime_type || 'image/jpeg' });
+      setFiles(prev => prev.map((f, i) => (i === idx ? enhancedFile : f)));
+      setSuccess(res.data.notice || 'Studio photo ready.');
+    } else {
+      setError(res?.message || 'Could not enhance photo.');
+    }
   };
 
   const runAiPreview = async () => {
@@ -542,27 +578,37 @@ export default function ShopkeeperIntakePanel({ catalog, onCatalogChanged }) {
               </Grid>
             </Grid>
 
-            {/* Photo capture + AI Auto-name */}
+            {/* Photo capture + Gallery + Delete + AI Auto-name / Studio */}
             <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: '#f8fafc' }}>
               <Stack spacing={1.5}>
                 <Stack direction={{ xs: 'column', sm: 'row' }} gap={1.5} alignItems={{ sm: 'center' }} justifyContent="space-between">
                   <div>
-                    <Typography variant="subtitle2" fontWeight={700}>Garment Photo(s)</Typography>
+                    <Typography variant="subtitle2" fontWeight={700}>Garment Photo(s) ({files.length}/10)</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Use rear camera on mobile or upload 1–10 images (JPG, PNG, WebP)
+                      Use Take Photo for camera, Choose from Gallery for saved photos, tap ✕ to delete, or 🪄 Studio to polish
                     </Typography>
                   </div>
                   <Stack direction="row" gap={1} flexWrap="wrap">
-                    <Button variant="outlined" component="label" disabled={busy}>
-                      📷 Capture / Choose Photo
+                    <Button variant="outlined" component="label" disabled={busy || files.length >= 10}>
+                      📷 Take Photo
                       <input
-                        key={fileKey}
+                        key={`cam-${fileKey}`}
+                        hidden
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={e => appendFiles(e.target.files)}
+                      />
+                    </Button>
+                    <Button variant="outlined" component="label" disabled={busy || files.length >= 10}>
+                      🖼️ Choose from Gallery
+                      <input
+                        key={`gal-${fileKey}`}
                         hidden
                         type="file"
                         accept=".jpg,.jpeg,.png,.webp,.avif"
-                        capture="environment"
                         multiple
-                        onChange={e => setFiles(Array.from(e.target.files || []))}
+                        onChange={e => appendFiles(e.target.files)}
                       />
                     </Button>
                     <Button
@@ -577,9 +623,44 @@ export default function ShopkeeperIntakePanel({ catalog, onCatalogChanged }) {
                 </Stack>
 
                 {previews.length > 0 && (
-                  <Stack direction="row" gap={1} flexWrap="wrap">
+                  <Stack direction="row" gap={1.5} flexWrap="wrap">
                     {previews.map((url, idx) => (
-                      <Box key={url + idx} component="img" src={url} alt={`Capture ${idx + 1}`} sx={{ width: 80, height: 96, objectFit: 'cover', borderRadius: 1.5, border: '1px solid #cbd5e1' }} />
+                      <Box key={url + idx} sx={{ position: 'relative', width: 92 }}>
+                        <Box
+                          component="img"
+                          src={url}
+                          alt={`Capture ${idx + 1}`}
+                          sx={{ width: 92, height: 112, objectFit: 'cover', borderRadius: 1.5, border: '1px solid #cbd5e1', display: 'block' }}
+                        />
+                        <IconButton
+                          size="small"
+                          aria-label={`Remove photo ${idx + 1}`}
+                          onClick={() => removeFileAt(idx)}
+                          disabled={busy || polishingIndex !== null}
+                          sx={{
+                            position: 'absolute',
+                            top: 4,
+                            right: 4,
+                            bgcolor: 'rgba(15, 23, 42, 0.8)',
+                            color: '#fff',
+                            width: 24,
+                            height: 24,
+                            fontSize: 13,
+                            '&:hover': { bgcolor: '#dc2626' },
+                          }}
+                        >
+                          ✕
+                        </IconButton>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          onClick={() => makeStudioPhoto(idx)}
+                          disabled={busy || polishingIndex !== null}
+                          sx={{ mt: 0.5, width: '100%', fontSize: 11, py: 0.25, px: 0.5 }}
+                        >
+                          {polishingIndex === idx ? 'Polishing…' : '🪄 Studio'}
+                        </Button>
+                      </Box>
                     ))}
                   </Stack>
                 )}

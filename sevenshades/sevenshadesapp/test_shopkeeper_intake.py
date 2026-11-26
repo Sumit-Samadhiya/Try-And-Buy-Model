@@ -180,3 +180,21 @@ class ShopkeeperIntakeWorkflowTests(TestCase):
         self.assertEqual(Product.objects.count(), 2)
         self.assertEqual(ProductDetails.objects.get(sku='SH01-002-XL').price, 870)
         self.assertEqual(ShopkeeperIntakeItem.objects.filter(status='PUBLISHED').count(), 2)
+
+    @patch('sevenshadesapp.intake_ai.requests.post')
+    def test_studio_photo_falls_back_cleanly_on_429(self, mock_post):
+        class Fake429:
+            status_code = 429
+            text = 'quota exceeded'
+        mock_post.return_value = Fake429()
+        with override_settings(GEMINI_API_KEY='test-key'):
+            res = self.client.post('/api/intake_studio_photo', {
+                'maincategoryid': self.cat.id,
+                'subcategoryid': self.sub.id,
+                'icon': _fake_jpeg('raw_shop.jpg'),
+            })
+        self.assertEqual(res.status_code, 200)
+        data = res.json()['data']
+        self.assertEqual(data['studio_mode'], 'studio_polish')
+        self.assertTrue(data['data_url'].startswith('data:image/jpeg;base64,'))
+

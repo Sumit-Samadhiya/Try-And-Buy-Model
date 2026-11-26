@@ -195,6 +195,7 @@ urlpatterns = [
     path('api/shopkeeper_list', shopkeeper_intake_views.Shopkeeper_List),
     path('api/shopkeeper_save', shopkeeper_intake_views.Shopkeeper_Save),
     path('api/intake_analyze', shopkeeper_intake_views.Intake_Analyze),
+    path('api/intake_studio_photo', shopkeeper_intake_views.Intake_Studio_Photo),
     path('api/intake_list', shopkeeper_intake_views.Intake_List),
     path('api/intake_submit', shopkeeper_intake_views.Intake_Submit),
     path('api/intake_update', shopkeeper_intake_views.Intake_Update),

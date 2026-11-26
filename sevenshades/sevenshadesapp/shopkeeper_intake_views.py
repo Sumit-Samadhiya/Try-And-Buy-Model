@@ -1,4 +1,5 @@
 """Shopkeeper Quick Intake, AI Auto-Naming, Staging Preview, Publish & Export APIs."""
+import base64
 import csv
 import json
 import logging
@@ -12,7 +13,7 @@ from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from rest_framework.decorators import api_view
 
-from .intake_ai import analyze_garment_image
+from .intake_ai import analyze_garment_image, create_studio_product_photo
 from .models import (
     Brands,
     MainCategory,
@@ -210,6 +211,36 @@ def Intake_Analyze(request):
         color_hint=str(request.data.get('color') or ''),
     )
     return JsonResponse({'status': True, 'data': result})
+
+
+@api_view(['POST'])
+def Intake_Studio_Photo(request):
+    upload = request.FILES.get('icon')
+    if not upload:
+        return failure('Choose a garment photo to enhance.', 400)
+    errs = validate_uploaded_image(upload)
+    if errs:
+        return failure(errs[0], 400)
+    opt_bytes = optimize_uploaded_image(upload, max_dimension=1200, quality=85)
+    cat = MainCategory.objects.filter(pk=request.data.get('maincategoryid')).first()
+    sub = MySubCategory.objects.filter(pk=request.data.get('subcategoryid')).first()
+    studio = create_studio_product_photo(
+        opt_bytes,
+        mime_type='image/jpeg',
+        category_name=cat.maincategoryname if cat else '',
+        subcategory_name=sub.subcategoryname if sub else '',
+    )
+    mime = studio['mime_type']
+    b64 = base64.b64encode(studio['image_bytes']).decode('ascii')
+    return JsonResponse({
+        'status': True,
+        'data': {
+            'data_url': f"data:{mime};base64,{b64}",
+            'mime_type': mime,
+            'studio_mode': studio['studio_mode'],
+            'notice': studio['notice'],
+        },
+    })
 
 
 @api_view(['GET'])

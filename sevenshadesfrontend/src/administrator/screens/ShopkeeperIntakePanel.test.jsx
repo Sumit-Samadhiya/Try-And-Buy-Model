@@ -52,6 +52,30 @@ beforeEach(() => {
     return { status: true, data: [] };
   });
   postData.mockResolvedValue({ status: true, message: 'Uploaded 1 item to website.', published_count: 1 });
+  URL.createObjectURL = jest.fn(() => 'blob:preview');
+  URL.revokeObjectURL = jest.fn();
+});
+
+test('supports separate camera and gallery inputs plus immediate photo removal', async () => {
+  render(
+    <MemoryRouter>
+      <ShopkeeperIntakePanel catalog={catalog} />
+    </MemoryRouter>
+  );
+
+  await screen.findByText('SH01-001');
+  const camBtn = screen.getByText('📷 Take Photo');
+  const galBtn = screen.getByText('🖼️ Choose from Gallery');
+  const camInput = camBtn.querySelector('input');
+  const galInput = galBtn.querySelector('input');
+  expect(camInput).toHaveAttribute('capture', 'environment');
+  expect(galInput).not.toHaveAttribute('capture');
+
+  fireEvent.change(galInput, { target: { files: [new File(['img'], 'shirt1.jpg', { type: 'image/jpeg' })] } });
+  expect(await screen.findByAltText('Capture 1')).toBeInTheDocument();
+
+  fireEvent.click(screen.getByLabelText('Remove photo 1'));
+  expect(screen.queryByAltText('Capture 1')).not.toBeInTheDocument();
 });
 
 test('shows shopkeeper rate, +150 website price, and supports one-by-one and bulk publish', async () => {
