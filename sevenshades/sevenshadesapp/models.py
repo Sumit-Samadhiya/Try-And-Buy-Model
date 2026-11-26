@@ -516,3 +516,69 @@ class WhatsAppOtp(models.Model):
     def __str__(self):
         return f"WhatsApp OTP for {self.phone} (consumed={self.is_consumed})"
 
+
+class Shopkeeper(models.Model):
+    """Partner shopkeeper / local garment supplier for field quick intake."""
+    shop_code = models.CharField(max_length=20, unique=True)
+    shop_name = models.CharField(max_length=100)
+    owner_name = models.CharField(max_length=70, blank=True, default='')
+    phone = models.CharField(max_length=15, blank=True, default='')
+    address = models.CharField(max_length=250, blank=True, default='')
+    default_markup = models.IntegerField(default=150)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['shop_code', 'shop_name']
+        constraints = [
+            models.CheckConstraint(check=models.Q(default_markup__gte=0), name='shopkeeper_default_markup_non_negative'),
+        ]
+
+    def __str__(self):
+        return f"{self.shop_code} - {self.shop_name}"
+
+
+class ShopkeeperIntakeItem(models.Model):
+    """Staging item captured at a shopkeeper before publishing to the live catalog."""
+    STATUS_CHOICES = (
+        ('DRAFT', 'Draft'),
+        ('PUBLISHED', 'Published'),
+    )
+    AI_SOURCE_CHOICES = (
+        ('gemini', 'Gemini Vision'),
+        ('fallback', 'Smart Fallback'),
+        ('manual', 'Manual'),
+    )
+
+    shopkeeper = models.ForeignKey(Shopkeeper, on_delete=models.PROTECT, related_name='intake_items')
+    unique_code = models.CharField(max_length=50, unique=True, db_index=True)
+    maincategoryid = models.ForeignKey(MainCategory, on_delete=models.PROTECT)
+    subcategoryid = models.ForeignKey(MySubCategory, on_delete=models.PROTECT)
+    brandid = models.ForeignKey(Brands, on_delete=models.PROTECT)
+    product_name = models.CharField(max_length=70)
+    description = models.CharField(max_length=150)
+    color = models.CharField(max_length=70, default='Assorted')
+    cost_price = models.IntegerField()
+    markup_amount = models.IntegerField(default=150)
+    website_price = models.IntegerField()
+    sizes_json = models.JSONField(default=list, blank=True)
+    photos = models.TextField(default='')
+    ai_source = models.CharField(max_length=20, choices=AI_SOURCE_CHOICES, default='fallback')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT', db_index=True)
+    published_product = models.ForeignKey(Product, null=True, blank=True, on_delete=models.SET_NULL, related_name='intake_sources')
+    published_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        constraints = [
+            models.CheckConstraint(check=models.Q(cost_price__gte=0), name='intake_cost_price_non_negative'),
+            models.CheckConstraint(check=models.Q(markup_amount__gte=0), name='intake_markup_amount_non_negative'),
+            models.CheckConstraint(check=models.Q(website_price__gte=0), name='intake_website_price_non_negative'),
+        ]
+
+    def __str__(self):
+        return f"{self.unique_code} ({self.status}) - {self.product_name}"
+
+

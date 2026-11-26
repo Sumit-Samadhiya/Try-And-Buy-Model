@@ -16,7 +16,7 @@ class AccountSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(exc.messages)
         return make_password(value)
 
-from sevenshadesapp.models import MainCategory,MySubCategory,Brands,Product,ProductDetails,AdminLogin,Banner,SignUp,UserAddress,WalletAccount,TryOrder,TryOrderItem,FinalOrder,FinalOrderItem,DeliveryRider,DeliveryAssignment,DeliveryBatch,ReturnedItem,TamperProofTag,ProductReview
+from sevenshadesapp.models import MainCategory,MySubCategory,Brands,Product,ProductDetails,AdminLogin,Banner,SignUp,UserAddress,WalletAccount,TryOrder,TryOrderItem,FinalOrder,FinalOrderItem,DeliveryRider,DeliveryAssignment,DeliveryBatch,ReturnedItem,TamperProofTag,ProductReview,Shopkeeper,ShopkeeperIntakeItem
 
 class ProductReviewSerializer(serializers.ModelSerializer):
     class Meta:
@@ -295,6 +295,19 @@ class TamperProofTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = TamperProofTag
         fields = '__all__'
+
+
+class ShopkeeperSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Shopkeeper
+        fields = '__all__'
+
+
+class ShopkeeperIntakeItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShopkeeperIntakeItem
+        fields = '__all__'
+
 
 
 

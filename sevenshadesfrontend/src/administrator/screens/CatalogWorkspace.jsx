@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { getData, postData } from '../../services/FetchDjangoApiServices';
 import { validateFields } from '../../services/validation';
 import imageUrl from '../../services/imageUrl';
+import ShopkeeperIntakePanel from './ShopkeeperIntakePanel';
 
 const idOf = value => String(value?.id ?? value ?? '');
 const blank = {maincategoryid:'',subcategoryid:'',brandid:'',productid:'',productname:'',productsubname:'',description:'',qty:'0',price:'',offerprice:'0',color:'',size:'',offertype:'None',sku:''};
@@ -400,6 +401,7 @@ export default function CatalogWorkspace({variant = false, list = false}) {
   };
 
   const isVariantsTab = activeTab === 'variants';
+  const isIntakeTab = activeTab === 'intake';
   const rawRows = catalog ? (isVariantsTab ? catalog.variants : catalog.products) : [];
 
   const filtered = rawRows.filter(row => {
@@ -483,15 +485,29 @@ export default function CatalogWorkspace({variant = false, list = false}) {
       {success && <Alert onClose={() => setSuccess('')}>{success}</Alert>}
 
       {catalog && !list && (
-        <Paper variant="outlined" sx={{ p: { xs: 2, md: 3 }, borderRadius: 3 }}>
-          <ProductForm variant={variant} catalog={catalog} onSaved={saved} />
-        </Paper>
+        <Stack spacing={2}>
+          <Stack direction="row" gap={1}>
+            <Button variant={!isIntakeTab ? 'contained' : 'outlined'} size="small" onClick={() => setActiveTab(variant ? 'variants' : 'products')}>
+              Standard Form
+            </Button>
+            <Button variant={isIntakeTab ? 'contained' : 'outlined'} size="small" onClick={() => setActiveTab('intake')}>
+              📸 Shopkeeper Quick Intake
+            </Button>
+          </Stack>
+          {isIntakeTab ? (
+            <ShopkeeperIntakePanel catalog={catalog} onCatalogChanged={load} />
+          ) : (
+            <Paper variant="outlined" sx={{ p: { xs: 2, md: 3 }, borderRadius: 3 }}>
+              <ProductForm variant={variant} catalog={catalog} onSaved={saved} />
+            </Paper>
+          )}
+        </Stack>
       )}
 
       {catalog && list && (
         <>
           <Paper variant="outlined" sx={{ p: 2 }}>
-            <Stack direction={{ xs: 'column', sm: 'row' }} gap={2} justifyContent="space-between" alignItems={{ sm: 'center' }} sx={{ mb: 2 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} gap={2} justifyContent="space-between" alignItems={{ sm: 'center' }} sx={{ mb: isIntakeTab ? 0 : 2 }}>
               <ButtonGroup size="small">
                 <Button
                   variant={activeTab === 'products' ? 'contained' : 'outlined'}
@@ -507,31 +523,43 @@ export default function CatalogWorkspace({variant = false, list = false}) {
                 >
                   🎨 All Variants & Stock ({catalog.variants.length})
                 </Button>
+                <Button
+                  variant={isIntakeTab ? 'contained' : 'outlined'}
+                  onClick={() => { setActiveTab('intake'); setPage(0); }}
+                  sx={{ fontWeight: 700 }}
+                >
+                  📸 Quick Shopkeeper Intake
+                </Button>
               </ButtonGroup>
             </Stack>
 
-            <Stack direction={{ xs: 'column', md: 'row' }} gap={2}>
-              <TextField label="Search products" size="small" value={filters.q} onChange={e => change('q', e.target.value)} />
-              <TextField select size="small" label="Category" sx={{ minWidth: 150 }} value={filters.category} onChange={e => change('category', e.target.value)}>
-                <MenuItem value="">All</MenuItem>
-                {catalog.categories.map(item => <MenuItem key={item.id} value={String(item.id)}>{item.maincategoryname}</MenuItem>)}
-              </TextField>
-              <TextField select size="small" label="Brand" sx={{ minWidth: 150 }} value={filters.brand} onChange={e => change('brand', e.target.value)}>
-                <MenuItem value="">All</MenuItem>
-                {catalog.brands.map(item => <MenuItem key={item.id} value={String(item.id)}>{item.brandname}</MenuItem>)}
-              </TextField>
-              {isVariantsTab && (
-                <TextField select size="small" label="Stock" sx={{ minWidth: 150 }} value={filters.stock} onChange={e => change('stock', e.target.value)}>
+            {!isIntakeTab && (
+              <Stack direction={{ xs: 'column', md: 'row' }} gap={2}>
+                <TextField label="Search products" size="small" value={filters.q} onChange={e => change('q', e.target.value)} />
+                <TextField select size="small" label="Category" sx={{ minWidth: 150 }} value={filters.category} onChange={e => change('category', e.target.value)}>
                   <MenuItem value="">All</MenuItem>
-                  <MenuItem value="low">Low (1–3)</MenuItem>
-                  <MenuItem value="out">Out of stock</MenuItem>
+                  {catalog.categories.map(item => <MenuItem key={item.id} value={String(item.id)}>{item.maincategoryname}</MenuItem>)}
                 </TextField>
-              )}
-              <Button onClick={() => { setFilters({ q: '', category: '', brand: '', stock: '' }); setPage(0); }}>Reset filters</Button>
-            </Stack>
+                <TextField select size="small" label="Brand" sx={{ minWidth: 150 }} value={filters.brand} onChange={e => change('brand', e.target.value)}>
+                  <MenuItem value="">All</MenuItem>
+                  {catalog.brands.map(item => <MenuItem key={item.id} value={String(item.id)}>{item.brandname}</MenuItem>)}
+                </TextField>
+                {isVariantsTab && (
+                  <TextField select size="small" label="Stock" sx={{ minWidth: 150 }} value={filters.stock} onChange={e => change('stock', e.target.value)}>
+                    <MenuItem value="">All</MenuItem>
+                    <MenuItem value="low">Low (1–3)</MenuItem>
+                    <MenuItem value="out">Out of stock</MenuItem>
+                  </TextField>
+                )}
+                <Button onClick={() => { setFilters({ q: '', category: '', brand: '', stock: '' }); setPage(0); }}>Reset filters</Button>
+              </Stack>
+            )}
           </Paper>
 
-          <Paper variant="outlined">
+          {isIntakeTab ? (
+            <ShopkeeperIntakePanel catalog={catalog} onCatalogChanged={load} />
+          ) : (
+            <Paper variant="outlined">
             <TableContainer>
               <Table>
                 <TableHead>
@@ -651,6 +679,7 @@ export default function CatalogWorkspace({variant = false, list = false}) {
               onRowsPerPageChange={e => { setSize(Number(e.target.value)); setPage(0); }}
             />
           </Paper>
+          )}
         </>
       )}
 

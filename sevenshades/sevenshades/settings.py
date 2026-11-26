@@ -291,6 +291,10 @@ DOORDRAPE_UPI_NAME = os.environ.get('DOORDRAPE_UPI_NAME', 'DoorDrape Fashion')
 # Geoapify API Key for Precise Geocoding, Scooter Routing & Map Tiles
 GEOAPIFY_API_KEY = os.environ.get('GEOAPIFY_API_KEY', '').strip()
 
+# Gemini Vision AI for Shopkeeper Quick Intake auto-naming
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '').strip()
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-3.8-flash').strip() or 'gemini-3.8-flash'
+
 # Fixed OTP is explicitly limited to local debug mode. SMS integration is pending.
 OTP_TEST_MODE = DEBUG and os.environ.get('OTP_TEST_MODE', '1') == '1'
 

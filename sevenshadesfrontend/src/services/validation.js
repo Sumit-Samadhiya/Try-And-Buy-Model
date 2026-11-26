@@ -56,7 +56,8 @@ export function validateFields(endpoint, body) {
   }
   for (const key of required[endpoint] || []) if (data[key] === undefined || data[key] === null || String(data[key]).trim() === '') errors[key] = 'This field is required.';
   for (const [key, value] of Object.entries(data)) {
-    if (limits[key] && !(key === 'address' && endpoint === 'try_order_create') && (typeof value !== 'string' || value.length > limits[key] || (!value.trim() && !['review_text','bannerdescription','sku'].includes(key)))) errors[key] = 'Enter valid text up to ' + limits[key] + ' characters.';
+    const optionalIntake = ['intake_submit', 'intake_analyze'].includes(endpoint) && ['description', 'color'].includes(key);
+    if (limits[key] && !(key === 'address' && endpoint === 'try_order_create') && !optionalIntake && (typeof value !== 'string' || value.length > limits[key] || (!value.trim() && !['review_text','bannerdescription','sku'].includes(key)))) errors[key] = 'Enter valid text up to ' + limits[key] + ' characters.';
     if (['mobileno','mobile','phone','user_mobile'].includes(key) && !/^[6-9][0-9]{9}$/.test(String(value))) errors[key] = 'Enter a 10-digit mobile number starting with 6–9.';
     if (key === 'emailid' && value && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || value.length > 70)) errors[key] = 'Enter a valid email address.';
     if (['postcode', 'pincode'].includes(key) && !/^[1-9][0-9]{5}$/.test(value)) errors[key] = 'Enter a valid 6-digit PIN code.';

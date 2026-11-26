@@ -21,7 +21,7 @@ Including another URLconf
 from django.contrib import admin
 from sevenshadesapp.health import health, ready
 from django.urls import path
-from sevenshadesapp import maincategory_views,mysubcategory_views,brands_views,product_views,productdetails_views,admin_login_view,userinterface,banner_views,signup_views,order_views,delivery_ops_views,inventory_views,admin_analytics_views,coupon_views,whatsapp_auth_views
+from sevenshadesapp import maincategory_views,mysubcategory_views,brands_views,product_views,productdetails_views,admin_login_view,userinterface,banner_views,signup_views,order_views,delivery_ops_views,inventory_views,admin_analytics_views,coupon_views,whatsapp_auth_views,shopkeeper_intake_views
 
 from django.urls import include,re_path
 from sevenshadesapp import auth_views
@@ -192,6 +192,16 @@ urlpatterns = [
     path('api/admin_coupon_delete', coupon_views.AdminCouponDelete),
     path('api/admin_coupon_dependencies', coupon_views.AdminCouponDependencies),
     path('api/validate_coupon', coupon_views.ValidateCoupon),
+    path('api/shopkeeper_list', shopkeeper_intake_views.Shopkeeper_List),
+    path('api/shopkeeper_save', shopkeeper_intake_views.Shopkeeper_Save),
+    path('api/intake_analyze', shopkeeper_intake_views.Intake_Analyze),
+    path('api/intake_list', shopkeeper_intake_views.Intake_List),
+    path('api/intake_submit', shopkeeper_intake_views.Intake_Submit),
+    path('api/intake_update', shopkeeper_intake_views.Intake_Update),
+    path('api/intake_delete', shopkeeper_intake_views.Intake_Delete),
+    path('api/intake_publish', shopkeeper_intake_views.Intake_Publish),
+    path('api/intake_export_csv', shopkeeper_intake_views.Intake_Export_CSV),
+    path('api/intake_export_sheet', shopkeeper_intake_views.Intake_Export_Sheet),
     re_path(r'^media/(?P<path>.*)$', secure_media_serve, name='media_serve'),
     re_path(r'^(?P<path>static/.*)$', secure_media_serve, name='static_serve'),
 ]
